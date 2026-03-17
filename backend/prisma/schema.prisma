@@ -8,18 +8,70 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+  USER
+}
 
-  @@map("users")
+enum Language {
+  EN
+  VI
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
+
+enum ContentType {
+  POST
+  PAGE
+  EVENT
+}
+
+enum MediaType {
+  IMAGE
+  DOCUMENT
+  VIDEO
+  AUDIO
+}
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  password    String?
+  googleId    String?   @unique
+  googleEmail String?
+  role        Role      @default(USER)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String?
+  lastLoginAt DateTime?
+
+  sessions        Session[]
+  accounts        Account[]
+  posts           Post[]
+  postsUpdated    Post[]            @relation("PostUpdatedBy")
+  pages           Page[]
+  pagesUpdated    Page[]            @relation("PageUpdatedBy")
+  events          Event[]
+  eventsUpdated   Event[]           @relation("EventUpdatedBy")
+  templates       Template[]
+  media           Media[]
+  faqItems        FAQ[]
+  faqUpdated      FAQ[]             @relation("FAQUpdatedBy")
+  chatbotTraining ChatbotTraining[]
+  approvals       Approval[]
+  auditLogs       AuditLog[]
+
+  @@index([role])
+  @@index([email])
 }
 
 model Session {
@@ -32,8 +84,6 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("sessions")
 }
 
 model Account {
@@ -51,8 +101,6 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-
-  @@map("accounts")
 }
 
 model Verification {
@@ -62,6 +110,382 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
+}
 
-  @@map("verifications")
+model Template {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  description   String?
+  templateType  ContentType
+  content       String
+  isActive      Boolean     @default(true)
+  createdBy     String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdByUser User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  posts  Post[]
+  pages  Page[]
+  events Event[]
+
+  @@index([createdBy])
+  @@index([templateType])
+}
+
+model Post {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  content     String
+  excerpt     String?
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String
+  updatedBy   String?
+
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdByUser  User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  updatedByUser  User?         @relation("PostUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  postCategories PostCategory[]
+  postTags       PostTag[]
+  media          PostMedia[]
+  approval       Approval?
+  seoMetadata    SEOMetadata?
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([publishedAt])
+  @@index([slug])
+}
+
+model PostCategory {
+  postId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+}
+
+model PostTag {
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Page {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  content     String
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String
+  updatedBy   String?
+
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdByUser User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  updatedByUser User?      @relation("PageUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  media         PageMedia[]
+  approval      Approval?
+  seoMetadata   SEOMetadata?
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([slug])
+}
+
+model Event {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  description String
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String
+  updatedBy   String?
+
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  createdByUser   User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  updatedByUser   User?          @relation("EventUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  eventCategories EventCategory[]
+  media           EventMedia[]
+  approval        Approval?
+  seoMetadata     SEOMetadata?
+
+  @@index([status])
+  @@index([startDate])
+  @@index([createdBy])
+  @@index([slug])
+}
+
+model EventCategory {
+  eventId    String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, categoryId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  postCategories  PostCategory[]
+  eventCategories EventCategory[]
+
+  @@index([slug])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postTags PostTag[]
+
+  @@index([slug])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  people Person[]
+
+  @@index([slug])
+}
+
+model Person {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  position     String?
+  bio          String?
+  departmentId String?
+  avatarId     String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  avatar     Media?      @relation(fields: [avatarId], references: [id], onDelete: SetNull)
+
+  @@index([departmentId])
+  @@index([email])
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  name      String
+  type      MediaType
+  url       String
+  mimeType  String?
+  size      Int?
+  width     Int?
+  height    Int?
+  alt       String?
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  createdByUser User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  personAvatar  Person?
+  postMedia     PostMedia[]
+  pageMedia     PageMedia[]
+  eventMedia    EventMedia[]
+
+  @@index([createdBy])
+  @@index([type])
+}
+
+model PostMedia {
+  id        String   @id @default(cuid())
+  postId    String
+  mediaId   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, mediaId])
+  @@index([mediaId])
+}
+
+model PageMedia {
+  id        String   @id @default(cuid())
+  pageId    String
+  mediaId   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  page  Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, mediaId])
+  @@index([mediaId])
+}
+
+model EventMedia {
+  id        String   @id @default(cuid())
+  eventId   String
+  mediaId   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, mediaId])
+  @@index([mediaId])
+}
+
+model Approval {
+  id          String        @id @default(cuid())
+  contentType ContentType
+  postId      String?       @unique
+  pageId      String?       @unique
+  eventId     String?       @unique
+  status      ContentStatus @default(PENDING_APPROVAL)
+  requestedAt DateTime      @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  comments    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  post     Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  page     Page?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  event    Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  reviewer User?  @relation(fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([reviewedBy])
+  @@index([contentType])
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdBy String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdByUser User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  updatedByUser User?             @relation("FAQUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  trainingData  ChatbotTraining[]
+
+  @@index([isActive])
+  @@index([category])
+  @@index([createdBy])
+}
+
+model ChatbotTraining {
+  id        String   @id @default(cuid())
+  faqId     String?
+  question  String
+  answer    String
+  context   String?
+  language  Language
+  version   Int      @default(1)
+  isActive  Boolean  @default(true)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdByUser User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  faq           FAQ? @relation(fields: [faqId], references: [id], onDelete: SetNull)
+
+  @@index([language])
+  @@index([isActive])
+  @@index([createdBy])
+  @@index([faqId])
+}
+
+model SEOMetadata {
+  id              String      @id @default(cuid())
+  contentType     ContentType
+  postId          String?     @unique
+  pageId          String?     @unique
+  eventId         String?     @unique
+  metaTitle       String?
+  metaDescription String?
+  keywords        String?
+  canonicalUrl    String?
+  ogTitle         String?
+  ogDescription   String?
+  ogImage         String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  post  Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  page  Page?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([contentType])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  changes    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([action])
 }
