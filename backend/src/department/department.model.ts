@@ -13,6 +13,12 @@ export type CreateDepartmentBodyType = z.infer<
   typeof CreateDepartmentBodySchema
 >;
 
+export const UpdateDepartmentBodySchema = CreateDepartmentBodySchema.partial();
+
+export type UpdateDepartmentBodyType = z.infer<
+  typeof UpdateDepartmentBodySchema
+>;
+
 export const DepartmentResSchema = z.object({
   id: z.string(),
   name: z.string(),

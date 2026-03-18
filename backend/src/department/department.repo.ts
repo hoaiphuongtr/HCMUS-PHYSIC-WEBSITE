@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateDepartmentBodyType } from './department.model';
+import {
+  CreateDepartmentBodyType,
+  UpdateDepartmentBodyType,
+} from './department.model';
 
 @Injectable()
 export class DepartmentRepository {
@@ -20,5 +23,9 @@ export class DepartmentRepository {
 
   findAll() {
     return this.prisma.department.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  update(id: string, data: UpdateDepartmentBodyType) {
+    return this.prisma.department.update({ where: { id }, data });
   }
 }
