@@ -19,7 +19,8 @@ const main = async () => {
     data: {
       email: envConfig.ADMIN_EMAIL,
       password: hashedPassword,
-      name: envConfig.ADMIN_NAME,
+      firstName: envConfig.ADMIN_FIRST_NAME,
+      lastName: envConfig.ADMIN_LAST_NAME,
       role: RoleName.SuperAdmin,
       isActive: true,
     },

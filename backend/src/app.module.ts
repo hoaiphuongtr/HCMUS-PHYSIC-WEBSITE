@@ -4,6 +4,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
 import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
+import { DepartmentModule } from './department/department.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -14,6 +15,7 @@ import { AppService } from './app.service';
     PrismaModule,
     SharedModule,
     AuthModule,
+    DepartmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
