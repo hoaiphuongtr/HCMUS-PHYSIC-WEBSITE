@@ -1,14 +1,26 @@
-import { All, Controller, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { auth } from './auth';
-import { toNodeHandler } from 'better-auth/node';
+import { Body, Controller, Post } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { ZodSerializerDto } from 'nestjs-zod';
+import {
+  LoginBodyDTO,
+  LoginResDTO,
+  RefreshTokenBodyDTO,
+  RefreshTokenResDTO,
+} from './auth.dto';
 
-const handler = toNodeHandler(auth);
-
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
-  @All('*path')
-  async handleAuth(@Req() req: Request, @Res() res: Response) {
-    return handler(req, res);
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  @ZodSerializerDto(LoginResDTO)
+  login(@Body() body: LoginBodyDTO) {
+    return this.authService.login(body);
+  }
+
+  @Post('refresh-token')
+  @ZodSerializerDto(RefreshTokenResDTO)
+  refreshToken(@Body() body: RefreshTokenBodyDTO) {
+    return this.authService.refreshToken(body.refreshToken);
   }
 }

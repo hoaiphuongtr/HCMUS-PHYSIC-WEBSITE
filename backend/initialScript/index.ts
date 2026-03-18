@@ -2,8 +2,12 @@ import envConfig from 'src/shared/config/config';
 import { RoleName } from 'src/shared/constants/role.constants';
 import { HashingService } from 'src/shared/services/hashing.service';
 import { PrismaClient } from 'src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
-const prisma = new PrismaClient({} as any);
+const pool = new Pool({ connectionString: envConfig.DATABASE_URL });
+const adapter = new PrismaPg(pool as any);
+const prisma = new PrismaClient({ adapter } as any);
 const hashingService = new HashingService();
 
 const main = async () => {
