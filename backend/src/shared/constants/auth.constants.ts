@@ -12,3 +12,8 @@ export enum ConditionType {
 
 export const AUTH_TYPE_KEY = 'authType';
 export const ROLES_KEY = 'roles';
+
+export enum VerificationMethod {
+  Register = 'REGISTER',
+  ForgotPassword = 'FORGOT_PASSWORD',
+}

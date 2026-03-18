@@ -68,6 +68,11 @@ enum BlockType {
   EMBED
 }
 
+enum VerificationCodeType {
+  REGISTER
+  FORGOT_PASSWORD
+}
+
 enum ReactionType {
   LIKE
   LOVE
@@ -169,6 +174,18 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
+}
+
+model VerificationCode {
+  id        String               @id @default(cuid())
+  email     String
+  code      String
+  type      VerificationCodeType
+  expiresAt DateTime
+  createdAt DateTime             @default(now())
+
+  @@unique([email, type])
+  @@index([expiresAt, email])
 }
 
 model Department {

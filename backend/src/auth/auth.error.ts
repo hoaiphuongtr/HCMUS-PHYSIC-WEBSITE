@@ -23,3 +23,11 @@ export const EmailAlreadyExistsException = new ConflictException([
 export const DepartmentNotFoundException = new NotFoundException([
   { field: 'departmentId', error: 'Department not found' },
 ]);
+
+export const InvalidOTPException = new UnauthorizedException([
+  { field: 'code', error: 'Invalid OTP code' },
+]);
+
+export const ExpiredOTPException = new UnauthorizedException([
+  { field: 'code', error: 'Expired OTP code' },
+]);

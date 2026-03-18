@@ -17,6 +17,17 @@ const configSchema = z.object({
   BETTER_AUTH_URL: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  GOOGLE_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3001/auth/google/callback'),
+  GOOGLE_CLIENT_REDIRECT_URI: z
+    .string()
+    .default('http://localhost:3000/oauth-google-callback'),
+  OTP_EXPIRES_IN: z.string().default('2m'),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_REGION: z.string().default('ap-southeast-1'),
+  SES_FROM_ADDRESS: z.string(),
   SENTRY_DSN: z.string().optional(),
   NODE_ENV: z.string().optional(),
   FRONTEND_URL: z.string(),

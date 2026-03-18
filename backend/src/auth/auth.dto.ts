@@ -7,6 +7,10 @@ import {
   RegisterBodySchema,
   CreateAdminBodySchema,
   UserResSchema,
+  SendOTPBodySchema,
+  ForgotPasswordBodySchema,
+  GetAuthorizationUrlResSchema,
+  MessageResSchema,
 } from './auth.model';
 
 export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
@@ -16,3 +20,11 @@ export class RefreshTokenResDTO extends createZodDto(RefreshTokenResSchema) {}
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
 export class CreateAdminBodyDTO extends createZodDto(CreateAdminBodySchema) {}
 export class UserResDTO extends createZodDto(UserResSchema) {}
+export class SendOTPBodyDTO extends createZodDto(SendOTPBodySchema) {}
+export class ForgotPasswordBodyDTO extends createZodDto(
+  ForgotPasswordBodySchema,
+) {}
+export class GetAuthorizationUrlResDTO extends createZodDto(
+  GetAuthorizationUrlResSchema,
+) {}
+export class MessageResDTO extends createZodDto(MessageResSchema) {}

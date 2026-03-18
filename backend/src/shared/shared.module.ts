@@ -6,8 +6,9 @@ import { HashingService } from './services/hashing.service';
 import { AuthenticationGuard } from './guards/authentication.guard';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { EmailService } from './email/email.service';
 
-const sharedServices = [TokenService, HashingService];
+const sharedServices = [TokenService, HashingService, EmailService];
 
 @Global()
 @Module({
