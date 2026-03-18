@@ -25,6 +25,47 @@ export const authApi = {
       { method: "POST", body: JSON.stringify(body) },
     );
   },
+  register(body: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    code: string;
+  }) {
+    return apiFetch<{ id: string; email: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  sendOTP(body: { email: string; type: "REGISTER" | "FORGOT_PASSWORD" }) {
+    return apiFetch<{ message: string }>("/auth/otp", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  verifyOTP(body: {
+    email: string;
+    code: string;
+    type: "REGISTER" | "FORGOT_PASSWORD";
+  }) {
+    return apiFetch<{ message: string }>("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  forgotPassword(body: {
+    email: string;
+    code: string;
+    newPassword: string;
+    confirmNewPassword: string;
+  }) {
+    return apiFetch<{ message: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
   googleLink() {
     return apiFetch<{ url: string }>("/auth/google-link");
   },

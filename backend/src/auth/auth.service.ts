@@ -10,6 +10,7 @@ import {
   RegisterBodyType,
   CreateAdminBodyType,
   SendOTPBodyType,
+  VerifyOTPBodyType,
   ForgotPasswordBodyType,
 } from './auth.model';
 import { RoleName } from '../shared/constants/role.constants';
@@ -57,18 +58,30 @@ export class AuthService {
   }
 
   async register(body: RegisterBodyType) {
+    await this.validateVerificationCode({
+      email: body.email,
+      code: body.code,
+      type: VerificationMethod.Register,
+    });
     const existing = await this.authRepository.findUniqueUserByEmail(
       body.email,
     );
     if (existing) throw EmailAlreadyExistsException;
     const hashedPassword = await this.hashingService.hash(body.password);
-    return this.authRepository.createUser({
-      email: body.email,
-      password: hashedPassword,
-      firstName: body.firstName,
-      lastName: body.lastName,
-      role: RoleName.User as any,
-    });
+    const [user] = await Promise.all([
+      this.authRepository.createUser({
+        email: body.email,
+        password: hashedPassword,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        role: RoleName.User as any,
+      }),
+      this.authRepository.deleteVerificationCode({
+        email: body.email,
+        type: VerificationCodeType.REGISTER,
+      }),
+    ]);
+    return user;
   }
 
   async createAdmin(body: CreateAdminBodyType) {
@@ -114,6 +127,15 @@ export class AuthService {
     });
     await this.emailService.sendOTP(body.email, code);
     return { message: 'Send OTP successfully' };
+  }
+
+  async verifyOTP(body: VerifyOTPBodyType) {
+    await this.validateVerificationCode({
+      email: body.email,
+      code: body.code,
+      type: body.type as unknown as VerificationMethod,
+    });
+    return { message: 'Verification code is valid' };
   }
 
   async validateVerificationCode({

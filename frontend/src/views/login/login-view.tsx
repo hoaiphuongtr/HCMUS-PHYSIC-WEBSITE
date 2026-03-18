@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { ViewIcon, ViewOffIcon } from "hugeicons-react";
+import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
 
 export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = useMutation({
     mutationKey: ["AUTH", "LOGIN"],
@@ -17,16 +19,16 @@ export function LoginView() {
     onSuccess(data) {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
+      toast.success("Login successful");
       window.location.href = "/";
     },
     onError(err: { message?: string; statusCode?: number }) {
-      setError(err.message || "Login failed");
+      toast.error(err.message || "Login failed");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     loginMutation.mutate({ email, password });
   };
 
@@ -35,7 +37,7 @@ export function LoginView() {
       const data = await authApi.googleLink();
       window.location.href = data.url;
     } catch {
-      setError("Failed to initiate Google login");
+      toast.error("Failed to initiate Google login");
     }
   };
 
@@ -62,12 +64,6 @@ export function LoginView() {
                 Please enter your details to sign in.
               </p>
             </div>
-
-            {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
-                {error}
-              </div>
-            )}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div>
@@ -104,16 +100,29 @@ export function LoginView() {
                     Forgot Password?
                   </Link>
                 </div>
-                <input
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-hcmus-blue focus:border-hcmus-blue transition-colors text-sm outline-none"
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <div className="relative">
+                  <input
+                    className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-hcmus-blue focus:border-hcmus-blue transition-colors text-sm outline-none"
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? (
+                      <ViewOffIcon size={18} />
+                    ) : (
+                      <ViewIcon size={18} />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button

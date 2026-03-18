@@ -31,6 +31,7 @@ export const RegisterBodySchema = z
     firstName: z.string().min(1).max(100),
     lastName: z.string().min(1).max(100),
     phone: z.string().max(11).optional(),
+    code: z.string().length(6),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {
     if (confirmPassword !== password) {
@@ -58,6 +59,14 @@ export const SendOTPBodySchema = z.object({
 });
 
 export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>;
+
+export const VerifyOTPBodySchema = z.object({
+  email: z.email(),
+  code: z.string().length(6),
+  type: z.enum(VerificationMethod),
+});
+
+export type VerifyOTPBodyType = z.infer<typeof VerifyOTPBodySchema>;
 
 export const ForgotPasswordBodySchema = z
   .object({

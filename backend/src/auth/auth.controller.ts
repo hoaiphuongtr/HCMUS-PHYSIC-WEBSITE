@@ -12,6 +12,7 @@ import {
   CreateAdminBodyDTO,
   UserResDTO,
   SendOTPBodyDTO,
+  VerifyOTPBodyDTO,
   ForgotPasswordBodyDTO,
   GetAuthorizationUrlResDTO,
   MessageResDTO,
@@ -61,6 +62,13 @@ export class AuthController {
   @ZodSerializerDto(MessageResDTO)
   sendOTP(@Body() body: SendOTPBodyDTO) {
     return this.authService.sendOTP(body);
+  }
+
+  @Post('verify-otp')
+  @IsPublic()
+  @ZodSerializerDto(MessageResDTO)
+  verifyOTP(@Body() body: VerifyOTPBodyDTO) {
+    return this.authService.verifyOTP(body);
   }
 
   @Post('forgot-password')
