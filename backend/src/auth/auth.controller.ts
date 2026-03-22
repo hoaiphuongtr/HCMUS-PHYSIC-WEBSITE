@@ -19,6 +19,7 @@ import {
 } from './auth.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
+import { ActiveUser } from '../shared/decorators/active-user.decorator';
 import { RoleName } from '../shared/constants/role.constants';
 import envConfig from '../shared/config/config';
 
@@ -28,6 +29,12 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly googleService: GoogleService,
   ) {}
+
+  @Get('profile')
+  @ZodSerializerDto(UserResDTO)
+  getProfile(@ActiveUser('userId') userId: string) {
+    return this.authService.getProfile(userId);
+  }
 
   @Post('login')
   @IsPublic()

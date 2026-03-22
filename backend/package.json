@@ -20,7 +20,10 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "db:seed": "tsx initialScript/index.ts"
+    "db:seed": "tsx initialScript/index.ts",
+    "db:seed-widgets": "tsx initialScript/seed-widgets.ts",
+    "db:seed-all": "tsx initialScript/index.ts && tsx initialScript/seed-widgets.ts",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1011.0",
@@ -46,6 +49,7 @@
     "prisma": "^7.5.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -41,6 +41,12 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
+  async getProfile(userId: string) {
+    const user = await this.authRepository.findUniqueUserById(userId);
+    if (!user) throw InvalidEmailException;
+    return user;
+  }
+
   async login(body: LoginBodyType) {
     const user = await this.authRepository.findUniqueUserByEmail(body.email);
     if (!user) throw InvalidEmailException;

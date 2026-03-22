@@ -82,6 +82,13 @@ enum ReactionType {
   ANGRY
 }
 
+enum WidgetCategory {
+  FEED_COMPONENTS
+  UTILITY_INFO
+  CONTENT
+  NAVIGATION
+}
+
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
@@ -117,6 +124,7 @@ model User {
   faqUpdated          FAQ[]             @relation("FAQUpdatedBy")
   chatbotTraining     ChatbotTraining[]
   auditLogs           AuditLog[]
+  pageLayouts         PageLayout[]
 
   @@index([role])
   @@index([email])
@@ -258,7 +266,6 @@ model Post {
   postTags       PostTag[]
   media          PostMedia[]
   seoMetadata    SEOMetadata?
-  widgetPosts    WidgetPost[]
 
   @@index([status])
   @@index([category])
@@ -343,35 +350,62 @@ model PostComment {
 }
 
 model Widget {
-  id          String        @id @default(cuid())
-  name        String
-  slug        String        @unique
-  description String?
-  status      ContentStatus @default(DRAFT)
-  publishedAt DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  metadata    Json?
+  id            String         @id @default(cuid())
+  type          String         @unique
+  name          String
+  description   String?
+  category      WidgetCategory
+  icon          String?
+  configSchema  Json
+  defaultConfig Json           @default("{}")
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  widgetPosts WidgetPost[]
-  seoMetadata SEOMetadata?
+  instances WidgetInstance[]
 
-  @@index([status])
-  @@index([slug])
+  @@index([category])
+  @@index([isActive])
 }
 
-model WidgetPost {
-  widgetId  String
-  postId    String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+model WidgetInstance {
+  id           String   @id @default(cuid())
+  widgetId     String
+  pageLayoutId String
+  config       Json     @default("{}")
+  order        Int
+  row          Int      @default(0)
+  colSpan      Int      @default(12)
+  isVisible    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  widget Widget @relation(fields: [widgetId], references: [id], onDelete: Cascade)
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  widget     Widget     @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+  pageLayout PageLayout @relation(fields: [pageLayoutId], references: [id], onDelete: Cascade)
 
-  @@id([widgetId, postId])
+  @@index([pageLayoutId])
   @@index([widgetId])
-  @@index([postId])
+  @@index([order])
+}
+
+model PageLayout {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdByUser User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  widgets       WidgetInstance[]
+  seoMetadata   SEOMetadata?
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([createdBy])
 }
 
 model Tag {
@@ -436,7 +470,7 @@ model PostMedia {
 model SEOMetadata {
   id              String   @id @default(cuid())
   postId          String?  @unique
-  widgetId        String?  @unique
+  pageLayoutId    String?  @unique
   metaTitle       String?
   metaDescription String?
   keywords        String?
@@ -447,8 +481,8 @@ model SEOMetadata {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  widget Widget? @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+  post       Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  pageLayout PageLayout? @relation(fields: [pageLayoutId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

@@ -17,7 +17,17 @@
     "test:frontend": "npm run test --workspace=frontend",
     "test": "npm run test:backend && npm run test:frontend",
     "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
-    "format": "npm run format --workspace=backend && npm run format --workspace=frontend"
+    "format": "npm run format --workspace=backend && npm run format --workspace=frontend",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "db:seed": "npm run db:seed --workspace=backend",
+    "db:seed-widgets": "npm run db:seed-widgets --workspace=backend",
+    "db:seed-all": "npm run db:seed-all --workspace=backend",
+    "prisma:generate": "npm run prisma:generate --workspace=backend",
+    "prisma:migrate": "npm run prisma:migrate --workspace=backend",
+    "prisma:studio": "npm run prisma:studio --workspace=backend",
+    "check-types": "npm run check-types --workspace=backend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
