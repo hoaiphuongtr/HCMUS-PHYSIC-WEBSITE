@@ -192,7 +192,11 @@ export function WidgetsLayoutView() {
     });
   };
 
-  const handleAddWidgetAt = (widgetId: string, row: number, colSpan: number) => {
+  const handleAddWidgetAt = (
+    widgetId: string,
+    row: number,
+    colSpan: number,
+  ) => {
     if (!selectedLayoutId) return;
     const ws = selectedLayout?.widgets || [];
     addWidgetMutation.mutate({
@@ -344,7 +348,11 @@ export function WidgetsLayoutView() {
                       <div className="border-t border-slate-100 my-0.5" />
                       <button
                         onClick={() => {
-                          if (confirm("Delete this layout? This cannot be undone.")) {
+                          if (
+                            confirm(
+                              "Delete this layout? This cannot be undone.",
+                            )
+                          ) {
                             deleteLayoutMutation.mutate(l.id);
                           }
                           setLayoutMenuId(null);
@@ -432,7 +440,9 @@ export function WidgetsLayoutView() {
                 </div>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-[10px] text-slate-500 block mb-1">Width</span>
+                    <span className="text-[10px] text-slate-500 block mb-1">
+                      Width
+                    </span>
                     <div className="flex gap-0.5">
                       {[
                         { value: 3, label: "1/4" },
@@ -444,7 +454,11 @@ export function WidgetsLayoutView() {
                       ].map((opt) => (
                         <button
                           key={opt.value}
-                          onClick={() => handleUpdateWidget(selectedInstance.id, { colSpan: opt.value })}
+                          onClick={() =>
+                            handleUpdateWidget(selectedInstance.id, {
+                              colSpan: opt.value,
+                            })
+                          }
                           className={
                             "flex-1 py-1 text-[10px] font-medium rounded border transition-colors " +
                             ((selectedInstance.colSpan || 12) === opt.value
@@ -458,14 +472,18 @@ export function WidgetsLayoutView() {
                     </div>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block mb-1">Row</span>
+                    <span className="text-[10px] text-slate-500 block mb-1">
+                      Row
+                    </span>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
                         min={0}
                         value={selectedInstance.row ?? 0}
                         onChange={(e) =>
-                          handleUpdateWidget(selectedInstance.id, { row: Number(e.target.value) })
+                          handleUpdateWidget(selectedInstance.id, {
+                            row: Number(e.target.value),
+                          })
                         }
                         className="w-14 px-2 py-1 text-xs border border-slate-200 rounded-md outline-none focus:ring-1 focus:ring-blue-300"
                       />
@@ -487,13 +505,17 @@ export function WidgetsLayoutView() {
                       }
                       className={
                         "relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors " +
-                        (selectedInstance.isVisible ? "bg-blue-500" : "bg-slate-300")
+                        (selectedInstance.isVisible
+                          ? "bg-blue-500"
+                          : "bg-slate-300")
                       }
                     >
                       <span
                         className={
                           "inline-block h-3 w-3 rounded-full bg-white shadow-sm transition-transform " +
-                          (selectedInstance.isVisible ? "translate-x-3.5" : "translate-x-0.5")
+                          (selectedInstance.isVisible
+                            ? "translate-x-3.5"
+                            : "translate-x-0.5")
                         }
                       />
                     </button>
@@ -514,7 +536,9 @@ export function WidgetsLayoutView() {
                     ...selectedInstance.config,
                   }}
                   onSave={(newConfig) =>
-                    handleUpdateWidget(selectedInstance.id, { config: newConfig })
+                    handleUpdateWidget(selectedInstance.id, {
+                      config: newConfig,
+                    })
                   }
                 />
               </section>

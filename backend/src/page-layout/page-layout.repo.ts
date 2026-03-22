@@ -113,7 +113,19 @@ export class PageLayoutRepository {
   }
 
   async duplicateWithWidgets(
-    original: { name: string; slug: string; description: string | null; widgets: Array<{ widgetId: string; config: any; order: number; row: number; colSpan: number; isVisible: boolean }> },
+    original: {
+      name: string;
+      slug: string;
+      description: string | null;
+      widgets: Array<{
+        widgetId: string;
+        config: any;
+        order: number;
+        row: number;
+        colSpan: number;
+        isVisible: boolean;
+      }>;
+    },
     newData: { name: string; slug: string; createdBy: string },
   ) {
     return this.prisma.$transaction(async (tx) => {

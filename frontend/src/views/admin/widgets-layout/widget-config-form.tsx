@@ -39,7 +39,9 @@ export function WidgetConfigForm({
   };
 
   const isLongText = (key: string, value: any) =>
-    typeof value === "string" && (value.length > 60 || key.toLowerCase().includes("url") === false && value.includes("\n"));
+    typeof value === "string" &&
+    (value.length > 60 ||
+      (key.toLowerCase().includes("url") === false && value.includes("\n")));
 
   return (
     <div className="space-y-3">
@@ -48,10 +50,7 @@ export function WidgetConfigForm({
           <label className="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-1">
             <span>{schema.label}</span>
             {schema.type === "boolean" && (
-              <Toggle
-                checked={!!local[key]}
-                onChange={(v) => update(key, v)}
-              />
+              <Toggle checked={!!local[key]} onChange={(v) => update(key, v)} />
             )}
           </label>
 

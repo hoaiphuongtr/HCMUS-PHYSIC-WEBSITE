@@ -10,7 +10,11 @@ const NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: "dashboard" },
   { name: "My Posts", href: "/admin/posts", icon: "article" },
   { name: "Media Library", href: "/admin/media", icon: "folder_open" },
-  { name: "Page Layouts", href: "/admin/widgets-layout", icon: "dashboard_customize" },
+  {
+    name: "Page Layouts",
+    href: "/admin/widgets-layout",
+    icon: "dashboard_customize",
+  },
   { name: "Widget Types", href: "/admin/widgets", icon: "extension" },
   { name: "Menus", href: "/admin/menus", icon: "menu" },
 ];

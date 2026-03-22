@@ -64,37 +64,55 @@ export class PageLayoutService {
     return this.pageLayoutRepository.publish(id);
   }
 
-  async addWidgetInstance(pageLayoutId: string, body: AddWidgetInstanceBodyType) {
+  async addWidgetInstance(
+    pageLayoutId: string,
+    body: AddWidgetInstanceBodyType,
+  ) {
     await this.findById(pageLayoutId);
     const widget = await this.widgetRepository.findById(body.widgetId);
     if (!widget) throw WidgetNotFoundException;
-    const config = { ...widget.defaultConfig as object, ...body.config };
+    const config = { ...(widget.defaultConfig as object), ...body.config };
     return this.pageLayoutRepository.addWidgetInstance(pageLayoutId, {
       ...body,
       config,
     });
   }
 
-  async updateWidgetInstance(pageLayoutId: string, instanceId: string, body: UpdateWidgetInstanceBodyType) {
+  async updateWidgetInstance(
+    pageLayoutId: string,
+    instanceId: string,
+    body: UpdateWidgetInstanceBodyType,
+  ) {
     await this.findById(pageLayoutId);
-    const instance = await this.pageLayoutRepository.findWidgetInstance(instanceId);
-    if (!instance || instance.pageLayoutId !== pageLayoutId) throw WidgetInstanceNotFoundException;
+    const instance =
+      await this.pageLayoutRepository.findWidgetInstance(instanceId);
+    if (!instance || instance.pageLayoutId !== pageLayoutId)
+      throw WidgetInstanceNotFoundException;
     return this.pageLayoutRepository.updateWidgetInstance(instanceId, body);
   }
 
   async removeWidgetInstance(pageLayoutId: string, instanceId: string) {
     await this.findById(pageLayoutId);
-    const instance = await this.pageLayoutRepository.findWidgetInstance(instanceId);
-    if (!instance || instance.pageLayoutId !== pageLayoutId) throw WidgetInstanceNotFoundException;
+    const instance =
+      await this.pageLayoutRepository.findWidgetInstance(instanceId);
+    if (!instance || instance.pageLayoutId !== pageLayoutId)
+      throw WidgetInstanceNotFoundException;
     await this.pageLayoutRepository.removeWidgetInstance(instanceId);
     return { message: 'Widget instance removed successfully' };
   }
 
-  async duplicate(id: string, userId: string, body: DuplicatePageLayoutBodyType) {
+  async duplicate(
+    id: string,
+    userId: string,
+    body: DuplicatePageLayoutBodyType,
+  ) {
     const original = await this.pageLayoutRepository.findById(id);
     if (!original) throw PageLayoutNotFoundException;
     const baseName = body.name || `Copy of ${original.name}`;
-    let slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    let slug = baseName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
     const existing = await this.pageLayoutRepository.findBySlug(slug);
     if (existing) {
       slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
@@ -119,6 +137,9 @@ export class PageLayoutService {
 
   async reorderWidgets(pageLayoutId: string, body: ReorderWidgetsBodyType) {
     await this.findById(pageLayoutId);
-    return this.pageLayoutRepository.reorderWidgets(pageLayoutId, body.orderedInstanceIds);
+    return this.pageLayoutRepository.reorderWidgets(
+      pageLayoutId,
+      body.orderedInstanceIds,
+    );
   }
 }

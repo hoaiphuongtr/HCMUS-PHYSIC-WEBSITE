@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Req,
+} from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { PageLayoutService } from './page-layout.service';
 import {
@@ -24,7 +34,10 @@ export class PageLayoutController {
   @Post()
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  create(@Body() body: CreatePageLayoutBodyDTO, @ActiveUser('userId') userId: string) {
+  create(
+    @Body() body: CreatePageLayoutBodyDTO,
+    @ActiveUser('userId') userId: string,
+  ) {
     return this.pageLayoutService.create(body, userId);
   }
 
@@ -65,7 +78,11 @@ export class PageLayoutController {
   @Post(':id/duplicate')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  duplicate(@Param('id') id: string, @Body() body: DuplicatePageLayoutBodyDTO, @ActiveUser('userId') userId: string) {
+  duplicate(
+    @Param('id') id: string,
+    @Body() body: DuplicatePageLayoutBodyDTO,
+    @ActiveUser('userId') userId: string,
+  ) {
     return this.pageLayoutService.duplicate(id, userId, body);
   }
 
@@ -97,7 +114,10 @@ export class PageLayoutController {
   @Delete(':id/widgets/:instanceId')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutMessageResDTO)
-  removeWidget(@Param('id') id: string, @Param('instanceId') instanceId: string) {
+  removeWidget(
+    @Param('id') id: string,
+    @Param('instanceId') instanceId: string,
+  ) {
     return this.pageLayoutService.removeWidgetInstance(id, instanceId);
   }
 

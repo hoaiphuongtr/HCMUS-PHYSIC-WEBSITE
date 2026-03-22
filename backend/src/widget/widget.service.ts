@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { WidgetRepository } from './widget.repo';
 import { CreateWidgetBodyType, UpdateWidgetBodyType } from './widget.model';
-import { WidgetTypeExistsException, WidgetNotFoundException } from './widget.error';
+import {
+  WidgetTypeExistsException,
+  WidgetNotFoundException,
+} from './widget.error';
 import { WidgetCategory } from '../generated/prisma/client';
 
 @Injectable()

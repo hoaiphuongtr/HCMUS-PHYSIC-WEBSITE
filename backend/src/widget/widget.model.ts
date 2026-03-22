@@ -1,6 +1,11 @@
 import z from 'zod';
 
-const WidgetCategoryEnum = ['FEED_COMPONENTS', 'UTILITY_INFO', 'CONTENT', 'NAVIGATION'] as const;
+const WidgetCategoryEnum = [
+  'FEED_COMPONENTS',
+  'UTILITY_INFO',
+  'CONTENT',
+  'NAVIGATION',
+] as const;
 
 export const CreateWidgetBodySchema = z.object({
   type: z.string().min(1).max(100),

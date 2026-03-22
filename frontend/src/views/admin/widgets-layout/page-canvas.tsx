@@ -41,7 +41,13 @@ export function PageCanvas({
   onSelectInstance: (id: string | null) => void;
   onUpdateWidget: (
     instanceId: string,
-    body: { config?: Record<string, any>; order?: number; row?: number; colSpan?: number; isVisible?: boolean },
+    body: {
+      config?: Record<string, any>;
+      order?: number;
+      row?: number;
+      colSpan?: number;
+      isVisible?: boolean;
+    },
   ) => void;
   onRemoveWidget: (instanceId: string) => void;
   onReorder: (orderedIds: string[]) => void;
@@ -110,19 +116,20 @@ export function PageCanvas({
     resetDrag();
   };
 
-  const handleBetweenRowDrop = (afterRowIdx: number) => (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const widgetId = e.dataTransfer.getData("widgetId");
-    if (!widgetId) {
+  const handleBetweenRowDrop =
+    (afterRowIdx: number) => (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const widgetId = e.dataTransfer.getData("widgetId");
+      if (!widgetId) {
+        resetDrag();
+        return;
+      }
+      const afterRow = afterRowIdx >= 0 ? (rows[afterRowIdx]?.row ?? -1) : -1;
+      const newRow = getNextRow(afterRow);
+      onAddWidgetAt(widgetId, newRow, 12);
       resetDrag();
-      return;
-    }
-    const afterRow = afterRowIdx >= 0 ? rows[afterRowIdx]?.row ?? -1 : -1;
-    const newRow = getNextRow(afterRow);
-    onAddWidgetAt(widgetId, newRow, 12);
-    resetDrag();
-  };
+    };
 
   const resetDrag = () => {
     setDragRowIdx(null);
@@ -141,10 +148,18 @@ export function PageCanvas({
 
   const colSpanClass = (span: number) => {
     const map: Record<number, string> = {
-      1: "col-span-1", 2: "col-span-2", 3: "col-span-3",
-      4: "col-span-4", 5: "col-span-5", 6: "col-span-6",
-      7: "col-span-7", 8: "col-span-8", 9: "col-span-9",
-      10: "col-span-10", 11: "col-span-11", 12: "col-span-12",
+      1: "col-span-1",
+      2: "col-span-2",
+      3: "col-span-3",
+      4: "col-span-4",
+      5: "col-span-5",
+      6: "col-span-6",
+      7: "col-span-7",
+      8: "col-span-8",
+      9: "col-span-9",
+      10: "col-span-10",
+      11: "col-span-11",
+      12: "col-span-12",
     };
     return map[span] || "col-span-12";
   };
@@ -180,7 +195,9 @@ export function PageCanvas({
             )}
 
             <DropZoneLine
-              active={dropTarget?.type === "new-row" && dropTarget.afterRow === -1}
+              active={
+                dropTarget?.type === "new-row" && dropTarget.afterRow === -1
+              }
               onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -191,7 +208,10 @@ export function PageCanvas({
             />
 
             {rows.map((rowGroup, rowIdx) => {
-              const colUsed = rowGroup.instances.reduce((s, i) => s + (i.colSpan || 12), 0);
+              const colUsed = rowGroup.instances.reduce(
+                (s, i) => s + (i.colSpan || 12),
+                0,
+              );
               const hasSpace = colUsed < 12;
 
               return (
@@ -215,12 +235,17 @@ export function PageCanvas({
 
                     <div className="grid grid-cols-12 gap-2">
                       {rowGroup.instances.map((inst) => (
-                        <div key={inst.id} className={colSpanClass(inst.colSpan || 12)}>
+                        <div
+                          key={inst.id}
+                          className={colSpanClass(inst.colSpan || 12)}
+                        >
                           <WidgetInstanceCard
                             instance={inst}
                             isSelected={selectedInstanceId === inst.id}
                             onSelect={() =>
-                              onSelectInstance(selectedInstanceId === inst.id ? null : inst.id)
+                              onSelectInstance(
+                                selectedInstanceId === inst.id ? null : inst.id,
+                              )
                             }
                             onUpdateWidget={onUpdateWidget}
                             onRemoveWidget={onRemoveWidget}
@@ -230,11 +255,17 @@ export function PageCanvas({
 
                       {hasSpace && (
                         <div
-                          className={colSpanClass(12 - colUsed) + " min-h-[60px]"}
+                          className={
+                            colSpanClass(12 - colUsed) + " min-h-[60px]"
+                          }
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setDropTarget({ type: "same-row", row: rowGroup.row, afterInstanceId: null });
+                            setDropTarget({
+                              type: "same-row",
+                              row: rowGroup.row,
+                              afterInstanceId: null,
+                            });
                           }}
                           onDragLeave={() => setDropTarget(null)}
                           onDrop={(e) => {
@@ -251,7 +282,8 @@ export function PageCanvas({
                           <div
                             className={
                               "h-full rounded-xl border-2 border-dashed transition-all flex items-center justify-center " +
-                              (dropTarget?.type === "same-row" && dropTarget.row === rowGroup.row
+                              (dropTarget?.type === "same-row" &&
+                              dropTarget.row === rowGroup.row
                                 ? "border-blue-400 bg-blue-50/50"
                                 : "border-transparent hover:border-slate-200")
                             }
@@ -259,7 +291,8 @@ export function PageCanvas({
                             <div
                               className={
                                 "text-center transition-opacity " +
-                                (dropTarget?.type === "same-row" && dropTarget.row === rowGroup.row
+                                (dropTarget?.type === "same-row" &&
+                                dropTarget.row === rowGroup.row
                                   ? "opacity-100"
                                   : "opacity-0 group-hover/row:opacity-40")
                               }
@@ -284,11 +317,17 @@ export function PageCanvas({
                   </div>
 
                   <DropZoneLine
-                    active={dropTarget?.type === "new-row" && dropTarget.afterRow === rowGroup.row}
+                    active={
+                      dropTarget?.type === "new-row" &&
+                      dropTarget.afterRow === rowGroup.row
+                    }
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setDropTarget({ type: "new-row", afterRow: rowGroup.row });
+                      setDropTarget({
+                        type: "new-row",
+                        afterRow: rowGroup.row,
+                      });
                     }}
                     onDragLeave={() => setDropTarget(null)}
                     onDrop={handleBetweenRowDrop(rowIdx)}
@@ -357,7 +396,9 @@ function DropZonePlaceholder({
         onDrop(e);
       }}
     >
-      <span className="material-symbols-outlined text-4xl mb-2">add_circle_outline</span>
+      <span className="material-symbols-outlined text-4xl mb-2">
+        add_circle_outline
+      </span>
       <p className="text-sm font-medium">{label}</p>
       {sublabel && <p className="text-xs mt-1">{sublabel}</p>}
     </div>

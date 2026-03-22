@@ -24,7 +24,12 @@ export function WidgetInstanceCard({
   onSelect: () => void;
   onUpdateWidget: (
     instanceId: string,
-    body: { config?: Record<string, any>; isVisible?: boolean; colSpan?: number; row?: number },
+    body: {
+      config?: Record<string, any>;
+      isVisible?: boolean;
+      colSpan?: number;
+      row?: number;
+    },
   ) => void;
   onRemoveWidget: (instanceId: string) => void;
 }) {
@@ -106,7 +111,8 @@ export function WidgetInstanceCard({
           <div className="flex items-center gap-1.5">
             {(instance.colSpan || 12) < 12 && (
               <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">
-                {COL_SPAN_OPTIONS.find((o) => o.value === instance.colSpan)?.label || `${instance.colSpan}/12`}
+                {COL_SPAN_OPTIONS.find((o) => o.value === instance.colSpan)
+                  ?.label || `${instance.colSpan}/12`}
               </span>
             )}
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-200/60 text-slate-500">

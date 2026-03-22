@@ -22,9 +22,7 @@ export default function AdminDashboardPage() {
       </header>
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Admin Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
           <p className="text-sm text-slate-500 mt-2">
             Welcome to the Physics Faculty Admin Portal
           </p>

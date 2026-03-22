@@ -46,8 +46,12 @@ export class WidgetRepository {
       data: {
         ...rest,
         ...(category && { category: category as WidgetCategory }),
-        ...(configSchema !== undefined && { configSchema: configSchema as any }),
-        ...(defaultConfig !== undefined && { defaultConfig: defaultConfig as any }),
+        ...(configSchema !== undefined && {
+          configSchema: configSchema as any,
+        }),
+        ...(defaultConfig !== undefined && {
+          defaultConfig: defaultConfig as any,
+        }),
       },
     });
   }

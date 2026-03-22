@@ -220,7 +220,13 @@ export const pageLayoutApi = {
   },
   addWidget(
     layoutId: string,
-    body: { widgetId: string; config?: Record<string, any>; order: number; row?: number; colSpan?: number },
+    body: {
+      widgetId: string;
+      config?: Record<string, any>;
+      order: number;
+      row?: number;
+      colSpan?: number;
+    },
   ) {
     return authFetch<WidgetInstance>(`/page-layouts/${layoutId}/widgets`, {
       method: "POST",

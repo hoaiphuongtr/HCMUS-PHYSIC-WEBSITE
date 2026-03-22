@@ -41,7 +41,12 @@ export function ComponentLibrary({
     return acc;
   }, {});
 
-  const categoryOrder = ["NAVIGATION", "FEED_COMPONENTS", "CONTENT", "UTILITY_INFO"];
+  const categoryOrder = [
+    "NAVIGATION",
+    "FEED_COMPONENTS",
+    "CONTENT",
+    "UTILITY_INFO",
+  ];
 
   return (
     <div className="w-[280px] shrink-0 bg-white border-r border-slate-200/60 flex flex-col h-full overflow-hidden">
@@ -71,9 +76,7 @@ export function ComponentLibrary({
           return (
             <div key={cat}>
               <button
-                onClick={() =>
-                  setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))
-                }
+                onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
                 className="flex items-center justify-between w-full py-2 px-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-700"
               >
                 <span className="flex items-center gap-1.5">

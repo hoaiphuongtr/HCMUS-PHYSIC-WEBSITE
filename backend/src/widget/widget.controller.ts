@@ -1,7 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { WidgetService } from './widget.service';
-import { CreateWidgetBodyDTO, UpdateWidgetBodyDTO, WidgetResDTO } from './widget.dto';
+import {
+  CreateWidgetBodyDTO,
+  UpdateWidgetBodyDTO,
+  WidgetResDTO,
+} from './widget.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
 import { RoleName } from '../shared/constants/role.constants';
