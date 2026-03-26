@@ -1,6 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 type FieldSchema = {
   type: string;
@@ -38,63 +51,74 @@ export function WidgetConfigForm({
     setDirty(false);
   };
 
-  const isLongText = (key: string, value: any) =>
-    typeof value === "string" &&
-    (value.length > 60 ||
-      (key.toLowerCase().includes("url") === false && value.includes("\n")));
+  const isLongText = (value: any) =>
+    typeof value === "string" && value.length > 60;
 
   return (
     <div className="space-y-3">
       {Object.entries(configSchema).map(([key, schema]) => (
         <div key={key}>
-          <label className="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-1">
-            <span>{schema.label}</span>
-            {schema.type === "boolean" && (
-              <Toggle checked={!!local[key]} onChange={(v) => update(key, v)} />
-            )}
-          </label>
+          {schema.type === "boolean" ? (
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">
+                {schema.label}
+              </Label>
+              <Switch
+                size="sm"
+                checked={!!local[key]}
+                onCheckedChange={(v) => update(key, v)}
+              />
+            </div>
+          ) : (
+            <Label className="text-xs text-muted-foreground block mb-1">
+              {schema.label}
+            </Label>
+          )}
 
-          {schema.type === "string" && !isLongText(key, local[key]) && (
-            <input
-              type="text"
+          {schema.type === "string" && !isLongText(local[key]) && (
+            <Input
               value={local[key] ?? ""}
               onChange={(e) => update(key, e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 bg-white"
+              className="h-7 text-xs"
             />
           )}
 
-          {schema.type === "string" && isLongText(key, local[key]) && (
-            <textarea
+          {schema.type === "string" && isLongText(local[key]) && (
+            <Textarea
               value={local[key] ?? ""}
               onChange={(e) => update(key, e.target.value)}
               rows={3}
-              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 bg-white resize-y"
+              className="text-xs resize-y"
             />
           )}
 
           {schema.type === "number" && (
-            <input
+            <Input
               type="number"
               value={local[key] ?? ""}
               min={schema.min}
               max={schema.max}
               onChange={(e) => update(key, Number(e.target.value))}
-              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 bg-white"
+              className="h-7 text-xs"
             />
           )}
 
           {schema.type === "select" && (
-            <select
+            <Select
               value={local[key] ?? ""}
-              onChange={(e) => update(key, e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 bg-white"
+              onValueChange={(v) => update(key, v)}
             >
-              {schema.options?.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {schema.options?.map((opt) => (
+                  <SelectItem key={opt} value={opt} className="text-xs">
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
           {schema.type === "multi-select" && (
@@ -102,9 +126,10 @@ export function WidgetConfigForm({
               {schema.options?.map((opt) => {
                 const selected = (local[key] || []).includes(opt);
                 return (
-                  <button
+                  <Badge
                     key={opt}
-                    type="button"
+                    variant={selected ? "default" : "outline"}
+                    className="cursor-pointer text-[10px]"
                     onClick={() => {
                       const current = local[key] || [];
                       update(
@@ -114,15 +139,9 @@ export function WidgetConfigForm({
                           : [...current, opt],
                       );
                     }}
-                    className={
-                      "px-2 py-0.5 text-[10px] rounded border transition-colors " +
-                      (selected
-                        ? "bg-blue-50 border-blue-300 text-blue-700"
-                        : "bg-white border-slate-200 text-slate-500 hover:border-slate-300")
-                    }
                   >
                     {opt}
-                  </button>
+                  </Badge>
                 );
               })}
             </div>
@@ -139,42 +158,11 @@ export function WidgetConfigForm({
       ))}
 
       {dirty && (
-        <button
-          onClick={handleSave}
-          className="w-full py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-        >
+        <Button size="sm" className="w-full" onClick={handleSave}>
           Save Changes
-        </button>
+        </Button>
       )}
     </div>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={
-        "relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors " +
-        (checked ? "bg-blue-500" : "bg-slate-300")
-      }
-    >
-      <span
-        className={
-          "inline-block h-3 w-3 rounded-full bg-white shadow-sm transition-transform " +
-          (checked ? "translate-x-3.5" : "translate-x-0.5")
-        }
-      />
-    </button>
   );
 }
 
@@ -213,15 +201,15 @@ function ArrayFieldEditor({
       {items.map((item, idx) => (
         <div
           key={idx}
-          className="flex items-start gap-1 p-2 rounded-md bg-slate-50 border border-slate-100"
+          className="flex items-start gap-1 p-2 rounded-md bg-muted/50 border"
         >
           <div className="flex-1 space-y-1">
             {keys.map((field) => (
               <div key={field} className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-400 w-10 shrink-0 text-right truncate">
+                <span className="text-[9px] text-muted-foreground w-10 shrink-0 text-right truncate">
                   {field}
                 </span>
-                <input
+                <Input
                   type={itemSchema[field] === "number" ? "number" : "text"}
                   value={item[field] ?? ""}
                   onChange={(e) =>
@@ -233,26 +221,25 @@ function ArrayFieldEditor({
                         : e.target.value,
                     )
                   }
-                  className="flex-1 px-2 py-0.5 text-[10px] border border-slate-200 rounded bg-white outline-none focus:ring-1 focus:ring-blue-200"
+                  className="h-6 text-[10px] flex-1"
                 />
               </div>
             ))}
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={() => removeItem(idx)}
-            className="p-0.5 text-slate-400 hover:text-red-500 shrink-0 mt-0.5"
+            className="text-muted-foreground hover:text-destructive shrink-0 mt-0.5"
           >
             <span className="material-symbols-outlined text-[12px]">close</span>
-          </button>
+          </Button>
         </div>
       ))}
-      <button
-        onClick={addItem}
-        className="w-full py-1 text-[10px] font-medium text-blue-600 border border-dashed border-blue-200 rounded-md hover:bg-blue-50/50 transition-colors flex items-center justify-center gap-1"
-      >
+      <Button variant="outline" size="xs" className="w-full" onClick={addItem}>
         <span className="material-symbols-outlined text-[12px]">add</span>
         Add Item
-      </button>
+      </Button>
     </div>
   );
 }

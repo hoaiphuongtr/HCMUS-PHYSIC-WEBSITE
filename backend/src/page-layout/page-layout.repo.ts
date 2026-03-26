@@ -154,6 +154,13 @@ export class PageLayoutRepository {
     });
   }
 
+  savePuckData(id: string, puckData: any) {
+    return this.prisma.pageLayout.update({
+      where: { id },
+      data: { puckData: puckData as any },
+    });
+  }
+
   async reorderWidgets(pageLayoutId: string, orderedInstanceIds: string[]) {
     await this.prisma.$transaction(
       orderedInstanceIds.map((id, index) =>

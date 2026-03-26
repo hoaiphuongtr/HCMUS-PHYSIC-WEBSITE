@@ -145,6 +145,7 @@ export type PageLayout = {
   name: string;
   slug: string;
   description: string | null;
+  puckData: any | null;
   isPublished: boolean;
   publishedAt: string | null;
   createdBy: string;
@@ -259,6 +260,12 @@ export const pageLayoutApi = {
     return authFetch<PageLayout>(`/page-layouts/${layoutId}/widgets/reorder`, {
       method: "PUT",
       body: JSON.stringify({ orderedInstanceIds }),
+    });
+  },
+  savePuckData(layoutId: string, puckData: any) {
+    return authFetch<PageLayout>(`/page-layouts/${layoutId}/puck-data`, {
+      method: "PUT",
+      body: JSON.stringify({ puckData }),
     });
   },
 };

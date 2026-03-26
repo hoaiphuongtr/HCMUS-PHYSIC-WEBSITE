@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import {
   CreatePageLayoutBodySchema,
   UpdatePageLayoutBodySchema,
+  SavePuckDataBodySchema,
   AddWidgetInstanceBodySchema,
   UpdateWidgetInstanceBodySchema,
   ReorderWidgetsBodySchema,
@@ -26,6 +27,7 @@ export class UpdateWidgetInstanceBodyDTO extends createZodDto(
 export class ReorderWidgetsBodyDTO extends createZodDto(
   ReorderWidgetsBodySchema,
 ) {}
+export class SavePuckDataBodyDTO extends createZodDto(SavePuckDataBodySchema) {}
 export class PageLayoutResDTO extends createZodDto(PageLayoutResSchema) {}
 export class WidgetInstanceResDTO extends createZodDto(
   WidgetInstanceResSchema,

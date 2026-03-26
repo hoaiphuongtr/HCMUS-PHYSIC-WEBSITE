@@ -5,6 +5,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { widgetApi, type WidgetType } from "@/lib/api";
 import { WidgetFormModal } from "./widget-form-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 const CATEGORY_LABELS: Record<string, string> = {
   NAVIGATION: "Navigation",
@@ -13,11 +19,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   UTILITY_INFO: "Utility & Info",
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  NAVIGATION: "bg-purple-100 text-purple-700",
-  FEED_COMPONENTS: "bg-blue-100 text-blue-700",
-  CONTENT: "bg-green-100 text-green-700",
-  UTILITY_INFO: "bg-amber-100 text-amber-700",
+const CATEGORY_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
+  NAVIGATION: "default",
+  FEED_COMPONENTS: "secondary",
+  CONTENT: "outline",
+  UTILITY_INFO: "secondary",
 };
 
 export function WidgetsManageView() {
@@ -66,132 +72,131 @@ export function WidgetsManageView() {
 
   return (
     <>
-      <header className="flex h-14 items-center justify-between border-b border-slate-200/60 bg-white px-6 shrink-0">
-        <div className="text-sm text-slate-500 font-medium">
-          <span className="text-slate-400">Configuration</span>
-          <span className="mx-2 text-slate-300">/</span>
-          <span className="text-slate-900">Widget Types</span>
+      <header className="flex h-12 items-center justify-between border-b bg-card px-5 shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-[18px] text-muted-foreground">
+            extension
+          </span>
+          <h1 className="text-sm font-semibold">Widget Types</h1>
+          <Badge variant="secondary">{widgets.length}</Badge>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
+        <Button size="sm" onClick={() => setShowCreate(true)}>
+          <span className="material-symbols-outlined text-[14px]">add</span>
           Create Widget
-        </button>
+        </Button>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">
+      <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="relative flex-1 max-w-xs">
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-muted-foreground">
               search
             </span>
-            <input
-              type="text"
-              placeholder="Search widget types..."
+            <Input
+              placeholder="Search widgets..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300"
+              className="pl-8 h-8"
             />
           </div>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-200"
-          >
-            <option value="">All Categories</option>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex gap-1">
+            <Button
+              variant={!categoryFilter ? "default" : "outline"}
+              size="xs"
+              onClick={() => setCategoryFilter("")}
+            >
+              All
+            </Button>
             {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
+              <Button
+                key={k}
+                variant={categoryFilter === k ? "default" : "outline"}
+                size="xs"
+                onClick={() => setCategoryFilter(categoryFilter === k ? "" : k)}
+              >
                 {v}
-              </option>
+              </Button>
             ))}
-          </select>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((w) => (
-            <div
+            <Card
               key={w.id}
-              className={`rounded-xl border bg-white p-4 transition-all hover:shadow-md ${w.isActive ? "border-slate-200" : "border-slate-100 opacity-60"}`}
+              size="sm"
+              className={w.isActive ? "" : "opacity-50"}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl text-slate-500">
-                      {w.icon || "widgets"}
-                    </span>
+              <CardContent className="p-3">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-md bg-muted flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[18px] text-muted-foreground">
+                        {w.icon || "widgets"}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold">{w.name}</h3>
+                      <span className="text-[9px] font-mono text-muted-foreground">
+                        {w.type}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      {w.name}
-                    </h3>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {w.type}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() =>
-                    toggleMutation.mutate({
-                      id: w.id,
-                      isActive: !w.isActive,
-                    })
-                  }
-                  className={`relative w-9 h-5 rounded-full transition-colors ${w.isActive ? "bg-green-500" : "bg-slate-300"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${w.isActive ? "translate-x-4" : "translate-x-0.5"}`}
+                  <Switch
+                    size="sm"
+                    checked={w.isActive}
+                    onCheckedChange={(checked) =>
+                      toggleMutation.mutate({ id: w.id, isActive: !!checked })
+                    }
                   />
-                </button>
-              </div>
-
-              {w.description && (
-                <p className="text-xs text-slate-500 mb-3 line-clamp-2">
-                  {w.description}
-                </p>
-              )}
-
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${CATEGORY_COLORS[w.category] || "bg-slate-100 text-slate-600"}`}
-                >
-                  {CATEGORY_LABELS[w.category] || w.category}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setEditingWidget(w)}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      edit
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${w.name}"?`))
-                        deleteMutation.mutate(w.id);
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      delete
-                    </span>
-                  </button>
                 </div>
-              </div>
 
-              <div className="mt-3 pt-3 border-t border-slate-100">
-                <div className="text-[10px] text-slate-400">
-                  {Object.keys(w.configSchema).length} config fields
+                {w.description && (
+                  <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">
+                    {w.description}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <Badge variant={CATEGORY_VARIANT[w.category] || "outline"}>
+                    {CATEGORY_LABELS[w.category] || w.category}
+                  </Badge>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[9px] text-muted-foreground mr-1">
+                      {Object.keys(w.configSchema).length} fields
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => setEditingWidget(w)}
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        edit
+                      </span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => {
+                        if (confirm(`Delete "${w.name}"?`))
+                          deleteMutation.mutate(w.id);
+                      }}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        delete
+                      </span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-16 text-muted-foreground">
             <span className="material-symbols-outlined text-4xl mb-2 block">
               extension_off
             </span>

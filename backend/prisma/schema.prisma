@@ -393,6 +393,7 @@ model PageLayout {
   name        String
   slug        String    @unique
   description String?
+  puckData    Json?
   isPublished Boolean   @default(false)
   publishedAt DateTime?
   createdBy   String

@@ -10,7 +10,16 @@ export type CreatePageLayoutBodyType = z.infer<
   typeof CreatePageLayoutBodySchema
 >;
 
-export const UpdatePageLayoutBodySchema = CreatePageLayoutBodySchema.partial();
+export const UpdatePageLayoutBodySchema =
+  CreatePageLayoutBodySchema.partial().extend({
+    puckData: z.any().optional(),
+  });
+
+export const SavePuckDataBodySchema = z.object({
+  puckData: z.any(),
+});
+
+export type SavePuckDataBodyType = z.infer<typeof SavePuckDataBodySchema>;
 
 export type UpdatePageLayoutBodyType = z.infer<
   typeof UpdatePageLayoutBodySchema
@@ -76,6 +85,7 @@ export const PageLayoutResSchema = z.object({
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),
+  puckData: z.any().nullable(),
   isPublished: z.boolean(),
   publishedAt: z.date().nullable(),
   createdBy: z.string(),

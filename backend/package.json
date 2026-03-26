@@ -22,7 +22,8 @@
     "prisma:studio": "prisma studio",
     "db:seed": "tsx initialScript/index.ts",
     "db:seed-widgets": "tsx initialScript/seed-widgets.ts",
-    "db:seed-all": "tsx initialScript/index.ts && tsx initialScript/seed-widgets.ts",
+    "db:seed-homepage": "tsx initialScript/seed-homepage-layout.ts",
+    "db:seed-all": "tsx initialScript/index.ts && tsx initialScript/seed-widgets.ts && tsx initialScript/seed-homepage-layout.ts",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {

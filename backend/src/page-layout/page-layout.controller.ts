@@ -18,6 +18,7 @@ import {
   UpdateWidgetInstanceBodyDTO,
   ReorderWidgetsBodyDTO,
   DuplicatePageLayoutBodyDTO,
+  SavePuckDataBodyDTO,
   PageLayoutResDTO,
   WidgetInstanceResDTO,
   PageLayoutMessageResDTO,
@@ -84,6 +85,13 @@ export class PageLayoutController {
     @ActiveUser('userId') userId: string,
   ) {
     return this.pageLayoutService.duplicate(id, userId, body);
+  }
+
+  @Put(':id/puck-data')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutResDTO)
+  savePuckData(@Param('id') id: string, @Body() body: SavePuckDataBodyDTO) {
+    return this.pageLayoutService.savePuckData(id, body);
   }
 
   @Post(':id/publish')

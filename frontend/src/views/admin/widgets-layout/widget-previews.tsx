@@ -357,6 +357,296 @@ function DefaultPreview({
   );
 }
 
+function HeadingPreview({ config }: PreviewProps) {
+  const sizes: Record<string, string> = {
+    h1: "text-lg font-bold",
+    h2: "text-base font-bold",
+    h3: "text-sm font-semibold",
+    h4: "text-xs font-semibold",
+    h5: "text-[11px] font-semibold",
+    h6: "text-[10px] font-medium",
+  };
+  const align: Record<string, string> = {
+    left: "text-left",
+    center: "text-center",
+    right: "text-right",
+  };
+  return (
+    <div
+      className={`${sizes[config.level] || sizes.h2} ${align[config.alignment] || ""} py-1`}
+      style={{ color: config.color || "#1e293b" }}
+    >
+      {config.text || "Heading"}
+    </div>
+  );
+}
+
+function TextBlockPreview({ config }: PreviewProps) {
+  const sizes: Record<string, string> = {
+    sm: "text-[10px]",
+    base: "text-xs",
+    lg: "text-sm",
+    xl: "text-base",
+  };
+  const align: Record<string, string> = {
+    left: "text-left",
+    center: "text-center",
+    right: "text-right",
+    justify: "text-justify",
+  };
+  return (
+    <p
+      className={`${sizes[config.fontSize] || sizes.base} ${align[config.alignment] || ""} leading-relaxed line-clamp-3`}
+      style={{ color: config.color || "#475569" }}
+    >
+      {config.content || "Enter your text here..."}
+    </p>
+  );
+}
+
+function ImagePreview({ config }: PreviewProps) {
+  const radii: Record<string, string> = {
+    none: "rounded-none",
+    sm: "rounded-sm",
+    md: "rounded-md",
+    lg: "rounded-lg",
+    full: "rounded-full",
+  };
+  return (
+    <div className="space-y-1">
+      <div
+        className={`w-full aspect-video bg-slate-100 border border-slate-200 flex items-center justify-center ${radii[config.borderRadius] || "rounded-md"}`}
+      >
+        {config.src ? (
+          <div className="text-[9px] text-slate-400 truncate px-2">
+            {config.src}
+          </div>
+        ) : (
+          <span className="material-symbols-outlined text-2xl text-slate-300">
+            image
+          </span>
+        )}
+      </div>
+      {config.caption && (
+        <div className="text-[9px] text-slate-400 text-center">
+          {config.caption}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ButtonPreview({ config }: PreviewProps) {
+  const variants: Record<string, string> = {
+    primary: "bg-blue-600 text-white",
+    secondary: "bg-slate-700 text-white",
+    outline: "border border-blue-600 text-blue-600 bg-transparent",
+    ghost: "text-blue-600 bg-transparent",
+  };
+  const sizes: Record<string, string> = {
+    sm: "px-2 py-0.5 text-[9px]",
+    md: "px-3 py-1 text-[10px]",
+    lg: "px-4 py-1.5 text-xs",
+  };
+  const align: Record<string, string> = {
+    left: "justify-start",
+    center: "justify-center",
+    right: "justify-end",
+  };
+  return (
+    <div className={`flex ${align[config.alignment] || "justify-start"}`}>
+      <div
+        className={`${variants[config.variant] || variants.primary} ${sizes[config.size] || sizes.md} rounded-md font-medium ${config.fullWidth ? "w-full text-center" : ""}`}
+      >
+        {config.label || "Button"}
+      </div>
+    </div>
+  );
+}
+
+function SpacerPreview({ config }: PreviewProps) {
+  const heights: Record<string, string> = {
+    xs: "h-2",
+    sm: "h-4",
+    md: "h-8",
+    lg: "h-12",
+    xl: "h-16",
+  };
+  return (
+    <div
+      className={`${heights[config.height] || heights.md} w-full bg-slate-50/50 border border-dashed border-slate-200 rounded flex items-center justify-center`}
+    >
+      <span className="text-[8px] text-slate-300">spacer</span>
+    </div>
+  );
+}
+
+function DividerPreview({ config }: PreviewProps) {
+  const thickness: Record<string, string> = {
+    thin: "border-t",
+    normal: "border-t-2",
+    thick: "border-t-4",
+  };
+  const styles: Record<string, string> = {
+    solid: "border-solid",
+    dashed: "border-dashed",
+    dotted: "border-dotted",
+  };
+  return (
+    <div className="py-2">
+      <hr
+        className={`${thickness[config.thickness] || "border-t"} ${styles[config.style] || "border-solid"}`}
+        style={{ borderColor: config.color || "#e2e8f0" }}
+      />
+    </div>
+  );
+}
+
+function CardPreview({ config }: PreviewProps) {
+  return (
+    <div
+      className={`rounded-lg overflow-hidden ${config.showBorder !== false ? "border border-slate-200" : ""} ${config.showShadow !== false ? "shadow-sm" : ""}`}
+    >
+      {config.imageUrl ? (
+        <div className="h-16 bg-slate-100 flex items-center justify-center">
+          <span className="text-[9px] text-slate-400 truncate px-2">
+            {config.imageUrl}
+          </span>
+        </div>
+      ) : (
+        <div className="h-12 bg-gradient-to-r from-slate-100 to-slate-50" />
+      )}
+      <div className="p-2">
+        <div className="text-xs font-semibold text-slate-700">
+          {config.title || "Card Title"}
+        </div>
+        {config.description && (
+          <div className="text-[9px] text-slate-400 mt-0.5 line-clamp-2">
+            {config.description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IconTextPreview({ config }: PreviewProps) {
+  const isVertical = config.layout === "vertical";
+  return (
+    <div
+      className={`flex ${isVertical ? "flex-col items-center text-center" : "items-start"} gap-2 p-2`}
+    >
+      <span
+        className="material-symbols-outlined text-xl"
+        style={{ color: config.iconColor || "#3b82f6" }}
+      >
+        {config.icon || "info"}
+      </span>
+      <div>
+        <div className="text-xs font-semibold text-slate-700">
+          {config.title || "Feature"}
+        </div>
+        {config.description && (
+          <div className="text-[9px] text-slate-400 mt-0.5">
+            {config.description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ImageGalleryPreview({ config }: PreviewProps) {
+  const cols: Record<string, string> = {
+    "2": "grid-cols-2",
+    "3": "grid-cols-3",
+    "4": "grid-cols-4",
+  };
+  const gaps: Record<string, string> = {
+    sm: "gap-1",
+    md: "gap-2",
+    lg: "gap-3",
+  };
+  const count = (config.images || []).length || 4;
+  return (
+    <div
+      className={`grid ${cols[config.columns] || "grid-cols-3"} ${gaps[config.gap] || "gap-2"}`}
+    >
+      {Array.from({ length: Math.min(count, 6) }).map((_, i) => (
+        <div
+          key={i}
+          className="aspect-square rounded bg-slate-100 border border-slate-200 flex items-center justify-center"
+        >
+          <span className="material-symbols-outlined text-sm text-slate-300">
+            image
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BannerPreview({ config }: PreviewProps) {
+  const align: Record<string, string> = {
+    left: "text-left",
+    center: "text-center",
+    right: "text-right",
+  };
+  return (
+    <div
+      className={`rounded-lg px-4 py-3 ${align[config.alignment] || "text-center"}`}
+      style={{
+        backgroundColor: config.bgColor || "#1e40af",
+        color: config.textColor || "#ffffff",
+      }}
+    >
+      <div className="text-sm font-bold">{config.text || "Welcome"}</div>
+      {config.subtext && (
+        <div className="text-[10px] opacity-80 mt-0.5">{config.subtext}</div>
+      )}
+      {config.buttonLabel && (
+        <div className="mt-2">
+          <span className="px-3 py-1 text-[10px] font-medium rounded bg-white/20 border border-white/30">
+            {config.buttonLabel}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NavLinksPreview({ config }: PreviewProps) {
+  const links = config.links || [];
+  const isVertical = config.direction !== "horizontal";
+  const sizes: Record<string, string> = {
+    sm: "text-[11px]",
+    base: "text-xs",
+    lg: "text-sm",
+  };
+  const weights: Record<string, string> = {
+    normal: "font-normal",
+    medium: "font-medium",
+    semibold: "font-semibold",
+    bold: "font-bold",
+  };
+  return (
+    <div className={isVertical ? "space-y-0.5" : "flex flex-wrap gap-3"}>
+      {links.map((link: { label: string; url: string }, i: number) => (
+        <div
+          key={i}
+          className={`flex items-center justify-between py-1.5 ${isVertical && i < links.length - 1 ? "border-b border-slate-100" : ""} ${sizes[config.fontSize] || "text-[11px]"} ${weights[config.fontWeight] || "font-medium"}`}
+          style={{ color: config.color || "#374151" }}
+        >
+          <span>{link.label}</span>
+          {config.showArrow !== false && (
+            <span className="text-slate-400 ml-2">&raquo;</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const PREVIEW_MAP: Record<string, React.FC<PreviewProps>> = {
   TOP_NAV_BAR: NavBarPreview,
   HERO_CAROUSEL: HeroCarouselPreview,
@@ -371,6 +661,17 @@ const PREVIEW_MAP: Record<string, React.FC<PreviewProps>> = {
   QUICK_LINKS: QuickLinksPreview,
   SEARCH_BAR: SearchBarPreview,
   FOOTER: FooterPreview,
+  HEADING: HeadingPreview,
+  TEXT_BLOCK: TextBlockPreview,
+  IMAGE: ImagePreview,
+  BUTTON: ButtonPreview,
+  SPACER: SpacerPreview,
+  DIVIDER: DividerPreview,
+  CARD: CardPreview,
+  ICON_TEXT: IconTextPreview,
+  IMAGE_GALLERY: ImageGalleryPreview,
+  BANNER: BannerPreview,
+  NAV_LINKS: NavLinksPreview,
 };
 
 export function WidgetPreview({

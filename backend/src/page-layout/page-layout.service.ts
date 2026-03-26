@@ -8,6 +8,7 @@ import {
   UpdateWidgetInstanceBodyType,
   ReorderWidgetsBodyType,
   DuplicatePageLayoutBodyType,
+  SavePuckDataBodyType,
 } from './page-layout.model';
 import {
   PageLayoutSlugExistsException,
@@ -133,6 +134,11 @@ export class PageLayoutService {
       },
       { name: baseName, slug, createdBy: userId },
     );
+  }
+
+  async savePuckData(id: string, body: SavePuckDataBodyType) {
+    await this.findById(id);
+    return this.pageLayoutRepository.savePuckData(id, body.puckData);
   }
 
   async reorderWidgets(pageLayoutId: string, body: ReorderWidgetsBodyType) {
