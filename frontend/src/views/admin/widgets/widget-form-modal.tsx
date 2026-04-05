@@ -52,7 +52,7 @@ export function WidgetFormModal({
   const updateMutation = useMutation({
     mutationKey: ["WIDGETS", "UPDATE"],
     mutationFn: (body: Partial<WidgetType>) =>
-      widgetApi.update(widget?.id, body),
+      widgetApi.update(widget!.id, body),
     onSuccess() {
       toast.success("Widget updated");
       onSaved();
