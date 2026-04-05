@@ -12,7 +12,14 @@ function HeroFullScreenClient({
   showScrollIndicator,
   isEditing,
 }: {
-  slides: { src: string; alt: string; headline: string; subtitle: string; ctaLabel: string; ctaUrl: string }[];
+  slides: {
+    src: string;
+    alt: string;
+    headline: string;
+    subtitle: string;
+    ctaLabel: string;
+    ctaUrl: string;
+  }[];
   tagline: string;
   taglineColor: string;
   overlayOpacity: string;
@@ -54,30 +61,51 @@ function HeroFullScreenClient({
   };
 
   return (
-    <div className={`relative w-full ${heights[height] || "min-h-screen"} overflow-hidden`}>
-      {slides?.map((s: { src: string; alt: string; headline: string; subtitle: string; ctaLabel: string; ctaUrl: string }, i: number) => {
-        const isActive = i === current;
-        const offset = isActive ? 0 : direction > 0 ? 100 : -100;
-        return (
-          <div
-            key={i}
-            className="absolute inset-0"
-            style={{
-              transform: `translateX(${offset}%)`,
-              opacity: isActive ? 1 : 0,
-              transition: "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.8s ease",
-              zIndex: isActive ? 1 : 0,
-            }}
-          >
-            {s.src ? (
-              <img src={s.src} alt={s.alt} className="w-full h-full object-cover scale-105 animate-[slowZoom_20s_ease_infinite_alternate]" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
-            )}
-          </div>
-        );
-      })}
-      <div className={`absolute inset-0 z-[2] ${opacities[overlayOpacity] || "bg-black/40"}`} />
+    <div
+      className={`relative w-full ${heights[height] || "min-h-screen"} overflow-hidden`}
+    >
+      {slides?.map(
+        (
+          s: {
+            src: string;
+            alt: string;
+            headline: string;
+            subtitle: string;
+            ctaLabel: string;
+            ctaUrl: string;
+          },
+          i: number,
+        ) => {
+          const isActive = i === current;
+          const offset = isActive ? 0 : direction > 0 ? 100 : -100;
+          return (
+            <div
+              key={i}
+              className="absolute inset-0"
+              style={{
+                transform: `translateX(${offset}%)`,
+                opacity: isActive ? 1 : 0,
+                transition:
+                  "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.8s ease",
+                zIndex: isActive ? 1 : 0,
+              }}
+            >
+              {s.src ? (
+                <img
+                  src={s.src}
+                  alt={s.alt}
+                  className="w-full h-full object-cover scale-105 animate-[slowZoom_20s_ease_infinite_alternate]"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
+              )}
+            </div>
+          );
+        },
+      )}
+      <div
+        className={`absolute inset-0 z-[2] ${opacities[overlayOpacity] || "bg-black/40"}`}
+      />
       <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6 py-32 gap-4">
         {tagline && (
@@ -128,7 +156,9 @@ function HeroFullScreenClient({
       )}
       {showScrollIndicator && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce hidden md:block">
-          <span className="material-symbols-outlined text-white/60 text-3xl">keyboard_arrow_down</span>
+          <span className="material-symbols-outlined text-white/60 text-3xl">
+            keyboard_arrow_down
+          </span>
         </div>
       )}
     </div>
@@ -136,7 +166,14 @@ function HeroFullScreenClient({
 }
 
 export const HeroFullScreen: ComponentConfig<{
-  slides: { src: string; alt: string; headline: string; subtitle: string; ctaLabel: string; ctaUrl: string }[];
+  slides: {
+    src: string;
+    alt: string;
+    headline: string;
+    subtitle: string;
+    ctaLabel: string;
+    ctaUrl: string;
+  }[];
   tagline: string;
   taglineColor: string;
   overlayOpacity: string;
@@ -146,7 +183,14 @@ export const HeroFullScreen: ComponentConfig<{
   label: "Hero Full Screen",
   defaultProps: {
     slides: [
-      { src: "", alt: "Slide 1", headline: "Khoa Vật lý - Vật lý Kỹ thuật", subtitle: "Đại học Khoa học Tự nhiên - ĐHQG TP.HCM", ctaLabel: "Khám phá", ctaUrl: "/gioi-thieu" },
+      {
+        src: "",
+        alt: "Slide 1",
+        headline: "Khoa Vật lý - Vật lý Kỹ thuật",
+        subtitle: "Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+        ctaLabel: "Khám phá",
+        ctaUrl: "/gioi-thieu",
+      },
     ],
     tagline: "KHÁM PHÁ • SÁNG TẠO • CỐNG HIẾN",
     taglineColor: "#ffffff",
@@ -197,7 +241,15 @@ export const HeroFullScreen: ComponentConfig<{
       ],
     },
   },
-  render: ({ slides, tagline, taglineColor, overlayOpacity, height, showScrollIndicator, puck }) => (
+  render: ({
+    slides,
+    tagline,
+    taglineColor,
+    overlayOpacity,
+    height,
+    showScrollIndicator,
+    puck,
+  }) => (
     <HeroFullScreenClient
       slides={slides}
       tagline={tagline}
@@ -210,7 +262,13 @@ export const HeroFullScreen: ComponentConfig<{
   ),
 };
 
-function StatsCounterClient({ stats, isEditing }: { stats: { value: number; suffix: string; label: string }[]; isEditing: boolean }) {
+function StatsCounterClient({
+  stats,
+  isEditing,
+}: {
+  stats: { value: number; suffix: string; label: string }[];
+  isEditing: boolean;
+}) {
   const [visible, setVisible] = useState(false);
   const [counts, setCounts] = useState<number[]>((stats || []).map(() => 0));
   const ref = { current: null as HTMLDivElement | null };
@@ -223,7 +281,12 @@ function StatsCounterClient({ stats, isEditing }: { stats: { value: number; suff
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
       { threshold: 0.3 },
     );
     obs.observe(el);
@@ -240,22 +303,36 @@ function StatsCounterClient({ stats, isEditing }: { stats: { value: number; suff
       step++;
       const progress = Math.min(step / steps, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setCounts((stats || []).map((s: { value: number }) => Math.round(s.value * eased)));
+      setCounts(
+        (stats || []).map((s: { value: number }) =>
+          Math.round(s.value * eased),
+        ),
+      );
       if (step >= steps) clearInterval(timer);
     }, interval);
     return () => clearInterval(timer);
   }, [visible, stats]);
 
   return (
-    <div ref={(el) => { ref.current = el; }} className="grid grid-cols-2 md:grid-cols-4 gap-8 py-4">
-      {(stats || []).map((stat: { value: number; suffix: string; label: string }, i: number) => (
-        <div key={i} className="text-center">
-          <div className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">
-            {counts[i] || 0}{stat.suffix}
+    <div
+      ref={(el) => {
+        ref.current = el;
+      }}
+      className="grid grid-cols-2 md:grid-cols-4 gap-8 py-4"
+    >
+      {(stats || []).map(
+        (stat: { value: number; suffix: string; label: string }, i: number) => (
+          <div key={i} className="text-center">
+            <div className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">
+              {counts[i] || 0}
+              {stat.suffix}
+            </div>
+            <div className="text-sm text-slate-600 uppercase tracking-wider">
+              {stat.label}
+            </div>
           </div>
-          <div className="text-sm text-slate-600 uppercase tracking-wider">{stat.label}</div>
-        </div>
-      ))}
+        ),
+      )}
     </div>
   );
 }
@@ -287,7 +364,10 @@ export const StatsCounter: ComponentConfig<{
     bgColor: { type: "text", label: "Background Color" },
   },
   render: ({ stats, bgColor, puck }) => (
-    <div className="py-16 px-6" style={{ backgroundColor: bgColor || "#f8fafc" }}>
+    <div
+      className="py-16 px-6"
+      style={{ backgroundColor: bgColor || "#f8fafc" }}
+    >
       <div className="max-w-5xl mx-auto">
         <StatsCounterClient stats={stats} isEditing={!!puck?.isEditing} />
       </div>

@@ -64,7 +64,8 @@ export const ButtonBlock: ComponentConfig<{
     const variants: Record<string, string> = {
       primary: "bg-blue-600 text-white hover:bg-blue-700",
       secondary: "bg-slate-700 text-white hover:bg-slate-800",
-      outline: "border-2 border-blue-600 text-blue-600 bg-transparent hover:bg-blue-50",
+      outline:
+        "border-2 border-blue-600 text-blue-600 bg-transparent hover:bg-blue-50",
       ghost: "text-blue-600 bg-transparent hover:bg-blue-50",
     };
     const sizes: Record<string, string> = {
@@ -127,7 +128,16 @@ export const Banner: ComponentConfig<{
     buttonLabel: { type: "text", label: "Button Label" },
     buttonUrl: { type: "text", label: "Button URL" },
   },
-  render: ({ text, subtext, bgColor, textColor, alignment, buttonLabel, buttonUrl, puck }) => (
+  render: ({
+    text,
+    subtext,
+    bgColor,
+    textColor,
+    alignment,
+    buttonLabel,
+    buttonUrl,
+    puck,
+  }) => (
     <div
       className="rounded-lg px-8 py-6"
       style={{
@@ -178,9 +188,16 @@ export const AnnouncementBar: ComponentConfig<{
   render: ({ text, bgColor, textColor, icon, linkUrl, puck }) => (
     <div
       className="px-4 py-2.5 flex items-center gap-3"
-      style={{ backgroundColor: bgColor || "#dc2626", color: textColor || "#ffffff" }}
+      style={{
+        backgroundColor: bgColor || "#dc2626",
+        color: textColor || "#ffffff",
+      }}
     >
-      {icon && <span className="material-symbols-outlined text-lg shrink-0">{icon}</span>}
+      {icon && (
+        <span className="material-symbols-outlined text-lg shrink-0">
+          {icon}
+        </span>
+      )}
       {linkUrl ? (
         <a
           href={puck?.isEditing ? "#" : linkUrl}
@@ -257,21 +274,27 @@ export const SearchOverlay: ComponentConfig<{
                   autoFocus
                   className="w-full bg-transparent border-b-2 border-white/40 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/40 transition-colors"
                 />
-                <span className="material-symbols-outlined absolute right-0 top-1 text-white/60 text-3xl">search</span>
+                <span className="material-symbols-outlined absolute right-0 top-1 text-white/60 text-3xl">
+                  search
+                </span>
               </div>
               {suggestedLinks?.length > 0 && (
                 <div className="mt-8">
-                  <p className="text-white/50 text-xs uppercase tracking-widest mb-4">Gợi ý tìm kiếm</p>
+                  <p className="text-white/50 text-xs uppercase tracking-widest mb-4">
+                    Gợi ý tìm kiếm
+                  </p>
                   <div className="flex flex-wrap gap-3">
-                    {suggestedLinks.map((link: { label: string; url: string }, i: number) => (
-                      <a
-                        key={i}
-                        href={link.url}
-                        className="px-4 py-2 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/60 transition-all text-sm"
-                      >
-                        {link.label}
-                      </a>
-                    ))}
+                    {suggestedLinks.map(
+                      (link: { label: string; url: string }, i: number) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          className="px-4 py-2 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/60 transition-all text-sm"
+                        >
+                          {link.label}
+                        </a>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -284,16 +307,41 @@ export const SearchOverlay: ComponentConfig<{
 };
 
 export const PersonaSelector: ComponentConfig<{
-  personas: { label: string; icon: string; description: string; linkUrl: string }[];
+  personas: {
+    label: string;
+    icon: string;
+    description: string;
+    linkUrl: string;
+  }[];
   bgColor: string;
 }> = {
   label: "Persona Selector",
   defaultProps: {
     personas: [
-      { label: "Sinh viên", icon: "school", description: "Thông tin học vụ, lịch thi, biểu mẫu", linkUrl: "/sinh-vien" },
-      { label: "Giảng viên", icon: "person", description: "Nghiên cứu, giảng dạy, quản lý", linkUrl: "/giang-vien" },
-      { label: "Tuyển sinh", icon: "campaign", description: "Chương trình, xét tuyển, học bổng", linkUrl: "/tuyen-sinh" },
-      { label: "Cựu sinh viên", icon: "groups", description: "Kết nối, sự kiện, đóng góp", linkUrl: "/cuu-sinh-vien" },
+      {
+        label: "Sinh viên",
+        icon: "school",
+        description: "Thông tin học vụ, lịch thi, biểu mẫu",
+        linkUrl: "/sinh-vien",
+      },
+      {
+        label: "Giảng viên",
+        icon: "person",
+        description: "Nghiên cứu, giảng dạy, quản lý",
+        linkUrl: "/giang-vien",
+      },
+      {
+        label: "Tuyển sinh",
+        icon: "campaign",
+        description: "Chương trình, xét tuyển, học bổng",
+        linkUrl: "/tuyen-sinh",
+      },
+      {
+        label: "Cựu sinh viên",
+        icon: "groups",
+        description: "Kết nối, sự kiện, đóng góp",
+        linkUrl: "/cuu-sinh-vien",
+      },
     ],
     bgColor: "#ffffff",
   },
@@ -311,23 +359,38 @@ export const PersonaSelector: ComponentConfig<{
     bgColor: { type: "text", label: "Background Color" },
   },
   render: ({ personas, bgColor, puck }) => (
-    <div className="py-16 px-6" style={{ backgroundColor: bgColor || "#ffffff" }}>
+    <div
+      className="py-16 px-6"
+      style={{ backgroundColor: bgColor || "#ffffff" }}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {(personas || []).map((p: { label: string; icon: string; description: string; linkUrl: string }, i: number) => (
-            <a
-              key={i}
-              href={puck?.isEditing ? "#" : p.linkUrl || "#"}
-              tabIndex={puck?.isEditing ? -1 : undefined}
-              className="flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white group"
-            >
-              <div className="w-16 h-16 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-4 transition-colors">
-                <span className="material-symbols-outlined text-2xl text-blue-700">{p.icon}</span>
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">{p.label}</h3>
-              <p className="text-xs text-slate-500">{p.description}</p>
-            </a>
-          ))}
+          {(personas || []).map(
+            (
+              p: {
+                label: string;
+                icon: string;
+                description: string;
+                linkUrl: string;
+              },
+              i: number,
+            ) => (
+              <a
+                key={i}
+                href={puck?.isEditing ? "#" : p.linkUrl || "#"}
+                tabIndex={puck?.isEditing ? -1 : undefined}
+                className="flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white group"
+              >
+                <div className="w-16 h-16 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-4 transition-colors">
+                  <span className="material-symbols-outlined text-2xl text-blue-700">
+                    {p.icon}
+                  </span>
+                </div>
+                <h3 className="font-bold text-slate-900 mb-1">{p.label}</h3>
+                <p className="text-xs text-slate-500">{p.description}</p>
+              </a>
+            ),
+          )}
         </div>
       </div>
     </div>
@@ -361,7 +424,16 @@ export const ChatButton: ComponentConfig<{
         className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-200 hover:shadow-xl"
         style={{ backgroundColor: bgColor || "#1d4ed8" }}
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={iconColor || "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={iconColor || "#ffffff"}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M8 13.5H16M8 9.5H12" />
           <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" />
         </svg>

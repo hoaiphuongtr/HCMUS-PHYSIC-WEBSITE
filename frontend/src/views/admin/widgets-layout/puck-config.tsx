@@ -1,11 +1,47 @@
 "use client";
 
 import type { Config } from "@puckeditor/core";
-import { Spacer, Divider, Card, Columns, Container, Grid, FooterBlock } from "./components/layout";
-import { Navbar, NavLinks, QuickLinks, SocialIcons } from "./components/navigation";
-import { Heading, TextBlock, IconText, SectionHeader, ContactInfo, NewsCard, ProfileCard, DepartmentCard } from "./components/content";
-import { ImageBlock, ImageGallery, VideoEmbed, ImageSlider, LogoGrid, LogoSlider } from "./components/media";
-import { ButtonBlock, Banner, AnnouncementBar, SearchOverlay, PersonaSelector, ChatButton } from "./components/interactive";
+import {
+  Spacer,
+  Divider,
+  Card,
+  Columns,
+  Container,
+  Grid,
+  FooterBlock,
+} from "./components/layout";
+import {
+  Navbar,
+  NavLinks,
+  QuickLinks,
+  SocialIcons,
+} from "./components/navigation";
+import {
+  Heading,
+  TextBlock,
+  IconText,
+  SectionHeader,
+  ContactInfo,
+  NewsCard,
+  ProfileCard,
+  DepartmentCard,
+} from "./components/content";
+import {
+  ImageBlock,
+  ImageGallery,
+  VideoEmbed,
+  ImageSlider,
+  LogoGrid,
+  LogoSlider,
+} from "./components/media";
+import {
+  ButtonBlock,
+  Banner,
+  AnnouncementBar,
+  SearchOverlay,
+  PersonaSelector,
+  ChatButton,
+} from "./components/interactive";
 import { HeroFullScreen, StatsCounter } from "./components/hero";
 import { NewsOverlayCard, EventCard } from "./components/cards";
 
@@ -53,7 +89,14 @@ export const puckConfig: Config = {
     },
     interactive: {
       title: "Interactive",
-      components: ["ButtonBlock", "Banner", "AnnouncementBar", "SearchOverlay", "PersonaSelector", "ChatButton"],
+      components: [
+        "ButtonBlock",
+        "Banner",
+        "AnnouncementBar",
+        "SearchOverlay",
+        "PersonaSelector",
+        "ChatButton",
+      ],
     },
     hero: {
       title: "Hero & Stats",

@@ -64,10 +64,14 @@ export const ImageBlock: ComponentConfig<{
           <div
             className={`w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
           >
-            <span className="material-symbols-outlined text-4xl text-slate-300">image</span>
+            <span className="material-symbols-outlined text-4xl text-slate-300">
+              image
+            </span>
           </div>
         )}
-        {caption && <p className="text-sm text-slate-500 text-center mt-2">{caption}</p>}
+        {caption && (
+          <p className="text-sm text-slate-500 text-center mt-2">{caption}</p>
+        )}
       </div>
     );
   },
@@ -110,27 +114,48 @@ export const ImageGallery: ComponentConfig<{
   },
   render: ({ images, columns, gap }) => {
     const cols = parseInt(columns) || 3;
-    const gaps: Record<string, string> = { sm: "gap-2", md: "gap-4", lg: "gap-6" };
+    const gaps: Record<string, string> = {
+      sm: "gap-2",
+      md: "gap-4",
+      lg: "gap-6",
+    };
     if (!images || images.length === 0) {
       return (
-        <div className={`grid ${gaps[gap] || "gap-4"}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        <div
+          className={`grid ${gaps[gap] || "gap-4"}`}
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
           {Array.from({ length: cols }).map((_, i) => (
-            <div key={i} className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-slate-300">image</span>
+            <div
+              key={i}
+              className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-2xl text-slate-300">
+                image
+              </span>
             </div>
           ))}
         </div>
       );
     }
     return (
-      <div className={`grid ${gaps[gap] || "gap-4"}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+      <div
+        className={`grid ${gaps[gap] || "gap-4"}`}
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
         {images.map((img: { src: string; alt: string }, i: number) => (
           <div key={i}>
             {img.src ? (
-              <img src={img.src} alt={img.alt || ""} className="w-full aspect-square object-cover rounded-md" />
+              <img
+                src={img.src}
+                alt={img.alt || ""}
+                className="w-full aspect-square object-cover rounded-md"
+              />
             ) : (
               <div className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-slate-300">image</span>
+                <span className="material-symbols-outlined text-2xl text-slate-300">
+                  image
+                </span>
               </div>
             )}
           </div>
@@ -163,12 +188,22 @@ export const VideoEmbed: ComponentConfig<{
     const ratio = aspectRatio === "4:3" ? "aspect-[4/3]" : "aspect-video";
     return (
       <div>
-        {title && <h3 className="text-lg font-semibold text-slate-800 mb-3">{title}</h3>}
+        {title && (
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">{title}</h3>
+        )}
         {videoUrl ? (
-          <iframe src={videoUrl} className={`w-full ${ratio} rounded-lg`} allowFullScreen />
+          <iframe
+            src={videoUrl}
+            className={`w-full ${ratio} rounded-lg`}
+            allowFullScreen
+          />
         ) : (
-          <div className={`w-full ${ratio} rounded-lg bg-slate-900 flex items-center justify-center`}>
-            <span className="material-symbols-outlined text-5xl text-white/30">play_circle</span>
+          <div
+            className={`w-full ${ratio} rounded-lg bg-slate-900 flex items-center justify-center`}
+          >
+            <span className="material-symbols-outlined text-5xl text-white/30">
+              play_circle
+            </span>
           </div>
         )}
       </div>
@@ -211,8 +246,13 @@ function ImageSliderClient({
 
   if (count === 0) {
     return (
-      <div className={`relative overflow-hidden bg-slate-200 flex items-center justify-center ${r}`} style={{ height: h }}>
-        <span className="material-symbols-outlined text-5xl text-slate-400">photo_library</span>
+      <div
+        className={`relative overflow-hidden bg-slate-200 flex items-center justify-center ${r}`}
+        style={{ height: h }}
+      >
+        <span className="material-symbols-outlined text-5xl text-slate-400">
+          photo_library
+        </span>
       </div>
     );
   }
@@ -222,18 +262,28 @@ function ImageSliderClient({
   return (
     <div className={`relative overflow-hidden ${r}`} style={{ height: h }}>
       {slide?.src ? (
-        <img src={slide.src} alt={slide.alt || ""} className="w-full h-full object-cover transition-opacity duration-500" />
+        <img
+          src={slide.src}
+          alt={slide.alt || ""}
+          className="w-full h-full object-cover transition-opacity duration-500"
+        />
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-blue-900 to-indigo-800 flex items-center justify-center">
           <div className="text-center text-white">
-            <span className="material-symbols-outlined text-5xl mb-2 block opacity-50">photo_library</span>
-            <p className="text-lg font-semibold opacity-80">{slide?.caption || `Slide ${current + 1}`}</p>
+            <span className="material-symbols-outlined text-5xl mb-2 block opacity-50">
+              photo_library
+            </span>
+            <p className="text-lg font-semibold opacity-80">
+              {slide?.caption || `Slide ${current + 1}`}
+            </p>
           </div>
         </div>
       )}
       {slide?.caption && slide?.src && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-          <p className="text-white text-xl font-bold drop-shadow-lg">{slide.caption}</p>
+          <p className="text-white text-xl font-bold drop-shadow-lg">
+            {slide.caption}
+          </p>
           {slide.linkUrl && (
             <a
               href={isEditing ? "#" : slide.linkUrl}
@@ -251,13 +301,17 @@ function ImageSliderClient({
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
-            <span className="material-symbols-outlined text-xl">chevron_left</span>
+            <span className="material-symbols-outlined text-xl">
+              chevron_left
+            </span>
           </button>
           <button
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
-            <span className="material-symbols-outlined text-xl">chevron_right</span>
+            <span className="material-symbols-outlined text-xl">
+              chevron_right
+            </span>
           </button>
         </>
       )}
@@ -318,7 +372,12 @@ export const ImageSlider: ComponentConfig<{
         { label: "No", value: false },
       ],
     },
-    intervalMs: { type: "number", label: "Interval (ms)", min: 1000, max: 15000 },
+    intervalMs: {
+      type: "number",
+      label: "Interval (ms)",
+      min: 1000,
+      max: 15000,
+    },
     height: {
       type: "select",
       label: "Height",
@@ -356,9 +415,27 @@ export const ImageSlider: ComponentConfig<{
     },
   },
   render: (props) => {
-    const { slides, autoplay, intervalMs, height, showDots, showArrows, borderRadius, puck } = props;
-    const heights: Record<string, string> = { sm: "200px", md: "320px", lg: "450px", xl: "600px" };
-    const radii: Record<string, string> = { none: "", md: "rounded-md", lg: "rounded-lg" };
+    const {
+      slides,
+      autoplay,
+      intervalMs,
+      height,
+      showDots,
+      showArrows,
+      borderRadius,
+      puck,
+    } = props;
+    const heights: Record<string, string> = {
+      sm: "200px",
+      md: "320px",
+      lg: "450px",
+      xl: "600px",
+    };
+    const radii: Record<string, string> = {
+      none: "",
+      md: "rounded-md",
+      lg: "rounded-lg",
+    };
     return (
       <ImageSliderClient
         slides={slides || []}
@@ -423,23 +500,38 @@ export const LogoGrid: ComponentConfig<{
     const cols = parseInt(columns) || 6;
     const h = parseInt(height) || 60;
     return (
-      <div className="grid gap-6 items-center justify-items-center" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {(logos || []).map((logo: { src: string; alt: string; linkUrl: string }, i: number) => (
-          <a
-            key={i}
-            href={puck?.isEditing ? "#" : logo.linkUrl || "#"}
-            tabIndex={puck?.isEditing ? -1 : undefined}
-            className="block hover:opacity-70 transition-opacity"
-          >
-            {logo.src ? (
-              <img src={logo.src} alt={logo.alt || ""} style={{ height: `${h}px` }} className="object-contain" />
-            ) : (
-              <div className="bg-slate-100 rounded-md flex items-center justify-center px-4" style={{ height: `${h}px`, minWidth: `${h * 1.5}px` }}>
-                <span className="text-xs text-slate-400 text-center">{logo.alt || "Logo"}</span>
-              </div>
-            )}
-          </a>
-        ))}
+      <div
+        className="grid gap-6 items-center justify-items-center"
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
+        {(logos || []).map(
+          (logo: { src: string; alt: string; linkUrl: string }, i: number) => (
+            <a
+              key={i}
+              href={puck?.isEditing ? "#" : logo.linkUrl || "#"}
+              tabIndex={puck?.isEditing ? -1 : undefined}
+              className="block hover:opacity-70 transition-opacity"
+            >
+              {logo.src ? (
+                <img
+                  src={logo.src}
+                  alt={logo.alt || ""}
+                  style={{ height: `${h}px` }}
+                  className="object-contain"
+                />
+              ) : (
+                <div
+                  className="bg-slate-100 rounded-md flex items-center justify-center px-4"
+                  style={{ height: `${h}px`, minWidth: `${h * 1.5}px` }}
+                >
+                  <span className="text-xs text-slate-400 text-center">
+                    {logo.alt || "Logo"}
+                  </span>
+                </div>
+              )}
+            </a>
+          ),
+        )}
       </div>
     );
   },
@@ -494,35 +586,62 @@ export const LogoSlider: ComponentConfig<{
     return (
       <div className="relative py-12 px-6 overflow-hidden">
         {bgImageUrl ? (
-          <img src={bgImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img
+            src={bgImageUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200" />
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center">
-          {title && <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>}
-          {description && <p className="text-sm text-white/80 mb-8 max-w-2xl mx-auto">{description}</p>}
+          {title && (
+            <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+          )}
+          {description && (
+            <p className="text-sm text-white/80 mb-8 max-w-2xl mx-auto">
+              {description}
+            </p>
+          )}
           <div className="flex items-center justify-around flex-wrap gap-y-6">
-            {(logos || []).map((logo: { src: string; alt: string; linkUrl: string }, i: number) => (
-              <a
-                key={i}
-                href={puck?.isEditing ? "#" : logo.linkUrl || "#"}
-                tabIndex={puck?.isEditing ? -1 : undefined}
-                className="flex flex-col items-center gap-3 group"
-              >
-                <div
-                  className="bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                  style={{ width: `${size}px`, height: `${size}px` }}
+            {(logos || []).map(
+              (
+                logo: { src: string; alt: string; linkUrl: string },
+                i: number,
+              ) => (
+                <a
+                  key={i}
+                  href={puck?.isEditing ? "#" : logo.linkUrl || "#"}
+                  tabIndex={puck?.isEditing ? -1 : undefined}
+                  className="flex flex-col items-center gap-3 group"
                 >
-                  {logo.src ? (
-                    <img src={logo.src} alt={logo.alt} className="object-contain rounded-full" style={{ width: `${size * 0.7}px`, height: `${size * 0.7}px` }} />
-                  ) : (
-                    <span className="text-xs text-slate-400 text-center px-1 leading-tight">{logo.alt}</span>
-                  )}
-                </div>
-                <span className="text-xs font-medium text-white mt-1 group-hover:underline">{logo.alt}</span>
-              </a>
-            ))}
+                  <div
+                    className="bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                    style={{ width: `${size}px`, height: `${size}px` }}
+                  >
+                    {logo.src ? (
+                      <img
+                        src={logo.src}
+                        alt={logo.alt}
+                        className="object-contain rounded-full"
+                        style={{
+                          width: `${size * 0.7}px`,
+                          height: `${size * 0.7}px`,
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-400 text-center px-1 leading-tight">
+                        {logo.alt}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-white mt-1 group-hover:underline">
+                    {logo.alt}
+                  </span>
+                </a>
+              ),
+            )}
           </div>
         </div>
       </div>

@@ -266,7 +266,16 @@ export const ContactInfo: ComponentConfig<{
       ],
     },
   },
-  render: ({ address, phone, email, showIcons, color, layout, alignment, puck }) => {
+  render: ({
+    address,
+    phone,
+    email,
+    showIcons,
+    color,
+    layout,
+    alignment,
+    puck,
+  }) => {
     const items = [
       { icon: "location_on", text: address, href: "" },
       { icon: "phone", text: phone, href: `tel:${phone}` },
@@ -353,13 +362,21 @@ export const NewsCard: ComponentConfig<{
           className="block group"
         >
           {imageUrl ? (
-            <img src={imageUrl} alt={title} className="w-full aspect-video object-cover rounded-md mb-2" />
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full aspect-video object-cover rounded-md mb-2"
+            />
           ) : (
             <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-slate-300">image</span>
+              <span className="material-symbols-outlined text-2xl text-slate-300">
+                image
+              </span>
             </div>
           )}
-          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">{title}</h4>
+          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+            {title}
+          </h4>
           <p className="text-xs text-slate-400 mt-1">{date}</p>
         </a>
       );
@@ -371,14 +388,22 @@ export const NewsCard: ComponentConfig<{
         className="flex gap-3 group py-2 border-b border-slate-100 last:border-0"
       >
         {imageUrl ? (
-          <img src={imageUrl} alt={title} className="w-20 h-14 object-cover rounded shrink-0" />
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-20 h-14 object-cover rounded shrink-0"
+          />
         ) : (
           <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
-            <span className="material-symbols-outlined text-lg text-slate-300">image</span>
+            <span className="material-symbols-outlined text-lg text-slate-300">
+              image
+            </span>
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">{title}</h4>
+          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+            {title}
+          </h4>
           <p className="text-xs text-slate-400 mt-1">{date}</p>
         </div>
       </a>
@@ -416,16 +441,28 @@ export const ProfileCard: ComponentConfig<{
     >
       <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
-          <img src={imageUrl} alt={name} className="w-full aspect-[3/4] object-cover" />
+          <img
+            src={imageUrl}
+            alt={name}
+            className="w-full aspect-[3/4] object-cover"
+          />
         ) : (
           <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
-            <span className="material-symbols-outlined text-5xl text-slate-300">person</span>
+            <span className="material-symbols-outlined text-5xl text-slate-300">
+              person
+            </span>
           </div>
         )}
       </div>
-      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">{name}</h4>
+      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+        {name}
+      </h4>
       <p className="text-xs text-slate-500 mt-1">{role}</p>
-      {description && <p className="text-xs text-slate-400 mt-2 line-clamp-3">{description}</p>}
+      {description && (
+        <p className="text-xs text-slate-400 mt-2 line-clamp-3">
+          {description}
+        </p>
+      )}
     </a>
   ),
 };
@@ -453,13 +490,19 @@ export const DepartmentCard: ComponentConfig<{
       className="block relative aspect-[16/10] rounded-lg overflow-hidden group"
     >
       {imageUrl ? (
-        <img src={imageUrl} alt={title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3 text-center">
-        <span className="text-white text-sm font-semibold drop-shadow-lg">{title}</span>
+        <span className="text-white text-sm font-semibold drop-shadow-lg">
+          {title}
+        </span>
       </div>
     </a>
   ),
