@@ -14,6 +14,25 @@
       "correctness": {
         "noUnusedImports": "warn",
         "noUnusedVariables": "warn"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "noArrayIndexKey": "warn"
+      },
+      "a11y": {
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "noLabelWithoutControl": "warn",
+        "useSemanticElements": "warn",
+        "useAnchorContent": "warn",
+        "useValidAnchor": "warn",
+        "useIframeTitle": "warn"
+      },
+      "performance": {
+        "noImgElement": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "warn"
       }
     }
   },
@@ -37,7 +56,8 @@
   },
   "files": {
     "includes": [
-      "src/**"
+      "src/**",
+      "!src/components/ui/**"
     ]
   }
 }

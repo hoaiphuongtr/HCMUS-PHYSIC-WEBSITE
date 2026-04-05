@@ -109,6 +109,7 @@ export function WidgetsLayoutView() {
           {layouts.map((l) => (
             <div key={l.id} className="relative shrink-0">
               <button
+                type="button"
                 onClick={() => setSelectedLayoutId(l.id)}
                 className={
                   "px-3 py-1.5 rounded-md border text-left transition-all flex items-center gap-2 " +
@@ -153,6 +154,7 @@ export function WidgetsLayoutView() {
                   className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 min-w-[140px]"
                 >
                   <button
+                    type="button"
                     onClick={() => {
                       duplicateLayoutMutation.mutate(l.id);
                       setLayoutMenuId(null);
@@ -166,6 +168,7 @@ export function WidgetsLayoutView() {
                   </button>
                   <div className="border-t border-slate-100 my-0.5" />
                   <button
+                    type="button"
                     onClick={() => {
                       setDeleteTargetId(l.id);
                       setLayoutMenuId(null);
@@ -182,6 +185,7 @@ export function WidgetsLayoutView() {
             </div>
           ))}
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
             className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors flex items-center gap-1.5 text-slate-400 hover:text-blue-500"
           >

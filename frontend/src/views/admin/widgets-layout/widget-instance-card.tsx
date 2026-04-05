@@ -49,6 +49,7 @@ export function WidgetInstanceCard({
         <div className="flex items-center bg-white/90 shadow-sm border border-slate-200 rounded-md overflow-hidden">
           {COL_SPAN_OPTIONS.map((opt) => (
             <button
+              type="button"
               key={opt.value}
               onClick={(e) => {
                 e.stopPropagation();
@@ -66,6 +67,7 @@ export function WidgetInstanceCard({
           ))}
         </div>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onUpdateWidget(instance.id, { isVisible: !instance.isVisible });
@@ -78,6 +80,7 @@ export function WidgetInstanceCard({
           </span>
         </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRemoveWidget(instance.id);

@@ -214,7 +214,7 @@ export const Columns: ComponentConfig<{
   },
   render: (props: any) => {
     const { columns, gap, verticalAlign } = props;
-    const cols = parseInt(columns) || 2;
+    const cols = parseInt(columns, 10) || 2;
     const gaps: Record<string, string> = {
       none: "gap-0",
       sm: "gap-2",
@@ -387,8 +387,8 @@ export const Grid: ComponentConfig<any> = {
   } as any,
   render: (props) => {
     const { columns, rows, gap } = props;
-    const cols = parseInt(columns) || 3;
-    const rowCount = parseInt(rows) || 1;
+    const cols = parseInt(columns, 10) || 3;
+    const rowCount = parseInt(rows, 10) || 1;
     const total = cols * rowCount;
     const gaps: Record<string, string> = {
       none: "gap-0",

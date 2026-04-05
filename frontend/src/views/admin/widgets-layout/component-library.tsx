@@ -37,7 +37,8 @@ export function ComponentLibrary({
   );
 
   const grouped = filtered.reduce<Record<string, WidgetType[]>>((acc, w) => {
-    (acc[w.category] ??= []).push(w);
+    acc[w.category] ??= [];
+    acc[w.category].push(w);
     return acc;
   }, {});
 
@@ -76,6 +77,7 @@ export function ComponentLibrary({
           return (
             <div key={cat}>
               <button
+                type="button"
                 onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
                 className="flex items-center justify-between w-full py-2 px-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-700"
               >
@@ -98,6 +100,7 @@ export function ComponentLibrary({
                 <div className="space-y-1.5 pb-2">
                   {items.map((w) => (
                     <button
+                      type="button"
                       key={w.id}
                       onClick={() => onAddWidget(w.id)}
                       disabled={disabled}

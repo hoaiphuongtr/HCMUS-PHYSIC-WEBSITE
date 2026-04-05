@@ -247,6 +247,7 @@ export const SearchOverlay: ComponentConfig<{
     return (
       <>
         <button
+          type="button"
           onClick={() => !puck?.isEditing && setOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 text-white/80 hover:text-white hover:border-white transition-all text-sm backdrop-blur-sm"
         >
@@ -259,6 +260,7 @@ export const SearchOverlay: ComponentConfig<{
             style={{ backgroundColor: bgColor || "#0c2340" }}
           >
             <button
+              type="button"
               onClick={() => setOpen(false)}
               className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
             >
@@ -271,7 +273,6 @@ export const SearchOverlay: ComponentConfig<{
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={placeholder}
-                  autoFocus
                   className="w-full bg-transparent border-b-2 border-white/40 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/40 transition-colors"
                 />
                 <span className="material-symbols-outlined absolute right-0 top-1 text-white/60 text-3xl">
@@ -425,6 +426,7 @@ export const ChatButton: ComponentConfig<{
         style={{ backgroundColor: bgColor || "#1d4ed8" }}
       >
         <svg
+          aria-hidden="true"
           width="26"
           height="26"
           viewBox="0 0 24 24"

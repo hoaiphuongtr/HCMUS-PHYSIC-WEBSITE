@@ -131,7 +131,7 @@ export const EventCard: ComponentConfig<{
         >
           <span className="text-xl font-bold leading-none">{day}</span>
           <span className="text-xs uppercase">
-            {months[parseInt(month)] || month}
+            {months[parseInt(month, 10)] || month}
           </span>
         </div>
         <div className="min-w-0">

@@ -88,6 +88,7 @@ function NavbarClient({
           )}
           {showSearch && (
             <button
+              type="button"
               onClick={() => !isEditing && setSearchOpen(true)}
               className="ml-2 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors"
               style={{ color: textColor || "#1e293b" }}
@@ -104,6 +105,7 @@ function NavbarClient({
           style={{ backgroundColor: "#0c2340f2" }}
         >
           <button
+            type="button"
             onClick={() => {
               setSearchOpen(false);
               setQuery("");
@@ -122,7 +124,6 @@ function NavbarClient({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder || "Nhập từ khóa..."}
-                autoFocus
                 className="w-full bg-transparent border-b-2 border-white/30 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/30 transition-colors"
               />
               <span className="material-symbols-outlined absolute right-0 top-1 text-white/50 text-3xl">
@@ -372,7 +373,7 @@ export const QuickLinks: ComponentConfig<{
     },
   },
   render: ({ links, columns, puck }) => {
-    const cols = parseInt(columns) || 6;
+    const cols = parseInt(columns, 10) || 6;
     return (
       <div
         className="grid gap-4"
@@ -495,6 +496,7 @@ export const SocialIcons: ComponentConfig<{
             >
               {item.icon === "facebook" ? (
                 <svg
+                  aria-hidden="true"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   className={s.icon}
@@ -504,6 +506,7 @@ export const SocialIcons: ComponentConfig<{
                 </svg>
               ) : item.icon === "youtube" ? (
                 <svg
+                  aria-hidden="true"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   className={s.icon}
@@ -513,6 +516,7 @@ export const SocialIcons: ComponentConfig<{
                 </svg>
               ) : item.icon === "twitter" ? (
                 <svg
+                  aria-hidden="true"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   className={s.icon}

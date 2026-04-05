@@ -53,7 +53,7 @@ export function PageCanvas({
   onReorder: (orderedIds: string[]) => void;
   onAddWidgetAt: (widgetId: string, row: number, colSpan: number) => void;
 }) {
-  const [dragRowIdx, setDragRowIdx] = useState<number | null>(null);
+  const [_dragRowIdx, setDragRowIdx] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
   const instances = layout.widgets || [];
@@ -103,7 +103,7 @@ export function PageCanvas({
     }
 
     const fromRowIdx = parseInt(e.dataTransfer.getData("rowIdx"), 10);
-    if (isNaN(fromRowIdx) || fromRowIdx === toRowIdx) {
+    if (Number.isNaN(fromRowIdx) || fromRowIdx === toRowIdx) {
       resetDrag();
       return;
     }
@@ -255,9 +255,7 @@ export function PageCanvas({
 
                       {hasSpace && (
                         <div
-                          className={
-                            colSpanClass(12 - colUsed) + " min-h-[60px]"
-                          }
+                          className={`${colSpanClass(12 - colUsed)} min-h-[60px]`}
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

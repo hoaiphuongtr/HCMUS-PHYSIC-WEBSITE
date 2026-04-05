@@ -54,7 +54,7 @@ function HeroFullScreenClient({
       setPrev(null);
     }, 800);
     return () => clearTimeout(timer);
-  }, [animating, current]);
+  }, [animating]);
 
   const heights: Record<string, string> = {
     md: "min-h-[60vh]",
@@ -151,7 +151,7 @@ function HeroFullScreenClient({
         )}
         {slide?.headline && (
           <h1
-            key={"h-" + current}
+            key={`h-${current}`}
             className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-2 animate-[fadeInUp_0.8s_ease] leading-tight max-w-4xl font-heading italic"
           >
             {slide.headline}
@@ -159,7 +159,7 @@ function HeroFullScreenClient({
         )}
         {slide?.subtitle && (
           <p
-            key={"s-" + current}
+            key={`s-${current}`}
             className="text-lg md:text-xl text-white/80 mb-6 animate-[fadeInUp_0.8s_ease_0.2s_both] max-w-2xl"
           >
             {slide.subtitle}
@@ -167,7 +167,7 @@ function HeroFullScreenClient({
         )}
         {slide?.ctaLabel && (
           <a
-            key={"c-" + current}
+            key={`c-${current}`}
             href={isEditing ? "#" : slide.ctaUrl || "#"}
             tabIndex={isEditing ? -1 : undefined}
             className="px-8 py-3 bg-white text-slate-900 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
@@ -180,6 +180,7 @@ function HeroFullScreenClient({
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {slides.map((_: any, i: number) => (
             <button
+              type="button"
               key={i}
               onClick={() => goTo(i)}
               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === current ? "bg-white w-8" : "bg-white/40 hover:bg-white/70"}`}
@@ -324,7 +325,7 @@ function StatsCounterClient({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [isEditing, stats]);
+  }, [isEditing, stats, ref.current]);
 
   useEffect(() => {
     if (!visible) return;

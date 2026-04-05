@@ -113,7 +113,7 @@ export const ImageGallery: ComponentConfig<{
     },
   },
   render: ({ images, columns, gap }) => {
-    const cols = parseInt(columns) || 3;
+    const cols = parseInt(columns, 10) || 3;
     const gaps: Record<string, string> = {
       sm: "gap-2",
       md: "gap-4",
@@ -298,6 +298,7 @@ function ImageSliderClient({
       {showArrows && count > 1 && (
         <>
           <button
+            type="button"
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
@@ -306,6 +307,7 @@ function ImageSliderClient({
             </span>
           </button>
           <button
+            type="button"
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
@@ -319,6 +321,7 @@ function ImageSliderClient({
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
           {slides.map((_, i) => (
             <button
+              type="button"
               key={i}
               onClick={() => setCurrent(i)}
               className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
@@ -497,8 +500,8 @@ export const LogoGrid: ComponentConfig<{
     },
   },
   render: ({ logos, columns, height, puck }) => {
-    const cols = parseInt(columns) || 6;
-    const h = parseInt(height) || 60;
+    const cols = parseInt(columns, 10) || 6;
+    const h = parseInt(height, 10) || 60;
     return (
       <div
         className="grid gap-6 items-center justify-items-center"
@@ -582,7 +585,7 @@ export const LogoSlider: ComponentConfig<{
     },
   },
   render: ({ logos, bgImageUrl, title, description, logoSize, puck }) => {
-    const size = parseInt(logoSize) || 80;
+    const size = parseInt(logoSize, 10) || 80;
     return (
       <div className="relative py-12 px-6 overflow-hidden">
         {bgImageUrl ? (

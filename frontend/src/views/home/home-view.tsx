@@ -73,6 +73,7 @@ export function HomeView() {
               </Link>
             )}
             <button
+              type="button"
               className="text-sm text-hcmus-gray hover:text-red-600 font-medium transition-colors"
               onClick={handleLogout}
             >
@@ -95,6 +96,7 @@ export function HomeView() {
           >
             Go to Widgets Layout
             <svg
+              aria-hidden="true"
               className="w-4 h-4"
               fill="none"
               stroke="currentColor"

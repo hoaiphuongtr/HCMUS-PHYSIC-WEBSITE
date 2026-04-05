@@ -9,7 +9,6 @@ import { puckConfig } from "./puck-config";
 export function PuckEditor({
   layout,
   onSave,
-  isSaving,
 }: {
   layout: PageLayout;
   onSave: (data: any) => void;

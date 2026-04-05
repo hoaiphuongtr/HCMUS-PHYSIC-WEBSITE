@@ -150,7 +150,7 @@ export function LoginView() {
               type="button"
               onClick={handleGoogleLogin}
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                   fill="#4285F4"
@@ -180,6 +180,7 @@ export function LoginView() {
                 >
                   Register here
                   <svg
+                    aria-hidden="true"
                     className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
@@ -202,7 +203,12 @@ export function LoginView() {
       <footer className="py-6 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-hcmus-gray text-xs">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <svg
+              aria-hidden="true"
+              className="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
               <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5a1 1 0 112 0v4h3a1 1 0 110 2h-4a1 1 0 01-1-1z" />
             </svg>
             &copy; 2024 Faculty of Physics. All rights reserved.

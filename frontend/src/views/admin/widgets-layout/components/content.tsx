@@ -289,7 +289,7 @@ export const ContactInfo: ComponentConfig<{
           isInline
             ? "flex flex-wrap items-center gap-x-6 gap-y-2" +
               (isCenter ? " justify-center" : "")
-            : "space-y-2" + (isCenter ? " flex flex-col items-center" : "")
+            : `space-y-2${isCenter ? " flex flex-col items-center" : ""}`
         }
       >
         {items.map((item, i) => (
