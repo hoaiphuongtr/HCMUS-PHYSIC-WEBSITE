@@ -126,17 +126,25 @@ export function WidgetsLayoutView() {
                   </div>
                   <div className="text-[9px] text-slate-400">/{l.slug}</div>
                 </div>
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
                     setLayoutMenuId(layoutMenuId === l.id ? null : l.id);
                   }}
-                  className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation();
+                      setLayoutMenuId(layoutMenuId === l.id ? null : l.id);
+                    }
+                  }}
+                  className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">
                     more_vert
                   </span>
-                </button>
+                </div>
               </button>
 
               {layoutMenuId === l.id && (
