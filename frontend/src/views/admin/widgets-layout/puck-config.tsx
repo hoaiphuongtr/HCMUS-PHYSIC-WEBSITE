@@ -1,49 +1,49 @@
 "use client";
 
 import type { Config } from "@puckeditor/core";
+import { EventCard, NewsOverlayCard } from "./components/cards";
 import {
-  Spacer,
-  Divider,
+  ContactInfo,
+  DepartmentCard,
+  Heading,
+  IconText,
+  NewsCard,
+  ProfileCard,
+  SectionHeader,
+  TextBlock,
+} from "./components/content";
+import { HeroFullScreen, StatsCounter } from "./components/hero";
+import {
+  AnnouncementBar,
+  Banner,
+  ButtonBlock,
+  ChatButton,
+  PersonaSelector,
+  SearchOverlay,
+} from "./components/interactive";
+import {
   Card,
   Columns,
   Container,
-  Grid,
+  Divider,
   FooterBlock,
+  Grid,
+  Spacer,
 } from "./components/layout";
+import {
+  ImageBlock,
+  ImageGallery,
+  ImageSlider,
+  LogoGrid,
+  LogoSlider,
+  VideoEmbed,
+} from "./components/media";
 import {
   Navbar,
   NavLinks,
   QuickLinks,
   SocialIcons,
 } from "./components/navigation";
-import {
-  Heading,
-  TextBlock,
-  IconText,
-  SectionHeader,
-  ContactInfo,
-  NewsCard,
-  ProfileCard,
-  DepartmentCard,
-} from "./components/content";
-import {
-  ImageBlock,
-  ImageGallery,
-  VideoEmbed,
-  ImageSlider,
-  LogoGrid,
-  LogoSlider,
-} from "./components/media";
-import {
-  ButtonBlock,
-  Banner,
-  AnnouncementBar,
-  SearchOverlay,
-  PersonaSelector,
-  ChatButton,
-} from "./components/interactive";
-import { HeroFullScreen, StatsCounter } from "./components/hero";
-import { NewsOverlayCard, EventCard } from "./components/cards";
 
 export const puckConfig: Config = {
   categories: {

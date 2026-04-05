@@ -38,7 +38,8 @@ const configSchema = z.object({
   ADMIN_FIRST_NAME: z.string().min(1).max(100),
   ADMIN_LAST_NAME: z.string().min(1).max(100),
   ADMIN_PASSWORD: z.string().min(1).max(100),
-  ADMIN_EMAIL: z.string().email(),
+  ADMIN_EMAIL: z.email(),
+  REDIS_URL: z.string(),
 });
 
 const configServer = configSchema.safeParse(process.env);

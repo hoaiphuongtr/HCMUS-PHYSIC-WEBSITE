@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { authApi } from "@/lib/api";
 
 const NAV_ITEMS = [
@@ -182,6 +182,7 @@ export function AdminSidebar() {
           return renderNavItem(item, isActive);
         })}
         <button
+          type="button"
           onClick={handleLogout}
           title={collapsed ? "Log Out" : undefined}
           className={
@@ -194,6 +195,7 @@ export function AdminSidebar() {
         </button>
 
         <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
           className={
             "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-400 hover:bg-white/[0.05] hover:text-white transition-colors w-full " +

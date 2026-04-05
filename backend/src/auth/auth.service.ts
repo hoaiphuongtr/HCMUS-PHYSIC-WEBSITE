@@ -80,7 +80,7 @@ export class AuthService {
         password: hashedPassword,
         firstName: body.firstName,
         lastName: body.lastName,
-        role: RoleName.User as any,
+        role: RoleName.User,
       }),
       this.authRepository.deleteVerificationCode({
         email: body.email,
@@ -107,7 +107,7 @@ export class AuthService {
       password: hashedPassword,
       firstName: body.firstName,
       lastName: body.lastName,
-      role: RoleName.Admin as any,
+      role: RoleName.Admin,
       phone: body.phone,
       position: body.position,
       bio: body.bio,

@@ -155,7 +155,7 @@
 }
 
 .puck-editor-wrapper * {
-  scroll-behavior: auto !important;
+  scroll-behavior: auto;
 }
 
 @keyframes fadeIn {

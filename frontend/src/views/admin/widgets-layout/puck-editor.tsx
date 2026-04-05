@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
 import { Puck } from "@puckeditor/core";
+import { useCallback, useMemo } from "react";
 import "@puckeditor/core/puck.css";
 import type { PageLayout } from "@/lib/api";
 import { puckConfig } from "./puck-config";

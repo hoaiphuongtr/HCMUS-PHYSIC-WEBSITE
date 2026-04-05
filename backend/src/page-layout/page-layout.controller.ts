@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
   Put,
-  Req,
 } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { PageLayoutService } from './page-layout.service';

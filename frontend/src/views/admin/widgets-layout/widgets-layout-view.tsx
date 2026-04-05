@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { pageLayoutApi, type PageLayout } from "@/lib/api";
-import { CreateLayoutModal } from "./create-layout-modal";
-import { PuckEditor } from "./puck-editor";
 import {
   AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { type PageLayout, pageLayoutApi } from "@/lib/api";
+import { CreateLayoutModal } from "./create-layout-modal";
+import { PuckEditor } from "./puck-editor";
 
 export function WidgetsLayoutView() {
   const queryClient = useQueryClient();

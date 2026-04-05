@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
-import { QueryProvider } from "@/providers/query-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastContainer } from "react-toastify";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryProvider } from "@/providers/query-provider";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import type { ComponentConfig } from "@puckeditor/core";
+import { useEffect, useRef, useState } from "react";
 
 function HeroFullScreenClient({
   slides,
@@ -335,7 +335,7 @@ function StatsCounterClient({
     const timer = setInterval(() => {
       step++;
       const progress = Math.min(step / steps, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = 1 - (1 - progress) ** 3;
       setCounts(
         (stats || []).map((s: { value: number }) =>
           Math.round(s.value * eased),

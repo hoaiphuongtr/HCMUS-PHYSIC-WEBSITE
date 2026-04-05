@@ -6,6 +6,11 @@ import {
   AddWidgetInstanceBodyType,
   UpdateWidgetInstanceBodyType,
 } from './page-layout.model';
+import {
+  InputJsonValue,
+  JsonValue,
+  NullableJsonNullValueInput,
+} from 'src/generated/prisma/internal/prismaNamespace';
 
 const widgetInclude = {
   widget: {
@@ -80,7 +85,7 @@ export class PageLayoutRepository {
       data: {
         pageLayoutId,
         widgetId: data.widgetId,
-        config: (data.config ?? {}) as any,
+        config: data.config ?? {},
         order: data.order,
         row: data.row ?? 0,
         colSpan: data.colSpan ?? 12,
@@ -102,7 +107,7 @@ export class PageLayoutRepository {
       where: { id: instanceId },
       data: {
         ...rest,
-        ...(config !== undefined && { config: config as any }),
+        ...(config !== undefined && { config }),
       },
       include: widgetInclude,
     });
@@ -142,7 +147,7 @@ export class PageLayoutRepository {
           data: original.widgets.map((w) => ({
             pageLayoutId: layout.id,
             widgetId: w.widgetId,
-            config: w.config ?? {},
+            config: w.config,
             order: w.order,
             row: w.row,
             colSpan: w.colSpan,
@@ -154,10 +159,13 @@ export class PageLayoutRepository {
     });
   }
 
-  savePuckData(id: string, puckData: any) {
+  savePuckData(
+    id: string,
+    puckData: NullableJsonNullValueInput | InputJsonValue | undefined,
+  ) {
     return this.prisma.pageLayout.update({
       where: { id },
-      data: { puckData: puckData as any },
+      data: { puckData },
     });
   }
 

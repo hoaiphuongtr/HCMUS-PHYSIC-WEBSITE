@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { ComponentConfig } from "@puckeditor/core";
+import { useState } from "react";
 
 export const ButtonBlock: ComponentConfig<{
   label: string;

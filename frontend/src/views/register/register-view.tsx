@@ -1,10 +1,10 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
+import { ViewIcon, ViewOffIcon } from "hugeicons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { ViewIcon, ViewOffIcon } from "hugeicons-react";
 import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
 import { OTPStep } from "./otp-step";

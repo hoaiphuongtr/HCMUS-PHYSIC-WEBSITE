@@ -1,9 +1,8 @@
-import * as React from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-
-import { cn } from "@/lib/utils";
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
+import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -59,11 +58,11 @@ function BreadcrumbLink({
   });
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({ className, ...props }: React.ComponentProps<"a">) {
   return (
-    <span
+    <a
       data-slot="breadcrumb-page"
-      role="link"
+      tabIndex={0}
       aria-disabled="true"
       aria-current="page"
       className={cn("font-normal text-foreground", className)}
@@ -113,10 +112,10 @@ function BreadcrumbEllipsis({
 
 export {
   Breadcrumb,
-  BreadcrumbList,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 };

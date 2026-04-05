@@ -9,7 +9,12 @@ export class AuthRepository {
   findUniqueUserByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
   }
-
+  findUniqueUserByEmailButOmitPassword(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      omit: { password: true },
+    });
+  }
   findUniqueUserById(id: string) {
     return this.prisma.user.findUnique({ where: { id } });
   }

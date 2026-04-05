@@ -9,9 +9,18 @@ import { WidgetModule } from './widget/widget.module';
 import { PageLayoutModule } from './page-layout/page-layout.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
+    CacheModule.registerAsync({
+      useFactory: async () => {
+        return {
+          stores: [new KeyvRedis('redis://localhost:6379')],
+        };
+      },
+    }),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,

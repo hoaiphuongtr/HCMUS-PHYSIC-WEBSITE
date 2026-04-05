@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { ComponentConfig } from "@puckeditor/core";
+import { useEffect, useState } from "react";
 
 export const ImageBlock: ComponentConfig<{
   src: string;

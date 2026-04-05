@@ -60,18 +60,20 @@ export class GoogleService {
     const oauth2 = google.oauth2({ auth: this.oauth2Client, version: 'v2' });
     const { data } = await oauth2.userinfo.get();
     if (!data.email) throw new Error('Cannot get user information from Google');
-    let user = await this.authRepository.findUniqueUserByEmail(data.email);
+    let user = await this.authRepository.findUniqueUserByEmailButOmitPassword(
+      data.email,
+    );
     if (!user) {
       const randomPassword = uuidv4();
       const hashedPassword = await this.hashingService.hash(randomPassword);
-      user = (await this.authRepository.createUserFromGoogle({
+      user = await this.authRepository.createUserFromGoogle({
         email: data.email,
         password: hashedPassword,
         firstName: data.given_name ?? '',
         lastName: data.family_name ?? '',
         avatarUrl: data.picture ?? null,
         googleId: data.id ?? '',
-      })) as any;
+      });
     }
     return this.authService.generateTokens({
       userId: user!.id,

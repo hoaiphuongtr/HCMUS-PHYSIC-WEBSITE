@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import { widgetApi, type WidgetType } from "@/lib/api";
+import { type WidgetType, widgetApi } from "@/lib/api";
 import { SchemaBuilder } from "./schema-builder";
 
 const CATEGORIES = [
