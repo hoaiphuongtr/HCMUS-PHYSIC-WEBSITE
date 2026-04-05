@@ -4,12 +4,14 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './sentry/sentry.filter';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { ZodValidationPipe } from 'nestjs-zod';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalPipes(new ZodValidationPipe());
+  app.use(helmet());
   app.useGlobalFilters(
     new AllExceptionsFilter(httpAdapter),
     new HttpExceptionFilter(),
