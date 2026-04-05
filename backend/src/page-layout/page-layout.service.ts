@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
 import {
@@ -22,12 +23,18 @@ export class PageLayoutService {
   constructor(
     private readonly pageLayoutRepository: PageLayoutRepository,
     private readonly widgetRepository: WidgetRepository,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async create(body: CreatePageLayoutBodyType, userId: string) {
     const existing = await this.pageLayoutRepository.findBySlug(body.slug);
     if (existing) throw PageLayoutSlugExistsException;
-    return this.pageLayoutRepository.create({ ...body, createdBy: userId });
+    const layout = await this.pageLayoutRepository.create({
+      ...body,
+      createdBy: userId,
+    });
+    await this.cache.clear();
+    return layout;
   }
 
   findAll() {
@@ -52,17 +59,23 @@ export class PageLayoutService {
       const existing = await this.pageLayoutRepository.findBySlug(body.slug);
       if (existing && existing.id !== id) throw PageLayoutSlugExistsException;
     }
-    return this.pageLayoutRepository.update(id, body);
+    const updated = await this.pageLayoutRepository.update(id, body);
+    await this.cache.clear();
+    return updated;
   }
 
   async delete(id: string) {
     await this.findById(id);
-    return this.pageLayoutRepository.delete(id);
+    const result = await this.pageLayoutRepository.delete(id);
+    await this.cache.clear();
+    return result;
   }
 
   async publish(id: string) {
     await this.findById(id);
-    return this.pageLayoutRepository.publish(id);
+    const result = await this.pageLayoutRepository.publish(id);
+    await this.cache.clear();
+    return result;
   }
 
   async addWidgetInstance(
@@ -73,10 +86,12 @@ export class PageLayoutService {
     const widget = await this.widgetRepository.findById(body.widgetId);
     if (!widget) throw WidgetNotFoundException;
     const config = { ...(widget.defaultConfig as object), ...body.config };
-    return this.pageLayoutRepository.addWidgetInstance(pageLayoutId, {
-      ...body,
-      config,
-    });
+    const instance = await this.pageLayoutRepository.addWidgetInstance(
+      pageLayoutId,
+      { ...body, config },
+    );
+    await this.cache.clear();
+    return instance;
   }
 
   async updateWidgetInstance(
@@ -89,7 +104,12 @@ export class PageLayoutService {
       await this.pageLayoutRepository.findWidgetInstance(instanceId);
     if (!instance || instance.pageLayoutId !== pageLayoutId)
       throw WidgetInstanceNotFoundException;
-    return this.pageLayoutRepository.updateWidgetInstance(instanceId, body);
+    const updated = await this.pageLayoutRepository.updateWidgetInstance(
+      instanceId,
+      body,
+    );
+    await this.cache.clear();
+    return updated;
   }
 
   async removeWidgetInstance(pageLayoutId: string, instanceId: string) {
@@ -99,6 +119,7 @@ export class PageLayoutService {
     if (!instance || instance.pageLayoutId !== pageLayoutId)
       throw WidgetInstanceNotFoundException;
     await this.pageLayoutRepository.removeWidgetInstance(instanceId);
+    await this.cache.clear();
     return { message: 'Widget instance removed successfully' };
   }
 
@@ -118,7 +139,7 @@ export class PageLayoutService {
     if (existing) {
       slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
     }
-    return this.pageLayoutRepository.duplicateWithWidgets(
+    const duplicated = await this.pageLayoutRepository.duplicateWithWidgets(
       {
         name: original.name,
         slug: original.slug,
@@ -134,18 +155,27 @@ export class PageLayoutService {
       },
       { name: baseName, slug, createdBy: userId },
     );
+    await this.cache.clear();
+    return duplicated;
   }
 
   async savePuckData(id: string, body: SavePuckDataBodyType) {
     await this.findById(id);
-    return this.pageLayoutRepository.savePuckData(id, body.puckData);
+    const result = await this.pageLayoutRepository.savePuckData(
+      id,
+      body.puckData,
+    );
+    await this.cache.clear();
+    return result;
   }
 
   async reorderWidgets(pageLayoutId: string, body: ReorderWidgetsBodyType) {
     await this.findById(pageLayoutId);
-    return this.pageLayoutRepository.reorderWidgets(
+    const result = await this.pageLayoutRepository.reorderWidgets(
       pageLayoutId,
       body.orderedInstanceIds,
     );
+    await this.cache.clear();
+    return result;
   }
 }

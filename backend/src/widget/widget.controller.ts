@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ZodSerializerDto } from 'nestjs-zod';
+
+const TEN_MINUTES_MS = 600_000;
 import { WidgetService } from './widget.service';
 import {
   CreateWidgetBodyDTO,
@@ -33,6 +37,8 @@ export class WidgetController {
 
   @Get()
   @IsPublic()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_MS)
   findAll(
     @Query('category') category?: WidgetCategory,
     @Query('isActive') isActive?: string,
@@ -45,6 +51,8 @@ export class WidgetController {
 
   @Get(':id')
   @IsPublic()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_MS)
   @ZodSerializerDto(WidgetResDTO)
   findById(@Param('id') id: string) {
     return this.widgetService.findById(id);

@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Put,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ZodSerializerDto } from 'nestjs-zod';
+
+const TEN_MINUTES_MS = 600_000;
 import { PageLayoutService } from './page-layout.service';
 import {
   CreatePageLayoutBodyDTO,
@@ -43,12 +47,16 @@ export class PageLayoutController {
 
   @Get()
   @IsPublic()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_MS)
   findAll() {
     return this.pageLayoutService.findAll();
   }
 
   @Get(':id')
   @IsPublic()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_MS)
   @ZodSerializerDto(PageLayoutResDTO)
   findById(@Param('id') id: string) {
     return this.pageLayoutService.findById(id);
@@ -56,6 +64,8 @@ export class PageLayoutController {
 
   @Get('slug/:slug')
   @IsPublic()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_MS)
   @ZodSerializerDto(PageLayoutResDTO)
   findBySlug(@Param('slug') slug: string) {
     return this.pageLayoutService.findBySlug(slug);

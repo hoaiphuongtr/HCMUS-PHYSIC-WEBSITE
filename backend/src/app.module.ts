@@ -11,15 +11,17 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
+import envConfig from './shared/config/config';
 
 @Module({
   imports: [
     CacheModule.registerAsync({
-      useFactory: async () => {
-        return {
-          stores: [new KeyvRedis('redis://localhost:6379')],
-        };
-      },
+      isGlobal: true,
+      useFactory: () => ({
+        stores: [new KeyvRedis(envConfig.REDIS_URL)],
+        ttl: 60_000,
+        namespace: 'hcmus-physics',
+      }),
     }),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
