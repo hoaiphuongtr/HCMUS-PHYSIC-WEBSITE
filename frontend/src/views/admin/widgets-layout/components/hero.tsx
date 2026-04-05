@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ComponentConfig } from "@puckeditor/core";
 
 function HeroFullScreenClient({
@@ -28,17 +28,33 @@ function HeroFullScreenClient({
   isEditing: boolean;
 }) {
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const [prev, setPrev] = useState<number | null>(null);
+  const [animating, setAnimating] = useState(false);
+  const dirRef = useRef(1);
   const count = slides?.length || 0;
 
   useEffect(() => {
     if (isEditing || count <= 1) return;
     const id = setInterval(() => {
-      setDirection(1);
-      setCurrent((p) => (p + 1) % count);
+      dirRef.current = 1;
+      setPrev((c) => c);
+      setCurrent((p) => {
+        setPrev(p);
+        return (p + 1) % count;
+      });
+      setAnimating(true);
     }, 6000);
     return () => clearInterval(id);
   }, [count, isEditing]);
+
+  useEffect(() => {
+    if (!animating) return;
+    const timer = setTimeout(() => {
+      setAnimating(false);
+      setPrev(null);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [animating, current]);
 
   const heights: Record<string, string> = {
     md: "min-h-[60vh]",
@@ -56,8 +72,26 @@ function HeroFullScreenClient({
   const slide = slides?.[current];
 
   const goTo = (i: number) => {
-    setDirection(i > current ? 1 : -1);
+    if (i === current || animating) return;
+    dirRef.current = i > current ? 1 : -1;
+    setPrev(current);
     setCurrent(i);
+    setAnimating(true);
+  };
+
+  const getSlideAnimation = (i: number) => {
+    const forward = dirRef.current > 0;
+    if (i === current && animating) {
+      return forward
+        ? "heroSlideInFromRight 0.8s cubic-bezier(0.4,0,0.2,1) both"
+        : "heroSlideInFromLeft 0.8s cubic-bezier(0.4,0,0.2,1) both";
+    }
+    if (i === prev && animating) {
+      return forward
+        ? "heroSlideOutToLeft 0.8s cubic-bezier(0.4,0,0.2,1) both"
+        : "heroSlideOutToRight 0.8s cubic-bezier(0.4,0,0.2,1) both";
+    }
+    return "none";
   };
 
   return (
@@ -77,17 +111,16 @@ function HeroFullScreenClient({
           i: number,
         ) => {
           const isActive = i === current;
-          const offset = isActive ? 0 : direction > 0 ? 100 : -100;
+          const isPrev = i === prev && animating;
+          const visible = isActive || isPrev;
           return (
             <div
               key={i}
               className="absolute inset-0"
               style={{
-                transform: `translateX(${offset}%)`,
-                opacity: isActive ? 1 : 0,
-                transition:
-                  "transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.8s ease",
-                zIndex: isActive ? 1 : 0,
+                visibility: visible ? "visible" : "hidden",
+                zIndex: isActive ? 2 : isPrev ? 1 : 0,
+                animation: getSlideAnimation(i),
               }}
             >
               {s.src ? (
@@ -104,9 +137,9 @@ function HeroFullScreenClient({
         },
       )}
       <div
-        className={`absolute inset-0 z-[2] ${opacities[overlayOpacity] || "bg-black/40"}`}
+        className={`absolute inset-0 z-[3] ${opacities[overlayOpacity] || "bg-black/40"}`}
       />
-      <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <div className="absolute inset-0 z-[3] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6 py-32 gap-4">
         {tagline && (
           <p
@@ -119,7 +152,7 @@ function HeroFullScreenClient({
         {slide?.headline && (
           <h1
             key={"h-" + current}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-2 animate-[fadeInUp_0.8s_ease] leading-tight max-w-4xl"
+            className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-2 animate-[fadeInUp_0.8s_ease] leading-tight max-w-4xl font-heading italic"
           >
             {slide.headline}
           </h1>
