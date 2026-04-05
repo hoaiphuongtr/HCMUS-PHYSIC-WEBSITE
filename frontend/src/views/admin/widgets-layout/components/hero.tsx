@@ -29,32 +29,26 @@ function HeroFullScreenClient({
 }) {
   const [current, setCurrent] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
-  const [animating, setAnimating] = useState(false);
-  const dirRef = useRef(1);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const count = slides?.length || 0;
 
   useEffect(() => {
     if (isEditing || count <= 1) return;
     const id = setInterval(() => {
-      dirRef.current = 1;
-      setPrev((c) => c);
+      setDirection(1);
       setCurrent((p) => {
         setPrev(p);
         return (p + 1) % count;
       });
-      setAnimating(true);
     }, 6000);
     return () => clearInterval(id);
   }, [count, isEditing]);
 
   useEffect(() => {
-    if (!animating) return;
-    const timer = setTimeout(() => {
-      setAnimating(false);
-      setPrev(null);
-    }, 800);
+    if (prev === null) return;
+    const timer = setTimeout(() => setPrev(null), 900);
     return () => clearTimeout(timer);
-  }, [animating]);
+  }, [prev, current]);
 
   const heights: Record<string, string> = {
     md: "min-h-[60vh]",
@@ -72,26 +66,26 @@ function HeroFullScreenClient({
   const slide = slides?.[current];
 
   const goTo = (i: number) => {
-    if (i === current || animating) return;
-    dirRef.current = i > current ? 1 : -1;
+    if (i === current || prev !== null) return;
+    setDirection(i > current ? 1 : -1);
     setPrev(current);
     setCurrent(i);
-    setAnimating(true);
   };
 
   const getSlideAnimation = (i: number) => {
-    const forward = dirRef.current > 0;
-    if (i === current && animating) {
+    if (prev === null) return undefined;
+    const forward = direction > 0;
+    if (i === current) {
       return forward
         ? "heroSlideInFromRight 0.8s cubic-bezier(0.4,0,0.2,1) both"
         : "heroSlideInFromLeft 0.8s cubic-bezier(0.4,0,0.2,1) both";
     }
-    if (i === prev && animating) {
+    if (i === prev) {
       return forward
         ? "heroSlideOutToLeft 0.8s cubic-bezier(0.4,0,0.2,1) both"
         : "heroSlideOutToRight 0.8s cubic-bezier(0.4,0,0.2,1) both";
     }
-    return "none";
+    return undefined;
   };
 
   return (
@@ -111,23 +105,24 @@ function HeroFullScreenClient({
           i: number,
         ) => {
           const isActive = i === current;
-          const isPrev = i === prev && animating;
+          const isPrev = i === prev;
           const visible = isActive || isPrev;
+          const anim = getSlideAnimation(i);
           return (
             <div
-              key={i}
+              key={`slide-${i}-${current}-${prev ?? "idle"}`}
               className="absolute inset-0"
               style={{
                 visibility: visible ? "visible" : "hidden",
                 zIndex: isActive ? 2 : isPrev ? 1 : 0,
-                animation: getSlideAnimation(i),
+                animation: anim,
               }}
             >
               {s.src ? (
                 <img
                   src={s.src}
                   alt={s.alt}
-                  className="w-full h-full object-cover scale-105 animate-[slowZoom_20s_ease_infinite_alternate]"
+                  className="w-full h-full object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />

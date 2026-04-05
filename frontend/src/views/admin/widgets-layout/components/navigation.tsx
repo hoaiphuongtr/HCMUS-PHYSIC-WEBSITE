@@ -52,37 +52,33 @@ function NavbarClient({
               item: { label: string; url: string; children: string },
               i: number,
             ) => {
-              const hasChildren =
-                item.children && item.children.trim().length > 0;
+              const isHash = item.url?.startsWith("#");
+              const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                if (isEditing) {
+                  e.preventDefault();
+                  return;
+                }
+                if (!isHash) return;
+                e.preventDefault();
+                const target = document.querySelector(item.url);
+                if (target) {
+                  target.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              };
               return (
-                <div key={i} className="relative group">
-                  <a
-                    href={isEditing ? "#" : item.url || "#"}
-                    tabIndex={isEditing ? -1 : undefined}
-                    className="px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-100 transition-colors flex items-center gap-1"
-                    style={{ color: textColor || "#1e293b" }}
-                  >
-                    {item.label}
-                    {hasChildren && (
-                      <span className="material-symbols-outlined text-sm opacity-50">
-                        expand_more
-                      </span>
-                    )}
-                  </a>
-                  {hasChildren && !isEditing && (
-                    <div className="absolute top-full left-0 mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                      {item.children.split(",").map((child, j) => (
-                        <a
-                          key={j}
-                          href="#"
-                          className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                        >
-                          {child.trim()}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <a
+                  key={i}
+                  href={isEditing ? "#" : item.url || "#"}
+                  tabIndex={isEditing ? -1 : undefined}
+                  onClick={handleClick}
+                  className="px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-100 transition-colors"
+                  style={{ color: textColor || "#1e293b" }}
+                >
+                  {item.label}
+                </a>
               );
             },
           )}

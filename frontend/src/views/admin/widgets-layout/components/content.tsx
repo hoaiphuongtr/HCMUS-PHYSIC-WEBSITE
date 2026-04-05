@@ -7,6 +7,7 @@ export const Heading: ComponentConfig<{
   level: string;
   alignment: string;
   color: string;
+  anchorId: string;
 }> = {
   label: "Heading",
   defaultProps: {
@@ -14,8 +15,10 @@ export const Heading: ComponentConfig<{
     level: "h2",
     alignment: "left",
     color: "#1e293b",
+    anchorId: "",
   },
   fields: {
+    anchorId: { type: "text", label: "Anchor ID (for scroll target)" },
     text: { type: "text", label: "Text" },
     level: {
       type: "select",
@@ -40,7 +43,7 @@ export const Heading: ComponentConfig<{
     },
     color: { type: "text", label: "Color" },
   },
-  render: ({ text, level, alignment, color }) => {
+  render: ({ text, level, alignment, color, anchorId }) => {
     const Tag = (level || "h2") as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
     const sizes: Record<string, string> = {
       h1: "text-4xl font-bold",
@@ -52,7 +55,8 @@ export const Heading: ComponentConfig<{
     };
     return (
       <Tag
-        className={sizes[level] || sizes.h2}
+        id={anchorId || undefined}
+        className={`${sizes[level] || sizes.h2} scroll-mt-20`}
         style={{ textAlign: alignment as any, color: color || "#1e293b" }}
       >
         {text || "Heading"}

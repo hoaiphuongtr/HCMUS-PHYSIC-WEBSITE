@@ -882,37 +882,12 @@ const NEW_HOMEPAGE_PUCK_DATA = {
         logoSrc: '/Logo_Phys-blue.png',
         logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
         menuItems: [
-          {
-            label: 'Giới thiệu',
-            url: '/gioi-thieu',
-            children: 'Lịch sử,Sứ mệnh,Tầm nhìn,Cơ cấu tổ chức',
-          },
-          {
-            label: 'Đội ngũ',
-            url: '/doi-ngu',
-            children: 'Ban chủ nhiệm Khoa,Giảng viên,Nghiên cứu sinh,Trợ giảng',
-          },
-          {
-            label: 'Đào tạo',
-            url: '/dao-tao',
-            children: 'Đại học,Sau đại học,Chương trình đào tạo,Quy chế,Biểu mẫu',
-          },
-          {
-            label: 'Nghiên cứu',
-            url: '/nghien-cuu',
-            children: 'Nhóm nghiên cứu,Phòng thí nghiệm,Dự án,Công bố khoa học',
-          },
-          {
-            label: 'Hội nghị',
-            url: '/hoi-nghi',
-            children: 'Sắp diễn ra,Đã diễn ra',
-          },
-          {
-            label: 'Hoạt động',
-            url: '/hoat-dong',
-            children: 'Tin tức,Sự kiện,Đoàn - Hội',
-          },
-          { label: 'Tuyển sinh', url: '/tuyen-sinh', children: '' },
+          { label: 'Giới thiệu', url: '#gioi-thieu', children: '' },
+          { label: 'Đội ngũ', url: '#doi-ngu', children: '' },
+          { label: 'Đào tạo', url: '#dao-tao', children: '' },
+          { label: 'Nghiên cứu', url: '#nghien-cuu', children: '' },
+          { label: 'Hoạt động', url: '#hoat-dong', children: '' },
+          { label: 'Liên hệ', url: '#lien-he', children: '' },
         ],
         bgColor: '#ffffff',
         textColor: '#1e293b',
@@ -1036,6 +1011,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'Heading',
             props: {
               id: 'news-title',
+              anchorId: 'gioi-thieu',
               text: 'Tin tức & Sự kiện',
               level: 'h2',
               alignment: 'left',
@@ -1181,6 +1157,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       type: 'Heading',
       props: {
         id: 'dept-heading-new',
+        anchorId: 'dao-tao',
         text: 'Các Bộ môn',
         level: 'h2',
         alignment: 'center',
@@ -1302,6 +1279,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       type: 'Heading',
       props: {
         id: 'leaders-heading-new',
+        anchorId: 'doi-ngu',
         text: 'Lãnh đạo Khoa',
         level: 'h2',
         alignment: 'center',
@@ -1416,6 +1394,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'Heading',
                   props: {
                     id: 'events-heading-new',
+                    anchorId: 'nghien-cuu',
                     text: 'Sự kiện sắp tới',
                     level: 'h2',
                     alignment: 'left',
@@ -1477,6 +1456,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'Heading',
                   props: {
                     id: 'video-heading-new',
+                    anchorId: 'hoat-dong',
                     text: 'Video nổi bật',
                     level: 'h2',
                     alignment: 'left',
@@ -1537,6 +1517,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       type: 'Heading',
       props: {
         id: 'contact-heading-new',
+        anchorId: 'lien-he',
         text: 'Liên hệ',
         level: 'h2',
         alignment: 'center',

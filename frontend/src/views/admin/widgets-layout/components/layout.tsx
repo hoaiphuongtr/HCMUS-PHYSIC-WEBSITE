@@ -248,6 +248,7 @@ export const Container: ComponentConfig<{
   padding: string;
   bgColor: string;
   centered: boolean;
+  anchorId: string;
   content: Slot;
 }> = {
   label: "Container",
@@ -256,8 +257,10 @@ export const Container: ComponentConfig<{
     padding: "md",
     bgColor: "",
     centered: true,
+    anchorId: "",
   } as any,
   fields: {
+    anchorId: { type: "text", label: "Anchor ID (for scroll target)" },
     maxWidth: {
       type: "select",
       label: "Max Width",
@@ -290,7 +293,14 @@ export const Container: ComponentConfig<{
     },
     content: { type: "slot" },
   },
-  render: ({ maxWidth, padding, bgColor, centered, content: Content }: any) => {
+  render: ({
+    maxWidth,
+    padding,
+    bgColor,
+    centered,
+    anchorId,
+    content: Content,
+  }: any) => {
     const maxWidths: Record<string, string> = {
       sm: "max-w-screen-sm",
       md: "max-w-screen-md",
@@ -306,7 +316,8 @@ export const Container: ComponentConfig<{
     };
     return (
       <div
-        className={`w-full ${maxWidths[maxWidth] || "max-w-full"} ${centered ? "mx-auto" : ""} ${paddings[padding] || "p-6"}`}
+        id={anchorId || undefined}
+        className={`w-full ${maxWidths[maxWidth] || "max-w-full"} ${centered ? "mx-auto" : ""} ${paddings[padding] || "p-6"} scroll-mt-20`}
         style={bgColor ? { backgroundColor: bgColor } : undefined}
       >
         <Content />
