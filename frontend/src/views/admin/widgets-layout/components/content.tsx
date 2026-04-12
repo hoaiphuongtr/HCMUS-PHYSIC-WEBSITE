@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import { useEffect, useRef, useState } from "react";
 
 export const Heading: ComponentConfig<{
   text: string;
@@ -443,7 +444,7 @@ export const ProfileCard: ComponentConfig<{
       tabIndex={puck?.isEditing ? -1 : undefined}
       className="block text-center group"
     >
-      <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-3">
+      <div className="relative border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -457,16 +458,20 @@ export const ProfileCard: ComponentConfig<{
             </span>
           </div>
         )}
+        {description && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-900/95 via-blue-900/80 to-transparent pt-12 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <p className="text-white font-semibold text-sm">{name}</p>
+            <p className="text-blue-200 text-xs mt-0.5">{role}</p>
+            <p className="text-white/80 text-xs mt-2 leading-relaxed">
+              {description}
+            </p>
+          </div>
+        )}
       </div>
       <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
         {name}
       </h4>
       <p className="text-xs text-slate-500 mt-1">{role}</p>
-      {description && (
-        <p className="text-xs text-slate-400 mt-2 line-clamp-3">
-          {description}
-        </p>
-      )}
     </a>
   ),
 };
@@ -497,7 +502,7 @@ export const DepartmentCard: ComponentConfig<{
         <img
           src={imageUrl}
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
@@ -509,5 +514,282 @@ export const DepartmentCard: ComponentConfig<{
         </span>
       </div>
     </a>
+  ),
+};
+
+function ImageTextBlockClient({
+  imageUrl,
+  imageAlt,
+  imagePosition,
+  headline,
+  body,
+  stats,
+  ctaLabel,
+  ctaUrl,
+  bgColor,
+  fullBleed,
+  isEditing,
+}: {
+  imageUrl: string;
+  imageAlt: string;
+  imagePosition: string;
+  headline: string;
+  body: string;
+  stats: { value: string; label: string }[];
+  ctaLabel: string;
+  ctaUrl: string;
+  bgColor: string;
+  fullBleed: boolean;
+  isEditing: boolean;
+}) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      setVisible(true);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.15 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [isEditing]);
+
+  const isRight = imagePosition === "right";
+
+  if (fullBleed) {
+    const imgClip = visible
+      ? "inset(0 0 0 0)"
+      : isRight
+        ? "inset(0 0 0 100%)"
+        : "inset(0 100% 0 0)";
+    return (
+      <div
+        ref={ref}
+        className="grid md:grid-cols-2 overflow-hidden"
+        style={bgColor ? { backgroundColor: bgColor } : undefined}
+      >
+        <div
+          className={`relative min-h-[50vh] md:min-h-[70vh] ${isRight ? "md:order-2" : ""}`}
+          style={{
+            clipPath: imgClip,
+            transition: "clip-path 1s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
+              <span className="material-symbols-outlined text-5xl text-slate-400">
+                image
+              </span>
+            </div>
+          )}
+        </div>
+        <div
+          className={`flex flex-col justify-center p-10 md:p-16 lg:p-20 ${isRight ? "md:order-1" : ""}`}
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(40px)",
+            transition: "opacity 0.8s ease, transform 0.8s ease",
+          }}
+        >
+          {headline && (
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+              {headline}
+            </h2>
+          )}
+          {body && (
+            <p className="text-lg text-slate-600 leading-relaxed mb-8">
+              {body}
+            </p>
+          )}
+          {stats && stats.length > 0 && (
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              {stats.map((s, i) => (
+                <div key={i}>
+                  <div className="text-4xl font-bold text-blue-800">
+                    {s.value}
+                  </div>
+                  <div className="text-sm text-slate-500 mt-1 uppercase tracking-wider">
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {ctaLabel && (
+            <a
+              href={isEditing ? "#" : ctaUrl || "#"}
+              tabIndex={isEditing ? -1 : undefined}
+              className="inline-block px-8 py-4 bg-blue-800 text-white text-base font-semibold rounded hover:bg-blue-900 transition-colors self-start"
+            >
+              {ctaLabel}
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="py-16 px-6 md:px-12"
+      style={bgColor ? { backgroundColor: bgColor } : undefined}
+    >
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+        <div
+          className={`overflow-hidden rounded-lg ${isRight ? "md:order-2" : ""}`}
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible
+              ? "translateX(0)"
+              : isRight
+                ? "translateX(40px)"
+                : "translateX(-40px)",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+          }}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              className="w-full h-auto object-cover"
+            />
+          ) : (
+            <div className="w-full aspect-[4/3] bg-slate-200 flex items-center justify-center">
+              <span className="material-symbols-outlined text-5xl text-slate-400">
+                image
+              </span>
+            </div>
+          )}
+        </div>
+        <div
+          className={isRight ? "md:order-1" : ""}
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(30px)",
+            transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s",
+          }}
+        >
+          {headline && (
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
+              {headline}
+            </h2>
+          )}
+          {body && (
+            <p className="text-base text-slate-600 leading-relaxed mb-6">
+              {body}
+            </p>
+          )}
+          {stats && stats.length > 0 && (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              {stats.map((s, i) => (
+                <div key={i}>
+                  <div className="text-3xl font-bold text-blue-800">
+                    {s.value}
+                  </div>
+                  <div className="text-sm text-slate-500 mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {ctaLabel && (
+            <a
+              href={isEditing ? "#" : ctaUrl || "#"}
+              tabIndex={isEditing ? -1 : undefined}
+              className="inline-block px-6 py-3 bg-blue-800 text-white text-sm font-semibold rounded hover:bg-blue-900 transition-colors"
+            >
+              {ctaLabel}
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const ImageTextBlock: ComponentConfig<{
+  imageUrl: string;
+  imageAlt: string;
+  imagePosition: string;
+  headline: string;
+  body: string;
+  stats: { value: string; label: string }[];
+  ctaLabel: string;
+  ctaUrl: string;
+  bgColor: string;
+  fullBleed: boolean;
+}> = {
+  label: "Image + Text Block",
+  defaultProps: {
+    imageUrl: "",
+    imageAlt: "",
+    imagePosition: "left",
+    headline: "Tiêu đề",
+    body: "Mô tả nội dung",
+    stats: [],
+    ctaLabel: "",
+    ctaUrl: "#",
+    bgColor: "",
+    fullBleed: false,
+  },
+  fields: {
+    fullBleed: {
+      type: "radio",
+      label: "Full Bleed (edge-to-edge)",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
+    imageUrl: { type: "text", label: "Image URL" },
+    imageAlt: { type: "text", label: "Image Alt" },
+    imagePosition: {
+      type: "select",
+      label: "Image Position",
+      options: [
+        { label: "Left", value: "left" },
+        { label: "Right", value: "right" },
+      ],
+    },
+    headline: { type: "text", label: "Headline" },
+    body: { type: "textarea", label: "Body Text" },
+    stats: {
+      type: "array",
+      label: "Stats",
+      arrayFields: {
+        value: { type: "text", label: "Value (e.g. 50+)" },
+        label: { type: "text", label: "Label" },
+      },
+    },
+    ctaLabel: { type: "text", label: "CTA Label" },
+    ctaUrl: { type: "text", label: "CTA URL" },
+    bgColor: { type: "text", label: "Background Color" },
+  },
+  render: (props) => (
+    <ImageTextBlockClient
+      imageUrl={props.imageUrl}
+      imageAlt={props.imageAlt}
+      imagePosition={props.imagePosition}
+      headline={props.headline}
+      body={props.body}
+      stats={props.stats}
+      ctaLabel={props.ctaLabel}
+      ctaUrl={props.ctaUrl}
+      bgColor={props.bgColor}
+      fullBleed={!!props.fullBleed}
+      isEditing={!!props.puck?.isEditing}
+    />
   ),
 };

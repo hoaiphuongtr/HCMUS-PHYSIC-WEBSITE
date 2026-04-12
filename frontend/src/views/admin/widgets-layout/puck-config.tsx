@@ -1,12 +1,13 @@
 "use client";
 
 import type { Config } from "@puckeditor/core";
-import { EventCard, NewsOverlayCard } from "./components/cards";
+import { EventCard, NewsOverlayCard, UpcomingEvents } from "./components/cards";
 import {
   ContactInfo,
   DepartmentCard,
   Heading,
   IconText,
+  ImageTextBlock,
   NewsCard,
   ProfileCard,
   SectionHeader,
@@ -36,6 +37,7 @@ import {
   ImageSlider,
   LogoGrid,
   LogoSlider,
+  PartnerShowcase,
   VideoEmbed,
 } from "./components/media";
 import {
@@ -74,6 +76,7 @@ export const puckConfig: Config = {
         "TextBlock",
         "IconText",
         "ContactInfo",
+        "ImageTextBlock",
       ],
     },
     media: {
@@ -84,6 +87,7 @@ export const puckConfig: Config = {
         "ImageGallery",
         "LogoGrid",
         "LogoSlider",
+        "PartnerShowcase",
         "VideoEmbed",
       ],
     },
@@ -104,7 +108,7 @@ export const puckConfig: Config = {
     },
     cards: {
       title: "Cards",
-      components: ["NewsOverlayCard", "EventCard"],
+      components: ["NewsOverlayCard", "EventCard", "UpcomingEvents"],
     },
   },
   components: {
@@ -143,5 +147,8 @@ export const puckConfig: Config = {
     EventCard,
     PersonaSelector,
     ChatButton,
+    ImageTextBlock,
+    UpcomingEvents,
+    PartnerShowcase,
   } as any,
 };

@@ -146,6 +146,7 @@ export type PageLayout = {
   slug: string;
   description: string | null;
   puckData: any | null;
+  publishedPuckData: any | null;
   isPublished: boolean;
   publishedAt: string | null;
   scheduledAt: string | null;

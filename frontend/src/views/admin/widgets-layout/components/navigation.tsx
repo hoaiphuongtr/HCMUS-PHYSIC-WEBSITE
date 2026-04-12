@@ -410,6 +410,7 @@ export const SocialIcons: ComponentConfig<{
   size: string;
   gap: string;
   alignment: string;
+  variant: string;
 }> = {
   label: "Social Icons",
   defaultProps: {
@@ -421,6 +422,7 @@ export const SocialIcons: ComponentConfig<{
     size: "md",
     gap: "sm",
     alignment: "left",
+    variant: "filled",
   },
   fields: {
     icons: {
@@ -459,12 +461,20 @@ export const SocialIcons: ComponentConfig<{
         { label: "Right", value: "right" },
       ],
     },
+    variant: {
+      type: "select",
+      label: "Variant",
+      options: [
+        { label: "Filled (color bg)", value: "filled" },
+        { label: "Flat (icon only)", value: "flat" },
+      ],
+    },
   },
-  render: ({ icons, size, gap, alignment, puck }) => {
-    const sizes: Record<string, { btn: string; icon: string }> = {
-      sm: { btn: "w-8 h-8", icon: "text-base" },
-      md: { btn: "w-10 h-10", icon: "text-xl" },
-      lg: { btn: "w-12 h-12", icon: "text-2xl" },
+  render: ({ icons, size, gap, alignment, variant, puck }) => {
+    const sizes: Record<string, { btn: string; icon: string; px: number }> = {
+      sm: { btn: "w-8 h-8", icon: "text-base", px: 20 },
+      md: { btn: "w-11 h-11", icon: "text-xl", px: 24 },
+      lg: { btn: "w-12 h-12", icon: "text-2xl", px: 28 },
     };
     const gaps: Record<string, string> = {
       sm: "gap-2",
@@ -477,56 +487,73 @@ export const SocialIcons: ComponentConfig<{
       right: "justify-end",
     };
     const s = sizes[size] || sizes.md;
+    const isFlat = variant === "flat";
+
+    const renderIcon = (icon: string, fillColor: string) => {
+      const svgProps = {
+        "aria-hidden": true as const,
+        viewBox: "0 0 30 30",
+        fill: fillColor,
+        width: s.px,
+        height: s.px,
+      };
+      if (icon === "facebook") {
+        return (
+          <svg {...svgProps}>
+            <path d="M25.81.5H3.689A3.7 3.7 0 0 0 0 4.183v22.125a3.7 3.7 0 0 0 3.688 3.688h11.187V19.42h-3.531v-4.608h3.531v-2.31c0-3.56 2.629-6.346 5.982-6.346h3.257v5.203H21.2c-.762 0-.99.435-.99 1.04v2.413h3.903v4.608h-3.902v10.575h5.599a3.7 3.7 0 0 0 3.687-3.688V4.183A3.699 3.699 0 0 0 25.81.5" />
+          </svg>
+        );
+      }
+      if (icon === "youtube") {
+        return (
+          <svg {...svgProps} viewBox="0 0 24 24">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+          </svg>
+        );
+      }
+      if (icon === "twitter") {
+        return (
+          <svg {...svgProps} viewBox="0 0 24 24">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+        );
+      }
+      return (
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: `${s.px}px`, color: fillColor }}
+        >
+          {icon || "link"}
+        </span>
+      );
+    };
+
     return (
       <div
         className={`flex items-center ${gaps[gap] || "gap-3"} ${aligns[alignment] || "justify-start"}`}
       >
         {(icons || []).map(
-          (item: { icon: string; url: string; color: string }, i: number) => (
-            <a
-              key={i}
-              href={puck?.isEditing ? "#" : item.url || "#"}
-              tabIndex={puck?.isEditing ? -1 : undefined}
-              className={`${s.btn} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}
-              style={{ backgroundColor: item.color || "#3b82f6" }}
-            >
-              {item.icon === "facebook" ? (
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className={s.icon}
-                  style={{ width: "1em", height: "1em" }}
-                >
-                  <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                </svg>
-              ) : item.icon === "youtube" ? (
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className={s.icon}
-                  style={{ width: "1em", height: "1em" }}
-                >
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-              ) : item.icon === "twitter" ? (
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className={s.icon}
-                  style={{ width: "1em", height: "1em" }}
-                >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              ) : (
-                <span className={`material-symbols-outlined ${s.icon}`}>
-                  {item.icon || "link"}
-                </span>
-              )}
-            </a>
-          ),
+          (item: { icon: string; url: string; color: string }, i: number) =>
+            isFlat ? (
+              <a
+                key={i}
+                href={puck?.isEditing ? "#" : item.url || "#"}
+                tabIndex={puck?.isEditing ? -1 : undefined}
+                className="hover:opacity-70 transition-opacity"
+              >
+                {renderIcon(item.icon, item.color || "#ffffff")}
+              </a>
+            ) : (
+              <a
+                key={i}
+                href={puck?.isEditing ? "#" : item.url || "#"}
+                tabIndex={puck?.isEditing ? -1 : undefined}
+                className={`${s.btn} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}
+                style={{ backgroundColor: item.color || "#3b82f6" }}
+              >
+                {renderIcon(item.icon, "#ffffff")}
+              </a>
+            ),
         )}
       </div>
     );

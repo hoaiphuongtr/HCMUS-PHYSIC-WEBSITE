@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const ImageBlock: ComponentConfig<{
   src: string;
@@ -650,4 +650,171 @@ export const LogoSlider: ComponentConfig<{
       </div>
     );
   },
+};
+
+function PartnerShowcaseClient({
+  partners,
+  title,
+  bgColor,
+  isEditing,
+}: {
+  partners: {
+    name: string;
+    logoUrl: string;
+    description: string;
+    linkUrl: string;
+  }[];
+  title: string;
+  bgColor: string;
+  isEditing: boolean;
+}) {
+  const [visibleSet, setVisibleSet] = useState<Set<number>>(new Set());
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isEditing) {
+      setVisibleSet(new Set(partners.map((_, i) => i)));
+      return;
+    }
+    const observers: IntersectionObserver[] = [];
+    rowRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisibleSet((prev) => new Set(prev).add(i));
+          } else {
+            setVisibleSet((prev) => {
+              const next = new Set(prev);
+              next.delete(i);
+              return next;
+            });
+          }
+        },
+        { threshold: 0.2 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, [isEditing, partners.length]);
+
+  return (
+    <div
+      className="relative py-20 px-6 overflow-hidden"
+      style={{ backgroundColor: bgColor || "#0c2340" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40" />
+      <div className="relative z-10">
+        {title && (
+          <h2 className="text-3xl font-bold text-white text-center mb-14">
+            {title}
+          </h2>
+        )}
+        <div className="max-w-4xl mx-auto space-y-6">
+          {partners.map((partner, i) => {
+            const alignLeft = i % 2 === 0;
+            const isVisible = visibleSet.has(i);
+            return (
+              <div
+                key={i}
+                ref={(el) => {
+                  rowRefs.current[i] = el;
+                }}
+                className={`flex items-center gap-6 md:gap-10 p-5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-colors ${alignLeft ? "flex-row" : "flex-row-reverse"}`}
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible
+                    ? "translateX(0)"
+                    : alignLeft
+                      ? "translateX(100%)"
+                      : "translateX(-100%)",
+                  transition: "opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)",
+                }}
+              >
+                <a
+                  href={isEditing ? "#" : partner.linkUrl || "#"}
+                  tabIndex={isEditing ? -1 : undefined}
+                  className="shrink-0"
+                >
+                  {partner.logoUrl ? (
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center p-2">
+                      <img
+                        src={partner.logoUrl}
+                        alt={partner.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 rounded-xl flex items-center justify-center">
+                      <span className="text-xs text-white/60 text-center px-2">
+                        {partner.name}
+                      </span>
+                    </div>
+                  )}
+                </a>
+                <div className={alignLeft ? "" : "text-right"}>
+                  <h3 className="text-lg font-semibold text-white">
+                    {partner.name}
+                  </h3>
+                  {partner.description && (
+                    <p className="text-sm text-white/60 mt-1 line-clamp-2">
+                      {partner.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const PartnerShowcase: ComponentConfig<{
+  partners: {
+    name: string;
+    logoUrl: string;
+    description: string;
+    linkUrl: string;
+  }[];
+  title: string;
+  bgColor: string;
+}> = {
+  label: "Partner Showcase",
+  defaultProps: {
+    partners: [
+      {
+        name: "Đối tác 1",
+        logoUrl: "",
+        description: "",
+        linkUrl: "#",
+      },
+    ],
+    title: "Đối tác & Liên kết",
+    bgColor: "#f8fafc",
+  },
+  fields: {
+    title: { type: "text", label: "Title" },
+    bgColor: { type: "text", label: "Background Color" },
+    partners: {
+      type: "array",
+      label: "Partners",
+      arrayFields: {
+        name: { type: "text", label: "Name" },
+        logoUrl: { type: "text", label: "Logo URL" },
+        description: { type: "textarea", label: "Description" },
+        linkUrl: { type: "text", label: "Link URL" },
+      },
+    },
+  },
+  render: ({ partners, title, bgColor, puck }) => (
+    <PartnerShowcaseClient
+      partners={partners || []}
+      title={title}
+      bgColor={bgColor}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
 };

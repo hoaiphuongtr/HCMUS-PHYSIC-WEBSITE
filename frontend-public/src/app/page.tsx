@@ -11,7 +11,7 @@ export default async function HomePage() {
   try {
     const layout = await getLayoutBySlug(HOMEPAGE_SLUG);
     if (!layout.isPublished) notFound();
-    return <PuckRenderer puckData={layout.puckData} />;
+    return <PuckRenderer puckData={layout.publishedPuckData ?? layout.puckData} />;
   } catch {
     notFound();
   }

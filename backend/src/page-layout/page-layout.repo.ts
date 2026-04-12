@@ -73,10 +73,19 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.delete({ where: { id } });
   }
 
-  publish(id: string) {
+  async publish(id: string) {
+    const layout = await this.prisma.pageLayout.findUnique({
+      where: { id },
+      select: { puckData: true },
+    });
     return this.prisma.pageLayout.update({
       where: { id },
-      data: { isPublished: true, publishedAt: new Date(), scheduledAt: null },
+      data: {
+        isPublished: true,
+        publishedAt: new Date(),
+        scheduledAt: null,
+        publishedPuckData: layout?.puckData ?? undefined,
+      },
     });
   }
 

@@ -949,11 +949,14 @@ const NEW_HOMEPAGE_PUCK_DATA = {
         showSearch: true,
         searchPlaceholder: 'Nhập từ khóa...',
         searchSuggestions: [
+          { label: 'Sinh viên', url: '/sinh-vien' },
+          { label: 'Giảng viên', url: '/giang-vien' },
           { label: 'Tuyển sinh 2026', url: '/tuyen-sinh' },
+          { label: 'Nghiên cứu sinh', url: '/nghien-cuu-sinh' },
           { label: 'Chương trình đào tạo', url: '/dao-tao' },
           { label: 'Học bổng', url: '/hoc-bong' },
-          { label: 'Nghiên cứu khoa học', url: '/nghien-cuu' },
-          { label: 'Lịch học', url: '/lich-hoc' },
+          { label: 'Cựu sinh viên', url: '/cuu-sinh-vien' },
+          { label: 'Nhà tuyển dụng', url: '/nha-tuyen-dung' },
           { label: 'Liên hệ', url: '/lien-he' },
         ],
       },
@@ -1022,33 +1025,43 @@ const NEW_HOMEPAGE_PUCK_DATA = {
     },
 
     {
-      type: 'PersonaSelector',
+      type: 'ImageTextBlock',
       props: {
-        id: 'new-persona',
-        personas: [
-          { label: 'Sinh viên', icon: 'school', description: 'Thông tin học vụ, lịch thi, biểu mẫu', linkUrl: '/sinh-vien' },
-          { label: 'Giảng viên', icon: 'person', description: 'Nghiên cứu, giảng dạy, quản lý', linkUrl: '/giang-vien' },
-          { label: 'Tuyển sinh', icon: 'campaign', description: 'Chương trình, xét tuyển, học bổng', linkUrl: '/tuyen-sinh' },
-          { label: 'Nghiên cứu sinh', icon: 'science', description: 'Đề tài, hướng dẫn, hội thảo', linkUrl: '/nghien-cuu-sinh' },
-          { label: 'Phụ huynh', icon: 'family_restroom', description: 'Chương trình đào tạo, cơ sở vật chất', linkUrl: '/phu-huynh' },
-          { label: 'Cựu sinh viên', icon: 'groups', description: 'Kết nối, sự kiện, đóng góp', linkUrl: '/cuu-sinh-vien' },
-          { label: 'Đối tác', icon: 'handshake', description: 'Hợp tác, tài trợ, dự án', linkUrl: '/doi-tac' },
-          { label: 'Nhà tuyển dụng', icon: 'work', description: 'Tuyển dụng, thực tập, liên hệ', linkUrl: '/nha-tuyen-dung' },
+        id: 'about-block',
+        imageUrl: PHYS_IMAGES.hero.asiin,
+        imageAlt: 'Khoa Vật lý - Vật lý Kỹ thuật HCMUS',
+        imagePosition: 'left',
+        fullBleed: true,
+        headline: 'Khoa Vật lý - Vật lý Kỹ thuật',
+        body: 'Là một trong những khoa lâu đời nhất tại Đại học Khoa học Tự nhiên - ĐHQG TP.HCM, Khoa Vật lý - Vật lý Kỹ thuật đào tạo nguồn nhân lực chất lượng cao trong lĩnh vực vật lý và công nghệ, với 5 ngành đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu.',
+        stats: [
+          { value: '50+', label: 'Năm thành lập' },
+          { value: '120+', label: 'Giảng viên & NCS' },
+          { value: '3000+', label: 'Sinh viên' },
+          { value: '500+', label: 'Công bố quốc tế' },
         ],
-        bgColor: '#ffffff',
+        ctaLabel: 'Tìm hiểu thêm',
+        ctaUrl: '/gioi-thieu',
+        bgColor: '',
       },
     },
 
     {
-      type: 'StatsCounter',
+      type: 'ImageTextBlock',
       props: {
-        id: 'new-stats',
+        id: 'research-block',
+        imageUrl: PHYS_IMAGES.sci.quantumWorkshop,
+        imageAlt: 'Nghiên cứu khoa học tại Khoa Vật lý',
+        imagePosition: 'right',
+        fullBleed: true,
+        headline: 'Nghiên cứu Đẳng cấp Quốc tế',
+        body: 'Đội ngũ giảng viên và nghiên cứu sinh liên tục công bố trên các tạp chí khoa học uy tín quốc tế. Ngành Vật lý và Không gian của HCMUS thuộc Top 550 thế giới theo xếp hạng QS World University Rankings.',
         stats: [
-          { value: 50, suffix: '+', label: 'Năm thành lập' },
-          { value: 120, suffix: '+', label: 'Giảng viên & NCS' },
-          { value: 3000, suffix: '+', label: 'Sinh viên' },
-          { value: 500, suffix: '+', label: 'Công bố quốc tế' },
+          { value: 'Top 550', label: 'Thế giới (QS Ranking)' },
+          { value: '5', label: 'Ngành đạt ASIIN' },
         ],
+        ctaLabel: 'Xem nghiên cứu',
+        ctaUrl: '/nghien-cuu',
         bgColor: '#f8fafc',
       },
     },
@@ -1056,152 +1069,140 @@ const NEW_HOMEPAGE_PUCK_DATA = {
     {
       type: 'Container',
       props: {
-        id: 'news-section',
+        id: 'news-events-section',
+        anchorId: 'hoat-dong',
         maxWidth: 'xl',
         padding: 'lg',
-        bgColor: '',
+        bgColor: '#f8fafc',
         centered: true,
         content: [
           {
-            type: 'Heading',
+            type: 'Columns',
             props: {
-              id: 'news-title',
-              anchorId: 'gioi-thieu',
-              text: 'Tin tức & Sự kiện',
-              level: 'h2',
-              alignment: 'left',
-              color: '#1e293b',
-            },
-          },
-          { type: 'Spacer', props: { id: 'news-spacer-1', height: 'sm' } },
-          {
-            type: 'Grid',
-            props: {
-              id: 'news-grid',
-              columns: '3',
-              rows: '1',
-              gap: 'md',
-              cell0: [
+              id: 'news-events-cols',
+              columns: '2',
+              gap: 'lg',
+              verticalAlign: 'top',
+              col0: [
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'SectionHeader',
                   props: {
-                    id: 'news-1',
+                    id: 'news-header',
+                    title: 'TIN TỨC',
+                    linkText: 'Xem thêm',
+                    linkUrl: '/tin-tuc',
+                    bgColor: '#1e40af',
+                    textColor: '#ffffff',
+                  },
+                },
+                {
+                  type: 'NewsCard',
+                  props: {
+                    id: 'n-news-1',
                     imageUrl: PHYS_IMAGES.sci.mamm2026,
-                    title: 'Hội thảo quốc tế về Vật lý Chất rắn và Khoa học Vật liệu 2026',
-                    excerpt: 'Khoa Vật lý phối hợp tổ chức hội thảo quốc tế thu hút hơn 200 nhà khoa học từ 15 quốc gia.',
+                    title: 'Hội thảo quốc tế MAMM 2026 về Vật lý Chất rắn & Khoa học Vật liệu',
                     date: '24/03/2026',
                     linkUrl: '#',
-                    size: 'lg',
+                    layout: 'horizontal',
                   },
                 },
-              ],
-              cell1: [
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'NewsCard',
                   props: {
-                    id: 'news-2',
+                    id: 'n-news-2',
                     imageUrl: PHYS_IMAGES.sci.quantumWorkshop,
                     title: 'Sinh viên Khoa Vật lý đạt giải nhất Olympic Vật lý toàn quốc',
-                    excerpt: 'Đội tuyển Olympic Vật lý HCMUS giành 3 huy chương vàng.',
                     date: '18/03/2026',
                     linkUrl: '#',
-                    size: 'lg',
+                    layout: 'horizontal',
                   },
                 },
-              ],
-              cell2: [
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'NewsCard',
                   props: {
-                    id: 'news-3',
-                    imageUrl: PHYS_IMAGES.sci.polandProgram,
-                    title: 'Chương trình trao đổi sinh viên với ĐH Tokyo 2026',
-                    excerpt: 'Cơ hội học tập và nghiên cứu tại Nhật Bản trong 1 học kỳ.',
+                    id: 'n-news-3',
+                    imageUrl: PHYS_IMAGES.sci.vff20,
+                    title: 'Workshop VEF 2.0 - Học bổng nghiên cứu quốc tế cho sinh viên',
                     date: '10/03/2026',
                     linkUrl: '#',
-                    size: 'lg',
+                    layout: 'horizontal',
                   },
                 },
-              ],
-            },
-          },
-          { type: 'Spacer', props: { id: 'news-spacer-2', height: 'sm' } },
-          {
-            type: 'Grid',
-            props: {
-              id: 'news-grid-2',
-              columns: '4',
-              rows: '1',
-              gap: 'md',
-              cell0: [
+                { type: 'Spacer', props: { id: 'news-btn-sp', height: 'sm' } },
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'ButtonBlock',
                   props: {
-                    id: 'news-4',
-                    imageUrl: PHYS_IMAGES.edu.courseRegistration,
-                    title: 'Thông báo đăng ký học phần HK2 năm 2025-2026',
-                    date: '04/02/2026',
-                    linkUrl: '#',
-                    excerpt: '',
-                    size: 'md',
+                    id: 'news-more-btn',
+                    label: 'Xem tất cả tin tức',
+                    url: '/tin-tuc',
+                    variant: 'outline',
+                    size: 'sm',
+                    fullWidth: false,
+                    alignment: 'center',
                   },
                 },
               ],
-              cell1: [
+              col1: [
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'SectionHeader',
                   props: {
-                    id: 'news-5',
-                    imageUrl: PHYS_IMAGES.sci.ndtSeminar,
-                    title: 'Tuyển sinh đi học tại Liên bang Nga năm 2026',
-                    date: '17/02/2026',
-                    linkUrl: '#',
-                    excerpt: '',
-                    size: 'md',
+                    id: 'events-header',
+                    title: 'SỰ KIỆN SẮP TỚI',
+                    linkText: 'Xem thêm',
+                    linkUrl: '/su-kien',
+                    bgColor: '#1e40af',
+                    textColor: '#ffffff',
                   },
                 },
-              ],
-              cell2: [
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'UpcomingEvents',
                   props: {
-                    id: 'news-6',
-                    imageUrl: PHYS_IMAGES.jobs.synopsys,
-                    title: 'Discover Synopsys - Chương trình thực tập quốc tế',
-                    date: '25/03/2026',
-                    linkUrl: '#',
-                    excerpt: '',
-                    size: 'md',
+                    id: 'upcoming-events',
+                    events: [
+                      {
+                        imageUrl: '',
+                        title: 'Hội thảo Quốc tế về Vật Lý lý thuyết 2026',
+                        date: '15/04/2026',
+                        time: '08:00 - 17:00',
+                        location: 'Hội trường Khoa Vật lý',
+                        linkUrl: '#',
+                        featured: false,
+                      },
+                      {
+                        imageUrl: '',
+                        title: 'Ứng dụng AI trong Vật lý Chất rắn',
+                        date: '10/04/2026',
+                        time: '14:00 - 16:00',
+                        location: 'Phòng F.102',
+                        linkUrl: '#',
+                        featured: false,
+                      },
+                      {
+                        imageUrl: '',
+                        title: 'Ngày hội Vật lý mở năm 2026',
+                        date: '20/04/2026',
+                        time: '08:00 - 12:00',
+                        location: 'Sảnh chính Trường ĐH KHTN',
+                        linkUrl: '#',
+                        featured: false,
+                      },
+                    ],
                   },
                 },
-              ],
-              cell3: [
+                { type: 'Spacer', props: { id: 'events-btn-sp', height: 'sm' } },
                 {
-                  type: 'NewsOverlayCard',
+                  type: 'ButtonBlock',
                   props: {
-                    id: 'news-7',
-                    imageUrl: PHYS_IMAGES.edu.graduationScholarship,
-                    title: 'Kết quả xét duyệt học bổng tốt nghiệp 2025',
-                    date: '18/12/2025',
-                    linkUrl: '#',
-                    excerpt: '',
-                    size: 'md',
+                    id: 'events-more-btn',
+                    label: 'Xem tất cả sự kiện',
+                    url: '/su-kien',
+                    variant: 'outline',
+                    size: 'sm',
+                    fullWidth: false,
+                    alignment: 'center',
                   },
                 },
               ],
-            },
-          },
-          { type: 'Spacer', props: { id: 'news-spacer-3', height: 'sm' } },
-          {
-            type: 'ButtonBlock',
-            props: {
-              id: 'news-more-btn',
-              label: 'Xem tất cả tin tức',
-              url: '/tin-tuc',
-              variant: 'outline',
-              size: 'md',
-              fullWidth: false,
-              alignment: 'center',
             },
           },
         ],
@@ -1376,8 +1377,8 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                     imageUrl: PHYS_IMAGES.leaders.hvTuan,
                     name: 'PGS. TS. HUỲNH VĂN TUẤN',
                     role: 'Trưởng Khoa',
-                    description: '',
-                    linkUrl: '#',
+                    description: 'Chuyên gia xử lý tín hiệu và học máy, nghiên cứu phân loại tín hiệu điện não đồ và năng lượng tái tạo.',
+                    linkUrl: '/nhan-su/pgsts-huynh-van-tuan',
                   },
                 },
               ],
@@ -1389,8 +1390,8 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                     imageUrl: PHYS_IMAGES.leaders.ttThanh,
                     name: 'PGS.TS. TRẦN THIỆN THANH',
                     role: 'Phó Trưởng Khoa',
-                    description: '',
-                    linkUrl: '#',
+                    description: 'Trưởng bộ môn Vật lý Hạt nhân, chuyên mô phỏng MCNP/PENELOPE ứng dụng trong công nghiệp và an toàn bức xạ.',
+                    linkUrl: '/nhan-su/pgsts-tran-thien-thanh',
                   },
                 },
               ],
@@ -1402,8 +1403,8 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                     imageUrl: PHYS_IMAGES.leaders.dhTrung,
                     name: 'TS. ĐẶNG HOÀI TRUNG',
                     role: 'Phó Trưởng Khoa',
-                    description: '',
-                    linkUrl: '#',
+                    description: 'Chuyên gia địa vật lý, nghiên cứu phương pháp từ tellur và radar xuyên đất ứng dụng trong thủy văn và kỹ thuật.',
+                    linkUrl: '/nhan-su/ts-dang-hoai-trung',
                   },
                 },
               ],
@@ -1426,189 +1427,26 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       },
     },
 
-    { type: 'Spacer', props: { id: 'spacer-events-new', height: 'lg' } },
-
     {
-      type: 'Container',
-      props: {
-        id: 'events-section-new',
-        maxWidth: 'xl',
-        padding: 'md',
-        bgColor: '#f8fafc',
-        centered: true,
-        content: [
-          {
-            type: 'Columns',
-            props: {
-              id: 'events-cols-new',
-              columns: '2',
-              gap: 'lg',
-              verticalAlign: 'top',
-              col0: [
-                {
-                  type: 'Heading',
-                  props: {
-                    id: 'events-heading-new',
-                    anchorId: 'nghien-cuu',
-                    text: 'Sự kiện sắp tới',
-                    level: 'h2',
-                    alignment: 'left',
-                    color: '#1e293b',
-                  },
-                },
-                {
-                  type: 'EventCard',
-                  props: {
-                    id: 'event-1',
-                    title: 'Hội thảo Quốc tế về Vật lý Lý thuyết 2026',
-                    date: '15/04',
-                    time: '08:00 - 17:00',
-                    location: 'Hội trường Khoa Vật lý',
-                    linkUrl: '#',
-                    accentColor: '#1e40af',
-                  },
-                },
-                {
-                  type: 'EventCard',
-                  props: {
-                    id: 'event-2',
-                    title: 'Seminar: Ứng dụng AI trong Vật lý Chất rắn',
-                    date: '20/04',
-                    time: '14:00 - 16:00',
-                    location: 'Phòng F102',
-                    linkUrl: '#',
-                    accentColor: '#1e40af',
-                  },
-                },
-                {
-                  type: 'EventCard',
-                  props: {
-                    id: 'event-3',
-                    title: 'Ngày hội Tuyển sinh 2026',
-                    date: '25/04',
-                    time: '08:00 - 12:00',
-                    location: 'Sảnh chính Trường ĐH KHTN',
-                    linkUrl: '#',
-                    accentColor: '#1e40af',
-                  },
-                },
-                { type: 'Spacer', props: { id: 'events-sp-new', height: 'sm' } },
-                {
-                  type: 'ButtonBlock',
-                  props: {
-                    id: 'events-btn-new',
-                    label: 'Xem lịch sự kiện',
-                    url: '/su-kien',
-                    variant: 'outline',
-                    size: 'sm',
-                    fullWidth: false,
-                    alignment: 'left',
-                  },
-                },
-              ],
-              col1: [
-                {
-                  type: 'Heading',
-                  props: {
-                    id: 'video-heading-new',
-                    anchorId: 'hoat-dong',
-                    text: 'Video nổi bật',
-                    level: 'h2',
-                    alignment: 'left',
-                    color: '#1e293b',
-                  },
-                },
-                {
-                  type: 'VideoEmbed',
-                  props: {
-                    id: 'video-new-1',
-                    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-                    title: 'Giới thiệu Khoa Vật lý - Vật lý Kỹ thuật',
-                    aspectRatio: '16:9',
-                  },
-                },
-                { type: 'Spacer', props: { id: 'video-sp-new', height: 'sm' } },
-                {
-                  type: 'VideoEmbed',
-                  props: {
-                    id: 'video-new-2',
-                    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-                    title: 'Giới thiệu ngành Vật lý',
-                    aspectRatio: '16:9',
-                  },
-                },
-              ],
-              col2: [],
-              col3: [],
-            },
-          },
-        ],
-      },
-    },
-
-    { type: 'Spacer', props: { id: 'spacer-partners-new', height: 'lg' } },
-
-    {
-      type: 'LogoSlider',
+      type: 'PartnerShowcase',
       props: {
         id: 'partners-new',
-        logos: [
-          { src: PHYS_IMAGES.partners.vnuHcm, alt: 'ĐH Quốc Gia', linkUrl: 'https://vnuhcm.edu.vn' },
-          { src: PHYS_IMAGES.partners.saigon, alt: 'ĐH Sài Gòn', linkUrl: 'https://sgu.edu.vn' },
-          { src: PHYS_IMAGES.partners.canTho, alt: 'ĐH Cần Thơ', linkUrl: 'https://ctu.edu.vn' },
-          { src: PHYS_IMAGES.partners.economicsLaw, alt: 'ĐH Kinh tế - Luật', linkUrl: 'https://uel.edu.vn' },
-          { src: PHYS_IMAGES.partners.polytechnic, alt: 'ĐH Bách Khoa', linkUrl: 'https://hcmut.edu.vn' },
-        ],
-        bgImageUrl: PHYS_IMAGES.hero.asiin,
         title: 'Đối tác & Liên kết',
-        description: 'Giảng viên Khoa Vật lý - Vật lý Kỹ thuật tham gia hoạt động giảng dạy và nghiên cứu cùng nhiều trường Đại học uy tín và Viện, Trung tâm nghiên cứu trong và ngoài nước.',
-        logoSize: '80',
-      },
-    },
-
-    { type: 'Spacer', props: { id: 'spacer-contact-new', height: 'lg' } },
-
-    {
-      type: 'Heading',
-      props: {
-        id: 'contact-heading-new',
-        anchorId: 'lien-he',
-        text: 'Liên hệ',
-        level: 'h2',
-        alignment: 'center',
-        color: '#1e293b',
-      },
-    },
-    { type: 'Spacer', props: { id: 'contact-sp-1-new', height: 'sm' } },
-    {
-      type: 'ContactInfo',
-      props: {
-        id: 'contact-new',
-        address: '227 Nguyễn Văn Cừ, phường Chợ Quán, TP.HCM',
-        phone: '+84 28 38355272',
-        email: 'phys@hcmus.edu.vn',
-        showIcons: true,
-        color: '#475569',
-        layout: 'inline',
-        alignment: 'center',
-      },
-    },
-    { type: 'Spacer', props: { id: 'contact-sp-2-new', height: 'sm' } },
-    {
-      type: 'SocialIcons',
-      props: {
-        id: 'social-new',
-        icons: [
-          { icon: 'facebook', url: 'https://facebook.com/khoavatly.hcmus', color: '#1877f2' },
-          { icon: 'youtube', url: '#', color: '#ff0000' },
+        bgColor: '#0c2340',
+        partners: [
+          { name: 'Đại học Quốc Gia TP.HCM', logoUrl: PHYS_IMAGES.partners.vnuHcm, description: 'Hệ thống đại học hàng đầu Việt Nam, đơn vị chủ quản của Trường ĐH KHTN', linkUrl: 'https://vnuhcm.edu.vn' },
+          { name: 'Đại học Bách Khoa TP.HCM', logoUrl: PHYS_IMAGES.partners.polytechnic, description: 'Hợp tác đào tạo liên ngành và nghiên cứu kỹ thuật ứng dụng', linkUrl: 'https://hcmut.edu.vn' },
+          { name: 'Renesas Design Vietnam', logoUrl: PHYS_IMAGES.jobs.renesas, description: 'Công ty TNHH Thiết kế Renesas - Đối tác thực tập và tuyển dụng kỹ sư thiết kế chip', linkUrl: '#' },
+          { name: 'TMA Solutions', logoUrl: PHYS_IMAGES.jobs.tmaK51, description: 'Chương trình thực tập sinh viên và tuyển dụng kỹ sư phần mềm', linkUrl: '#' },
+          { name: 'Bosch Vietnam', logoUrl: PHYS_IMAGES.jobs.bosh, description: 'Hợp tác nghiên cứu và chương trình thực tập kỹ sư mô phỏng', linkUrl: '#' },
+          { name: 'Đại học Sài Gòn', logoUrl: PHYS_IMAGES.partners.saigon, description: 'Đối tác đào tạo giáo viên Vật lý phổ thông', linkUrl: 'https://sgu.edu.vn' },
+          { name: 'ESTEC', logoUrl: PHYS_IMAGES.jobs.estec, description: 'Đối tác tuyển dụng kỹ sư trong lĩnh vực kiểm định và đo lường', linkUrl: '#' },
+          { name: 'Synopsys', logoUrl: PHYS_IMAGES.jobs.synopsys, description: 'Chương trình Discover Synopsys - Thực tập quốc tế thiết kế vi mạch', linkUrl: '#' },
+          { name: 'Đại học Cần Thơ', logoUrl: PHYS_IMAGES.partners.canTho, description: 'Hợp tác nghiên cứu vùng Đồng bằng sông Cửu Long', linkUrl: 'https://ctu.edu.vn' },
+          { name: 'Đại học Đà Lạt', logoUrl: PHYS_IMAGES.partners.dalat, description: 'Hợp tác nghiên cứu Vật lý Hạt nhân và đào tạo sau đại học', linkUrl: 'https://dlu.edu.vn' },
         ],
-        size: 'md',
-        gap: 'md',
-        alignment: 'center',
       },
     },
-
-    { type: 'Spacer', props: { id: 'spacer-footer-new', height: 'md' } },
 
     {
       type: 'FooterBlock',
@@ -1637,13 +1475,33 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   },
                 },
                 {
-                  type: 'TextBlock',
+                  type: 'ContactInfo',
                   props: {
-                    id: 'footer-addr-new',
-                    content: '227 Nguyễn Văn Cừ, P. Chợ Quán, Q.5, TP.HCM\nĐiện thoại: +84 28 38355272\nEmail: phys@hcmus.edu.vn',
-                    fontSize: 'sm',
-                    alignment: 'left',
+                    id: 'footer-contact-new',
+                    address: '227 Nguyễn Văn Cừ, P. Chợ Quán, Q.5, TP.HCM',
+                    phone: '+84 28 38355272',
+                    email: 'phys@hcmus.edu.vn',
+                    showIcons: true,
                     color: '#94a3b8',
+                    layout: 'vertical',
+                    alignment: 'left',
+                  },
+                },
+                {
+                  type: 'Spacer',
+                  props: { id: 'footer-social-sp', height: 'sm' },
+                },
+                {
+                  type: 'SocialIcons',
+                  props: {
+                    id: 'footer-social-new',
+                    icons: [
+                      { icon: 'facebook', url: 'https://www.facebook.com/VLH2015', color: '#ffffff' },
+                    ],
+                    size: 'lg',
+                    gap: 'sm',
+                    alignment: 'left',
+                    variant: 'flat',
                   },
                 },
               ],
@@ -1814,7 +1672,10 @@ const main = async () => {
   if (existingNew) {
     await prisma.pageLayout.update({
       where: { slug: 'trang-chu-moi' },
-      data: { puckData: NEW_HOMEPAGE_PUCK_DATA as any },
+      data: {
+        puckData: NEW_HOMEPAGE_PUCK_DATA as any,
+        publishedPuckData: NEW_HOMEPAGE_PUCK_DATA as any,
+      },
     });
     console.log('New homepage layout updated');
   } else {
@@ -1824,12 +1685,197 @@ const main = async () => {
         slug: 'trang-chu-moi',
         description: 'Trang chủ mới - layout quốc tế, full-screen hero, search bar, animations',
         puckData: NEW_HOMEPAGE_PUCK_DATA as any,
+        publishedPuckData: NEW_HOMEPAGE_PUCK_DATA as any,
         isPublished: true,
         publishedAt: new Date(),
         createdBy: admin.id,
       },
     });
     console.log('New homepage layout created');
+  }
+
+  const SUBPAGE_PUCK_DATA = {
+    root: {},
+    content: [
+      {
+        type: 'Navbar',
+        props: {
+          id: 'sub-navbar',
+          logoSrc: PHYS_IMAGES.logo,
+          logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+          menuItems: [
+            { label: 'Trang chủ', url: '/trang-chu-moi', children: '' },
+            { label: 'Giới thiệu', url: '#gioi-thieu', children: '' },
+            { label: 'Đào tạo', url: '#dao-tao', children: '' },
+            { label: 'Liên hệ', url: '#lien-he', children: '' },
+          ],
+          bgColor: '#ffffff',
+          textColor: '#1e293b',
+          showSearch: true,
+          searchPlaceholder: 'Nhập từ khóa...',
+          searchSuggestions: [
+            { label: 'Trang chủ', url: '/trang-chu-moi' },
+            { label: 'Tuyển sinh', url: '/tuyen-sinh' },
+          ],
+        },
+      },
+      {
+        type: 'ImageTextBlock',
+        props: {
+          id: 'sub-hero',
+          imageUrl: PHYS_IMAGES.hero.admissions2026,
+          imageAlt: 'Tuyển sinh Đại học 2026',
+          imagePosition: 'left',
+          fullBleed: true,
+          headline: 'Tuyển sinh Đại học 2026',
+          body: 'Khoa Vật lý - Vật lý Kỹ thuật tuyển sinh 7 ngành đào tạo bậc Đại học, trong đó 5 ngành đã đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu. Thông tin chi tiết về chỉ tiêu, phương thức xét tuyển và học bổng.',
+          stats: [
+            { value: '7', label: 'Ngành đào tạo' },
+            { value: '5', label: 'Ngành đạt ASIIN' },
+          ],
+          ctaLabel: 'Xem thông tin tuyển sinh',
+          ctaUrl: '#',
+          bgColor: '',
+        },
+      },
+      {
+        type: 'Container',
+        props: {
+          id: 'sub-content',
+          maxWidth: 'lg',
+          padding: 'lg',
+          bgColor: '',
+          centered: true,
+          anchorId: 'gioi-thieu',
+          content: [
+            {
+              type: 'Heading',
+              props: {
+                id: 'sub-heading-1',
+                text: 'Các ngành tuyển sinh',
+                level: 'h2',
+                alignment: 'left',
+                color: '#1e293b',
+              },
+            },
+            { type: 'Spacer', props: { id: 'sub-sp-1', height: 'sm' } },
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'sub-text-1',
+                content: 'Vật lý học (7440102_NN) · Công nghệ bán dẫn (7440102_NN) · Công nghệ vật lý điện tử và tin học (7440102_NN) · Kỹ thuật hạt nhân (7520402) · Vật lý y khoa (7520403) · Hải dương học (7440228)',
+                fontSize: 'lg',
+                alignment: 'left',
+                color: '#475569',
+              },
+            },
+            { type: 'Spacer', props: { id: 'sub-sp-2', height: 'md' } },
+            {
+              type: 'Heading',
+              props: {
+                id: 'sub-heading-2',
+                text: 'Chương trình đào tạo đặc biệt',
+                level: 'h2',
+                alignment: 'left',
+                color: '#1e293b',
+              },
+            },
+            { type: 'Spacer', props: { id: 'sub-sp-3', height: 'sm' } },
+            {
+              type: 'Grid',
+              props: {
+                id: 'sub-programs-grid',
+                columns: '3',
+                rows: '1',
+                gap: 'md',
+                cell0: [
+                  {
+                    type: 'IconText',
+                    props: {
+                      id: 'sub-prog-1',
+                      icon: 'school',
+                      title: 'Cử nhân tài năng Vật lý học',
+                      description: 'Chương trình đào tạo chuyên sâu cho sinh viên xuất sắc.',
+                      iconColor: '#1d4ed8',
+                      layout: 'vertical',
+                    },
+                  },
+                ],
+                cell1: [
+                  {
+                    type: 'IconText',
+                    props: {
+                      id: 'sub-prog-2',
+                      icon: 'translate',
+                      title: 'Vật lý học Tăng cường tiếng Anh',
+                      description: 'Chương trình giảng dạy song ngữ Việt-Anh.',
+                      iconColor: '#1d4ed8',
+                      layout: 'vertical',
+                    },
+                  },
+                ],
+                cell2: [
+                  {
+                    type: 'IconText',
+                    props: {
+                      id: 'sub-prog-3',
+                      icon: 'memory',
+                      title: 'Cử nhân tài năng Công nghệ bán dẫn',
+                      description: 'Đào tạo kỹ sư thiết kế vi mạch và bán dẫn.',
+                      iconColor: '#1d4ed8',
+                      layout: 'vertical',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'FooterBlock',
+        props: {
+          id: 'sub-footer',
+          bgColor: '#0c2340',
+          textColor: '#94a3b8',
+          content: [
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'sub-footer-text',
+                content: 'Khoa Vật Lý - Vật Lý Kỹ Thuật · 227 Nguyễn Văn Cừ, Q.5, TP.HCM · phys@hcmus.edu.vn',
+                fontSize: 'sm',
+                alignment: 'center',
+                color: '#94a3b8',
+              },
+            },
+          ],
+        },
+      },
+    ],
+  };
+
+  const existingSub = await prisma.pageLayout.findUnique({
+    where: { slug: 'tuyen-sinh' },
+  });
+  if (existingSub) {
+    await prisma.pageLayout.update({
+      where: { slug: 'tuyen-sinh' },
+      data: { puckData: SUBPAGE_PUCK_DATA as any },
+    });
+    console.log('Sub-page "tuyen-sinh" updated');
+  } else {
+    await prisma.pageLayout.create({
+      data: {
+        name: 'Tuyển sinh 2026',
+        slug: 'tuyen-sinh',
+        description: 'Thông tin tuyển sinh Đại học năm 2026',
+        puckData: SUBPAGE_PUCK_DATA as any,
+        isPublished: false,
+        createdBy: admin.id,
+      },
+    });
+    console.log('Sub-page "tuyen-sinh" created');
   }
 };
 

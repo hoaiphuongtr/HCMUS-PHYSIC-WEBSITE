@@ -14,7 +14,7 @@ export default async function PublicLayoutPage({
   try {
     const layout = await getLayoutBySlug(slug);
     if (!layout.isPublished) notFound();
-    return <PuckRenderer puckData={layout.puckData} />;
+    return <PuckRenderer puckData={layout.publishedPuckData ?? layout.puckData} />;
   } catch {
     notFound();
   }

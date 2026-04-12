@@ -244,3 +244,19 @@
     opacity: 0;
   }
 }
+
+@keyframes deptFloat {
+  0%,
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+  25% {
+    transform: scale(1.03) translate(1%, -1%);
+  }
+  50% {
+    transform: scale(1.05) translate(-1%, 1%);
+  }
+  75% {
+    transform: scale(1.03) translate(1%, 0.5%);
+  }
+}

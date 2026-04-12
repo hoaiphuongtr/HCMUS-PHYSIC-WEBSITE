@@ -2,7 +2,7 @@
 
 import { createUsePuck, Puck } from "@puckeditor/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "@puckeditor/core/puck.css";
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
@@ -353,6 +353,26 @@ export function PuckEditor({
     [onSave],
   );
 
+  const dispatchRef = useRef<((action: any) => void) | null>(null);
+
+  const handleAction = useCallback(
+    (action: any, appState: any, prevAppState: any) => {
+      if (
+        action.type === "setUi" &&
+        appState.ui?.itemSelector &&
+        !appState.ui?.rightSideBarVisible
+      ) {
+        setTimeout(() => {
+          dispatchRef.current?.({
+            type: "setUi",
+            ui: { rightSideBarVisible: true },
+          });
+        }, 0);
+      }
+    },
+    [],
+  );
+
   const overrides = useMemo(
     () => ({
       headerActions: () => (
@@ -363,6 +383,11 @@ export function PuckEditor({
           isSaving={isSaving}
         />
       ),
+      puck: ({ children }: { children: React.ReactNode }) => {
+        const dispatch = usePuck((s) => s.dispatch);
+        dispatchRef.current = dispatch;
+        return <>{children}</>;
+      },
     }),
     [layout, handlePublish, onLayoutChanged, isSaving],
   );
@@ -373,6 +398,7 @@ export function PuckEditor({
         config={puckConfig}
         data={initialData}
         onPublish={handlePublish}
+        onAction={handleAction}
         overrides={overrides}
         headerTitle={layout.name}
         headerPath={`/${layout.slug}`}

@@ -112,45 +112,89 @@ export function WidgetsLayoutView() {
     <div className="h-full flex flex-col">
       <div className="px-4 py-2 border-b border-slate-200/60 bg-white flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 flex-1 overflow-x-auto">
-          {layouts.map((l) => {
-            const isActive = selectedLayoutId === l.id;
-            const tabClassName = isActive
-              ? "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-blue-300 bg-blue-50"
-              : "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-slate-200 bg-white hover:border-slate-300";
-            return (
-              <div key={l.id} className={tabClassName}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLayoutId(l.id)}
-                  className="text-left"
-                >
-                  <div className="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
-                    {l.name}
-                    {l.isPublished && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    )}
-                  </div>
-                  <div className="text-[9px] text-slate-400">/{l.slug}</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    menuTriggerRef.current = e.currentTarget;
-                    setLayoutMenuId(layoutMenuId === l.id ? null : l.id);
-                  }}
-                  className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400"
-                  aria-label="Layout options"
-                  aria-haspopup="menu"
-                  aria-expanded={layoutMenuId === l.id}
-                >
-                  <span className="material-symbols-outlined text-[14px]">
-                    more_vert
-                  </span>
-                </button>
-              </div>
+          {(() => {
+            const published = layouts.filter((l) => l.isPublished);
+            const pending = layouts.filter(
+              (l) => !l.isPublished && l.scheduledAt,
             );
-          })}
+            const drafts = layouts.filter(
+              (l) => !l.isPublished && !l.scheduledAt,
+            );
+            const groups = [
+              {
+                label: "Published",
+                items: published,
+                dot: "bg-green-500",
+              },
+              {
+                label: "Pending",
+                items: pending,
+                dot: "bg-amber-500",
+              },
+              {
+                label: "Draft",
+                items: drafts,
+                dot: "bg-slate-400",
+              },
+            ];
+            return groups.map(
+              (group) =>
+                group.items.length > 0 && (
+                  <div
+                    key={group.label}
+                    className="flex items-center gap-1.5 shrink-0"
+                  >
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-medium px-1">
+                      {group.label}
+                    </span>
+                    {group.items.map((l) => {
+                      const isActive = selectedLayoutId === l.id;
+                      const tabClassName = isActive
+                        ? "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-blue-300 bg-blue-50"
+                        : "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-slate-200 bg-white hover:border-slate-300";
+                      return (
+                        <div key={l.id} className={tabClassName}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLayoutId(l.id)}
+                            className="text-left"
+                          >
+                            <div className="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
+                              {l.name}
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${group.dot}`}
+                              />
+                            </div>
+                            <div className="text-[9px] text-slate-400">
+                              /{l.slug}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              menuTriggerRef.current = e.currentTarget;
+                              setLayoutMenuId(
+                                layoutMenuId === l.id ? null : l.id,
+                              );
+                            }}
+                            className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400"
+                            aria-label="Layout options"
+                            aria-haspopup="menu"
+                            aria-expanded={layoutMenuId === l.id}
+                          >
+                            <span className="material-symbols-outlined text-[14px]">
+                              more_vert
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <div className="w-px h-5 bg-slate-200 mx-1" />
+                  </div>
+                ),
+            );
+          })()}
           {openMenuLayout && (
             <PortalMenu
               anchorRef={menuTriggerRef}

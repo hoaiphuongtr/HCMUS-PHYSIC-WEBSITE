@@ -93,6 +93,7 @@ export const PageLayoutResSchema = z.object({
   slug: z.string(),
   description: z.string().nullable(),
   puckData: z.any().nullable(),
+  publishedPuckData: z.any().nullable(),
   isPublished: z.boolean(),
   publishedAt: z.date().nullable(),
   scheduledAt: z.date().nullable(),
