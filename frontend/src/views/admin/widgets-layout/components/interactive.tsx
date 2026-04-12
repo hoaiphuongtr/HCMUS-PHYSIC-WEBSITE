@@ -398,52 +398,280 @@ export const PersonaSelector: ComponentConfig<{
   ),
 };
 
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+function ChatButtonClient({
+  tooltipText,
+  bgColor,
+  iconColor,
+  title,
+  subtitle,
+  welcomeMessage,
+  placeholder,
+  isEditing,
+}: {
+  tooltipText: string;
+  bgColor: string;
+  iconColor: string;
+  title: string;
+  subtitle: string;
+  welcomeMessage: string;
+  placeholder: string;
+  isEditing: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: "assistant", content: welcomeMessage },
+  ]);
+  const [isThinking, setIsThinking] = useState(false);
+
+  const handleSend = () => {
+    const trimmed = input.trim();
+    if (!trimmed || isThinking) return;
+    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    setInput("");
+    setIsThinking(true);
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Cảm ơn câu hỏi của bạn! Tính năng Q&A với AI đang được phát triển. Trong thời gian chờ, vui lòng liên hệ văn phòng Khoa qua email phys@hcmus.edu.vn hoặc số điện thoại +84 28 38355272.",
+        },
+      ]);
+      setIsThinking(false);
+    }, 800);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed bottom-6 right-6 z-[9998] group">
+        <button
+          type="button"
+          onClick={() => {
+            if (isEditing) return;
+            setOpen((p) => !p);
+          }}
+          className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-200 hover:shadow-xl"
+          style={{ backgroundColor: bgColor || "#1d4ed8" }}
+          aria-label={tooltipText || "Hỏi đáp với AI"}
+        >
+          <svg
+            aria-hidden="true"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={iconColor || "#ffffff"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M8 13.5H16M8 9.5H12" />
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" />
+          </svg>
+        </button>
+        {!open && (
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+            {tooltipText || "Hỏi đáp"}
+            <div className="absolute top-full right-5 -mt-1 w-2 h-2 bg-slate-800 rotate-45" />
+          </div>
+        )}
+      </div>
+      {open && (
+        <div
+          className="fixed bottom-24 right-6 z-[9998] w-[360px] max-w-[calc(100vw-3rem)] h-[520px] max-h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200"
+          role="dialog"
+          aria-label="Chat hỏi đáp với AI"
+        >
+          <div
+            className="px-4 py-3 flex items-center justify-between text-white"
+            style={{ backgroundColor: bgColor || "#1d4ed8" }}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2a5 5 0 0 0-5 5v2a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5Z" />
+                  <path d="M20 12v1a8 8 0 0 1-16 0v-1" />
+                  <path d="M12 21v-3" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold truncate">
+                  {title || "Trợ lý AI"}
+                </div>
+                <div className="text-[11px] text-white/80 truncate">
+                  {subtitle || "Hỏi đáp về Khoa Vật lý"}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center shrink-0"
+              aria-label="Đóng"
+            >
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-slate-50">
+            {messages.map((msg, i) => {
+              const bubbleClass =
+                msg.role === "user"
+                  ? "ml-auto bg-blue-600 text-white rounded-2xl rounded-br-sm"
+                  : "mr-auto bg-white text-slate-800 rounded-2xl rounded-bl-sm border border-slate-200";
+              return (
+                <div
+                  key={i}
+                  className={`max-w-[85%] px-3.5 py-2 text-sm leading-relaxed shadow-sm ${bubbleClass}`}
+                  style={
+                    msg.role === "user"
+                      ? { backgroundColor: bgColor || "#1d4ed8" }
+                      : undefined
+                  }
+                >
+                  {msg.content}
+                </div>
+              );
+            })}
+            {isThinking && (
+              <div className="mr-auto bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-3.5 py-2.5 shadow-sm inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                <span
+                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.15s" }}
+                />
+                <span
+                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.3s" }}
+                />
+              </div>
+            )}
+          </div>
+          <div className="border-t border-slate-200 p-3 bg-white">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder || "Nhập câu hỏi của bạn..."}
+                disabled={isThinking}
+                className="flex-1 px-3 py-2 text-sm rounded-full border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50"
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!input.trim() || isThinking}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 transition-transform"
+                style={{ backgroundColor: bgColor || "#1d4ed8" }}
+                aria-label="Gửi"
+              >
+                <svg
+                  aria-hidden="true"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 text-center mt-2">
+              Đang phát triển · Trả lời tự động
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export const ChatButton: ComponentConfig<{
   tooltipText: string;
   bgColor: string;
   iconColor: string;
-  url: string;
+  title: string;
+  subtitle: string;
+  welcomeMessage: string;
+  placeholder: string;
 }> = {
-  label: "Chat Button",
+  label: "AI Chat Button",
   defaultProps: {
-    tooltipText: "Hỏi đáp",
+    tooltipText: "Hỏi đáp với AI",
     bgColor: "#1d4ed8",
     iconColor: "#ffffff",
-    url: "/lien-he",
+    title: "Trợ lý AI",
+    subtitle: "Hỏi đáp về Khoa Vật lý",
+    welcomeMessage:
+      "Xin chào! Tôi là trợ lý ảo của Khoa Vật lý - Vật lý Kỹ thuật. Bạn cần hỗ trợ thông tin gì?",
+    placeholder: "Nhập câu hỏi của bạn...",
   },
   fields: {
     tooltipText: { type: "text", label: "Tooltip Text" },
     bgColor: { type: "text", label: "Background Color" },
     iconColor: { type: "text", label: "Icon Color" },
-    url: { type: "text", label: "Link URL" },
+    title: { type: "text", label: "Panel Title" },
+    subtitle: { type: "text", label: "Panel Subtitle" },
+    welcomeMessage: { type: "textarea", label: "Welcome Message" },
+    placeholder: { type: "text", label: "Input Placeholder" },
   },
-  render: ({ tooltipText, bgColor, iconColor, url, puck }) => (
-    <div className="fixed bottom-6 right-6 z-[9998] group">
-      <a
-        href={puck?.isEditing ? "#" : url || "#"}
-        tabIndex={puck?.isEditing ? -1 : undefined}
-        className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-200 hover:shadow-xl"
-        style={{ backgroundColor: bgColor || "#1d4ed8" }}
-      >
-        <svg
-          aria-hidden="true"
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={iconColor || "#ffffff"}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M8 13.5H16M8 9.5H12" />
-          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z" />
-        </svg>
-      </a>
-      <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
-        {tooltipText || "Hỏi đáp"}
-        <div className="absolute top-full right-5 -mt-1 w-2 h-2 bg-slate-800 rotate-45" />
-      </div>
-    </div>
+  render: ({
+    tooltipText,
+    bgColor,
+    iconColor,
+    title,
+    subtitle,
+    welcomeMessage,
+    placeholder,
+    puck,
+  }) => (
+    <ChatButtonClient
+      tooltipText={tooltipText}
+      bgColor={bgColor}
+      iconColor={iconColor}
+      title={title}
+      subtitle={subtitle}
+      welcomeMessage={welcomeMessage}
+      placeholder={placeholder}
+      isEditing={!!puck?.isEditing}
+    />
   ),
 };

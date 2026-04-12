@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
   AlertDialog,
@@ -15,25 +15,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
 import { CreateLayoutModal } from "./create-layout-modal";
+import { EditLayoutModal } from "./edit-layout-modal";
+import { PortalMenu } from "./portal-menu";
 import { PuckEditor } from "./puck-editor";
 
 export function WidgetsLayoutView() {
   const queryClient = useQueryClient();
   const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editTargetId, setEditTargetId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [layoutMenuId, setLayoutMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setLayoutMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: layouts = [] } = useQuery({
     queryKey: ["PAGE_LAYOUTS"],
@@ -54,6 +47,7 @@ export function WidgetsLayoutView() {
       queryClient.invalidateQueries({
         queryKey: ["PAGE_LAYOUTS", selectedLayoutId],
       });
+      queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       toast.success("Layout saved");
     },
     onError(err: { message?: string }) {
@@ -89,9 +83,19 @@ export function WidgetsLayoutView() {
     },
   });
 
-  const handleSavePuckData = (puckData: any) => {
+  const handleSavePuckData = async (puckData: any) => {
     if (!selectedLayoutId) return;
-    savePuckDataMutation.mutate({ layoutId: selectedLayoutId, puckData });
+    await savePuckDataMutation.mutateAsync({
+      layoutId: selectedLayoutId,
+      puckData,
+    });
+  };
+
+  const handleLayoutChanged = (_updated: PageLayout) => {
+    queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+    queryClient.invalidateQueries({
+      queryKey: ["PAGE_LAYOUTS", selectedLayoutId],
+    });
   };
 
   const handleLayoutCreated = (layout: PageLayout) => {
@@ -101,24 +105,25 @@ export function WidgetsLayoutView() {
   };
 
   const deleteTargetLayout = layouts.find((l) => l.id === deleteTargetId);
+  const editTargetLayout = layouts.find((l) => l.id === editTargetId);
+  const openMenuLayout = layouts.find((l) => l.id === layoutMenuId);
 
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-2 border-b border-slate-200/60 bg-white flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 flex-1 overflow-x-auto">
-          {layouts.map((l) => (
-            <div key={l.id} className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedLayoutId(l.id)}
-                className={
-                  "px-3 py-1.5 rounded-md border text-left transition-all flex items-center gap-2 " +
-                  (selectedLayoutId === l.id
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-slate-200 bg-white hover:border-slate-300")
-                }
-              >
-                <div>
+          {layouts.map((l) => {
+            const isActive = selectedLayoutId === l.id;
+            const tabClassName = isActive
+              ? "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-blue-300 bg-blue-50"
+              : "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-slate-200 bg-white hover:border-slate-300";
+            return (
+              <div key={l.id} className={tabClassName}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLayoutId(l.id)}
+                  className="text-left"
+                >
                   <div className="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
                     {l.name}
                     {l.isPublished && (
@@ -126,64 +131,75 @@ export function WidgetsLayoutView() {
                     )}
                   </div>
                   <div className="text-[9px] text-slate-400">/{l.slug}</div>
-                </div>
-                <div
-                  role="button"
-                  tabIndex={0}
+                </button>
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    menuTriggerRef.current = e.currentTarget;
                     setLayoutMenuId(layoutMenuId === l.id ? null : l.id);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.stopPropagation();
-                      setLayoutMenuId(layoutMenuId === l.id ? null : l.id);
-                    }
-                  }}
-                  className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400 cursor-pointer"
+                  className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400"
+                  aria-label="Layout options"
+                  aria-haspopup="menu"
+                  aria-expanded={layoutMenuId === l.id}
                 >
                   <span className="material-symbols-outlined text-[14px]">
                     more_vert
                   </span>
-                </div>
+                </button>
+              </div>
+            );
+          })}
+          {openMenuLayout && (
+            <PortalMenu
+              anchorRef={menuTriggerRef}
+              open={true}
+              onClose={() => setLayoutMenuId(null)}
+              widthPx={180}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setEditTargetId(openMenuLayout.id);
+                  setLayoutMenuId(null);
+                }}
+                className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px] text-slate-400">
+                  edit
+                </span>
+                Edit name & slug
               </button>
-
-              {layoutMenuId === l.id && (
-                <div
-                  ref={menuRef}
-                  className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 min-w-[140px]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      duplicateLayoutMutation.mutate(l.id);
-                      setLayoutMenuId(null);
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-[14px] text-slate-400">
-                      content_copy
-                    </span>
-                    Duplicate
-                  </button>
-                  <div className="border-t border-slate-100 my-0.5" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeleteTargetId(l.id);
-                      setLayoutMenuId(null);
-                    }}
-                    className="w-full px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">
-                      delete
-                    </span>
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+              <button
+                type="button"
+                onClick={() => {
+                  duplicateLayoutMutation.mutate(openMenuLayout.id);
+                  setLayoutMenuId(null);
+                }}
+                className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px] text-slate-400">
+                  content_copy
+                </span>
+                Duplicate
+              </button>
+              <div className="border-t border-slate-100 my-0.5" />
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteTargetId(openMenuLayout.id);
+                  setLayoutMenuId(null);
+                }}
+                className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 inline-flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">
+                  delete
+                </span>
+                Delete
+              </button>
+            </PortalMenu>
+          )}
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
@@ -201,6 +217,7 @@ export function WidgetsLayoutView() {
             key={selectedLayoutId}
             layout={selectedLayout}
             onSave={handleSavePuckData}
+            onLayoutChanged={handleLayoutChanged}
             isSaving={savePuckDataMutation.isPending}
           />
         ) : (
@@ -224,6 +241,14 @@ export function WidgetsLayoutView() {
         <CreateLayoutModal
           onClose={() => setShowCreateModal(false)}
           onCreated={handleLayoutCreated}
+        />
+      )}
+
+      {editTargetLayout && (
+        <EditLayoutModal
+          layout={editTargetLayout}
+          onClose={() => setEditTargetId(null)}
+          onUpdated={() => setEditTargetId(null)}
         />
       )}
 

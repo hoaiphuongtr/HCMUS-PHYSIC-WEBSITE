@@ -3,6 +3,7 @@ import {
   CreatePageLayoutBodySchema,
   UpdatePageLayoutBodySchema,
   SavePuckDataBodySchema,
+  SchedulePublishBodySchema,
   AddWidgetInstanceBodySchema,
   UpdateWidgetInstanceBodySchema,
   ReorderWidgetsBodySchema,
@@ -28,6 +29,9 @@ export class ReorderWidgetsBodyDTO extends createZodDto(
   ReorderWidgetsBodySchema,
 ) {}
 export class SavePuckDataBodyDTO extends createZodDto(SavePuckDataBodySchema) {}
+export class SchedulePublishBodyDTO extends createZodDto(
+  SchedulePublishBodySchema,
+) {}
 export class PageLayoutResDTO extends createZodDto(PageLayoutResSchema) {}
 export class WidgetInstanceResDTO extends createZodDto(
   WidgetInstanceResSchema,

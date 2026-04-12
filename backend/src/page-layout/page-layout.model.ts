@@ -21,6 +21,13 @@ export const SavePuckDataBodySchema = z.object({
 
 export type SavePuckDataBodyType = z.infer<typeof SavePuckDataBodySchema>;
 
+export const SchedulePublishBodySchema = z.object({
+  scheduledAt: z.coerce.date(),
+  alsoScheduleIds: z.array(z.string().min(1)).optional(),
+});
+
+export type SchedulePublishBodyType = z.infer<typeof SchedulePublishBodySchema>;
+
 export type UpdatePageLayoutBodyType = z.infer<
   typeof UpdatePageLayoutBodySchema
 >;
@@ -88,6 +95,7 @@ export const PageLayoutResSchema = z.object({
   puckData: z.any().nullable(),
   isPublished: z.boolean(),
   publishedAt: z.date().nullable(),
+  scheduledAt: z.date().nullable(),
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),

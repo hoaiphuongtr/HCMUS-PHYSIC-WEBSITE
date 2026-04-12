@@ -22,6 +22,7 @@ import {
   ReorderWidgetsBodyDTO,
   DuplicatePageLayoutBodyDTO,
   SavePuckDataBodyDTO,
+  SchedulePublishBodyDTO,
   PageLayoutResDTO,
   WidgetInstanceResDTO,
   PageLayoutMessageResDTO,
@@ -108,6 +109,23 @@ export class PageLayoutController {
   @ZodSerializerDto(PageLayoutResDTO)
   publish(@Param('id') id: string) {
     return this.pageLayoutService.publish(id);
+  }
+
+  @Post(':id/schedule-publish')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutResDTO)
+  schedulePublish(
+    @Param('id') id: string,
+    @Body() body: SchedulePublishBodyDTO,
+  ) {
+    return this.pageLayoutService.schedulePublish(id, body);
+  }
+
+  @Post(':id/unpublish')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutResDTO)
+  unpublish(@Param('id') id: string) {
+    return this.pageLayoutService.unpublish(id);
   }
 
   @Post(':id/widgets')

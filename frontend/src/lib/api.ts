@@ -148,6 +148,7 @@ export type PageLayout = {
   puckData: any | null;
   isPublished: boolean;
   publishedAt: string | null;
+  scheduledAt: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -210,6 +211,21 @@ export const pageLayoutApi = {
   },
   publish(id: string) {
     return authFetch<PageLayout>(`/page-layouts/${id}/publish`, {
+      method: "POST",
+    });
+  },
+  schedulePublish(
+    id: string,
+    scheduledAt: string,
+    alsoScheduleIds?: string[],
+  ) {
+    return authFetch<PageLayout>(`/page-layouts/${id}/schedule-publish`, {
+      method: "POST",
+      body: JSON.stringify({ scheduledAt, alsoScheduleIds }),
+    });
+  },
+  unpublish(id: string) {
+    return authFetch<PageLayout>(`/page-layouts/${id}/unpublish`, {
       method: "POST",
     });
   },

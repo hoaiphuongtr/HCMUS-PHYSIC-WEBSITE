@@ -76,7 +76,31 @@ export class PageLayoutRepository {
   publish(id: string) {
     return this.prisma.pageLayout.update({
       where: { id },
-      data: { isPublished: true, publishedAt: new Date() },
+      data: { isPublished: true, publishedAt: new Date(), scheduledAt: null },
+    });
+  }
+
+  scheduleManyPublish(ids: string[], scheduledAt: Date) {
+    return this.prisma.pageLayout.updateMany({
+      where: { id: { in: ids } },
+      data: { isPublished: false, scheduledAt },
+    });
+  }
+
+  unpublish(id: string) {
+    return this.prisma.pageLayout.update({
+      where: { id },
+      data: { isPublished: false, scheduledAt: null },
+    });
+  }
+
+  findDueForPublish(now: Date) {
+    return this.prisma.pageLayout.findMany({
+      where: {
+        isPublished: false,
+        scheduledAt: { not: null, lte: now },
+      },
+      select: { id: true },
     });
   }
 

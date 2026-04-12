@@ -7,6 +7,61 @@ const pool = new Pool({ connectionString: envConfig.DATABASE_URL });
 const adapter = new PrismaPg(pool as any);
 const prisma = new PrismaClient({ adapter } as any);
 
+const PHYS_BASE = 'https://phys.hcmus.edu.vn/uploads';
+const PHYS_IMAGES = {
+  logo: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/1.LOGO_m%E1%BB%9Bi/Logo_Phys-blue.png`,
+  hero: {
+    asiin: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/HUY116.jpg`,
+    admissions2026: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/Banner_1_web.png`,
+    top550: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/Banner_2.png`,
+    asiinBanner: `${PHYS_BASE}/khoa-vat-ly/Tran_Thi_Bao_Ngoc/Banner_web_khoa/Banner_tuyen_sinh_2025_(1).png`,
+  },
+  edu: {
+    courseRegistration: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_GI%C3%81O_V%E1%BB%A4/TH%C3%94NG_B%C3%81O_tkb.png`,
+    graduationScholarship: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_GI%C3%81O_V%E1%BB%A4/HB_LTN.png`,
+    graduationCeremony: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/TB_LE_TOT_NGHIEP_CAP_KHOA_25.png`,
+    top5Students: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/3DAYS_LEFT_%282%29.png`,
+    scholarship: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/h%E1%BB%8Dc_b%E1%BB%95ng.jpg`,
+  },
+  sci: {
+    mamm2026: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/MAMM26.jpg`,
+    vff20: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/VFF2.0.jpg`,
+    ndtSeminar: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/Seminar_NDT_t%E1%BA%A1i_TTA.png`,
+    polandProgram: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/Ba_Lan.jpg`,
+    quantumWorkshop: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TH%C3%94NG_TIN_KHOA_H%E1%BB%8CC/IMG_3030.JPG`,
+  },
+  jobs: {
+    synopsys: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_TUY%E1%BB%82N_D%E1%BB%A4NG/Synopsys_dcp.jpg`,
+    estec: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_TUY%E1%BB%82N_D%E1%BB%A4NG/Etec_logo.jpeg`,
+    bosh: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_TUY%E1%BB%82N_D%E1%BB%A4NG/bosh.jpg`,
+    tmaK51: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_TUY%E1%BB%82N_D%E1%BB%A4NG/TMA_K51.jpg`,
+    renesas: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/TIN_TUY%E1%BB%82N_D%E1%BB%A4NG/Renesas_campus_ambassador.png`,
+  },
+  dept: {
+    computerPhysics: `${PHYS_BASE}/vat-ly-tin-hoc/ava_tinhoc.png`,
+    theoretical: `${PHYS_BASE}/vat-ly-ly-thuyet/ava_lithuyet.png`,
+    nuclear: `${PHYS_BASE}/vat-ly-hat-nhan/bmvlhn.jpg`,
+    solidState: `${PHYS_BASE}/vat-ly-chat-ran/ava_chatran.png`,
+    applied: `${PHYS_BASE}/vat-ly-ung-dung/ava_ungdung.png`,
+    electronics: `${PHYS_BASE}/vat-ly-dien-tu/ava_dientu.png`,
+    geophysics: `${PHYS_BASE}/vat-ly-dia-cau/Hinh%20anh/1_teBtR_0pirBnX4nURoMvLA.jpeg`,
+    oceanography: `${PHYS_BASE}/vat-ly-hai-duong/ava_haiduong.png`,
+  },
+  leaders: {
+    hvTuan: `${PHYS_BASE}/khoa-vat-ly/Nh%C3%A2n%20s%E1%BB%B1/CB%20quan%20ly/HVTuan1.jpg`,
+    ttThanh: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/Tran_Thien_Thanh.jpg`,
+    dhTrung: `${PHYS_BASE}/khoa-vat-ly/TUI_LA_NGU/DHTrung.png`,
+  },
+  partners: {
+    vnuHcm: `${PHYS_BASE}/khoa-vat-ly/Logo_DHQG.png`,
+    saigon: `${PHYS_BASE}/khoa-vat-ly/Logo%20Li%C3%AAn%20k%E1%BA%BFt/logo_SaiGon_danen.png`,
+    canTho: `${PHYS_BASE}/khoa-vat-ly/logo_DHCT.png`,
+    economicsLaw: `${PHYS_BASE}/khoa-vat-ly/Logo_%C4%90%E1%BA%A1i_h%E1%BB%8Dc_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt.png`,
+    polytechnic: `${PHYS_BASE}/khoa-vat-ly/logo_DHBK.png`,
+    dalat: `${PHYS_BASE}/khoa-vat-ly/logo_DHDL.png`,
+  },
+};
+
 const HOMEPAGE_PUCK_DATA = {
   root: {},
   content: [
@@ -14,7 +69,7 @@ const HOMEPAGE_PUCK_DATA = {
       type: 'Navbar',
       props: {
         id: 'main-navbar',
-        logoSrc: '/Logo_Phys-blue.png',
+        logoSrc: PHYS_IMAGES.logo,
         logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
         menuItems: [
           {
@@ -64,25 +119,25 @@ const HOMEPAGE_PUCK_DATA = {
         id: 'hero-slider',
         slides: [
           {
-            src: '',
+            src: PHYS_IMAGES.hero.asiin,
             alt: 'Khoa Vật lý - Vật lý Kỹ thuật',
             caption: 'Chào mừng đến với Khoa Vật lý - Vật lý Kỹ thuật',
             linkUrl: '/gioi-thieu',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.hero.admissions2026,
             alt: 'Tuyển sinh 2026',
             caption: 'Tuyển sinh Đại học năm 2026',
             linkUrl: '/tuyen-sinh',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.hero.top550,
             alt: 'Nghiên cứu khoa học',
             caption: 'Nghiên cứu khoa học đỉnh cao',
             linkUrl: '/nghien-cuu',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.hero.asiinBanner,
             alt: 'Kiểm định ASIIN',
             caption: 'Chương trình đạt kiểm định ASIIN',
             linkUrl: '/dao-tao',
@@ -129,7 +184,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'tgv-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.courseRegistration,
                     title:
                       'Thông báo về việc đăng ký học phần và thời khoá biểu...',
                     date: '04/02/2026',
@@ -141,7 +196,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'tgv-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.graduationScholarship,
                     title:
                       'Thông báo kết quả xét duyệt học bổng trao tại Lễ Tốt...',
                     date: '18/12/2025',
@@ -153,7 +208,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'tgv-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.graduationCeremony,
                     title:
                       'Thông báo tổ chức Lễ tốt nghiệp đợt Khoa năm 2025',
                     date: '19/11/2025',
@@ -165,7 +220,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'tgv-4',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.top5Students,
                     title:
                       '[HTTT] Hành trình trải tôi sáng - xét danh hiệu "Sinh viên 5...',
                     date: '01/11/2025',
@@ -177,7 +232,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'tgv-5',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.scholarship,
                     title:
                       'THÔNG BÁO VỀ VIỆC CẤP HỌC BỔNG TRONG LỄ TỐT...',
                     date: '06/11/2025',
@@ -218,7 +273,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'ttkh-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.mamm2026,
                     title:
                       'Hội thảo quốc tế và các tiến bộ giàn dây trong khoa học vô...',
                     date: '24/03/2026',
@@ -230,7 +285,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'ttkh-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.vff20,
                     title:
                       'TƯỞNG NIỆM PGS.TS. NHÀ GIÁO NHÂN DÂN NGUYỄN...',
                     date: '22/02/2026',
@@ -242,7 +297,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'ttkh-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.ndtSeminar,
                     title:
                       'Tuyển sinh đi học tại Liên bang Nga năm 2026 theo Đề...',
                     date: '17/02/2026',
@@ -254,7 +309,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'ttkh-4',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.polandProgram,
                     title:
                       'Thông báo tuyển sinh học bổng tại Ban-ga-ri năm 2026',
                     date: '16/02/2026',
@@ -266,7 +321,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'ttkh-5',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.quantumWorkshop,
                     title:
                       'Chương trình trao đổi học kỳ mùa thu 2026 tại Đại học...',
                     date: '10/02/2026',
@@ -307,7 +362,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'td-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.synopsys,
                     title: 'Discover Synopsys program',
                     date: '25/03/2026',
                     linkUrl: '#',
@@ -318,7 +373,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'td-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.estec,
                     title: 'Thông báo tuyển dụng từ công ty ESTEC',
                     date: '13/08/2026',
                     linkUrl: '#',
@@ -329,7 +384,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'td-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.bosh,
                     title:
                       '[EAB] Thực tập sinh kỹ sư Mô hình Mô phỏng (Simulink)...',
                     date: '05/02/2026',
@@ -341,7 +396,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'td-4',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.tmaK51,
                     title:
                       'Chương trình tuyển thực tập Mùa hè Sinh viên 51 tại TMA...',
                     date: '20/01/2026',
@@ -353,7 +408,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'NewsCard',
                   props: {
                     id: 'td-5',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.renesas,
                     title:
                       'Chương trình Đại sứ Sinh viên Renesas (Pilot)',
                     date: '24/10/2025',
@@ -447,7 +502,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vlth',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.computerPhysics,
               title: 'Vật lý Tin học',
               linkUrl: '/bo-mon/vat-ly-tin-hoc',
             },
@@ -458,7 +513,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vllt',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.theoretical,
               title: 'Vật lý Lý thuyết',
               linkUrl: '/bo-mon/vat-ly-ly-thuyet',
             },
@@ -469,7 +524,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vlhn',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.nuclear,
               title: 'Vật lý Hạt nhân - KTHN - VLY/Y',
               linkUrl: '/bo-mon/vat-ly-hat-nhan',
             },
@@ -480,7 +535,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vlcr',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.solidState,
               title: 'Vật lý Chất Rắn',
               linkUrl: '/bo-mon/vat-ly-chat-ran',
             },
@@ -491,7 +546,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vlud',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.applied,
               title: 'Vật lý Ứng Dụng',
               linkUrl: '/bo-mon/vat-ly-ung-dung',
             },
@@ -502,7 +557,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-vldt',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.electronics,
               title: 'Vật lý Điện Tử',
               linkUrl: '/bo-mon/vat-ly-dien-tu',
             },
@@ -513,7 +568,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-dvl',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.geophysics,
               title: 'Địa Vật lý',
               linkUrl: '/bo-mon/dia-vat-ly',
             },
@@ -524,7 +579,7 @@ const HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-hdktv',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.oceanography,
               title: 'Hải dương - Khí tượng - Thủy văn',
               linkUrl: '/bo-mon/hai-duong-khi-tuong-thuy-van',
             },
@@ -578,7 +633,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.hvTuan,
                     name: 'PGS. TS. HUỲNH VĂN TUẤN',
                     role: 'Trưởng Khoa',
                     description: '',
@@ -591,7 +646,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.ttThanh,
                     name: 'PGS.TS. TRẦN THIỆN THANH',
                     role: 'Phó Trưởng Khoa',
                     description: '',
@@ -604,7 +659,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.dhTrung,
                     name: 'TS. ĐẶNG HOÀI TRUNG',
                     role: 'Phó Trưởng Khoa',
                     description: '',
@@ -639,32 +694,32 @@ const HOMEPAGE_PUCK_DATA = {
         id: 'partner-slider',
         logos: [
           {
-            src: '',
+            src: PHYS_IMAGES.partners.vnuHcm,
             alt: 'Đại học Quốc Gia',
             linkUrl: 'https://vnuhcm.edu.vn',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.partners.saigon,
             alt: 'Đại học Sài Gòn',
             linkUrl: 'https://sgu.edu.vn',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.partners.canTho,
             alt: 'Đại học Cần Thơ',
             linkUrl: 'https://ctu.edu.vn',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.partners.economicsLaw,
             alt: 'Đại học Kinh Tế - Luật',
             linkUrl: 'https://uel.edu.vn',
           },
           {
-            src: '',
+            src: PHYS_IMAGES.partners.polytechnic,
             alt: 'Đại học Bách Khoa',
             linkUrl: 'https://hcmut.edu.vn',
           },
         ],
-        bgImageUrl: '',
+        bgImageUrl: PHYS_IMAGES.hero.asiin,
         title: 'Liên kết',
         description:
           'Giảng viên Khoa Vật lý - Vật lý Kỹ thuật tham gia hoạt động giảng dạy và nghiên cứu cùng nhiều trường Đại học uy tín và Viện, Trung tâm nghiên cứu trong và ngoài nước.',
@@ -737,7 +792,7 @@ const HOMEPAGE_PUCK_DATA = {
                   type: 'ImageBlock',
                   props: {
                     id: 'footer-logo',
-                    src: '/Logo_Phys-blue.png',
+                    src: PHYS_IMAGES.logo,
                     alt: 'Physics HCMUS',
                     caption: '',
                     fit: 'contain',
@@ -879,7 +934,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       type: 'Navbar',
       props: {
         id: 'new-navbar',
-        logoSrc: '/Logo_Phys-blue.png',
+        logoSrc: PHYS_IMAGES.logo,
         logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
         menuItems: [
           { label: 'Giới thiệu', url: '#gioi-thieu', children: '' },
@@ -910,7 +965,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
         id: 'new-hero',
         slides: [
           {
-            src: '/Banner_1_web.png',
+            src: PHYS_IMAGES.hero.admissions2026,
             alt: 'Tuyển sinh Khoa Vật lý',
             headline: '',
             subtitle: '',
@@ -918,7 +973,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             ctaUrl: '',
           },
           {
-            src: '/HUY116.jpg',
+            src: PHYS_IMAGES.hero.asiin,
             alt: 'Đội ngũ Khoa Vật lý',
             headline: 'Khoa Vật lý - Vật lý Kỹ thuật',
             subtitle: 'Đại học Khoa học Tự nhiên - ĐHQG TP.HCM',
@@ -926,7 +981,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             ctaUrl: '/gioi-thieu',
           },
           {
-            src: '/Banner_tuyen_sinh_2025_(1).png',
+            src: PHYS_IMAGES.hero.asiinBanner,
             alt: 'Kiểm định ASIIN',
             headline: '',
             subtitle: '',
@@ -934,7 +989,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             ctaUrl: '',
           },
           {
-            src: '/C360_2020-01-11-19-15-56-466.jpg',
+            src: PHYS_IMAGES.edu.scholarship,
             alt: 'Sinh viên Khoa Vật lý',
             headline: 'Đời sống Sinh viên',
             subtitle: 'Trải nghiệm tuổi trẻ đầy ý nghĩa cùng Khoa Vật lý',
@@ -942,7 +997,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             ctaUrl: '/sinh-vien',
           },
           {
-            src: '/Banner_2.png',
+            src: PHYS_IMAGES.hero.top550,
             alt: 'Xếp hạng và Kiểm định',
             headline: '',
             subtitle: '',
@@ -950,7 +1005,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             ctaUrl: '',
           },
           {
-            src: '/C360_2020-01-11-21-13-56-974.jpg',
+            src: PHYS_IMAGES.sci.quantumWorkshop,
             alt: 'Cộng đồng Khoa Vật lý',
             headline: 'Cộng đồng Gắn kết',
             subtitle: 'Nơi hội tụ đam mê khoa học và tinh thần đoàn kết',
@@ -1031,7 +1086,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.mamm2026,
                     title: 'Hội thảo quốc tế về Vật lý Chất rắn và Khoa học Vật liệu 2026',
                     excerpt: 'Khoa Vật lý phối hợp tổ chức hội thảo quốc tế thu hút hơn 200 nhà khoa học từ 15 quốc gia.',
                     date: '24/03/2026',
@@ -1045,7 +1100,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.quantumWorkshop,
                     title: 'Sinh viên Khoa Vật lý đạt giải nhất Olympic Vật lý toàn quốc',
                     excerpt: 'Đội tuyển Olympic Vật lý HCMUS giành 3 huy chương vàng.',
                     date: '18/03/2026',
@@ -1059,7 +1114,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.polandProgram,
                     title: 'Chương trình trao đổi sinh viên với ĐH Tokyo 2026',
                     excerpt: 'Cơ hội học tập và nghiên cứu tại Nhật Bản trong 1 học kỳ.',
                     date: '10/03/2026',
@@ -1083,7 +1138,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-4',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.courseRegistration,
                     title: 'Thông báo đăng ký học phần HK2 năm 2025-2026',
                     date: '04/02/2026',
                     linkUrl: '#',
@@ -1097,7 +1152,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-5',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.sci.ndtSeminar,
                     title: 'Tuyển sinh đi học tại Liên bang Nga năm 2026',
                     date: '17/02/2026',
                     linkUrl: '#',
@@ -1111,7 +1166,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-6',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.jobs.synopsys,
                     title: 'Discover Synopsys - Chương trình thực tập quốc tế',
                     date: '25/03/2026',
                     linkUrl: '#',
@@ -1125,7 +1180,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'NewsOverlayCard',
                   props: {
                     id: 'news-7',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.edu.graduationScholarship,
                     title: 'Kết quả xét duyệt học bổng tốt nghiệp 2025',
                     date: '18/12/2025',
                     linkUrl: '#',
@@ -1187,7 +1242,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vlth',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.computerPhysics,
               title: 'Vật lý Tin học',
               linkUrl: '/bo-mon/vat-ly-tin-hoc',
             },
@@ -1198,7 +1253,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vllt',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.theoretical,
               title: 'Vật lý Lý thuyết',
               linkUrl: '/bo-mon/vat-ly-ly-thuyet',
             },
@@ -1209,7 +1264,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vlhn',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.nuclear,
               title: 'Vật lý Hạt nhân',
               linkUrl: '/bo-mon/vat-ly-hat-nhan',
             },
@@ -1220,7 +1275,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vlcr',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.solidState,
               title: 'Vật lý Chất Rắn',
               linkUrl: '/bo-mon/vat-ly-chat-ran',
             },
@@ -1231,7 +1286,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vlud',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.applied,
               title: 'Vật lý Ứng Dụng',
               linkUrl: '/bo-mon/vat-ly-ung-dung',
             },
@@ -1242,7 +1297,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-vldt',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.electronics,
               title: 'Vật lý Điện Tử',
               linkUrl: '/bo-mon/vat-ly-dien-tu',
             },
@@ -1253,7 +1308,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-dvl',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.geophysics,
               title: 'Địa Vật lý',
               linkUrl: '/bo-mon/dia-vat-ly',
             },
@@ -1264,7 +1319,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
             type: 'DepartmentCard',
             props: {
               id: 'dept-n-hdktv',
-              imageUrl: '',
+              imageUrl: PHYS_IMAGES.dept.oceanography,
               title: 'Hải dương - Khí tượng - Thủy văn',
               linkUrl: '/bo-mon/hai-duong',
             },
@@ -1318,7 +1373,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-n-1',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.hvTuan,
                     name: 'PGS. TS. HUỲNH VĂN TUẤN',
                     role: 'Trưởng Khoa',
                     description: '',
@@ -1331,7 +1386,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-n-2',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.ttThanh,
                     name: 'PGS.TS. TRẦN THIỆN THANH',
                     role: 'Phó Trưởng Khoa',
                     description: '',
@@ -1344,7 +1399,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'ProfileCard',
                   props: {
                     id: 'leader-n-3',
-                    imageUrl: '',
+                    imageUrl: PHYS_IMAGES.leaders.dhTrung,
                     name: 'TS. ĐẶNG HOÀI TRUNG',
                     role: 'Phó Trưởng Khoa',
                     description: '',
@@ -1498,13 +1553,13 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       props: {
         id: 'partners-new',
         logos: [
-          { src: '', alt: 'ĐH Quốc Gia', linkUrl: 'https://vnuhcm.edu.vn' },
-          { src: '', alt: 'ĐH Sài Gòn', linkUrl: 'https://sgu.edu.vn' },
-          { src: '', alt: 'ĐH Cần Thơ', linkUrl: 'https://ctu.edu.vn' },
-          { src: '', alt: 'ĐH Kinh tế - Luật', linkUrl: 'https://uel.edu.vn' },
-          { src: '', alt: 'ĐH Bách Khoa', linkUrl: 'https://hcmut.edu.vn' },
+          { src: PHYS_IMAGES.partners.vnuHcm, alt: 'ĐH Quốc Gia', linkUrl: 'https://vnuhcm.edu.vn' },
+          { src: PHYS_IMAGES.partners.saigon, alt: 'ĐH Sài Gòn', linkUrl: 'https://sgu.edu.vn' },
+          { src: PHYS_IMAGES.partners.canTho, alt: 'ĐH Cần Thơ', linkUrl: 'https://ctu.edu.vn' },
+          { src: PHYS_IMAGES.partners.economicsLaw, alt: 'ĐH Kinh tế - Luật', linkUrl: 'https://uel.edu.vn' },
+          { src: PHYS_IMAGES.partners.polytechnic, alt: 'ĐH Bách Khoa', linkUrl: 'https://hcmut.edu.vn' },
         ],
-        bgImageUrl: '',
+        bgImageUrl: PHYS_IMAGES.hero.asiin,
         title: 'Đối tác & Liên kết',
         description: 'Giảng viên Khoa Vật lý - Vật lý Kỹ thuật tham gia hoạt động giảng dạy và nghiên cứu cùng nhiều trường Đại học uy tín và Viện, Trung tâm nghiên cứu trong và ngoài nước.',
         logoSize: '80',
@@ -1574,7 +1629,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
                   type: 'ImageBlock',
                   props: {
                     id: 'footer-logo-new',
-                    src: '/Logo_Phys-blue.png',
+                    src: PHYS_IMAGES.logo,
                     alt: 'Physics HCMUS',
                     caption: '',
                     fit: 'contain',
@@ -1708,10 +1763,14 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       type: 'ChatButton',
       props: {
         id: 'new-chat-btn',
-        tooltipText: 'Hỏi đáp',
+        tooltipText: 'Hỏi đáp với AI',
         bgColor: '#1d4ed8',
         iconColor: '#ffffff',
-        url: '/lien-he',
+        title: 'Trợ lý AI',
+        subtitle: 'Hỏi đáp về Khoa Vật lý',
+        welcomeMessage:
+          'Xin chào! Tôi là trợ lý ảo của Khoa Vật lý - Vật lý Kỹ thuật. Bạn cần hỗ trợ thông tin gì?',
+        placeholder: 'Nhập câu hỏi của bạn...',
       },
     },
   ],

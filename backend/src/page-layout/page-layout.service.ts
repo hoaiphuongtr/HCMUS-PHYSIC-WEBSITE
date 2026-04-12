@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
@@ -10,6 +11,7 @@ import {
   ReorderWidgetsBodyType,
   DuplicatePageLayoutBodyType,
   SavePuckDataBodyType,
+  SchedulePublishBodyType,
 } from './page-layout.model';
 import {
   PageLayoutSlugExistsException,
@@ -20,11 +22,31 @@ import { WidgetNotFoundException } from '../widget/widget.error';
 
 @Injectable()
 export class PageLayoutService {
+  private readonly logger = new Logger(PageLayoutService.name);
+
   constructor(
     private readonly pageLayoutRepository: PageLayoutRepository,
     private readonly widgetRepository: WidgetRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
+
+  @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDueLayouts' })
+  async handleScheduledPublish() {
+    const due = await this.pageLayoutRepository.findDueForPublish(new Date());
+    if (due.length === 0) return;
+    for (const layout of due) {
+      try {
+        await this.pageLayoutRepository.publish(layout.id);
+        this.logger.log(`Auto-published scheduled layout ${layout.id}`);
+      } catch (err) {
+        this.logger.error(
+          `Failed to auto-publish layout ${layout.id}`,
+          err as Error,
+        );
+      }
+    }
+    await this.cache.clear();
+  }
 
   async create(body: CreatePageLayoutBodyType, userId: string) {
     const existing = await this.pageLayoutRepository.findBySlug(body.slug);
@@ -74,6 +96,31 @@ export class PageLayoutService {
   async publish(id: string) {
     await this.findById(id);
     const result = await this.pageLayoutRepository.publish(id);
+    await this.cache.clear();
+    return result;
+  }
+
+  async schedulePublish(id: string, body: SchedulePublishBodyType) {
+    await this.findById(id);
+    const ids = [id, ...(body.alsoScheduleIds ?? [])];
+    const uniqueIds = Array.from(new Set(ids));
+    for (const layoutId of uniqueIds) {
+      if (layoutId !== id) {
+        const exists = await this.pageLayoutRepository.findById(layoutId);
+        if (!exists) throw PageLayoutNotFoundException;
+      }
+    }
+    await this.pageLayoutRepository.scheduleManyPublish(
+      uniqueIds,
+      body.scheduledAt,
+    );
+    await this.cache.clear();
+    return this.findById(id);
+  }
+
+  async unpublish(id: string) {
+    await this.findById(id);
+    const result = await this.pageLayoutRepository.unpublish(id);
     await this.cache.clear();
     return result;
   }

@@ -396,6 +396,7 @@ model PageLayout {
   puckData    Json?
   isPublished Boolean   @default(false)
   publishedAt DateTime?
+  scheduledAt DateTime?
   createdBy   String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -407,6 +408,7 @@ model PageLayout {
   @@index([slug])
   @@index([isPublished])
   @@index([createdBy])
+  @@index([scheduledAt])
 }
 
 model Tag {

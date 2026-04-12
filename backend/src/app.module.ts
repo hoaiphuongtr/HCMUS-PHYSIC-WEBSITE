@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { PrismaModule } from './prisma/prisma.module';
 import { SharedModule } from './shared/shared.module';
@@ -25,6 +26,7 @@ import envConfig from './shared/config/config';
     }),
     SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     SharedModule,
     AuthModule,
