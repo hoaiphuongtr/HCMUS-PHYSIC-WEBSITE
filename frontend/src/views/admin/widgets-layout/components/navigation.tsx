@@ -499,21 +499,34 @@ export const SocialIcons: ComponentConfig<{
       };
       if (icon === "facebook") {
         return (
-          <svg {...svgProps}>
+          <svg {...svgProps} role="img" aria-label="Facebook">
+            <title>Facebook</title>
             <path d="M25.81.5H3.689A3.7 3.7 0 0 0 0 4.183v22.125a3.7 3.7 0 0 0 3.688 3.688h11.187V19.42h-3.531v-4.608h3.531v-2.31c0-3.56 2.629-6.346 5.982-6.346h3.257v5.203H21.2c-.762 0-.99.435-.99 1.04v2.413h3.903v4.608h-3.902v10.575h5.599a3.7 3.7 0 0 0 3.687-3.688V4.183A3.699 3.699 0 0 0 25.81.5" />
           </svg>
         );
       }
       if (icon === "youtube") {
         return (
-          <svg {...svgProps} viewBox="0 0 24 24">
+          <svg
+            {...svgProps}
+            viewBox="0 0 24 24"
+            role="img"
+            aria-label="YouTube"
+          >
+            <title>YouTube</title>
             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
           </svg>
         );
       }
       if (icon === "twitter") {
         return (
-          <svg {...svgProps} viewBox="0 0 24 24">
+          <svg
+            {...svgProps}
+            viewBox="0 0 24 24"
+            role="img"
+            aria-label="Twitter"
+          >
+            <title>Twitter</title>
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
           </svg>
         );

@@ -248,6 +248,18 @@ function EditJsonButton() {
   );
 }
 
+function PuckDispatchCapture({
+  dispatchRef,
+  children,
+}: {
+  dispatchRef: React.MutableRefObject<((action: any) => void) | null>;
+  children: React.ReactNode;
+}) {
+  const dispatch = usePuck((s) => s.dispatch);
+  dispatchRef.current = dispatch;
+  return <>{children}</>;
+}
+
 function formatDateTimeLocal(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -631,11 +643,11 @@ export function PuckEditor({
           {children}
         </>
       ),
-      puck: ({ children }: { children: React.ReactNode }) => {
-        const dispatch = usePuck((s) => s.dispatch);
-        dispatchRef.current = dispatch;
-        return <>{children}</>;
-      },
+      puck: (props: { children: React.ReactNode }) => (
+        <PuckDispatchCapture dispatchRef={dispatchRef}>
+          {props.children}
+        </PuckDispatchCapture>
+      ),
     }),
     [layout, handlePublish, onLayoutChanged, isSaving],
   );

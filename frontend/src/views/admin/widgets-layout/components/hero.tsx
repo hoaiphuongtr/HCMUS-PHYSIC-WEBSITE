@@ -73,7 +73,7 @@ function HeroFullScreenClient({
     if (prev === null) return;
     const timer = setTimeout(() => setPrev(null), 900);
     return () => clearTimeout(timer);
-  }, [prev, current]);
+  }, [prev]);
 
   const heights: Record<string, string> = {
     md: "min-h-[60vh]",

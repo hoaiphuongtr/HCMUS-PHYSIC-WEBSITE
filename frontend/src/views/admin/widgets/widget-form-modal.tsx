@@ -143,10 +143,14 @@ export function WidgetFormModal({
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label
+                htmlFor="widget-type"
+                className="block text-xs font-semibold text-slate-700 mb-1.5"
+              >
                 Type Identifier
               </label>
               <input
+                id="widget-type"
                 value={type}
                 onChange={(e) => handleTypeChange(e.target.value)}
                 placeholder="MY_CUSTOM_WIDGET"
@@ -156,10 +160,14 @@ export function WidgetFormModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label
+                htmlFor="widget-name"
+                className="block text-xs font-semibold text-slate-700 mb-1.5"
+              >
                 Display Name
               </label>
               <input
+                id="widget-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Custom Widget"

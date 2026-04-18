@@ -126,7 +126,7 @@ export function OTPStep({ email, registerBody, onBack }: OTPStepProps) {
               <div className="flex justify-center gap-3 mb-8">
                 {otp.map((digit, index) => (
                   <input
-                    key={index}
+                    key={`otp-digit-${index}`}
                     ref={(el) => {
                       inputRefs.current[index] = el;
                     }}

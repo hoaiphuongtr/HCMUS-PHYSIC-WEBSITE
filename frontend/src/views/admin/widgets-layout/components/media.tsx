@@ -696,8 +696,10 @@ function PartnerShowcaseClient({
       obs.observe(el);
       observers.push(obs);
     });
-    return () => observers.forEach((o) => o.disconnect());
-  }, [isEditing, partners.length]);
+    return () => {
+      for (const o of observers) o.disconnect();
+    };
+  }, [isEditing, partners]);
 
   return (
     <div
