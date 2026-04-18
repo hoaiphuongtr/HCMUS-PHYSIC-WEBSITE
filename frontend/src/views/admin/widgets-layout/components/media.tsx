@@ -729,7 +729,8 @@ function PartnerShowcaseClient({
                     : alignLeft
                       ? "translateX(100%)"
                       : "translateX(-100%)",
-                  transition: "opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)",
+                  transition:
+                    "opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)",
                 }}
               >
                 <a

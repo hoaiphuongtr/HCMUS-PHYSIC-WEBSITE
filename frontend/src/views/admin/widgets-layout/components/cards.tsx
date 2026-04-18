@@ -420,9 +420,6 @@ export const UpcomingEvents: ComponentConfig<{
     },
   },
   render: ({ events, puck }) => (
-    <UpcomingEventsClient
-      events={events || []}
-      isEditing={!!puck?.isEditing}
-    />
+    <UpcomingEventsClient events={events || []} isEditing={!!puck?.isEditing} />
   ),
 };

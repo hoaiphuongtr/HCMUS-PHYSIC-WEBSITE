@@ -33,11 +33,8 @@ export function EditLayoutModal({
 
   const updateMutation = useMutation({
     mutationKey: ["PAGE_LAYOUTS", "UPDATE"],
-    mutationFn: (body: {
-      name: string;
-      slug: string;
-      description?: string;
-    }) => pageLayoutApi.update(layout.id, body),
+    mutationFn: (body: { name: string; slug: string; description?: string }) =>
+      pageLayoutApi.update(layout.id, body),
     onSuccess(data) {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       queryClient.invalidateQueries({

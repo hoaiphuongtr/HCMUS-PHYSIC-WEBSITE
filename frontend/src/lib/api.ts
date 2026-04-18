@@ -215,11 +215,7 @@ export const pageLayoutApi = {
       method: "POST",
     });
   },
-  schedulePublish(
-    id: string,
-    scheduledAt: string,
-    alsoScheduleIds?: string[],
-  ) {
+  schedulePublish(id: string, scheduledAt: string, alsoScheduleIds?: string[]) {
     return authFetch<PageLayout>(`/page-layouts/${id}/schedule-publish`, {
       method: "POST",
       body: JSON.stringify({ scheduledAt, alsoScheduleIds }),

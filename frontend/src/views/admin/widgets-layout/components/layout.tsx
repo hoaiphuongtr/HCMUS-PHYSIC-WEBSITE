@@ -2,13 +2,21 @@
 
 import type { ComponentConfig, Slot } from "@puckeditor/core";
 
-export const Spacer: ComponentConfig<{ height: string }> = {
+export const Spacer: ComponentConfig<{ direction: string; size: string }> = {
   label: "Spacer",
-  defaultProps: { height: "md" },
+  defaultProps: { direction: "vertical", size: "md" },
   fields: {
-    height: {
+    direction: {
       type: "select",
-      label: "Height",
+      label: "Direction",
+      options: [
+        { label: "Vertical (height)", value: "vertical" },
+        { label: "Horizontal (width)", value: "horizontal" },
+      ],
+    },
+    size: {
+      type: "select",
+      label: "Size",
       options: [
         { label: "XS (8px)", value: "xs" },
         { label: "SM (16px)", value: "sm" },
@@ -18,15 +26,21 @@ export const Spacer: ComponentConfig<{ height: string }> = {
       ],
     },
   },
-  render: ({ height }) => {
-    const heights: Record<string, string> = {
+  render: (props: any) => {
+    const sizes: Record<string, string> = {
       xs: "8px",
       sm: "16px",
       md: "32px",
       lg: "48px",
       xl: "64px",
     };
-    return <div style={{ height: heights[height] || "32px" }} />;
+    const key = props.size || props.height || "md";
+    const value = sizes[key] || "32px";
+    return props.direction === "horizontal" ? (
+      <div style={{ width: value, display: "inline-block" }} />
+    ) : (
+      <div style={{ height: value }} />
+    );
   },
 };
 
@@ -77,12 +91,49 @@ export const Divider: ComponentConfig<{
   },
 };
 
+const widthPctField = {
+  type: "select" as const,
+  label: "Width",
+  options: [
+    { label: "25%", value: "25" },
+    { label: "33%", value: "33" },
+    { label: "50%", value: "50" },
+    { label: "66%", value: "66" },
+    { label: "75%", value: "75" },
+    { label: "100% (fill)", value: "100" },
+  ],
+};
+
+const widthPctAlignField = {
+  type: "select" as const,
+  label: "Align",
+  options: [
+    { label: "Left", value: "left" },
+    { label: "Center", value: "center" },
+    { label: "Right", value: "right" },
+  ],
+};
+
+const resolveWidthStyle = (widthPct: string) => {
+  const pct = parseInt(widthPct, 10);
+  if (!pct || pct >= 100) return { width: "100%" };
+  return { width: `${pct}%` };
+};
+
+const resolveAlignClass = (align: string) => {
+  if (align === "center") return "mx-auto";
+  if (align === "right") return "ml-auto";
+  return "";
+};
+
 export const Card: ComponentConfig<{
   padding: string;
   bgColor: string;
   borderRadius: string;
   showBorder: boolean;
   showShadow: boolean;
+  widthPct: string;
+  align: string;
   content: Slot;
 }> = {
   label: "Card",
@@ -92,8 +143,12 @@ export const Card: ComponentConfig<{
     borderRadius: "lg",
     showBorder: true,
     showShadow: true,
+    widthPct: "100",
+    align: "left",
   } as any,
   fields: {
+    widthPct: widthPctField,
+    align: widthPctAlignField,
     padding: {
       type: "select",
       label: "Padding",
@@ -140,6 +195,8 @@ export const Card: ComponentConfig<{
     borderRadius,
     showBorder,
     showShadow,
+    widthPct,
+    align,
     content: Content,
   }: any) => {
     const paddings: Record<string, string> = {
@@ -157,8 +214,11 @@ export const Card: ComponentConfig<{
     };
     return (
       <div
-        className={`${paddings[padding] || "p-5"} ${radii[borderRadius] || "rounded-lg"} ${showBorder ? "border border-slate-200" : ""} ${showShadow ? "shadow-sm" : ""}`}
-        style={{ backgroundColor: bgColor || "#ffffff" }}
+        className={`${paddings[padding] || "p-5"} ${radii[borderRadius] || "rounded-lg"} ${showBorder ? "border border-slate-200" : ""} ${showShadow ? "shadow-sm" : ""} ${resolveAlignClass(align || "left")}`}
+        style={{
+          backgroundColor: bgColor || "#ffffff",
+          ...resolveWidthStyle(widthPct || "100"),
+        }}
       >
         <Content />
       </div>

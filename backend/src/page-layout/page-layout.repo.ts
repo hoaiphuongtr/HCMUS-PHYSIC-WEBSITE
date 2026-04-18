@@ -92,7 +92,7 @@ export class PageLayoutRepository {
   scheduleManyPublish(ids: string[], scheduledAt: Date) {
     return this.prisma.pageLayout.updateMany({
       where: { id: { in: ids } },
-      data: { isPublished: false, scheduledAt },
+      data: { scheduledAt },
     });
   }
 
@@ -106,7 +106,6 @@ export class PageLayoutRepository {
   findDueForPublish(now: Date) {
     return this.prisma.pageLayout.findMany({
       where: {
-        isPublished: false,
         scheduledAt: { not: null, lte: now },
       },
       select: { id: true },

@@ -2,7 +2,7 @@
 
 import { createUsePuck, Puck } from "@puckeditor/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "@puckeditor/core/puck.css";
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
@@ -10,6 +10,135 @@ import { ModalPortal, PortalMenu } from "./portal-menu";
 import { puckConfig } from "./puck-config";
 
 const usePuck = createUsePuck();
+
+const SLOT_TYPES: Record<string, string[]> = {
+  Container: ["content"],
+  Card: ["content"],
+  Columns: ["col0", "col1", "col2", "col3"],
+  Grid: Array.from({ length: 24 }, (_, i) => `cell${i}`),
+  FooterBlock: ["content"],
+};
+
+type SlotTarget = {
+  zoneCompound: string;
+  label: string;
+  contentLength: number;
+};
+
+function walkForSlotTargets(
+  data: any,
+  selectedId: string | undefined,
+): SlotTarget[] {
+  const out: SlotTarget[] = [
+    {
+      zoneCompound: "root:default-zone",
+      label: "Root (page)",
+      contentLength: Array.isArray(data?.content) ? data.content.length : 0,
+    },
+  ];
+  const visit = (item: any) => {
+    if (!item || item.props?.id === selectedId) return;
+    const type = item.type as string | undefined;
+    const slots = type ? SLOT_TYPES[type] : undefined;
+    if (slots && item.props) {
+      const name = item.props?.id || type;
+      for (const slot of slots) {
+        const slotValue = item.props[slot];
+        if (Array.isArray(slotValue)) {
+          out.push({
+            zoneCompound: `${item.props.id}:${slot}`,
+            label: `${type} (${name}) › ${slot}`,
+            contentLength: slotValue.length,
+          });
+          for (const child of slotValue) visit(child);
+        }
+      }
+    } else if (item.props) {
+      for (const key of Object.keys(item.props)) {
+        const value = item.props[key];
+        if (Array.isArray(value)) {
+          for (const child of value) visit(child);
+        }
+      }
+    }
+  };
+  if (Array.isArray(data?.content)) {
+    for (const item of data.content) visit(item);
+  }
+  return out;
+}
+
+function MoveToPicker() {
+  const selectedItem = usePuck((s) => s.selectedItem);
+  const appState = usePuck((s) => s.appState);
+  const dispatch = usePuck((s) => s.dispatch);
+
+  const currentZone = appState.ui?.itemSelector?.zone;
+  const currentIndex = appState.ui?.itemSelector?.index;
+  const selectedId = selectedItem?.props?.id;
+
+  const targets = useMemo(() => {
+    if (!selectedItem) return [];
+    return walkForSlotTargets(appState.data, selectedId).filter(
+      (t) => t.zoneCompound !== currentZone,
+    );
+  }, [selectedItem, appState.data, currentZone, selectedId]);
+
+  if (
+    !selectedItem ||
+    currentZone === undefined ||
+    currentIndex === undefined
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+      <label
+        htmlFor="move-to-zone"
+        className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1"
+      >
+        Move to container
+      </label>
+      <select
+        id="move-to-zone"
+        className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+        value=""
+        onChange={(e) => {
+          const destZone = e.target.value;
+          if (!destZone) return;
+          const target = targets.find((t) => t.zoneCompound === destZone);
+          const destIndex = target?.contentLength ?? 0;
+          dispatch({
+            type: "move",
+            sourceZone: currentZone,
+            sourceIndex: currentIndex,
+            destinationZone: destZone,
+            destinationIndex: destIndex,
+          });
+          dispatch({
+            type: "setUi",
+            ui: {
+              itemSelector: { zone: destZone, index: destIndex },
+            },
+          });
+        }}
+      >
+        <option value="" disabled>
+          Choose target…
+        </option>
+        {targets.map((t) => (
+          <option key={t.zoneCompound} value={t.zoneCompound}>
+            {t.label}
+          </option>
+        ))}
+      </select>
+      <p className="text-[10px] text-slate-400 mt-1">
+        Tip: you can also drag the component by its border in the canvas.
+      </p>
+    </div>
+  );
+}
 
 function formatDateTimeLocal(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -128,10 +257,12 @@ function PublishMenu({
   };
 
   const disabled = busy || isSaving;
-  const statusLabel = layout.isPublished
-    ? "Published"
-    : layout.scheduledAt
-      ? `Scheduled ${new Date(layout.scheduledAt).toLocaleString()}`
+  const statusLabel = layout.scheduledAt
+    ? layout.isPublished
+      ? `Published — update scheduled ${new Date(layout.scheduledAt).toLocaleString()}`
+      : `Scheduled ${new Date(layout.scheduledAt).toLocaleString()}`
+    : layout.isPublished
+      ? "Published"
       : "Draft";
   const publicSiteUrl =
     process.env.NEXT_PUBLIC_PUBLIC_SITE_URL || "http://localhost:3002";
@@ -382,6 +513,12 @@ export function PuckEditor({
           onLayoutChanged={onLayoutChanged}
           isSaving={isSaving}
         />
+      ),
+      fields: ({ children }: { children: React.ReactNode }) => (
+        <>
+          <MoveToPicker />
+          {children}
+        </>
       ),
       puck: ({ children }: { children: React.ReactNode }) => {
         const dispatch = usePuck((s) => s.dispatch);

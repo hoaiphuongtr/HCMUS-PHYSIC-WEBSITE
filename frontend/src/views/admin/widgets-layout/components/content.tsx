@@ -334,6 +334,8 @@ export const NewsCard: ComponentConfig<{
   date: string;
   linkUrl: string;
   layout: string;
+  widthPct: string;
+  align: string;
 }> = {
   label: "News Card",
   defaultProps: {
@@ -342,6 +344,8 @@ export const NewsCard: ComponentConfig<{
     date: "25/03/2026",
     linkUrl: "#",
     layout: "horizontal",
+    widthPct: "100",
+    align: "left",
   },
   fields: {
     imageUrl: { type: "text", label: "Image URL" },
@@ -356,37 +360,69 @@ export const NewsCard: ComponentConfig<{
         { label: "Vertical (image top)", value: "vertical" },
       ],
     },
+    widthPct: {
+      type: "select",
+      label: "Width",
+      options: [
+        { label: "25%", value: "25" },
+        { label: "33%", value: "33" },
+        { label: "50%", value: "50" },
+        { label: "66%", value: "66" },
+        { label: "75%", value: "75" },
+        { label: "100% (fill)", value: "100" },
+      ],
+    },
+    align: {
+      type: "select",
+      label: "Align",
+      options: [
+        { label: "Left", value: "left" },
+        { label: "Center", value: "center" },
+        { label: "Right", value: "right" },
+      ],
+    },
   },
-  render: ({ imageUrl, title, date, linkUrl, layout, puck }) => {
+  render: ({
+    imageUrl,
+    title,
+    date,
+    linkUrl,
+    layout,
+    widthPct,
+    align,
+    puck,
+  }) => {
     const isVertical = layout === "vertical";
-    if (isVertical) {
-      return (
-        <a
-          href={puck?.isEditing ? "#" : linkUrl || "#"}
-          tabIndex={puck?.isEditing ? -1 : undefined}
-          className="block group"
-        >
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={title}
-              className="w-full aspect-video object-cover rounded-md mb-2"
-            />
-          ) : (
-            <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-slate-300">
-                image
-              </span>
-            </div>
-          )}
-          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
-            {title}
-          </h4>
-          <p className="text-xs text-slate-400 mt-1">{date}</p>
-        </a>
-      );
-    }
-    return (
+    const pct = parseInt(widthPct || "100", 10);
+    const wrapperClass =
+      align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
+    const wrapperStyle =
+      pct && pct < 100 ? { width: `${pct}%` } : { width: "100%" };
+    const inner = isVertical ? (
+      <a
+        href={puck?.isEditing ? "#" : linkUrl || "#"}
+        tabIndex={puck?.isEditing ? -1 : undefined}
+        className="block group"
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full aspect-video object-cover rounded-md mb-2"
+          />
+        ) : (
+          <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl text-slate-300">
+              image
+            </span>
+          </div>
+        )}
+        <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+          {title}
+        </h4>
+        <p className="text-xs text-slate-400 mt-1">{date}</p>
+      </a>
+    ) : (
       <a
         href={puck?.isEditing ? "#" : linkUrl || "#"}
         tabIndex={puck?.isEditing ? -1 : undefined}
@@ -412,6 +448,11 @@ export const NewsCard: ComponentConfig<{
           <p className="text-xs text-slate-400 mt-1">{date}</p>
         </div>
       </a>
+    );
+    return (
+      <div className={wrapperClass} style={wrapperStyle}>
+        {inner}
+      </div>
     );
   },
 };
