@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getLayoutBySlug } from "@/lib/api";
 import { PuckRenderer } from "@admin/views/admin/widgets-layout/puck-renderer";
+import { VisitorTracker } from "@/components/visitor-tracker";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,7 +15,12 @@ export default async function PublicLayoutPage({
   try {
     const layout = await getLayoutBySlug(slug);
     if (!layout.isPublished) notFound();
-    return <PuckRenderer puckData={layout.publishedPuckData ?? layout.puckData} />;
+    return (
+      <>
+        <VisitorTracker slug={slug} />
+        <PuckRenderer puckData={layout.publishedPuckData ?? layout.puckData} />
+      </>
+    );
   } catch {
     notFound();
   }

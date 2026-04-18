@@ -34,13 +34,26 @@ export class PageLayoutService {
   async handleScheduledPublish() {
     const due = await this.pageLayoutRepository.findDueForPublish(new Date());
     if (due.length === 0) return;
-    for (const layout of due) {
+    for (const dueLayout of due) {
       try {
+        const layout = await this.pageLayoutRepository.findById(dueLayout.id);
+        if (!layout) continue;
+        const conflict =
+          await this.pageLayoutRepository.findAnyPublishedWithSlug(
+            layout.slug,
+            layout.id,
+          );
+        if (conflict) {
+          await this.pageLayoutRepository.unpublish(conflict.id);
+          this.logger.log(
+            `Auto-unpublished ${conflict.id} to free slug "${layout.slug}"`,
+          );
+        }
         await this.pageLayoutRepository.publish(layout.id);
         this.logger.log(`Auto-published scheduled layout ${layout.id}`);
       } catch (err) {
         this.logger.error(
-          `Failed to auto-publish layout ${layout.id}`,
+          `Failed to auto-publish layout ${dueLayout.id}`,
           err as Error,
         );
       }
@@ -49,8 +62,6 @@ export class PageLayoutService {
   }
 
   async create(body: CreatePageLayoutBodyType, userId: string) {
-    const existing = await this.pageLayoutRepository.findBySlug(body.slug);
-    if (existing) throw PageLayoutSlugExistsException;
     const layout = await this.pageLayoutRepository.create({
       ...body,
       createdBy: userId,
@@ -70,16 +81,17 @@ export class PageLayoutService {
   }
 
   async findBySlug(slug: string) {
-    const layout = await this.pageLayoutRepository.findBySlug(slug);
+    const layout = await this.pageLayoutRepository.findPublishedBySlug(slug);
     if (!layout) throw PageLayoutNotFoundException;
     return layout;
   }
 
   async update(id: string, body: UpdatePageLayoutBodyType) {
-    await this.findById(id);
-    if (body.slug) {
-      const existing = await this.pageLayoutRepository.findBySlug(body.slug);
-      if (existing && existing.id !== id) throw PageLayoutSlugExistsException;
+    const current = await this.findById(id);
+    if (body.slug && current.isPublished && body.slug !== current.slug) {
+      const conflict =
+        await this.pageLayoutRepository.findAnyPublishedWithSlug(body.slug, id);
+      if (conflict) throw PageLayoutSlugExistsException;
     }
     const updated = await this.pageLayoutRepository.update(id, body);
     await this.cache.clear();
@@ -94,7 +106,12 @@ export class PageLayoutService {
   }
 
   async publish(id: string) {
-    await this.findById(id);
+    const layout = await this.findById(id);
+    const conflict = await this.pageLayoutRepository.findAnyPublishedWithSlug(
+      layout.slug,
+      id,
+    );
+    if (conflict) throw PageLayoutSlugExistsException;
     const result = await this.pageLayoutRepository.publish(id);
     await this.cache.clear();
     return result;
@@ -178,14 +195,10 @@ export class PageLayoutService {
     const original = await this.pageLayoutRepository.findById(id);
     if (!original) throw PageLayoutNotFoundException;
     const baseName = body.name || `Copy of ${original.name}`;
-    let slug = baseName
+    const slug = baseName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    const existing = await this.pageLayoutRepository.findBySlug(slug);
-    if (existing) {
-      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
-    }
+      .replace(/(^-|-$)/g, '') || original.slug;
     const duplicated = await this.pageLayoutRepository.duplicateWithWidgets(
       {
         name: original.name,

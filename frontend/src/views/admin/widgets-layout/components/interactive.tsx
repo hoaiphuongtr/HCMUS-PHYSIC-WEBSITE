@@ -2,6 +2,12 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useState } from "react";
+import { subscriptionApi, visitorApi } from "@/lib/api";
+import {
+  getOrCreateVisitorId,
+  getSubscriberEmail,
+  setSubscriberEmail,
+} from "@/lib/visitor";
 
 const BUTTON_FONT_CLASS: Record<string, string> = {
   default: "",
@@ -295,6 +301,7 @@ export const SearchOverlay: ComponentConfig<{
   hotLinks: SearchLink[];
   showRecent: boolean;
   recentStorageKey: string;
+  autoPersonalize: boolean;
 }> = {
   label: "Search Overlay",
   defaultProps: {
@@ -312,6 +319,7 @@ export const SearchOverlay: ComponentConfig<{
     ],
     showRecent: true,
     recentStorageKey: "search.recent",
+    autoPersonalize: false,
   },
   fields: {
     placeholder: { type: "text", label: "Placeholder" },
@@ -341,6 +349,14 @@ export const SearchOverlay: ComponentConfig<{
       ],
     },
     recentStorageKey: { type: "text", label: "Recent storage key" },
+    autoPersonalize: {
+      type: "radio",
+      label: "Auto-personalize (based on visitor behavior)",
+      options: [
+        { label: "On", value: true },
+        { label: "Off", value: false },
+      ],
+    },
   },
   render: ({
     placeholder,
@@ -349,17 +365,50 @@ export const SearchOverlay: ComponentConfig<{
     hotLinks,
     showRecent,
     recentStorageKey,
+    autoPersonalize,
     puck,
   }) => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [recent, setRecent] = useState<RecentItem[]>([]);
+    const [personalSuggested, setPersonalSuggested] = useState<SearchLink[]>(
+      [],
+    );
+    const [personalHot, setPersonalHot] = useState<SearchLink[]>([]);
 
     useEffect(() => {
       if (open && showRecent) {
         setRecent(readRecent(recentStorageKey || "search.recent"));
       }
     }, [open, showRecent, recentStorageKey]);
+
+    useEffect(() => {
+      if (!open || !autoPersonalize || puck?.isEditing) return;
+      const visitorId = getOrCreateVisitorId();
+      if (!visitorId) return;
+      visitorApi
+        .getSuggestions(visitorId, 6)
+        .then((res) => {
+          if (res.suggestedLinks?.length)
+            setPersonalSuggested(res.suggestedLinks);
+          if (res.hotTags?.length) {
+            setPersonalHot(
+              res.hotTags.map((t) => ({
+                label: t.label,
+                url: `/${t.slug}`,
+              })),
+            );
+          }
+        })
+        .catch(() => {});
+    }, [open, autoPersonalize, puck?.isEditing]);
+
+    const effectiveSuggested =
+      autoPersonalize && personalSuggested.length > 0
+        ? personalSuggested
+        : suggestedLinks;
+    const effectiveHot =
+      autoPersonalize && personalHot.length > 0 ? personalHot : hotLinks;
 
     const submitQuery = () => {
       const trimmed = query.trim();
@@ -413,7 +462,7 @@ export const SearchOverlay: ComponentConfig<{
                 </span>
               </div>
 
-              {hotLinks && hotLinks.length > 0 && (
+              {effectiveHot && effectiveHot.length > 0 && (
                 <div className="mt-8">
                   <p className="text-orange-300/80 text-xs uppercase tracking-widest mb-4 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">
@@ -422,7 +471,7 @@ export const SearchOverlay: ComponentConfig<{
                     Xu hướng
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {hotLinks.map((link, i) => (
+                    {effectiveHot.map((link, i) => (
                       <a
                         key={`hot-${i}`}
                         href={link.url}
@@ -435,13 +484,15 @@ export const SearchOverlay: ComponentConfig<{
                 </div>
               )}
 
-              {suggestedLinks && suggestedLinks.length > 0 && (
+              {effectiveSuggested && effectiveSuggested.length > 0 && (
                 <div className="mt-8">
                   <p className="text-white/50 text-xs uppercase tracking-widest mb-4">
-                    Gợi ý tìm kiếm
+                    {autoPersonalize && personalSuggested.length > 0
+                      ? "Dành cho bạn"
+                      : "Gợi ý tìm kiếm"}
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {suggestedLinks.map((link, i) => (
+                    {effectiveSuggested.map((link, i) => (
                       <a
                         key={`sug-${i}`}
                         href={link.url}
@@ -859,6 +910,358 @@ export const ChatButton: ComponentConfig<{
       subtitle={subtitle}
       welcomeMessage={welcomeMessage}
       placeholder={placeholder}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
+};
+
+function SubscribeBannerClient({
+  title,
+  subtitle,
+  bgColor,
+  textColor,
+  tagOptions,
+  successMessage,
+  isEditing,
+}: {
+  title: string;
+  subtitle: string;
+  bgColor: string;
+  textColor: string;
+  tagOptions: { label: string; value: string }[];
+  successMessage: string;
+  isEditing: boolean;
+}) {
+  const [email, setEmail] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">(
+    "idle",
+  );
+  const [alreadySubscribed, setAlreadySubscribed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isEditing) return;
+    setAlreadySubscribed(!!getSubscriberEmail());
+  }, [isEditing]);
+
+  const toggleTag = (value: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
+    );
+  };
+
+  const submit = async () => {
+    if (!email.trim()) {
+      setError("Vui lòng nhập email");
+      return;
+    }
+    setStatus("saving");
+    setError(null);
+    try {
+      const visitorId = getOrCreateVisitorId();
+      await subscriptionApi.create({
+        email: email.trim(),
+        tagSlugs: selectedTags,
+        visitorId,
+      });
+      setSubscriberEmail(email.trim());
+      setStatus("done");
+      setAlreadySubscribed(true);
+    } catch (err) {
+      setStatus("error");
+      const msg = err instanceof Error ? err.message : "Đăng ký thất bại";
+      setError(msg);
+    }
+  };
+
+  return (
+    <section
+      id="subscribe"
+      className="rounded-xl px-6 py-10 md:px-12 md:py-14 grid md:grid-cols-2 gap-8 items-center"
+      style={{
+        backgroundColor: bgColor || "#0c2340",
+        color: textColor || "#ffffff",
+      }}
+    >
+      <div>
+        <h3 className="text-2xl md:text-3xl font-bold mb-2">{title}</h3>
+        <p className="text-sm md:text-base opacity-80">{subtitle}</p>
+      </div>
+      {alreadySubscribed && !isEditing ? (
+        <div
+          className="rounded-lg border border-white/20 bg-white/5 px-4 py-6 text-center"
+          style={{ color: textColor || "#ffffff" }}
+        >
+          <p className="text-sm font-medium">
+            {successMessage || "Cảm ơn bạn đã đăng ký!"}
+          </p>
+          <p className="text-xs mt-1 opacity-70">
+            Bạn đã nằm trong danh sách nhận thông báo.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            disabled={isEditing || status === "saving"}
+            className="w-full px-4 py-3 rounded-md text-slate-900 bg-white/95 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          {tagOptions && tagOptions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tagOptions.map((opt) => {
+                const active = selectedTags.includes(opt.value);
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => !isEditing && toggleTag(opt.value)}
+                    className={
+                      active
+                        ? "px-3 py-1.5 rounded-full text-xs bg-white text-slate-900 border border-white"
+                        : "px-3 py-1.5 rounded-full text-xs bg-white/10 border border-white/30 hover:bg-white/20"
+                    }
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => !isEditing && submit()}
+            disabled={isEditing || status === "saving"}
+            className="w-full md:w-auto px-6 py-3 rounded-md bg-blue-500 hover:bg-blue-600 text-white font-medium text-sm disabled:opacity-60"
+          >
+            {status === "saving" ? "Đang lưu..." : "Đăng ký"}
+          </button>
+          {error && <p className="text-xs text-red-200">{error}</p>}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export const SubscribeBanner: ComponentConfig<{
+  title: string;
+  subtitle: string;
+  bgColor: string;
+  textColor: string;
+  tagOptions: { label: string; value: string }[];
+  successMessage: string;
+}> = {
+  label: "Subscribe Banner",
+  defaultProps: {
+    title: "Nhận thông báo qua email",
+    subtitle:
+      "Học bổng, tuyển sinh, sự kiện... được gửi tới bạn khi có thông tin mới.",
+    bgColor: "#0c2340",
+    textColor: "#ffffff",
+    tagOptions: [
+      { label: "Học bổng", value: "hoc-bong" },
+      { label: "Tuyển sinh", value: "tuyen-sinh" },
+      { label: "Bán dẫn", value: "ban-dan" },
+      { label: "Nghiên cứu", value: "nghien-cuu" },
+    ],
+    successMessage: "Cảm ơn bạn đã đăng ký!",
+  },
+  fields: {
+    title: { type: "text", label: "Title" },
+    subtitle: { type: "textarea", label: "Subtitle" },
+    bgColor: { type: "text", label: "Background Color" },
+    textColor: { type: "text", label: "Text Color" },
+    tagOptions: {
+      type: "array",
+      label: "Tag Options",
+      arrayFields: {
+        label: { type: "text", label: "Label" },
+        value: { type: "text", label: "Value (tag slug)" },
+      },
+    },
+    successMessage: { type: "text", label: "Success Message" },
+  },
+  render: ({
+    title,
+    subtitle,
+    bgColor,
+    textColor,
+    tagOptions,
+    successMessage,
+    puck,
+  }) => (
+    <SubscribeBannerClient
+      title={title}
+      subtitle={subtitle}
+      bgColor={bgColor}
+      textColor={textColor}
+      tagOptions={tagOptions}
+      successMessage={successMessage}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
+};
+
+function TagNotificationBarClient({
+  tagSlug,
+  message,
+  linkLabel,
+  linkUrl,
+  bgColor,
+  textColor,
+  minWeight,
+  dismissible,
+  isEditing,
+}: {
+  tagSlug: string;
+  message: string;
+  linkLabel: string;
+  linkUrl: string;
+  bgColor: string;
+  textColor: string;
+  minWeight: number;
+  dismissible: boolean;
+  isEditing: boolean;
+}) {
+  const [ready, setReady] = useState(false);
+  const [shouldShow, setShouldShow] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      setShouldShow(true);
+      setReady(true);
+      return;
+    }
+    const visitorId = getOrCreateVisitorId();
+    if (!visitorId || !tagSlug) {
+      setReady(true);
+      return;
+    }
+    const dismissKey = `dismissed:${tagSlug}`;
+    if (
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(dismissKey)
+    ) {
+      setReady(true);
+      return;
+    }
+    visitorApi
+      .getProfile(visitorId)
+      .then((profile) => {
+        const weight = profile.tagWeights?.[tagSlug] || 0;
+        const alreadySubscribed = profile.subscribedTagSlugs?.includes(tagSlug);
+        setShouldShow(weight >= minWeight && !alreadySubscribed);
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, [tagSlug, minWeight, isEditing]);
+
+  const dismiss = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(`dismissed:${tagSlug}`, "1");
+    }
+    setDismissed(true);
+  };
+
+  if (!ready || !shouldShow || dismissed) return null;
+
+  return (
+    <div
+      className="px-4 py-2.5 flex items-center gap-3"
+      style={{
+        backgroundColor: bgColor || "#0c2340",
+        color: textColor || "#ffffff",
+      }}
+    >
+      <span className="material-symbols-outlined text-lg shrink-0">
+        notifications_active
+      </span>
+      <span className="text-sm font-medium flex-1">{message}</span>
+      {linkLabel && (
+        <a
+          href={isEditing ? "#" : linkUrl || "#"}
+          tabIndex={isEditing ? -1 : undefined}
+          className="px-3 py-1 text-xs font-semibold rounded-md bg-white/15 hover:bg-white/25"
+        >
+          {linkLabel}
+        </a>
+      )}
+      {dismissible && !isEditing && (
+        <button
+          type="button"
+          onClick={dismiss}
+          className="shrink-0 opacity-70 hover:opacity-100"
+          aria-label="Dismiss"
+        >
+          <span className="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+export const TagNotificationBar: ComponentConfig<{
+  tagSlug: string;
+  message: string;
+  linkLabel: string;
+  linkUrl: string;
+  bgColor: string;
+  textColor: string;
+  minWeight: number;
+  dismissible: boolean;
+}> = {
+  label: "Tag Notification Bar",
+  defaultProps: {
+    tagSlug: "hoc-bong",
+    message: "Bạn quan tâm học bổng? Đăng ký để không bỏ lỡ tin mới.",
+    linkLabel: "Đăng ký",
+    linkUrl: "#subscribe",
+    bgColor: "#0c2340",
+    textColor: "#ffffff",
+    minWeight: 3,
+    dismissible: true,
+  },
+  fields: {
+    tagSlug: { type: "text", label: "Tag slug" },
+    message: { type: "text", label: "Message" },
+    linkLabel: { type: "text", label: "Link label" },
+    linkUrl: { type: "text", label: "Link URL" },
+    bgColor: { type: "text", label: "Background Color" },
+    textColor: { type: "text", label: "Text Color" },
+    minWeight: { type: "number", label: "Min visitor weight" },
+    dismissible: {
+      type: "radio",
+      label: "Dismissible",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
+  },
+  render: ({
+    tagSlug,
+    message,
+    linkLabel,
+    linkUrl,
+    bgColor,
+    textColor,
+    minWeight,
+    dismissible,
+    puck,
+  }) => (
+    <TagNotificationBarClient
+      tagSlug={tagSlug}
+      message={message}
+      linkLabel={linkLabel}
+      linkUrl={linkUrl}
+      bgColor={bgColor}
+      textColor={textColor}
+      minWeight={minWeight}
+      dismissible={dismissible}
       isEditing={!!puck?.isEditing}
     />
   ),

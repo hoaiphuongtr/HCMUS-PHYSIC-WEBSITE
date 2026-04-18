@@ -33,9 +33,9 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.create({ data });
   }
 
-  findBySlug(slug: string) {
-    return this.prisma.pageLayout.findUnique({
-      where: { slug },
+  findPublishedBySlug(slug: string) {
+    return this.prisma.pageLayout.findFirst({
+      where: { slug, isPublished: true },
       include: {
         widgets: {
           include: widgetInclude,
@@ -43,6 +43,17 @@ export class PageLayoutRepository {
           where: { widget: { isActive: true } },
         },
       },
+    });
+  }
+
+  findAnyPublishedWithSlug(slug: string, excludeId?: string) {
+    return this.prisma.pageLayout.findFirst({
+      where: {
+        slug,
+        isPublished: true,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
     });
   }
 

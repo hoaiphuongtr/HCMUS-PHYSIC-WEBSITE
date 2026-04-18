@@ -1,6 +1,9 @@
 "use client";
 
 import type { ComponentConfig, Slot } from "@puckeditor/core";
+import { useEffect, useState } from "react";
+import { visitorApi } from "@/lib/api";
+import { getOrCreateVisitorId } from "@/lib/visitor";
 
 export const Spacer: ComponentConfig<{ direction: string; size: string }> = {
   label: "Spacer",
@@ -413,9 +416,85 @@ const GRID_SLOT_KEYS = [
   "cell23",
 ] as const;
 
+function cellTagWeight(
+  cellChildren: any,
+  tagWeights: Record<string, number>,
+): number {
+  if (!Array.isArray(cellChildren)) return 0;
+  let max = 0;
+  for (const child of cellChildren) {
+    const tags = child?.props?.tags;
+    if (!Array.isArray(tags)) continue;
+    for (const t of tags) {
+      const slug = typeof t === "string" ? t : t?.slug;
+      if (!slug) continue;
+      const w = tagWeights[slug] || 0;
+      if (w > max) max = w;
+    }
+  }
+  return max;
+}
+
+function GridClient({
+  keys,
+  props,
+  cols,
+  gapClass,
+  reorderByTags,
+}: {
+  keys: string[];
+  props: Record<string, any>;
+  cols: number;
+  gapClass: string;
+  reorderByTags: boolean;
+}) {
+  const [orderedKeys, setOrderedKeys] = useState<string[]>(keys);
+
+  useEffect(() => {
+    setOrderedKeys(keys);
+    if (!reorderByTags || props.puck?.isEditing) return;
+    let cancelled = false;
+    const visitorId = getOrCreateVisitorId();
+    if (!visitorId) return;
+    visitorApi
+      .getProfile(visitorId)
+      .then((profile) => {
+        if (cancelled) return;
+        const weights = profile.tagWeights || {};
+        if (Object.keys(weights).length === 0) return;
+        const sorted = [...keys].sort((a, b) => {
+          const wa = cellTagWeight(props[a], weights);
+          const wb = cellTagWeight(props[b], weights);
+          return wb - wa;
+        });
+        setOrderedKeys(sorted);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [reorderByTags, keys, props]);
+
+  return (
+    <div
+      className={`grid ${gapClass}`}
+      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+    >
+      {orderedKeys.map((key) => {
+        const CellSlot = props[key];
+        return (
+          <div key={key}>
+            <CellSlot />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export const Grid: ComponentConfig<any> = {
   label: "Grid",
-  defaultProps: { columns: "3", rows: "1", gap: "md" },
+  defaultProps: { columns: "3", rows: "1", gap: "md", reorderByTags: false },
   fields: {
     columns: {
       type: "select",
@@ -449,6 +528,14 @@ export const Grid: ComponentConfig<any> = {
         { label: "Large", value: "lg" },
       ],
     },
+    reorderByTags: {
+      type: "radio",
+      label: "Reorder by visitor tags",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
     ...Object.fromEntries(
       GRID_SLOT_KEYS.map((k, i) => [
         k,
@@ -457,7 +544,7 @@ export const Grid: ComponentConfig<any> = {
     ),
   } as any,
   render: (props) => {
-    const { columns, rows, gap } = props;
+    const { columns, rows, gap, reorderByTags } = props;
     const cols = parseInt(columns, 10) || 3;
     const rowCount = parseInt(rows, 10) || 1;
     const total = cols * rowCount;
@@ -468,19 +555,13 @@ export const Grid: ComponentConfig<any> = {
       lg: "gap-8",
     };
     return (
-      <div
-        className={`grid ${gaps[gap] || "gap-4"}`}
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
-        {GRID_SLOT_KEYS.slice(0, total).map((key) => {
-          const CellSlot = (props as any)[key];
-          return (
-            <div key={key}>
-              <CellSlot />
-            </div>
-          );
-        })}
-      </div>
+      <GridClient
+        keys={GRID_SLOT_KEYS.slice(0, total)}
+        props={props as any}
+        cols={cols}
+        gapClass={gaps[gap] || "gap-4"}
+        reorderByTags={!!reorderByTags}
+      />
     );
   },
 };

@@ -391,7 +391,7 @@ model WidgetInstance {
 model PageLayout {
   id                String    @id @default(cuid())
   name              String
-  slug              String    @unique
+  slug              String
   description       String?
   puckData          Json?
   publishedPuckData Json?
@@ -505,6 +505,47 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+}
+
+model Subscription {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  visitorId  String?
+  tagSlugs   String[]
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([visitorId])
+}
+
+model VisitorProfile {
+  id          String   @id @default(cuid())
+  tagWeights  Json     @default("{}")
+  slugWeights Json     @default("{}")
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SlugVisit {
+  id        String   @id @default(cuid())
+  visitorId String
+  slug      String
+  createdAt DateTime @default(now())
+
+  @@index([visitorId, slug])
+  @@index([slug, createdAt])
+}
+
+model PostRead {
+  id        String   @id @default(cuid())
+  visitorId String
+  postId    String
+  createdAt DateTime @default(now())
+
+  @@index([visitorId, postId])
+  @@index([postId, createdAt])
 }
 
 model FAQ {

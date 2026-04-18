@@ -394,6 +394,7 @@ export const NewsCard: ComponentConfig<{
   layout: string;
   widthPct: string;
   align: string;
+  tags: { slug: string }[];
 }> = {
   label: "News Card",
   defaultProps: {
@@ -404,12 +405,20 @@ export const NewsCard: ComponentConfig<{
     layout: "horizontal",
     widthPct: "100",
     align: "left",
+    tags: [],
   },
   fields: {
     imageUrl: { type: "text", label: "Image URL" },
     title: { type: "text", label: "Title" },
     date: { type: "text", label: "Date" },
     linkUrl: { type: "text", label: "Link URL" },
+    tags: {
+      type: "array",
+      label: "Tags (for personalization)",
+      arrayFields: {
+        slug: { type: "text", label: "Tag slug" },
+      },
+    },
     layout: {
       type: "select",
       label: "Layout",

@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   },
   { name: "Widget Types", href: "/admin/widgets", icon: "extension" },
   { name: "Menus", href: "/admin/menus", icon: "menu" },
+  { name: "Subscribers", href: "/admin/subscriptions", icon: "mail" },
 ];
 
 const SYSTEM_ITEMS = [

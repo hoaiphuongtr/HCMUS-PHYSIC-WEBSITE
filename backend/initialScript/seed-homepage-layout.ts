@@ -1643,12 +1643,29 @@ const main = async () => {
     return;
   }
 
-  const existingOld = await prisma.pageLayout.findUnique({
+  const BASE_TAGS = [
+    { slug: 'hoc-bong', name: 'Học bổng' },
+    { slug: 'tuyen-sinh', name: 'Tuyển sinh' },
+    { slug: 'ban-dan', name: 'Bán dẫn' },
+    { slug: 'nghien-cuu', name: 'Nghiên cứu' },
+    { slug: 'su-kien', name: 'Sự kiện' },
+    { slug: 'tin-tuc', name: 'Tin tức' },
+  ];
+  for (const tag of BASE_TAGS) {
+    await prisma.tag.upsert({
+      where: { slug: tag.slug },
+      create: tag,
+      update: { name: tag.name },
+    });
+  }
+  console.log(`Upserted ${BASE_TAGS.length} base tags`);
+
+  const existingOld = await prisma.pageLayout.findFirst({
     where: { slug: 'trang-chu' },
   });
   if (existingOld) {
     await prisma.pageLayout.update({
-      where: { slug: 'trang-chu' },
+      where: { id: existingOld.id },
       data: { puckData: HOMEPAGE_PUCK_DATA as any },
     });
     console.log('Old homepage layout updated');
@@ -1666,12 +1683,12 @@ const main = async () => {
     console.log('Old homepage layout created');
   }
 
-  const existingNew = await prisma.pageLayout.findUnique({
+  const existingNew = await prisma.pageLayout.findFirst({
     where: { slug: 'trang-chu-moi' },
   });
   if (existingNew) {
     await prisma.pageLayout.update({
-      where: { slug: 'trang-chu-moi' },
+      where: { id: existingNew.id },
       data: {
         puckData: NEW_HOMEPAGE_PUCK_DATA as any,
         publishedPuckData: NEW_HOMEPAGE_PUCK_DATA as any,
@@ -1855,12 +1872,12 @@ const main = async () => {
     ],
   };
 
-  const existingSub = await prisma.pageLayout.findUnique({
+  const existingSub = await prisma.pageLayout.findFirst({
     where: { slug: 'tuyen-sinh' },
   });
   if (existingSub) {
     await prisma.pageLayout.update({
-      where: { slug: 'tuyen-sinh' },
+      where: { id: existingSub.id },
       data: { puckData: SUBPAGE_PUCK_DATA as any },
     });
     console.log('Sub-page "tuyen-sinh" updated');
@@ -1954,6 +1971,7 @@ const main = async () => {
                 columns: '3',
                 rows: '2',
                 gap: 'md',
+                reorderByTags: true,
                 cell0: [
                   {
                     type: 'NewsCard',
@@ -1981,6 +1999,7 @@ const main = async () => {
                       layout: 'vertical',
                       widthPct: '100',
                       align: 'left',
+                      tags: [{ slug: 'hoc-bong' }, { slug: 'ban-dan' }],
                     },
                   },
                 ],
@@ -2011,6 +2030,7 @@ const main = async () => {
                       layout: 'vertical',
                       widthPct: '100',
                       align: 'left',
+                      tags: [{ slug: 'hoc-bong' }, { slug: 'ban-dan' }],
                     },
                   },
                 ],
@@ -2041,6 +2061,7 @@ const main = async () => {
                       layout: 'vertical',
                       widthPct: '100',
                       align: 'left',
+                      tags: [{ slug: 'hoc-bong' }, { slug: 'nghien-cuu' }],
                     },
                   },
                 ],
@@ -2120,14 +2141,35 @@ const main = async () => {
         },
       },
       {
-        type: 'AnnouncementBar',
+        type: 'TagNotificationBar',
         props: {
-          id: 'hb-announce',
-          text: 'Đăng ký nhận thông báo học bổng mới qua email',
+          id: 'hb-tag-notif',
+          tagSlug: 'hoc-bong',
+          message: 'Bạn truy cập học bổng nhiều lần — đăng ký để không bỏ lỡ đợt mới.',
+          linkLabel: 'Đăng ký',
           linkUrl: '#subscribe',
           bgColor: '#0c2340',
           textColor: '#ffffff',
-          icon: 'notifications',
+          minWeight: 2,
+          dismissible: true,
+        },
+      },
+      {
+        type: 'SubscribeBanner',
+        props: {
+          id: 'hb-subscribe',
+          title: 'Nhận thông báo học bổng mới',
+          subtitle:
+            'Email bạn chỉ dùng để gửi tin học bổng, tuyển sinh, sự kiện của Khoa. Không spam.',
+          bgColor: '#0c2340',
+          textColor: '#ffffff',
+          tagOptions: [
+            { label: 'Học bổng', value: 'hoc-bong' },
+            { label: 'Tuyển sinh', value: 'tuyen-sinh' },
+            { label: 'Bán dẫn', value: 'ban-dan' },
+            { label: 'Nghiên cứu', value: 'nghien-cuu' },
+          ],
+          successMessage: 'Đã đăng ký! Bạn sẽ nhận thông báo khi có tin mới.',
         },
       },
       {
@@ -2154,12 +2196,12 @@ const main = async () => {
     ],
   };
 
-  const existingScholarship = await prisma.pageLayout.findUnique({
+  const existingScholarship = await prisma.pageLayout.findFirst({
     where: { slug: 'hoc-bong' },
   });
   if (existingScholarship) {
     await prisma.pageLayout.update({
-      where: { slug: 'hoc-bong' },
+      where: { id: existingScholarship.id },
       data: { puckData: SCHOLARSHIP_PUCK_DATA as any },
     });
     console.log('Scholarship page "hoc-bong" updated');

@@ -21,6 +21,8 @@ import {
   ChatButton,
   PersonaSelector,
   SearchOverlay,
+  SubscribeBanner,
+  TagNotificationBar,
 } from "./components/interactive";
 import {
   Card,
@@ -100,6 +102,8 @@ export const puckConfig: Config = {
         "SearchOverlay",
         "PersonaSelector",
         "ChatButton",
+        "SubscribeBanner",
+        "TagNotificationBar",
       ],
     },
     hero: {
@@ -150,5 +154,7 @@ export const puckConfig: Config = {
     ImageTextBlock,
     UpcomingEvents,
     PartnerShowcase,
+    SubscribeBanner,
+    TagNotificationBar,
   } as any,
 };

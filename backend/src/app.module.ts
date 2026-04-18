@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { DepartmentModule } from './department/department.module';
 import { WidgetModule } from './widget/widget.module';
 import { PageLayoutModule } from './page-layout/page-layout.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { VisitorModule } from './visitor/visitor.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -33,6 +35,8 @@ import envConfig from './shared/config/config';
     DepartmentModule,
     WidgetModule,
     PageLayoutModule,
+    SubscriptionModule,
+    VisitorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
