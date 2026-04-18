@@ -3,10 +3,31 @@
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
 
+const TAGLINE_SIZES: Record<string, string> = {
+  xs: "text-[10px] md:text-xs",
+  sm: "text-xs md:text-sm",
+  md: "text-sm md:text-base",
+  lg: "text-base md:text-lg",
+  xl: "text-lg md:text-xl",
+};
+
+const FONT_FAMILIES: Record<string, string> = {
+  default: "",
+  serif: "font-serif",
+  sans: "font-sans",
+  mono: "font-mono",
+  heading: "font-heading",
+  "heading-italic": "font-heading italic",
+};
+
 function HeroFullScreenClient({
   slides,
   tagline,
   taglineColor,
+  taglineSize,
+  taglineFont,
+  taglineClassName,
+  taglineStyle,
   overlayOpacity,
   height,
   showScrollIndicator,
@@ -22,6 +43,10 @@ function HeroFullScreenClient({
   }[];
   tagline: string;
   taglineColor: string;
+  taglineSize: string;
+  taglineFont: string;
+  taglineClassName?: string;
+  taglineStyle?: Record<string, string | number>;
   overlayOpacity: string;
   height: string;
   showScrollIndicator: boolean;
@@ -138,8 +163,11 @@ function HeroFullScreenClient({
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6 py-32 gap-4">
         {tagline && (
           <p
-            className="text-xs md:text-sm uppercase tracking-[0.3em] font-medium animate-[fadeInUp_1s_ease_0.6s_both]"
-            style={{ color: taglineColor || "#ffffff" }}
+            className={`uppercase tracking-[0.3em] font-medium animate-[fadeInUp_1s_ease_0.6s_both] ${TAGLINE_SIZES[taglineSize] || TAGLINE_SIZES.sm} ${FONT_FAMILIES[taglineFont] || ""} ${taglineClassName || ""}`}
+            style={{
+              color: taglineColor || "#ffffff",
+              ...(taglineStyle || {}),
+            }}
           >
             {tagline}
           </p>
@@ -194,6 +222,23 @@ function HeroFullScreenClient({
   );
 }
 
+export const TEXT_SIZE_OPTIONS = [
+  { label: "XS", value: "xs" },
+  { label: "S", value: "sm" },
+  { label: "M", value: "md" },
+  { label: "L", value: "lg" },
+  { label: "XL", value: "xl" },
+];
+
+export const FONT_OPTIONS = [
+  { label: "Default", value: "default" },
+  { label: "Sans", value: "sans" },
+  { label: "Serif", value: "serif" },
+  { label: "Mono", value: "mono" },
+  { label: "Heading", value: "heading" },
+  { label: "Heading italic", value: "heading-italic" },
+];
+
 export const HeroFullScreen: ComponentConfig<{
   slides: {
     src: string;
@@ -205,6 +250,9 @@ export const HeroFullScreen: ComponentConfig<{
   }[];
   tagline: string;
   taglineColor: string;
+  taglineSize: string;
+  taglineFont: string;
+  taglineClassName: string;
   overlayOpacity: string;
   height: string;
   showScrollIndicator: boolean;
@@ -223,6 +271,9 @@ export const HeroFullScreen: ComponentConfig<{
     ],
     tagline: "KHÁM PHÁ • SÁNG TẠO • CỐNG HIẾN",
     taglineColor: "#ffffff",
+    taglineSize: "sm",
+    taglineFont: "default",
+    taglineClassName: "",
     overlayOpacity: "medium",
     height: "full",
     showScrollIndicator: true,
@@ -242,6 +293,20 @@ export const HeroFullScreen: ComponentConfig<{
     },
     tagline: { type: "text", label: "Tagline" },
     taglineColor: { type: "text", label: "Tagline Color" },
+    taglineSize: {
+      type: "select",
+      label: "Tagline Size",
+      options: TEXT_SIZE_OPTIONS,
+    },
+    taglineFont: {
+      type: "select",
+      label: "Tagline Font",
+      options: FONT_OPTIONS,
+    },
+    taglineClassName: {
+      type: "text",
+      label: "Tagline class (advanced)",
+    },
     overlayOpacity: {
       type: "select",
       label: "Overlay Opacity",
@@ -274,15 +339,23 @@ export const HeroFullScreen: ComponentConfig<{
     slides,
     tagline,
     taglineColor,
+    taglineSize,
+    taglineFont,
+    taglineClassName,
     overlayOpacity,
     height,
     showScrollIndicator,
     puck,
-  }) => (
+    ...rest
+  }: any) => (
     <HeroFullScreenClient
       slides={slides}
       tagline={tagline}
       taglineColor={taglineColor}
+      taglineSize={taglineSize}
+      taglineFont={taglineFont}
+      taglineClassName={taglineClassName}
+      taglineStyle={rest.taglineStyle}
       overlayOpacity={overlayOpacity}
       height={height}
       showScrollIndicator={showScrollIndicator}

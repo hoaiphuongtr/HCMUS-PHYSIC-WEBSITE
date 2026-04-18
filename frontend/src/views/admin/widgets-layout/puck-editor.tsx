@@ -140,6 +140,114 @@ function MoveToPicker() {
   );
 }
 
+function EditJsonButton() {
+  const appState = usePuck((s) => s.appState);
+  const dispatch = usePuck((s) => s.dispatch);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const openModal = () => {
+    setValue(JSON.stringify(appState.data, null, 2));
+    setError(null);
+    setOpen(true);
+  };
+
+  const apply = () => {
+    try {
+      const parsed = JSON.parse(value);
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        !Array.isArray(parsed.content)
+      ) {
+        setError("Expected shape: { root: {}, content: [] }");
+        return;
+      }
+      dispatch({ type: "setData", data: parsed });
+      toast.success("JSON applied — remember to Save draft");
+      setOpen(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Invalid JSON";
+      setError(message);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={openModal}
+        title="Edit raw JSON"
+        aria-label="Edit raw JSON"
+        className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+      >
+        {"{ }"}
+      </button>
+      {open && (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center px-4"
+            style={{ zIndex: 10001 }}
+          >
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+              <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Edit raw JSON
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Advanced — changes apply in-memory. Click Save draft after.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                  aria-label="Close"
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    close
+                  </span>
+                </button>
+              </div>
+              <div className="p-5 flex-1 overflow-hidden flex flex-col gap-2">
+                <textarea
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  spellCheck={false}
+                  className="flex-1 min-h-[60vh] w-full font-mono text-xs border border-slate-200 rounded-md p-3 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {error && (
+                  <p className="text-xs text-red-600 font-mono whitespace-pre-wrap">
+                    {error}
+                  </p>
+                )}
+              </div>
+              <div className="px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-1.5 text-xs rounded-md border border-slate-200 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={apply}
+                  className="px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </>
+  );
+}
+
 function formatDateTimeLocal(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -507,12 +615,15 @@ export function PuckEditor({
   const overrides = useMemo(
     () => ({
       headerActions: () => (
-        <PublishMenu
-          layout={layout}
-          onSavePuck={handlePublish}
-          onLayoutChanged={onLayoutChanged}
-          isSaving={isSaving}
-        />
+        <div className="inline-flex items-center gap-2">
+          <EditJsonButton />
+          <PublishMenu
+            layout={layout}
+            onSavePuck={handlePublish}
+            onLayoutChanged={onLayoutChanged}
+            isSaving={isSaving}
+          />
+        </div>
       ),
       fields: ({ children }: { children: React.ReactNode }) => (
         <>

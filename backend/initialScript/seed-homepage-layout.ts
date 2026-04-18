@@ -1877,6 +1877,305 @@ const main = async () => {
     });
     console.log('Sub-page "tuyen-sinh" created');
   }
+
+  const SCHOLARSHIP_PUCK_DATA = {
+    root: {},
+    content: [
+      {
+        type: 'Navbar',
+        props: {
+          id: 'hb-navbar',
+          logoSrc: PHYS_IMAGES.logo,
+          logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+          menuItems: [
+            { label: 'Trang chủ', url: '/trang-chu-moi', children: '' },
+            { label: 'Tuyển sinh', url: '/tuyen-sinh', children: '' },
+            { label: 'Học bổng', url: '/hoc-bong', children: '' },
+            { label: 'Liên hệ', url: '#lien-he', children: '' },
+          ],
+          bgColor: '#ffffff',
+          textColor: '#1e293b',
+          showSearch: true,
+          searchPlaceholder: 'Tìm học bổng...',
+          searchSuggestions: [
+            { label: 'Học bổng khuyến khích', url: '/hoc-bong#kkht' },
+            { label: 'Học bổng doanh nghiệp', url: '/hoc-bong#doanh-nghiep' },
+            { label: 'Học bổng quốc tế', url: '/hoc-bong#quoc-te' },
+          ],
+        },
+      },
+      {
+        type: 'HeroFullScreen',
+        props: {
+          id: 'hb-hero',
+          slides: [
+            {
+              src: PHYS_IMAGES.edu.scholarship,
+              alt: 'Học bổng HCMUS Physics',
+              headline: 'Học bổng HCMUS Physics',
+              subtitle: 'Cơ hội tài trợ học tập, nghiên cứu và trao đổi quốc tế',
+              ctaLabel: 'Xem danh sách',
+              ctaUrl: '#programs',
+            },
+          ],
+          tagline: 'TÀI NĂNG • CƠ HỘI • PHÁT TRIỂN',
+          taglineColor: '#fde68a',
+          overlayOpacity: 'medium',
+          height: 'lg',
+          showScrollIndicator: true,
+        },
+      },
+      {
+        type: 'Container',
+        props: {
+          id: 'hb-intro',
+          maxWidth: 'xl',
+          padding: 'lg',
+          bgColor: '#ffffff',
+          centered: true,
+          anchorId: 'programs',
+          content: [
+            {
+              type: 'SectionHeader',
+              props: {
+                id: 'hb-sh-programs',
+                title: 'Các chương trình học bổng',
+                linkText: '',
+                linkUrl: '',
+                bgColor: '#1e40af',
+                textColor: '#ffffff',
+              },
+            },
+            { type: 'Spacer', props: { id: 'hb-sp-1', direction: 'vertical', size: 'md' } },
+            {
+              type: 'Grid',
+              props: {
+                id: 'hb-programs-grid',
+                columns: '3',
+                rows: '2',
+                gap: 'md',
+                cell0: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-1',
+                      imageUrl: PHYS_IMAGES.edu.graduationScholarship,
+                      title: 'Học bổng khuyến khích học tập',
+                      date: 'HK 1-2 hàng năm',
+                      linkUrl: '/hoc-bong/kkht',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+                cell1: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-2',
+                      imageUrl: PHYS_IMAGES.jobs.synopsys,
+                      title: 'Học bổng Synopsys - Bán dẫn',
+                      date: 'Mở đăng ký: Q1/2026',
+                      linkUrl: '/hoc-bong/synopsys',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+                cell2: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-3',
+                      imageUrl: PHYS_IMAGES.sci.polandProgram,
+                      title: 'Học bổng trao đổi Ba Lan',
+                      date: 'Hạn: 30/06/2026',
+                      linkUrl: '/hoc-bong/ba-lan',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+                cell3: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-4',
+                      imageUrl: PHYS_IMAGES.jobs.renesas,
+                      title: 'Học bổng Renesas Campus',
+                      date: 'Mở đăng ký: Q2/2026',
+                      linkUrl: '/hoc-bong/renesas',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+                cell4: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-5',
+                      imageUrl: PHYS_IMAGES.edu.top5Students,
+                      title: 'Học bổng sinh viên xuất sắc',
+                      date: 'Xét mỗi học kỳ',
+                      linkUrl: '/hoc-bong/xuat-sac',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+                cell5: [
+                  {
+                    type: 'NewsCard',
+                    props: {
+                      id: 'hb-card-6',
+                      imageUrl: PHYS_IMAGES.sci.quantumWorkshop,
+                      title: 'Học bổng nghiên cứu sinh',
+                      date: 'Tháng 9 hàng năm',
+                      linkUrl: '/hoc-bong/nghien-cuu',
+                      layout: 'vertical',
+                      widthPct: '100',
+                      align: 'left',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'ImageTextBlock',
+        props: {
+          id: 'hb-process',
+          imageUrl: PHYS_IMAGES.edu.courseRegistration,
+          imageAlt: 'Quy trình đăng ký học bổng',
+          imagePosition: 'left',
+          fullBleed: true,
+          headline: 'Quy trình đăng ký học bổng',
+          body: 'Bốn bước đơn giản để nộp hồ sơ. Bộ phận Công tác sinh viên sẽ hỗ trợ từng bước. Hồ sơ nộp online qua portal, xét duyệt trong 2 tuần, công bố kết quả trước khi học kỳ bắt đầu.',
+          stats: [
+            { value: 'Bước 1', label: 'Kiểm tra điều kiện' },
+            { value: 'Bước 2', label: 'Chuẩn bị hồ sơ' },
+            { value: 'Bước 3', label: 'Nộp online' },
+            { value: 'Bước 4', label: 'Phỏng vấn & kết quả' },
+          ],
+          ctaLabel: 'Tải biểu mẫu',
+          ctaUrl: '/bieu-mau/hoc-bong',
+          bgColor: '#f8fafc',
+        },
+      },
+      {
+        type: 'Container',
+        props: {
+          id: 'hb-cta-wrap',
+          maxWidth: 'md',
+          padding: 'lg',
+          bgColor: '#ffffff',
+          centered: true,
+          anchorId: 'lien-he',
+          content: [
+            {
+              type: 'SectionHeader',
+              props: {
+                id: 'hb-sh-cta',
+                title: 'Cần hỗ trợ?',
+                linkText: '',
+                linkUrl: '',
+                bgColor: '#1e40af',
+                textColor: '#ffffff',
+              },
+            },
+            { type: 'Spacer', props: { id: 'hb-sp-2', direction: 'vertical', size: 'sm' } },
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'hb-cta-text',
+                content:
+                  'Liên hệ Ban Công tác sinh viên để được tư vấn hồ sơ. Email: sv.phys@hcmus.edu.vn · Hotline: 028-38-350-096',
+                fontSize: 'base',
+                alignment: 'center',
+                color: '#475569',
+              },
+            },
+            { type: 'Spacer', props: { id: 'hb-sp-3', direction: 'vertical', size: 'sm' } },
+            {
+              type: 'ButtonBlock',
+              props: {
+                id: 'hb-cta-button',
+                label: 'Đăng ký tư vấn',
+                url: '/lien-he',
+                variant: 'primary',
+                size: 'lg',
+                alignment: 'center',
+                fullWidth: false,
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'AnnouncementBar',
+        props: {
+          id: 'hb-announce',
+          text: 'Đăng ký nhận thông báo học bổng mới qua email',
+          linkUrl: '#subscribe',
+          bgColor: '#0c2340',
+          textColor: '#ffffff',
+          icon: 'notifications',
+        },
+      },
+      {
+        type: 'FooterBlock',
+        props: {
+          id: 'hb-footer',
+          bgColor: '#0c2340',
+          textColor: '#94a3b8',
+          content: [
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'hb-footer-text',
+                content:
+                  'Khoa Vật Lý - Vật Lý Kỹ Thuật · 227 Nguyễn Văn Cừ, Q.5, TP.HCM · phys@hcmus.edu.vn',
+                fontSize: 'sm',
+                alignment: 'center',
+                color: '#94a3b8',
+              },
+            },
+          ],
+        },
+      },
+    ],
+  };
+
+  const existingScholarship = await prisma.pageLayout.findUnique({
+    where: { slug: 'hoc-bong' },
+  });
+  if (existingScholarship) {
+    await prisma.pageLayout.update({
+      where: { slug: 'hoc-bong' },
+      data: { puckData: SCHOLARSHIP_PUCK_DATA as any },
+    });
+    console.log('Scholarship page "hoc-bong" updated');
+  } else {
+    await prisma.pageLayout.create({
+      data: {
+        name: 'Học bổng',
+        slug: 'hoc-bong',
+        description: 'Các chương trình học bổng HCMUS Physics',
+        puckData: SCHOLARSHIP_PUCK_DATA as any,
+        isPublished: false,
+        createdBy: admin.id,
+      },
+    });
+    console.log('Scholarship page "hoc-bong" created');
+  }
 };
 
 main()

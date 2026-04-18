@@ -31,12 +31,34 @@ export function WidgetsLayoutView() {
   const { data: layouts = [] } = useQuery({
     queryKey: ["PAGE_LAYOUTS"],
     queryFn: () => pageLayoutApi.list(),
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: true,
+    refetchInterval: (query) => {
+      const list = query.state.data ?? [];
+      const now = Date.now();
+      const hasPending = list.some((l) => l.scheduledAt);
+      if (!hasPending) return false;
+      const hasDueSoon = list.some((l) => {
+        if (!l.scheduledAt) return false;
+        const t = new Date(l.scheduledAt).getTime();
+        return t - now < 120_000;
+      });
+      return hasDueSoon ? 10_000 : 60_000;
+    },
   });
 
   const { data: selectedLayout } = useQuery({
     queryKey: ["PAGE_LAYOUTS", selectedLayoutId],
     queryFn: () => pageLayoutApi.getById(selectedLayoutId!),
     enabled: !!selectedLayoutId,
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: true,
+    refetchInterval: (query) => {
+      const l = query.state.data;
+      if (!l?.scheduledAt) return false;
+      const t = new Date(l.scheduledAt).getTime();
+      return t - Date.now() < 120_000 ? 10_000 : 60_000;
+    },
   });
 
   const savePuckDataMutation = useMutation({

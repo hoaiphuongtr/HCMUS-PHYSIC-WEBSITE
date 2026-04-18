@@ -1,7 +1,16 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const BUTTON_FONT_CLASS: Record<string, string> = {
+  default: "",
+  sans: "font-sans",
+  serif: "font-serif",
+  mono: "font-mono",
+  heading: "font-heading",
+  "heading-italic": "font-heading italic",
+};
 
 export const ButtonBlock: ComponentConfig<{
   label: string;
@@ -10,6 +19,9 @@ export const ButtonBlock: ComponentConfig<{
   size: string;
   alignment: string;
   fullWidth: boolean;
+  labelFont: string;
+  labelColor: string;
+  labelClassName: string;
 }> = {
   label: "Button",
   defaultProps: {
@@ -19,6 +31,9 @@ export const ButtonBlock: ComponentConfig<{
     size: "md",
     alignment: "left",
     fullWidth: false,
+    labelFont: "default",
+    labelColor: "",
+    labelClassName: "",
   },
   fields: {
     label: { type: "text", label: "Label" },
@@ -40,6 +55,7 @@ export const ButtonBlock: ComponentConfig<{
         { label: "Small", value: "sm" },
         { label: "Medium", value: "md" },
         { label: "Large", value: "lg" },
+        { label: "XL", value: "xl" },
       ],
     },
     alignment: {
@@ -59,8 +75,34 @@ export const ButtonBlock: ComponentConfig<{
         { label: "No", value: false },
       ],
     },
+    labelFont: {
+      type: "select",
+      label: "Label Font",
+      options: [
+        { label: "Default", value: "default" },
+        { label: "Sans", value: "sans" },
+        { label: "Serif", value: "serif" },
+        { label: "Mono", value: "mono" },
+        { label: "Heading", value: "heading" },
+        { label: "Heading italic", value: "heading-italic" },
+      ],
+    },
+    labelColor: { type: "text", label: "Label Color (override)" },
+    labelClassName: { type: "text", label: "Label class (advanced)" },
   },
-  render: ({ label, url, variant, size, alignment, fullWidth, puck }) => {
+  render: ({
+    label,
+    url,
+    variant,
+    size,
+    alignment,
+    fullWidth,
+    labelFont,
+    labelColor,
+    labelClassName,
+    puck,
+    ...rest
+  }: any) => {
     const variants: Record<string, string> = {
       primary: "bg-blue-600 text-white hover:bg-blue-700",
       secondary: "bg-slate-700 text-white hover:bg-slate-800",
@@ -72,18 +114,23 @@ export const ButtonBlock: ComponentConfig<{
       sm: "px-4 py-1.5 text-sm",
       md: "px-6 py-2 text-base",
       lg: "px-8 py-3 text-lg",
+      xl: "px-10 py-4 text-xl",
     };
     const aligns: Record<string, string> = {
       left: "justify-start",
       center: "justify-center",
       right: "justify-end",
     };
+    const style: Record<string, string> = labelColor
+      ? { color: labelColor }
+      : {};
     return (
       <div className={`flex ${aligns[alignment] || "justify-start"}`}>
         <a
           href={puck?.isEditing ? "#" : url}
           tabIndex={puck?.isEditing ? -1 : undefined}
-          className={`inline-block rounded-md font-medium transition-colors ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${fullWidth ? "w-full text-center" : ""}`}
+          className={`inline-block rounded-md font-medium transition-colors ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${BUTTON_FONT_CLASS[labelFont] || ""} ${labelClassName || ""} ${fullWidth ? "w-full text-center" : ""}`}
+          style={{ ...style, ...(rest.labelStyle || {}) }}
         >
           {label || "Button"}
         </a>
@@ -213,10 +260,41 @@ export const AnnouncementBar: ComponentConfig<{
   ),
 };
 
+type SearchLink = { label: string; url: string };
+type RecentItem = { label: string; url: string; ts: number };
+
+function readRecent(key: string): RecentItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (x) => x && typeof x.url === "string" && typeof x.label === "string",
+      )
+      .sort((a, b) => (b.ts ?? 0) - (a.ts ?? 0))
+      .slice(0, 8);
+  } catch {
+    return [];
+  }
+}
+
+function pushRecent(key: string, item: Omit<RecentItem, "ts">) {
+  if (typeof window === "undefined") return;
+  const current = readRecent(key).filter((x) => x.url !== item.url);
+  const next = [{ ...item, ts: Date.now() }, ...current].slice(0, 8);
+  window.localStorage.setItem(key, JSON.stringify(next));
+}
+
 export const SearchOverlay: ComponentConfig<{
   placeholder: string;
   bgColor: string;
-  suggestedLinks: { label: string; url: string }[];
+  suggestedLinks: SearchLink[];
+  hotLinks: SearchLink[];
+  showRecent: boolean;
+  recentStorageKey: string;
 }> = {
   label: "Search Overlay",
   defaultProps: {
@@ -228,6 +306,12 @@ export const SearchOverlay: ComponentConfig<{
       { label: "Nghiên cứu", url: "/nghien-cuu" },
       { label: "Liên hệ", url: "/lien-he" },
     ],
+    hotLinks: [
+      { label: "Học bổng 2026", url: "/hoc-bong" },
+      { label: "Bán dẫn", url: "/ban-dan" },
+    ],
+    showRecent: true,
+    recentStorageKey: "search.recent",
   },
   fields: {
     placeholder: { type: "text", label: "Placeholder" },
@@ -240,10 +324,56 @@ export const SearchOverlay: ComponentConfig<{
         url: { type: "text", label: "URL" },
       },
     },
+    hotLinks: {
+      type: "array",
+      label: "Hot Links",
+      arrayFields: {
+        label: { type: "text", label: "Label" },
+        url: { type: "text", label: "URL" },
+      },
+    },
+    showRecent: {
+      type: "radio",
+      label: "Show recent searches",
+      options: [
+        { label: "On", value: true },
+        { label: "Off", value: false },
+      ],
+    },
+    recentStorageKey: { type: "text", label: "Recent storage key" },
   },
-  render: ({ placeholder, bgColor, suggestedLinks, puck }) => {
+  render: ({
+    placeholder,
+    bgColor,
+    suggestedLinks,
+    hotLinks,
+    showRecent,
+    recentStorageKey,
+    puck,
+  }) => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
+    const [recent, setRecent] = useState<RecentItem[]>([]);
+
+    useEffect(() => {
+      if (open && showRecent) {
+        setRecent(readRecent(recentStorageKey || "search.recent"));
+      }
+    }, [open, showRecent, recentStorageKey]);
+
+    const submitQuery = () => {
+      const trimmed = query.trim();
+      if (!trimmed) return;
+      const url = `/search?q=${encodeURIComponent(trimmed)}`;
+      pushRecent(recentStorageKey || "search.recent", { label: trimmed, url });
+      window.location.href = url;
+    };
+
+    const clearRecent = () => {
+      window.localStorage.removeItem(recentStorageKey || "search.recent");
+      setRecent([]);
+    };
+
     return (
       <>
         <button
@@ -256,7 +386,7 @@ export const SearchOverlay: ComponentConfig<{
         </button>
         {open && (
           <div
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-[15vh] animate-[fadeIn_0.3s_ease]"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-start pt-[12vh] overflow-y-auto animate-[fadeIn_0.3s_ease]"
             style={{ backgroundColor: bgColor || "#0c2340" }}
           >
             <button
@@ -266,12 +396,15 @@ export const SearchOverlay: ComponentConfig<{
             >
               <span className="material-symbols-outlined text-3xl">close</span>
             </button>
-            <div className="w-full max-w-2xl px-6 animate-[slideUp_0.4s_ease]">
+            <div className="w-full max-w-2xl px-6 pb-16 animate-[slideUp_0.4s_ease]">
               <div className="relative">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submitQuery();
+                  }}
                   placeholder={placeholder}
                   className="w-full bg-transparent border-b-2 border-white/40 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/40 transition-colors"
                 />
@@ -279,23 +412,78 @@ export const SearchOverlay: ComponentConfig<{
                   search
                 </span>
               </div>
-              {suggestedLinks?.length > 0 && (
+
+              {hotLinks && hotLinks.length > 0 && (
+                <div className="mt-8">
+                  <p className="text-orange-300/80 text-xs uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">
+                      local_fire_department
+                    </span>
+                    Xu hướng
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {hotLinks.map((link, i) => (
+                      <a
+                        key={`hot-${i}`}
+                        href={link.url}
+                        className="px-4 py-2 rounded-full bg-orange-500/20 border border-orange-400/40 text-white hover:bg-orange-500/30 transition-all text-sm"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {suggestedLinks && suggestedLinks.length > 0 && (
                 <div className="mt-8">
                   <p className="text-white/50 text-xs uppercase tracking-widest mb-4">
                     Gợi ý tìm kiếm
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {suggestedLinks.map(
-                      (link: { label: string; url: string }, i: number) => (
-                        <a
-                          key={i}
-                          href={link.url}
-                          className="px-4 py-2 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/60 transition-all text-sm"
-                        >
-                          {link.label}
-                        </a>
-                      ),
-                    )}
+                    {suggestedLinks.map((link, i) => (
+                      <a
+                        key={`sug-${i}`}
+                        href={link.url}
+                        className="px-4 py-2 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/60 transition-all text-sm"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {showRecent && recent.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-white/50 text-xs uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">
+                        history
+                      </span>
+                      Gần đây
+                    </p>
+                    <button
+                      type="button"
+                      onClick={clearRecent}
+                      className="text-white/50 hover:text-white text-xs underline"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {recent.map((item, i) => (
+                      <a
+                        key={`rec-${i}`}
+                        href={item.url}
+                        className="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm inline-flex items-center gap-1.5"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">
+                          schedule
+                        </span>
+                        {item.label}
+                      </a>
+                    ))}
                   </div>
                 </div>
               )}

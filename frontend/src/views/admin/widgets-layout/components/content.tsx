@@ -175,12 +175,32 @@ export const IconText: ComponentConfig<{
   },
 };
 
+const SECTION_TITLE_SIZES: Record<string, string> = {
+  xs: "text-xs",
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-lg",
+  xl: "text-xl",
+};
+
+const SECTION_TITLE_FONTS: Record<string, string> = {
+  default: "",
+  sans: "font-sans",
+  serif: "font-serif",
+  mono: "font-mono",
+  heading: "font-heading",
+  "heading-italic": "font-heading italic",
+};
+
 export const SectionHeader: ComponentConfig<{
   title: string;
   linkText: string;
   linkUrl: string;
   bgColor: string;
   textColor: string;
+  titleSize: string;
+  titleFont: string;
+  titleClassName: string;
 }> = {
   label: "Section Header",
   defaultProps: {
@@ -189,6 +209,9 @@ export const SectionHeader: ComponentConfig<{
     linkUrl: "#",
     bgColor: "#1e40af",
     textColor: "#ffffff",
+    titleSize: "sm",
+    titleFont: "default",
+    titleClassName: "",
   },
   fields: {
     title: { type: "text", label: "Title" },
@@ -196,15 +219,50 @@ export const SectionHeader: ComponentConfig<{
     linkUrl: { type: "text", label: "Link URL" },
     bgColor: { type: "text", label: "Background Color" },
     textColor: { type: "text", label: "Text Color" },
+    titleSize: {
+      type: "select",
+      label: "Title Size",
+      options: [
+        { label: "XS", value: "xs" },
+        { label: "S", value: "sm" },
+        { label: "M", value: "md" },
+        { label: "L", value: "lg" },
+        { label: "XL", value: "xl" },
+      ],
+    },
+    titleFont: {
+      type: "select",
+      label: "Title Font",
+      options: [
+        { label: "Default", value: "default" },
+        { label: "Sans", value: "sans" },
+        { label: "Serif", value: "serif" },
+        { label: "Mono", value: "mono" },
+        { label: "Heading", value: "heading" },
+        { label: "Heading italic", value: "heading-italic" },
+      ],
+    },
+    titleClassName: { type: "text", label: "Title class (advanced)" },
   },
-  render: ({ title, linkText, linkUrl, bgColor, textColor, puck }) => (
+  render: ({
+    title,
+    linkText,
+    linkUrl,
+    bgColor,
+    textColor,
+    titleSize,
+    titleFont,
+    titleClassName,
+    puck,
+    ...rest
+  }: any) => (
     <div
       className="flex items-center justify-between px-4 py-2.5 rounded-t-md"
       style={{ backgroundColor: bgColor || "#1e40af" }}
     >
       <h3
-        className="text-sm font-bold uppercase tracking-wide"
-        style={{ color: textColor || "#ffffff" }}
+        className={`font-bold uppercase tracking-wide ${SECTION_TITLE_SIZES[titleSize] || SECTION_TITLE_SIZES.sm} ${SECTION_TITLE_FONTS[titleFont] || ""} ${titleClassName || ""}`}
+        style={{ color: textColor || "#ffffff", ...(rest.titleStyle || {}) }}
       >
         {title}
       </h3>
