@@ -10,6 +10,7 @@ import { WidgetModule } from './widget/widget.module';
 import { PageLayoutModule } from './page-layout/page-layout.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { VisitorModule } from './visitor/visitor.module';
+import { MediaModule } from './media/media.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -37,6 +38,7 @@ import envConfig from './shared/config/config';
     PageLayoutModule,
     SubscriptionModule,
     VisitorModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

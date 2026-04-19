@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 const TAGLINE_SIZES: Record<string, string> = {
   xs: "text-[10px] md:text-xs",
@@ -283,7 +284,7 @@ export const HeroFullScreen: ComponentConfig<{
       type: "array",
       label: "Slides",
       arrayFields: {
-        src: { type: "text", label: "Image URL" },
+        src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
         headline: { type: "text", label: "Headline" },
         subtitle: { type: "text", label: "Subtitle" },

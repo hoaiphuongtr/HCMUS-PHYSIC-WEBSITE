@@ -92,3 +92,42 @@ export const visitorApi = {
     );
   },
 };
+
+export type MediaItem = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  mimeType: string | null;
+  size: number | null;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: { id: string; slug: string; name: string }[];
+};
+
+export const resolveMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
+  return url;
+};
+
+export const mediaApi = {
+  list: (_query?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    tagSlug?: string;
+  }) =>
+    Promise.resolve({
+      items: [] as MediaItem[],
+      total: 0,
+      page: 1,
+      pageSize: 0,
+    }),
+  tagsInUse: () =>
+    Promise.resolve([] as { id: string; slug: string; name: string }[]),
+};

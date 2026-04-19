@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 export const ImageBlock: ComponentConfig<{
   src: string;
@@ -19,7 +20,7 @@ export const ImageBlock: ComponentConfig<{
     borderRadius: "md",
   },
   fields: {
-    src: { type: "text", label: "Image URL" },
+    src: mediaPickerField("Image"),
     alt: { type: "text", label: "Alt Text" },
     caption: { type: "text", label: "Caption" },
     fit: {
@@ -89,7 +90,7 @@ export const ImageGallery: ComponentConfig<{
       type: "array",
       label: "Images",
       arrayFields: {
-        src: { type: "text", label: "Image URL" },
+        src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
       },
     },
@@ -361,7 +362,7 @@ export const ImageSlider: ComponentConfig<{
       type: "array",
       label: "Slides",
       arrayFields: {
-        src: { type: "text", label: "Image URL" },
+        src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
         caption: { type: "text", label: "Caption" },
         linkUrl: { type: "text", label: "Link URL" },
@@ -474,7 +475,7 @@ export const LogoGrid: ComponentConfig<{
       type: "array",
       label: "Logos",
       arrayFields: {
-        src: { type: "text", label: "Logo URL" },
+        src: mediaPickerField("Logo"),
         alt: { type: "text", label: "Name" },
         linkUrl: { type: "text", label: "Link URL" },
       },
@@ -566,12 +567,12 @@ export const LogoSlider: ComponentConfig<{
       type: "array",
       label: "Logos",
       arrayFields: {
-        src: { type: "text", label: "Logo URL" },
+        src: mediaPickerField("Logo"),
         alt: { type: "text", label: "Name" },
         linkUrl: { type: "text", label: "Link URL" },
       },
     },
-    bgImageUrl: { type: "text", label: "Background Image URL" },
+    bgImageUrl: mediaPickerField("Background Image"),
     title: { type: "text", label: "Title" },
     description: { type: "textarea", label: "Description" },
     logoSize: {
@@ -806,7 +807,7 @@ export const PartnerShowcase: ComponentConfig<{
       label: "Partners",
       arrayFields: {
         name: { type: "text", label: "Name" },
-        logoUrl: { type: "text", label: "Logo URL" },
+        logoUrl: mediaPickerField("Logo"),
         description: { type: "textarea", label: "Description" },
         linkUrl: { type: "text", label: "Link URL" },
       },

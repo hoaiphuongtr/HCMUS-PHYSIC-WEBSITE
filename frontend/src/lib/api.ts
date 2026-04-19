@@ -349,3 +349,99 @@ export const visitorApi = {
     );
   },
 };
+
+export type MediaItem = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  mimeType: string | null;
+  size: number | null;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: { id: string; slug: string; name: string }[];
+};
+
+export type MediaListRes = {
+  items: MediaItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type MediaTagRef = { id: string; slug: string; name: string };
+
+export const resolveMediaUrl = (url: string | null | undefined): string => {
+  if (!url) return "";
+  if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
+  return url;
+};
+
+const buildQuery = (
+  params: Record<string, string | number | undefined>,
+): string => {
+  const entries = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== "",
+  );
+  if (!entries.length) return "";
+  return `?${entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&")}`;
+};
+
+export const mediaApi = {
+  upload: async (
+    file: File,
+    opts?: { alt?: string; tagSlugs?: string[] },
+  ): Promise<MediaItem> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (opts?.alt) fd.append("alt", opts.alt);
+    if (opts?.tagSlugs?.length)
+      fd.append("tagSlugs", JSON.stringify(opts.tagSlugs));
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+    const res = await fetch(`${API_URL}/media/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: fd,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw err;
+    }
+    return res.json() as Promise<MediaItem>;
+  },
+  createFromUrl: (body: {
+    url: string;
+    name?: string;
+    alt?: string;
+    tagSlugs?: string[];
+  }) =>
+    authFetch<MediaItem>(`/media/from-url`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  list: (query: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    tagSlug?: string;
+  }) => authFetch<MediaListRes>(`/media${buildQuery(query)}`),
+  get: (id: string) => authFetch<MediaItem>(`/media/${id}`),
+  update: (
+    id: string,
+    body: { name?: string; alt?: string | null; tagSlugs?: string[] },
+  ) =>
+    authFetch<MediaItem>(`/media/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    authFetch<{ ok: boolean }>(`/media/${id}`, { method: "DELETE" }),
+  tagsInUse: () => authFetch<MediaTagRef[]>(`/media/tags-in-use`),
+};

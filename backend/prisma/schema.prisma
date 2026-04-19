@@ -419,7 +419,8 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  postTags PostTag[]
+  postTags  PostTag[]
+  mediaTags MediaTag[]
 
   @@index([slug])
 }
@@ -433,6 +434,18 @@ model PostTag {
   tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([postId, tagId])
+}
+
+model MediaTag {
+  mediaId   String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, tagId])
+  @@index([tagId])
 }
 
 model Media {
@@ -449,9 +462,10 @@ model Media {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  createdByUser    User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdByUser    User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   templateSnapshot Template?
   postMedia        PostMedia[]
+  mediaTags        MediaTag[]
 
   @@index([createdBy])
   @@index([type])

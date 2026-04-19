@@ -57,6 +57,21 @@ export class PageLayoutRepository {
     });
   }
 
+  findConflictBySlugAndStatus(
+    slug: string,
+    isPublished: boolean,
+    excludeId?: string,
+  ) {
+    return this.prisma.pageLayout.findFirst({
+      where: {
+        slug,
+        isPublished,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true, name: true },
+    });
+  }
+
   findById(id: string) {
     return this.prisma.pageLayout.findUnique({
       where: { id },

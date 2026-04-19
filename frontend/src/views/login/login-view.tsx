@@ -8,6 +8,16 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
 
+const decodeRole = (token: string): string | null => {
+  try {
+    const base64 = token.split(".")[1];
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json)?.roleName ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +30,9 @@ export function LoginView() {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       toast.success("Login successful");
-      window.location.href = "/";
+      const role = decodeRole(data.accessToken);
+      const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+      window.location.href = isAdmin ? "/admin" : "/";
     },
     onError(err: { message?: string; statusCode?: number }) {
       toast.error(err.message || "Login failed");

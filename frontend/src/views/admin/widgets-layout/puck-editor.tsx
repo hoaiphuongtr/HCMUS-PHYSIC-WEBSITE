@@ -180,7 +180,7 @@ function EditJsonButton() {
         onClick={openModal}
         title="Edit raw JSON"
         aria-label="Edit raw JSON"
-        className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+        className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 max-w-[48px] w-full"
       >
         {"{ }"}
       </button>

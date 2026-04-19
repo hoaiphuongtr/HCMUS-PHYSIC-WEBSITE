@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useState } from "react";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 function NavbarClient({
   logoSrc,
@@ -189,7 +190,7 @@ export const Navbar: ComponentConfig<{
     ],
   },
   fields: {
-    logoSrc: { type: "text", label: "Logo URL" },
+    logoSrc: mediaPickerField("Logo"),
     logoAlt: { type: "text", label: "Logo Alt" },
     menuItems: {
       type: "array",

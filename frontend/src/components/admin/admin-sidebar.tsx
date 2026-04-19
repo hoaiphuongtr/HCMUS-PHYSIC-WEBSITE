@@ -32,6 +32,12 @@ const ROLE_LABELS: Record<string, string> = {
   USER: "User",
 };
 
+const isPathActive = (pathname: string, href: string) => {
+  if (href === "/admin") return pathname === "/admin";
+  if (pathname === href) return true;
+  return pathname.startsWith(`${href}/`);
+};
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -163,13 +169,9 @@ export function AdminSidebar() {
           (collapsed ? "px-2" : "px-3")
         }
       >
-        {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(item.href);
-          return renderNavItem(item, isActive);
-        })}
+        {NAV_ITEMS.map((item) =>
+          renderNavItem(item, isPathActive(pathname, item.href)),
+        )}
       </nav>
 
       <div
@@ -178,10 +180,9 @@ export function AdminSidebar() {
           (collapsed ? "px-2" : "px-3")
         }
       >
-        {SYSTEM_ITEMS.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return renderNavItem(item, isActive);
-        })}
+        {SYSTEM_ITEMS.map((item) =>
+          renderNavItem(item, isPathActive(pathname, item.href)),
+        )}
         <button
           type="button"
           onClick={handleLogout}

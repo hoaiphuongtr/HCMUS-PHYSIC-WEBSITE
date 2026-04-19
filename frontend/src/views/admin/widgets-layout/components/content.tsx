@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 export const Heading: ComponentConfig<{
   text: string;
@@ -408,7 +409,7 @@ export const NewsCard: ComponentConfig<{
     tags: [],
   },
   fields: {
-    imageUrl: { type: "text", label: "Image URL" },
+    imageUrl: mediaPickerField("Image"),
     title: { type: "text", label: "Title" },
     date: { type: "text", label: "Date" },
     linkUrl: { type: "text", label: "Link URL" },
@@ -540,7 +541,7 @@ export const ProfileCard: ComponentConfig<{
     linkUrl: "#",
   },
   fields: {
-    imageUrl: { type: "text", label: "Photo URL" },
+    imageUrl: mediaPickerField("Photo"),
     name: { type: "text", label: "Name" },
     role: { type: "text", label: "Role/Title" },
     description: { type: "textarea", label: "Description" },
@@ -596,7 +597,7 @@ export const DepartmentCard: ComponentConfig<{
     linkUrl: "#",
   },
   fields: {
-    imageUrl: { type: "text", label: "Background Image URL" },
+    imageUrl: mediaPickerField("Background Image"),
     title: { type: "text", label: "Title" },
     linkUrl: { type: "text", label: "Link URL" },
   },
@@ -861,7 +862,7 @@ export const ImageTextBlock: ComponentConfig<{
         { label: "No", value: false },
       ],
     },
-    imageUrl: { type: "text", label: "Image URL" },
+    imageUrl: mediaPickerField("Image"),
     imageAlt: { type: "text", label: "Image Alt" },
     imagePosition: {
       type: "select",

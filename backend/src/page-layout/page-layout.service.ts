@@ -17,6 +17,7 @@ import {
   PageLayoutSlugExistsException,
   PageLayoutNotFoundException,
   WidgetInstanceNotFoundException,
+  slugExistsInStatusException,
 } from './page-layout.error';
 import { WidgetNotFoundException } from '../widget/widget.error';
 
@@ -88,10 +89,18 @@ export class PageLayoutService {
 
   async update(id: string, body: UpdatePageLayoutBodyType) {
     const current = await this.findById(id);
-    if (body.slug && current.isPublished && body.slug !== current.slug) {
+    if (body.slug && body.slug !== current.slug) {
       const conflict =
-        await this.pageLayoutRepository.findAnyPublishedWithSlug(body.slug, id);
-      if (conflict) throw PageLayoutSlugExistsException;
+        await this.pageLayoutRepository.findConflictBySlugAndStatus(
+          body.slug,
+          current.isPublished,
+          id,
+        );
+      if (conflict)
+        throw slugExistsInStatusException(
+          current.isPublished ? 'published' : 'draft',
+          conflict.name,
+        );
     }
     const updated = await this.pageLayoutRepository.update(id, body);
     await this.cache.clear();
@@ -136,7 +145,14 @@ export class PageLayoutService {
   }
 
   async unpublish(id: string) {
-    await this.findById(id);
+    const layout = await this.findById(id);
+    const conflict =
+      await this.pageLayoutRepository.findConflictBySlugAndStatus(
+        layout.slug,
+        false,
+        id,
+      );
+    if (conflict) throw slugExistsInStatusException('draft', conflict.name);
     const result = await this.pageLayoutRepository.unpublish(id);
     await this.cache.clear();
     return result;
@@ -195,10 +211,11 @@ export class PageLayoutService {
     const original = await this.pageLayoutRepository.findById(id);
     if (!original) throw PageLayoutNotFoundException;
     const baseName = body.name || `Copy of ${original.name}`;
-    const slug = baseName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || original.slug;
+    const slug =
+      baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || original.slug;
     const duplicated = await this.pageLayoutRepository.duplicateWithWidgets(
       {
         name: original.name,

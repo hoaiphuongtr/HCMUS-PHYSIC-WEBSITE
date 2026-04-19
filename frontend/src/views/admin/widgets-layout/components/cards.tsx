@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 export const NewsOverlayCard: ComponentConfig<{
   imageUrl: string;
@@ -21,7 +22,7 @@ export const NewsOverlayCard: ComponentConfig<{
     size: "md",
   },
   fields: {
-    imageUrl: { type: "text", label: "Image URL" },
+    imageUrl: mediaPickerField("Image"),
     title: { type: "text", label: "Title" },
     excerpt: { type: "textarea", label: "Excerpt" },
     date: { type: "text", label: "Date" },
@@ -402,7 +403,7 @@ export const UpcomingEvents: ComponentConfig<{
       type: "array",
       label: "Events",
       arrayFields: {
-        imageUrl: { type: "text", label: "Image URL" },
+        imageUrl: mediaPickerField("Image"),
         title: { type: "text", label: "Title" },
         date: { type: "text", label: "Date (DD/MM/YYYY)" },
         time: { type: "text", label: "Time" },
