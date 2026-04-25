@@ -150,3 +150,11 @@ export function toSlug(text: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
+
+export function toSlugPath(text: string): string {
+  return text
+    .split('/')
+    .map((segment) => toSlug(segment))
+    .filter(Boolean)
+    .join('/');
+}

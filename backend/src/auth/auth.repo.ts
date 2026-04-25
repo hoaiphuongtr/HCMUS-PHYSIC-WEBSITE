@@ -33,17 +33,6 @@ export class AuthRepository {
     return this.prisma.user.create({ data, omit: { password: true } });
   }
 
-  createUserFromGoogle(data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string | null;
-    googleId: string;
-  }) {
-    return this.prisma.user.create({ data, omit: { password: true } });
-  }
-
   updateUserPassword(email: string, password: string) {
     return this.prisma.user.update({
       where: { email },

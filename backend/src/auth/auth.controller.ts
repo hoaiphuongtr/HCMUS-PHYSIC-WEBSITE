@@ -8,7 +8,6 @@ import {
   LoginResDTO,
   RefreshTokenBodyDTO,
   RefreshTokenResDTO,
-  RegisterBodyDTO,
   CreateAdminBodyDTO,
   UserResDTO,
   SendOTPBodyDTO,
@@ -41,13 +40,6 @@ export class AuthController {
   @ZodSerializerDto(LoginResDTO)
   login(@Body() body: LoginBodyDTO) {
     return this.authService.login(body);
-  }
-
-  @Post('register')
-  @IsPublic()
-  @ZodSerializerDto(UserResDTO)
-  register(@Body() body: RegisterBodyDTO) {
-    return this.authService.register(body);
   }
 
   @Post('create-admin')

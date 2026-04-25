@@ -63,21 +63,7 @@ export const authApi = {
       { method: "POST", body: JSON.stringify(body) },
     );
   },
-  register(body: {
-    email: string;
-    password: string;
-    confirmPassword: string;
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    code: string;
-  }) {
-    return apiFetch<{ id: string; email: string }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
-  sendOTP(body: { email: string; type: "REGISTER" | "FORGOT_PASSWORD" }) {
+  sendOTP(body: { email: string; type: "FORGOT_PASSWORD" }) {
     return apiFetch<{ message: string }>("/auth/otp", {
       method: "POST",
       body: JSON.stringify(body),
@@ -86,7 +72,7 @@ export const authApi = {
   verifyOTP(body: {
     email: string;
     code: string;
-    type: "REGISTER" | "FORGOT_PASSWORD";
+    type: "FORGOT_PASSWORD";
   }) {
     return apiFetch<{ message: string }>("/auth/verify-otp", {
       method: "POST",
@@ -444,4 +430,93 @@ export const mediaApi = {
   remove: (id: string) =>
     authFetch<{ ok: boolean }>(`/media/${id}`, { method: "DELETE" }),
   tagsInUse: () => authFetch<MediaTagRef[]>(`/media/tags-in-use`),
+};
+
+export type PostCategoryValue =
+  | "EDUCATIONAL_NEWS"
+  | "SCIENTIFIC_INFORMATION"
+  | "RECRUITMENT"
+  | "EVENT"
+  | "SCHOLARSHIP";
+
+export type ContentStatusValue =
+  | "DRAFT"
+  | "PENDING"
+  | "SCHEDULED"
+  | "PUBLISHED"
+  | "REJECTED";
+
+export type PostLayoutRef = {
+  id: string;
+  name: string;
+  slug: string;
+  isPublished: boolean;
+  scheduledAt: string | null;
+  publishedAt: string | null;
+};
+
+export type PostRecord = {
+  id: string;
+  title: string;
+  slug: string;
+  body: string | null;
+  excerpt: string | null;
+  category: PostCategoryValue;
+  status: ContentStatusValue;
+  coverMediaId: string | null;
+  coverUrl: string | null;
+  coverAlt: string | null;
+  tags: { slug: string; name: string }[];
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  eventLocation: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  layouts: PostLayoutRef[];
+};
+
+export type UpsertPostBody = {
+  title: string;
+  slug: string;
+  body?: string | null;
+  excerpt?: string | null;
+  category: PostCategoryValue;
+  status?: ContentStatusValue;
+  coverMediaId?: string | null;
+  coverUrl?: string | null;
+  coverAlt?: string | null;
+  tagSlugs?: string[];
+  eventStartAt?: string | null;
+  eventEndAt?: string | null;
+  eventLocation?: string | null;
+};
+
+export const postApi = {
+  list: () => authFetch<PostRecord[]>(`/posts`),
+  getById: (id: string) => authFetch<PostRecord>(`/posts/${id}`),
+  create: (body: UpsertPostBody) =>
+    authFetch<PostRecord>(`/posts`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: UpsertPostBody) =>
+    authFetch<PostRecord>(`/posts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    authFetch<{ ok: boolean }>(`/posts/${id}`, { method: "DELETE" }),
+  cloneIntoLayout: (
+    id: string,
+    body: {
+      templateLayoutId: string;
+      layoutName?: string;
+      layoutSlug?: string;
+    },
+  ) =>
+    authFetch<{ id: string; slug: string }>(
+      `/posts/${id}/clone-into-layout`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
 };

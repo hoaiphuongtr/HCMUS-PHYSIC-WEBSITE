@@ -11,7 +11,6 @@ datasource db {
 enum Role {
   SUPER_ADMIN
   ADMIN
-  USER
 }
 
 enum Language {
@@ -69,7 +68,6 @@ enum BlockType {
 }
 
 enum VerificationCodeType {
-  REGISTER
   FORGOT_PASSWORD
 }
 
@@ -97,7 +95,7 @@ model User {
   password          String?
   avatarUrl         String?
   googleId          String?   @unique
-  role              Role      @default(USER)
+  role              Role      @default(ADMIN)
   isActive          Boolean   @default(true)
   hasSetPreferences Boolean   @default(false)
   phone             String?
@@ -236,9 +234,13 @@ model Post {
   id              String        @id @default(cuid())
   title           String
   slug            String        @unique
+  body            String?
   excerpt         String?
   category        PostCategory
   status          ContentStatus @default(DRAFT)
+  coverMediaId    String?
+  coverUrl        String?
+  coverAlt        String?
   publishedAt     DateTime?
   scheduledAt     DateTime?
   rejectedAt      DateTime?
@@ -259,6 +261,7 @@ model Post {
   createdByUser  User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   approvedByUser User?             @relation("PostApprovedBy", fields: [approvedBy], references: [id], onDelete: SetNull)
   template       Template?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  coverMedia     Media?            @relation("PostCoverMedia", fields: [coverMediaId], references: [id], onDelete: SetNull)
   contentBlocks  ContentBlock[]
   translations   PostTranslation[]
   reactions      PostReaction[]
@@ -266,6 +269,7 @@ model Post {
   postTags       PostTag[]
   media          PostMedia[]
   seoMetadata    SEOMetadata?
+  layouts        PageLayout[]      @relation("PageLayoutSourcePost")
 
   @@index([status])
   @@index([category])
@@ -274,6 +278,7 @@ model Post {
   @@index([scheduledAt])
   @@index([slug])
   @@index([eventStartAt])
+  @@index([coverMediaId])
 }
 
 model ContentBlock {
@@ -398,11 +403,13 @@ model PageLayout {
   isPublished       Boolean   @default(false)
   publishedAt       DateTime?
   scheduledAt       DateTime?
+  sourcePostId      String?
   createdBy         String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   createdByUser User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  sourcePost    Post?            @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
   widgets       WidgetInstance[]
   seoMetadata   SEOMetadata?
 
@@ -410,6 +417,7 @@ model PageLayout {
   @@index([isPublished])
   @@index([createdBy])
   @@index([scheduledAt])
+  @@index([sourcePostId])
 }
 
 model Tag {
@@ -466,6 +474,7 @@ model Media {
   templateSnapshot Template?
   postMedia        PostMedia[]
   mediaTags        MediaTag[]
+  postCovers       Post[]      @relation("PostCoverMedia")
 
   @@index([createdBy])
   @@index([type])

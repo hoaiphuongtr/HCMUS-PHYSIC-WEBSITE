@@ -8,16 +8,6 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
 
-const decodeRole = (token: string): string | null => {
-  try {
-    const base64 = token.split(".")[1];
-    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(json)?.roleName ?? null;
-  } catch {
-    return null;
-  }
-};
-
 export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +20,7 @@ export function LoginView() {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       toast.success("Login successful");
-      const role = decodeRole(data.accessToken);
-      const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
-      window.location.href = isAdmin ? "/admin" : "/";
+      window.location.href = "/admin";
     },
     onError(err: { message?: string; statusCode?: number }) {
       toast.error(err.message || "Login failed");
@@ -182,32 +170,6 @@ export function LoginView() {
               </svg>
               Sign in with Google
             </button>
-
-            <footer className="mt-8 text-center">
-              <p className="text-sm text-hcmus-gray">
-                Don&apos;t have an account?{" "}
-                <Link
-                  className="text-hcmus-blue font-bold hover:underline inline-flex items-center gap-1"
-                  href="/register"
-                >
-                  Register here
-                  <svg
-                    aria-hidden="true"
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </Link>
-              </p>
-            </footer>
           </section>
         </div>
       </main>

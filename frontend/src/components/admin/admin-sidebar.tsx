@@ -9,7 +9,7 @@ import { authApi } from "@/lib/api";
 
 const NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: "dashboard" },
-  { name: "My Posts", href: "/admin/posts", icon: "article" },
+  { name: "My Posts", href: "/admin/posts/list", icon: "article" },
   { name: "Media Library", href: "/admin/media", icon: "folder_open" },
   {
     name: "Page Layouts",
@@ -29,7 +29,6 @@ const SYSTEM_ITEMS = [
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
   ADMIN: "Administrator",
-  USER: "User",
 };
 
 const isPathActive = (pathname: string, href: string) => {

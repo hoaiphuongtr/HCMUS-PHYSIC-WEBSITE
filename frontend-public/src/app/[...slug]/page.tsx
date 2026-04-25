@@ -9,15 +9,16 @@ export const revalidate = 0;
 export default async function PublicLayoutPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
 }) {
   const { slug } = await params;
+  const slugPath = slug.join("/");
   try {
-    const layout = await getLayoutBySlug(slug);
+    const layout = await getLayoutBySlug(slugPath);
     if (!layout.isPublished) notFound();
     return (
       <>
-        <VisitorTracker slug={slug} />
+        <VisitorTracker slug={slugPath} />
         <PuckRenderer puckData={layout.publishedPuckData ?? layout.puckData} />
       </>
     );

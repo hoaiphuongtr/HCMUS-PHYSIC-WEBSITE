@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
   AlertDialog,
@@ -21,7 +22,36 @@ import { PuckEditor } from "./puck-editor";
 
 export function WidgetsLayoutView() {
   const queryClient = useQueryClient();
-  const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const editParam = searchParams.get("edit");
+  const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(
+    editParam,
+  );
+  const lastSyncedEditParam = useRef<string | null>(editParam);
+
+  useEffect(() => {
+    if (editParam !== lastSyncedEditParam.current) {
+      lastSyncedEditParam.current = editParam;
+      setSelectedLayoutId(editParam);
+    }
+  }, [editParam]);
+
+  const selectLayout = useCallback(
+    (layoutId: string | null) => {
+      setSelectedLayoutId(layoutId);
+      lastSyncedEditParam.current = layoutId;
+      const params = new URLSearchParams(searchParams.toString());
+      if (layoutId) params.set("edit", layoutId);
+      else params.delete("edit");
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editTargetId, setEditTargetId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -83,7 +113,7 @@ export function WidgetsLayoutView() {
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       if (selectedLayoutId === deleteLayoutMutation.variables) {
-        setSelectedLayoutId(null);
+        selectLayout(null);
       }
       toast.success("Layout deleted");
     },
@@ -97,7 +127,7 @@ export function WidgetsLayoutView() {
     mutationFn: (layoutId: string) => pageLayoutApi.duplicate(layoutId),
     onSuccess(data) {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
-      setSelectedLayoutId(data.id);
+      selectLayout(data.id);
       toast.success("Layout duplicated");
     },
     onError(err: { message?: string }) {
@@ -122,7 +152,7 @@ export function WidgetsLayoutView() {
 
   const handleLayoutCreated = (layout: PageLayout) => {
     queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
-    setSelectedLayoutId(layout.id);
+    selectLayout(layout.id);
     setShowCreateModal(false);
   };
 
@@ -178,7 +208,7 @@ export function WidgetsLayoutView() {
                         <div key={l.id} className={tabClassName}>
                           <button
                             type="button"
-                            onClick={() => setSelectedLayoutId(l.id)}
+                            onClick={() => selectLayout(l.id)}
                             className="text-left"
                           >
                             <div className="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">

@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { v4 as uuidv4 } from 'uuid';
 import envConfig from '../shared/config/config';
 import { AuthRepository } from './auth.repo';
-import { HashingService } from '../shared/services/hashing.service';
 import { AuthService } from './auth.service';
 import { GoogleAuthStateType } from './auth.model';
 import { RoleName } from '../shared/constants/role.constants';
@@ -15,7 +13,6 @@ export class GoogleService {
 
   constructor(
     private readonly authRepository: AuthRepository,
-    private readonly hashingService: HashingService,
     private readonly authService: AuthService,
   ) {
     this.oauth2Client = new google.auth.OAuth2(
@@ -60,21 +57,15 @@ export class GoogleService {
     const oauth2 = google.oauth2({ auth: this.oauth2Client, version: 'v2' });
     const { data } = await oauth2.userinfo.get();
     if (!data.email) throw new Error('Cannot get user information from Google');
-    let user = await this.authRepository.findUniqueUserByEmailButOmitPassword(
-      data.email,
-    );
-    if (!user) {
-      const randomPassword = uuidv4();
-      const hashedPassword = await this.hashingService.hash(randomPassword);
-      user = await this.authRepository.createUserFromGoogle({
-        email: data.email,
-        password: hashedPassword,
-        firstName: data.given_name ?? '',
-        lastName: data.family_name ?? '',
-        avatarUrl: data.picture ?? null,
-        googleId: data.id ?? '',
-      });
-    }
+    const user =
+      await this.authRepository.findUniqueUserByEmailButOmitPassword(
+        data.email,
+      );
+    if (!user)
+      throw new UnauthorizedException(
+        'No admin account is registered with this Google email',
+      );
+    if (!user.isActive) throw new UnauthorizedException('Account is inactive');
     return this.authService.generateTokens({
       userId: user.id,
       roleName: user.role as RoleName,

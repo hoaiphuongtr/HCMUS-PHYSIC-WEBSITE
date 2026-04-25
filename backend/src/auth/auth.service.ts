@@ -7,7 +7,6 @@ import { AuthRepository } from './auth.repo';
 import {
   LoginBodyType,
   RefreshTokenResType,
-  RegisterBodyType,
   CreateAdminBodyType,
   SendOTPBodyType,
   VerifyOTPBodyType,
@@ -63,33 +62,6 @@ export class AuthService {
     });
   }
 
-  async register(body: RegisterBodyType) {
-    await this.validateVerificationCode({
-      email: body.email,
-      code: body.code,
-      type: VerificationMethod.Register,
-    });
-    const existing = await this.authRepository.findUniqueUserByEmail(
-      body.email,
-    );
-    if (existing) throw EmailAlreadyExistsException;
-    const hashedPassword = await this.hashingService.hash(body.password);
-    const [user] = await Promise.all([
-      this.authRepository.createUser({
-        email: body.email,
-        password: hashedPassword,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        role: RoleName.User,
-      }),
-      this.authRepository.deleteVerificationCode({
-        email: body.email,
-        type: VerificationCodeType.REGISTER,
-      }),
-    ]);
-    return user;
-  }
-
   async createAdmin(body: CreateAdminBodyType) {
     const existing = await this.authRepository.findUniqueUserByEmail(
       body.email,
@@ -117,10 +89,7 @@ export class AuthService {
 
   async sendOTP(body: SendOTPBodyType) {
     const user = await this.authRepository.findUniqueUserByEmail(body.email);
-    if (user && body.type === VerificationMethod.Register)
-      throw EmailAlreadyExistsException;
-    if (!user && body.type === VerificationMethod.ForgotPassword)
-      throw InvalidEmailException;
+    if (!user) throw InvalidEmailException;
     const code = generateOTP();
     await this.authRepository.createVerificationCode({
       email: body.email,

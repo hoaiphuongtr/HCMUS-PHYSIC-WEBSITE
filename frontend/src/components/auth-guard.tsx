@@ -36,7 +36,9 @@ export function AuthGuard({
       return;
     }
     if (roles && !roles.includes(payload.roleName)) {
-      router.replace("/");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      router.replace("/login");
       return;
     }
     setAuthorized(true);

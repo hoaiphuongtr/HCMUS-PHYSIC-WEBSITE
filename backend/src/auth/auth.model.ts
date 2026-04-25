@@ -23,7 +23,7 @@ export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>;
 export const RefreshTokenResSchema = LoginResSchema;
 export type RefreshTokenResType = z.infer<typeof RefreshTokenResSchema>;
 
-export const RegisterBodySchema = z
+export const CreateAdminBodySchema = z
   .object({
     email: z.email(),
     password: z.string().min(6),
@@ -31,7 +31,9 @@ export const RegisterBodySchema = z
     firstName: z.string().min(1).max(100),
     lastName: z.string().min(1).max(100),
     phone: z.string().max(11).optional(),
-    code: z.string().length(6),
+    position: z.string().optional(),
+    bio: z.string().optional(),
+    departmentId: z.string().optional(),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {
     if (confirmPassword !== password) {
@@ -42,14 +44,6 @@ export const RegisterBodySchema = z
       });
     }
   });
-
-export type RegisterBodyType = z.infer<typeof RegisterBodySchema>;
-
-export const CreateAdminBodySchema = RegisterBodySchema.extend({
-  position: z.string().optional(),
-  bio: z.string().optional(),
-  departmentId: z.string().optional(),
-});
 
 export type CreateAdminBodyType = z.infer<typeof CreateAdminBodySchema>;
 

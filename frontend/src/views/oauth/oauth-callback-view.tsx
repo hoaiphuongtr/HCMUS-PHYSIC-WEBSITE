@@ -14,7 +14,7 @@ export function OAuthCallbackView() {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      window.location.href = "/";
+      window.location.href = "/admin";
     } else {
       const errorMessage = searchParams.get("errorMessage");
       toast.error(

@@ -8,5 +8,6 @@ import { PageLayoutRepository } from './page-layout.repo';
   imports: [WidgetModule],
   controllers: [PageLayoutController],
   providers: [PageLayoutService, PageLayoutRepository],
+  exports: [PageLayoutRepository],
 })
 export class PageLayoutModule {}

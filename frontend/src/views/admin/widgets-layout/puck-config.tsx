@@ -48,6 +48,13 @@ import {
   QuickLinks,
   SocialIcons,
 } from "./components/navigation";
+import {
+  PostBody,
+  PostCoverImage,
+  PostEventInfo,
+  PostTagList,
+  PostTitle,
+} from "./components/post-placeholders";
 
 export const puckConfig: Config = {
   categories: {
@@ -114,6 +121,16 @@ export const puckConfig: Config = {
       title: "Cards",
       components: ["NewsOverlayCard", "EventCard", "UpcomingEvents"],
     },
+    post: {
+      title: "Post Placeholders",
+      components: [
+        "PostTitle",
+        "PostCoverImage",
+        "PostTagList",
+        "PostBody",
+        "PostEventInfo",
+      ],
+    },
   },
   components: {
     Heading,
@@ -156,5 +173,10 @@ export const puckConfig: Config = {
     PartnerShowcase,
     SubscribeBanner,
     TagNotificationBar,
+    PostTitle,
+    PostBody,
+    PostCoverImage,
+    PostTagList,
+    PostEventInfo,
   } as any,
 };

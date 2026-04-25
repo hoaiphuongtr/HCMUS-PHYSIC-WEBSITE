@@ -63,13 +63,14 @@ export class PageLayoutController {
     return this.pageLayoutService.findById(id);
   }
 
-  @Get('slug/:slug')
+  @Get('slug/*slug')
   @IsPublic()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(TEN_MINUTES_MS)
   @ZodSerializerDto(PageLayoutResDTO)
-  findBySlug(@Param('slug') slug: string) {
-    return this.pageLayoutService.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string | string[]) {
+    const slugPath = Array.isArray(slug) ? slug.join('/') : slug;
+    return this.pageLayoutService.findBySlug(slugPath);
   }
 
   @Patch(':id')
