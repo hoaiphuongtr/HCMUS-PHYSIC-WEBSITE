@@ -4,6 +4,7 @@ import type { ComponentConfig, Slot } from "@puckeditor/core";
 import { useEffect, useState } from "react";
 import { visitorApi } from "@/lib/api";
 import { getOrCreateVisitorId } from "@/lib/visitor";
+import { colorField } from "../fields/color-field";
 
 export const Spacer: ComponentConfig<{ direction: string; size: string }> = {
   label: "Spacer",
@@ -64,7 +65,7 @@ export const Divider: ComponentConfig<{
         { label: "Dotted", value: "dotted" },
       ],
     },
-    color: { type: "text", label: "Color" },
+    color: colorField("Color"),
     thickness: {
       type: "select",
       label: "Thickness",
@@ -162,7 +163,7 @@ export const Card: ComponentConfig<{
         { label: "Large", value: "lg" },
       ],
     },
-    bgColor: { type: "text", label: "Background Color" },
+    bgColor: colorField("Background Color"),
     borderRadius: {
       type: "select",
       label: "Border Radius",
@@ -345,7 +346,7 @@ export const Container: ComponentConfig<{
         { label: "Large", value: "lg" },
       ],
     },
-    bgColor: { type: "text", label: "Background Color" },
+    bgColor: colorField("Background Color"),
     centered: {
       type: "radio",
       label: "Centered",
@@ -569,24 +570,28 @@ export const Grid: ComponentConfig<any> = {
 export const FooterBlock: ComponentConfig<{
   bgColor: string;
   textColor: string;
+  borderColor: string;
   content: Slot;
 }> = {
   label: "Footer",
   defaultProps: {
-    bgColor: "#0c2340",
-    textColor: "#94a3b8",
+    bgColor: "#1c1d220a",
+    textColor: "#0c2340",
+    borderColor: "#e2e8f0",
   } as any,
   fields: {
-    bgColor: { type: "text", label: "Background Color" },
-    textColor: { type: "text", label: "Text Color" },
+    bgColor: colorField("Background Color"),
+    textColor: colorField("Text Color"),
+    borderColor: colorField("Top Border Color"),
     content: { type: "slot" },
   },
-  render: ({ bgColor, textColor, content: Content }: any) => (
+  render: ({ bgColor, textColor, borderColor, content: Content }: any) => (
     <footer
       className="px-8 py-10"
       style={{
-        backgroundColor: bgColor || "#0c2340",
-        color: textColor || "#94a3b8",
+        backgroundColor: bgColor || "#1c1d220a",
+        color: textColor || "#0c2340",
+        borderTop: `1px solid ${borderColor || "#e2e8f0"}`,
       }}
     >
       <Content />

@@ -1,7 +1,12 @@
 "use client";
 
 import type { Config } from "@puckeditor/core";
-import { EventCard, NewsOverlayCard, UpcomingEvents } from "./components/cards";
+import { EventCard, NewsOverlayCard } from "./components/cards";
+import {
+  LatestNewsAuto,
+  NewsListPaginated,
+  UpcomingEventsAuto,
+} from "./components/news-feed";
 import {
   ContactInfo,
   DepartmentCard,
@@ -18,7 +23,6 @@ import {
   AnnouncementBar,
   Banner,
   ButtonBlock,
-  ChatButton,
   PersonaSelector,
   SearchOverlay,
   SubscribeBanner,
@@ -43,6 +47,7 @@ import {
   VideoEmbed,
 } from "./components/media";
 import {
+  LanguageSwitcher,
   Navbar,
   NavLinks,
   QuickLinks,
@@ -72,7 +77,13 @@ export const puckConfig: Config = {
     },
     navigation: {
       title: "Navigation",
-      components: ["Navbar", "NavLinks", "QuickLinks", "SocialIcons"],
+      components: [
+        "Navbar",
+        "NavLinks",
+        "QuickLinks",
+        "SocialIcons",
+        "LanguageSwitcher",
+      ],
     },
     content: {
       title: "Content",
@@ -108,7 +119,6 @@ export const puckConfig: Config = {
         "AnnouncementBar",
         "SearchOverlay",
         "PersonaSelector",
-        "ChatButton",
         "SubscribeBanner",
         "TagNotificationBar",
       ],
@@ -119,7 +129,13 @@ export const puckConfig: Config = {
     },
     cards: {
       title: "Cards",
-      components: ["NewsOverlayCard", "EventCard", "UpcomingEvents"],
+      components: [
+        "NewsOverlayCard",
+        "EventCard",
+        "LatestNewsAuto",
+        "UpcomingEventsAuto",
+        "NewsListPaginated",
+      ],
     },
     post: {
       title: "Post Placeholders",
@@ -160,6 +176,7 @@ export const puckConfig: Config = {
     AnnouncementBar,
     Navbar,
     QuickLinks,
+    LanguageSwitcher,
     DepartmentCard,
     SearchOverlay,
     HeroFullScreen,
@@ -167,9 +184,10 @@ export const puckConfig: Config = {
     NewsOverlayCard,
     EventCard,
     PersonaSelector,
-    ChatButton,
     ImageTextBlock,
-    UpcomingEvents,
+    LatestNewsAuto,
+    UpcomingEventsAuto,
+    NewsListPaginated,
     PartnerShowcase,
     SubscribeBanner,
     TagNotificationBar,

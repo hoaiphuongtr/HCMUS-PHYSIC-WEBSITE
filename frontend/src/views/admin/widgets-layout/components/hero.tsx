@@ -2,14 +2,27 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/locale-context";
+import { t, type LocalizedString } from "@/lib/i18n";
+import { colorField } from "../fields/color-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { localizedTextField } from "../fields/localized-text-field";
+
+type HeroSlide = {
+  src: string;
+  alt: string;
+  headline: LocalizedString;
+  subtitle: LocalizedString;
+  ctaLabel: LocalizedString;
+  ctaUrl: string;
+};
 
 const TAGLINE_SIZES: Record<string, string> = {
-  xs: "text-[10px] md:text-xs",
-  sm: "text-xs md:text-sm",
-  md: "text-sm md:text-base",
-  lg: "text-base md:text-lg",
-  xl: "text-lg md:text-xl",
+  xs: "text-xs md:text-sm",
+  sm: "text-sm md:text-base",
+  md: "text-base md:text-lg",
+  lg: "text-lg md:text-xl",
+  xl: "text-xl md:text-2xl",
 };
 
 const FONT_FAMILIES: Record<string, string> = {
@@ -34,15 +47,8 @@ function HeroFullScreenClient({
   showScrollIndicator,
   isEditing,
 }: {
-  slides: {
-    src: string;
-    alt: string;
-    headline: string;
-    subtitle: string;
-    ctaLabel: string;
-    ctaUrl: string;
-  }[];
-  tagline: string;
+  slides: HeroSlide[];
+  tagline: LocalizedString;
   taglineColor: string;
   taglineSize: string;
   taglineFont: string;
@@ -53,6 +59,7 @@ function HeroFullScreenClient({
   showScrollIndicator: boolean;
   isEditing: boolean;
 }) {
+  const { locale } = useLocale();
   const [current, setCurrent] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -118,87 +125,50 @@ function HeroFullScreenClient({
     <div
       className={`relative w-full ${heights[height] || "min-h-screen"} overflow-hidden`}
     >
-      {slides?.map(
-        (
-          s: {
-            src: string;
-            alt: string;
-            headline: string;
-            subtitle: string;
-            ctaLabel: string;
-            ctaUrl: string;
-          },
-          i: number,
-        ) => {
-          const isActive = i === current;
-          const isPrev = i === prev;
-          const visible = isActive || isPrev;
-          const anim = getSlideAnimation(i);
-          return (
-            <div
-              key={`slide-${i}-${current}-${prev ?? "idle"}`}
-              className="absolute inset-0"
-              style={{
-                visibility: visible ? "visible" : "hidden",
-                zIndex: isActive ? 2 : isPrev ? 1 : 0,
-                animation: anim,
-              }}
-            >
-              {s.src ? (
-                <img
-                  src={s.src}
-                  alt={s.alt}
-                  className="w-full h-full object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
-              )}
-            </div>
-          );
-        },
-      )}
+      {slides?.map((s: HeroSlide, i: number) => {
+        const isActive = i === current;
+        const isPrev = i === prev;
+        const visible = isActive || isPrev;
+        const anim = getSlideAnimation(i);
+        return (
+          <div
+            key={`slide-${i}-${current}-${prev ?? "idle"}`}
+            className="absolute inset-0"
+            style={{
+              visibility: visible ? "visible" : "hidden",
+              zIndex: isActive ? 2 : isPrev ? 1 : 0,
+              animation: anim,
+            }}
+          >
+            {s.src ? (
+              <img
+                src={s.src}
+                alt={s.alt}
+                className="w-full h-full object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
+            )}
+          </div>
+        );
+      })}
       <div
         className={`absolute inset-0 z-[3] ${opacities[overlayOpacity] || "bg-black/40"}`}
       />
       <div className="absolute inset-0 z-[3] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6 py-32 gap-4">
-        {tagline && (
-          <p
-            className={`uppercase tracking-[0.3em] font-medium animate-[fadeInUp_1s_ease_0.6s_both] ${TAGLINE_SIZES[taglineSize] || TAGLINE_SIZES.sm} ${FONT_FAMILIES[taglineFont] || ""} ${taglineClassName || ""}`}
-            style={{
-              color: taglineColor || "#ffffff",
-              ...(taglineStyle || {}),
-            }}
-          >
-            {tagline}
-          </p>
-        )}
-        {slide?.headline && (
-          <h1
-            key={`h-${current}`}
-            className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-2 animate-[fadeInUp_0.8s_ease] leading-tight max-w-4xl font-heading italic"
-          >
-            {slide.headline}
-          </h1>
-        )}
-        {slide?.subtitle && (
-          <p
-            key={`s-${current}`}
-            className="text-lg md:text-xl text-white/80 mb-6 animate-[fadeInUp_0.8s_ease_0.2s_both] max-w-2xl"
-          >
-            {slide.subtitle}
-          </p>
-        )}
-        {slide?.ctaLabel && (
-          <a
-            key={`c-${current}`}
-            href={isEditing ? "#" : slide.ctaUrl || "#"}
-            tabIndex={isEditing ? -1 : undefined}
-            className="px-8 py-3 bg-white text-slate-900 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
-          >
-            {slide.ctaLabel}
-          </a>
-        )}
+        <HeroFullScreenText
+          slide={slide}
+          tagline={tagline}
+          taglineColor={taglineColor}
+          taglineSize={taglineSize}
+          taglineFont={taglineFont}
+          taglineClassName={taglineClassName}
+          taglineStyle={taglineStyle}
+          current={current}
+          isEditing={isEditing}
+          locale={locale}
+        />
       </div>
       {count > 1 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
@@ -223,6 +193,87 @@ function HeroFullScreenClient({
   );
 }
 
+function HeroFullScreenText({
+  slide,
+  tagline,
+  taglineColor,
+  taglineSize,
+  taglineFont,
+  taglineClassName,
+  taglineStyle,
+  current,
+  isEditing,
+  locale,
+}: {
+  slide: HeroSlide | undefined;
+  tagline: LocalizedString;
+  taglineColor: string;
+  taglineSize: string;
+  taglineFont: string;
+  taglineClassName?: string;
+  taglineStyle?: Record<string, string | number>;
+  current: number;
+  isEditing: boolean;
+  locale: string;
+}) {
+  const taglineText = t(tagline, locale);
+  const headline = t(slide?.headline, locale);
+  const subtitle = t(slide?.subtitle, locale);
+  const ctaLabel = t(slide?.ctaLabel, locale);
+
+  return (
+    <>
+      {taglineText && (
+        <p
+          className={`inline-block uppercase tracking-[0.3em] font-bold px-5 py-2 rounded-full backdrop-blur-sm border border-white/30 animate-[fadeInUp_1s_ease_0.6s_both] ${TAGLINE_SIZES[taglineSize] || TAGLINE_SIZES.sm} ${FONT_FAMILIES[taglineFont] || ""} ${taglineClassName || ""}`}
+          style={{
+            color: taglineColor || "#ffffff",
+            backgroundColor: "rgba(0, 0, 0, 0.25)",
+            textShadow:
+              "0 2px 12px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.5)",
+            ...(taglineStyle || {}),
+          }}
+        >
+          {taglineText}
+        </p>
+      )}
+      {headline && (
+        <h1
+          key={`h-${current}`}
+          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-none whitespace-nowrap font-heading italic"
+          style={{
+            fontSize: "clamp(2rem, 7vw, 6.5rem)",
+            textShadow:
+              "0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
+            WebkitTextStroke: "0.5px rgba(0,0,0,0.2)",
+          }}
+        >
+          {headline}
+        </h1>
+      )}
+      {subtitle && (
+        <p
+          key={`s-${current}`}
+          className="text-xl md:text-2xl font-semibold text-white mb-6 animate-[fadeInUp_0.8s_ease_0.2s_both] max-w-2xl"
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
+        >
+          {subtitle}
+        </p>
+      )}
+      {ctaLabel && (
+        <a
+          key={`c-${current}`}
+          href={isEditing ? "#" : slide?.ctaUrl || "#"}
+          tabIndex={isEditing ? -1 : undefined}
+          className="px-8 py-3 bg-white text-slate-900 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
+        >
+          {ctaLabel}
+        </a>
+      )}
+    </>
+  );
+}
+
 export const TEXT_SIZE_OPTIONS = [
   { label: "XS", value: "xs" },
   { label: "S", value: "sm" },
@@ -241,15 +292,8 @@ export const FONT_OPTIONS = [
 ];
 
 export const HeroFullScreen: ComponentConfig<{
-  slides: {
-    src: string;
-    alt: string;
-    headline: string;
-    subtitle: string;
-    ctaLabel: string;
-    ctaUrl: string;
-  }[];
-  tagline: string;
+  slides: HeroSlide[];
+  tagline: LocalizedString;
   taglineColor: string;
   taglineSize: string;
   taglineFont: string;
@@ -264,13 +308,22 @@ export const HeroFullScreen: ComponentConfig<{
       {
         src: "",
         alt: "Slide 1",
-        headline: "Khoa Vật lý - Vật lý Kỹ thuật",
-        subtitle: "Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
-        ctaLabel: "Khám phá",
+        headline: {
+          vi: "Khoa Vật lý - Vật lý Kỹ thuật",
+          en: "Faculty of Physics - Engineering Physics",
+        },
+        subtitle: {
+          vi: "Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+          en: "University of Science - VNUHCM",
+        },
+        ctaLabel: { vi: "Khám phá", en: "Discover" },
         ctaUrl: "/gioi-thieu",
       },
     ],
-    tagline: "KHÁM PHÁ • SÁNG TẠO • CỐNG HIẾN",
+    tagline: {
+      vi: "KHÁM PHÁ • SÁNG TẠO • CỐNG HIẾN",
+      en: "EXPLORE • INNOVATE • CONTRIBUTE",
+    },
     taglineColor: "#ffffff",
     taglineSize: "sm",
     taglineFont: "default",
@@ -286,14 +339,14 @@ export const HeroFullScreen: ComponentConfig<{
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
-        headline: { type: "text", label: "Headline" },
-        subtitle: { type: "text", label: "Subtitle" },
-        ctaLabel: { type: "text", label: "CTA Label" },
+        headline: localizedTextField("Headline"),
+        subtitle: localizedTextField("Subtitle"),
+        ctaLabel: localizedTextField("CTA Label"),
         ctaUrl: { type: "text", label: "CTA URL" },
       },
     },
-    tagline: { type: "text", label: "Tagline" },
-    taglineColor: { type: "text", label: "Tagline Color" },
+    tagline: localizedTextField("Tagline"),
+    taglineColor: colorField("Tagline Color"),
     taglineSize: {
       type: "select",
       label: "Tagline Size",
@@ -365,13 +418,16 @@ export const HeroFullScreen: ComponentConfig<{
   ),
 };
 
+type StatItem = { value: number; suffix: string; label: LocalizedString };
+
 function StatsCounterClient({
   stats,
   isEditing,
 }: {
-  stats: { value: number; suffix: string; label: string }[];
+  stats: StatItem[];
   isEditing: boolean;
 }) {
+  const { locale } = useLocale();
   const [visible, setVisible] = useState(false);
   const [counts, setCounts] = useState<number[]>((stats || []).map(() => 0));
   const ref = { current: null as HTMLDivElement | null };
@@ -423,34 +479,48 @@ function StatsCounterClient({
       }}
       className="grid grid-cols-2 md:grid-cols-4 gap-8 py-4"
     >
-      {(stats || []).map(
-        (stat: { value: number; suffix: string; label: string }, i: number) => (
-          <div key={i} className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">
-              {counts[i] || 0}
-              {stat.suffix}
-            </div>
-            <div className="text-sm text-slate-600 uppercase tracking-wider">
-              {stat.label}
-            </div>
+      {(stats || []).map((stat: StatItem, i: number) => (
+        <div key={i} className="text-center">
+          <div className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">
+            {counts[i] || 0}
+            {stat.suffix}
           </div>
-        ),
-      )}
+          <div className="text-sm text-slate-600 uppercase tracking-wider">
+            {t(stat.label, locale)}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 export const StatsCounter: ComponentConfig<{
-  stats: { value: number; suffix: string; label: string }[];
+  stats: StatItem[];
   bgColor: string;
 }> = {
   label: "Stats Counter",
   defaultProps: {
     stats: [
-      { value: 50, suffix: "+", label: "Năm thành lập" },
-      { value: 120, suffix: "+", label: "Giảng viên" },
-      { value: 3000, suffix: "+", label: "Sinh viên" },
-      { value: 500, suffix: "+", label: "Công bố quốc tế" },
+      {
+        value: 50,
+        suffix: "+",
+        label: { vi: "Năm thành lập", en: "Years established" },
+      },
+      {
+        value: 120,
+        suffix: "+",
+        label: { vi: "Giảng viên", en: "Faculty" },
+      },
+      {
+        value: 3000,
+        suffix: "+",
+        label: { vi: "Sinh viên", en: "Students" },
+      },
+      {
+        value: 500,
+        suffix: "+",
+        label: { vi: "Công bố quốc tế", en: "International publications" },
+      },
     ],
     bgColor: "#f8fafc",
   },
@@ -461,10 +531,10 @@ export const StatsCounter: ComponentConfig<{
       arrayFields: {
         value: { type: "number", label: "Value" },
         suffix: { type: "text", label: "Suffix (+, %, etc.)" },
-        label: { type: "text", label: "Label" },
+        label: localizedTextField("Label"),
       },
     },
-    bgColor: { type: "text", label: "Background Color" },
+    bgColor: colorField("Background Color"),
   },
   render: ({ stats, bgColor, puck }) => (
     <div

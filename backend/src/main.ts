@@ -22,8 +22,16 @@ async function bootstrap() {
     new AllExceptionsFilter(httpAdapter),
     new HttpExceptionFilter(),
   );
+  const allowedOrigins = (
+    process.env.FRONTEND_URLS ||
+    process.env.FRONTEND_URL ||
+    'http://localhost:3000,http://localhost:3002'
+  )
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

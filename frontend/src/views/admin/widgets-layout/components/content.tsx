@@ -2,10 +2,17 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/locale-context";
+import { t, type LocalizedString } from "@/lib/i18n";
+import { colorField } from "../fields/color-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import {
+  localizedTextField,
+  localizedTextareaField,
+} from "../fields/localized-text-field";
 
 export const Heading: ComponentConfig<{
-  text: string;
+  text: LocalizedString;
   level: string;
   alignment: string;
   color: string;
@@ -13,7 +20,7 @@ export const Heading: ComponentConfig<{
 }> = {
   label: "Heading",
   defaultProps: {
-    text: "Heading",
+    text: { vi: "Tiêu đề", en: "Heading" },
     level: "h2",
     alignment: "left",
     color: "#1e293b",
@@ -21,7 +28,7 @@ export const Heading: ComponentConfig<{
   },
   fields: {
     anchorId: { type: "text", label: "Anchor ID (for scroll target)" },
-    text: { type: "text", label: "Text" },
+    text: localizedTextField("Text"),
     level: {
       type: "select",
       label: "Level",
@@ -43,45 +50,68 @@ export const Heading: ComponentConfig<{
         { label: "Right", value: "right" },
       ],
     },
-    color: { type: "text", label: "Color" },
+    color: colorField("Color"),
   },
-  render: ({ text, level, alignment, color, anchorId }) => {
-    const Tag = (level || "h2") as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-    const sizes: Record<string, string> = {
-      h1: "text-4xl font-bold",
-      h2: "text-3xl font-bold",
-      h3: "text-2xl font-semibold",
-      h4: "text-xl font-semibold",
-      h5: "text-lg font-semibold",
-      h6: "text-base font-medium",
-    };
-    return (
-      <Tag
-        id={anchorId || undefined}
-        className={`${sizes[level] || sizes.h2} scroll-mt-20`}
-        style={{ textAlign: alignment as any, color: color || "#1e293b" }}
-      >
-        {text || "Heading"}
-      </Tag>
-    );
-  },
+  render: ({ text, level, alignment, color, anchorId }) => (
+    <HeadingRender
+      text={text}
+      level={level}
+      alignment={alignment}
+      color={color}
+      anchorId={anchorId}
+    />
+  ),
 };
 
+function HeadingRender({
+  text,
+  level,
+  alignment,
+  color,
+  anchorId,
+}: {
+  text: LocalizedString;
+  level: string;
+  alignment: string;
+  color: string;
+  anchorId: string;
+}) {
+  const { locale } = useLocale();
+  const Tag = (level || "h2") as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  const sizes: Record<string, string> = {
+    h1: "text-4xl font-bold",
+    h2: "text-3xl font-bold",
+    h3: "text-2xl font-semibold",
+    h4: "text-xl font-semibold",
+    h5: "text-lg font-semibold",
+    h6: "text-base font-medium",
+  };
+  return (
+    <Tag
+      id={anchorId || undefined}
+      className={`${sizes[level] || sizes.h2} scroll-mt-20`}
+      style={{ textAlign: alignment as any, color: color || "#1e293b" }}
+    >
+      {t(text, locale) || "Heading"}
+    </Tag>
+  );
+}
+
 export const TextBlock: ComponentConfig<{
-  content: string;
+  content: LocalizedString;
   fontSize: string;
   alignment: string;
   color: string;
 }> = {
   label: "Text",
   defaultProps: {
-    content: "Enter your text here...",
+    content: { vi: "Nhập nội dung tại đây...", en: "Enter your text here..." },
     fontSize: "base",
     alignment: "left",
     color: "#475569",
   },
   fields: {
-    content: { type: "textarea", label: "Content" },
+    content: localizedTextareaField("Content"),
     fontSize: {
       type: "select",
       label: "Font Size",
@@ -102,46 +132,69 @@ export const TextBlock: ComponentConfig<{
         { label: "Justify", value: "justify" },
       ],
     },
-    color: { type: "text", label: "Color" },
+    color: colorField("Color"),
   },
-  render: ({ content, fontSize, alignment, color }) => {
-    const sizes: Record<string, string> = {
-      sm: "text-sm",
-      base: "text-base",
-      lg: "text-lg",
-      xl: "text-xl",
-    };
-    return (
-      <p
-        className={`${sizes[fontSize] || "text-base"} leading-relaxed`}
-        style={{ textAlign: alignment as any, color: color || "#475569" }}
-      >
-        {content || "Enter your text here..."}
-      </p>
-    );
-  },
+  render: ({ content, fontSize, alignment, color }) => (
+    <TextBlockRender
+      content={content}
+      fontSize={fontSize}
+      alignment={alignment}
+      color={color}
+    />
+  ),
 };
+
+function TextBlockRender({
+  content,
+  fontSize,
+  alignment,
+  color,
+}: {
+  content: LocalizedString;
+  fontSize: string;
+  alignment: string;
+  color: string;
+}) {
+  const { locale } = useLocale();
+  const sizes: Record<string, string> = {
+    sm: "text-sm",
+    base: "text-base",
+    lg: "text-lg",
+    xl: "text-xl",
+  };
+  return (
+    <p
+      className={`${sizes[fontSize] || "text-base"} leading-relaxed`}
+      style={{ textAlign: alignment as any, color: color || "#475569" }}
+    >
+      {t(content, locale) || "Enter your text here..."}
+    </p>
+  );
+}
 
 export const IconText: ComponentConfig<{
   icon: string;
-  title: string;
-  description: string;
+  title: LocalizedString;
+  description: LocalizedString;
   iconColor: string;
   layout: string;
 }> = {
   label: "Icon + Text",
   defaultProps: {
     icon: "info",
-    title: "Feature",
-    description: "Feature description",
+    title: { vi: "Feature", en: "Feature" },
+    description: {
+      vi: "Mô tả tính năng",
+      en: "Feature description",
+    },
     iconColor: "#3b82f6",
     layout: "horizontal",
   },
   fields: {
     icon: { type: "text", label: "Icon (Material Symbol)" },
-    title: { type: "text", label: "Title" },
-    description: { type: "textarea", label: "Description" },
-    iconColor: { type: "text", label: "Icon Color" },
+    title: localizedTextField("Title"),
+    description: localizedTextareaField("Description"),
+    iconColor: colorField("Icon Color"),
     layout: {
       type: "select",
       label: "Layout",
@@ -151,30 +204,55 @@ export const IconText: ComponentConfig<{
       ],
     },
   },
-  render: ({ icon, title, description, iconColor, layout }) => {
-    const isVertical = layout === "vertical";
-    return (
-      <div
-        className={`flex ${isVertical ? "flex-col items-center text-center" : "items-start"} gap-3 p-4`}
-      >
-        <span
-          className="material-symbols-outlined text-3xl"
-          style={{ color: iconColor || "#3b82f6" }}
-        >
-          {icon || "info"}
-        </span>
-        <div>
-          <div className="text-base font-semibold text-slate-800">
-            {title || "Feature"}
-          </div>
-          {description && (
-            <div className="text-sm text-slate-500 mt-1">{description}</div>
-          )}
-        </div>
-      </div>
-    );
-  },
+  render: ({ icon, title, description, iconColor, layout }) => (
+    <IconTextRender
+      icon={icon}
+      title={title}
+      description={description}
+      iconColor={iconColor}
+      layout={layout}
+    />
+  ),
 };
+
+function IconTextRender({
+  icon,
+  title,
+  description,
+  iconColor,
+  layout,
+}: {
+  icon: string;
+  title: LocalizedString;
+  description: LocalizedString;
+  iconColor: string;
+  layout: string;
+}) {
+  const { locale } = useLocale();
+  const isVertical = layout === "vertical";
+  const titleText = t(title, locale);
+  const descriptionText = t(description, locale);
+  return (
+    <div
+      className={`flex ${isVertical ? "flex-col items-center text-center" : "items-start"} gap-3 p-4`}
+    >
+      <span
+        className="material-symbols-outlined text-3xl"
+        style={{ color: iconColor || "#3b82f6" }}
+      >
+        {icon || "info"}
+      </span>
+      <div>
+        <div className="text-base font-semibold text-slate-800">
+          {titleText || "Feature"}
+        </div>
+        {descriptionText && (
+          <div className="text-sm text-slate-500 mt-1">{descriptionText}</div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const SECTION_TITLE_SIZES: Record<string, string> = {
   xs: "text-xs",
@@ -194,8 +272,8 @@ const SECTION_TITLE_FONTS: Record<string, string> = {
 };
 
 export const SectionHeader: ComponentConfig<{
-  title: string;
-  linkText: string;
+  title: LocalizedString;
+  linkText: LocalizedString;
   linkUrl: string;
   bgColor: string;
   textColor: string;
@@ -205,8 +283,8 @@ export const SectionHeader: ComponentConfig<{
 }> = {
   label: "Section Header",
   defaultProps: {
-    title: "Section Title",
-    linkText: "Xem thêm",
+    title: { vi: "Tiêu đề mục", en: "Section Title" },
+    linkText: { vi: "Xem thêm", en: "View all" },
     linkUrl: "#",
     bgColor: "#1e40af",
     textColor: "#ffffff",
@@ -215,11 +293,11 @@ export const SectionHeader: ComponentConfig<{
     titleClassName: "",
   },
   fields: {
-    title: { type: "text", label: "Title" },
-    linkText: { type: "text", label: "Link Text" },
+    title: localizedTextField("Title"),
+    linkText: localizedTextField("Link Text"),
     linkUrl: { type: "text", label: "Link URL" },
-    bgColor: { type: "text", label: "Background Color" },
-    textColor: { type: "text", label: "Text Color" },
+    bgColor: colorField("Background Color"),
+    textColor: colorField("Text Color"),
     titleSize: {
       type: "select",
       label: "Title Size",
@@ -257,32 +335,74 @@ export const SectionHeader: ComponentConfig<{
     puck,
     ...rest
   }: any) => (
+    <SectionHeaderRender
+      title={title}
+      linkText={linkText}
+      linkUrl={linkUrl}
+      bgColor={bgColor}
+      textColor={textColor}
+      titleSize={titleSize}
+      titleFont={titleFont}
+      titleClassName={titleClassName}
+      titleStyle={rest.titleStyle}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
+};
+
+function SectionHeaderRender({
+  title,
+  linkText,
+  linkUrl,
+  bgColor,
+  textColor,
+  titleSize,
+  titleFont,
+  titleClassName,
+  titleStyle,
+  isEditing,
+}: {
+  title: LocalizedString;
+  linkText: LocalizedString;
+  linkUrl: string;
+  bgColor: string;
+  textColor: string;
+  titleSize: string;
+  titleFont: string;
+  titleClassName: string;
+  titleStyle?: Record<string, string | number>;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const titleText = t(title, locale);
+  const linkLabel = t(linkText, locale);
+  return (
     <div
       className="flex items-center justify-between px-4 py-2.5 rounded-t-md"
       style={{ backgroundColor: bgColor || "#1e40af" }}
     >
       <h3
         className={`font-bold uppercase tracking-wide ${SECTION_TITLE_SIZES[titleSize] || SECTION_TITLE_SIZES.sm} ${SECTION_TITLE_FONTS[titleFont] || ""} ${titleClassName || ""}`}
-        style={{ color: textColor || "#ffffff", ...(rest.titleStyle || {}) }}
+        style={{ color: textColor || "#ffffff", ...(titleStyle || {}) }}
       >
-        {title}
+        {titleText}
       </h3>
-      {linkText && (
+      {linkLabel && (
         <a
-          href={puck?.isEditing ? "#" : linkUrl || "#"}
-          tabIndex={puck?.isEditing ? -1 : undefined}
+          href={isEditing ? "#" : linkUrl || "#"}
+          tabIndex={isEditing ? -1 : undefined}
           className="text-xs font-medium opacity-80 hover:opacity-100 transition-opacity"
           style={{ color: textColor || "#ffffff" }}
         >
-          {linkText} &raquo;
+          {linkLabel} &raquo;
         </a>
       )}
     </div>
-  ),
-};
+  );
+}
 
 export const ContactInfo: ComponentConfig<{
-  address: string;
+  address: LocalizedString;
   phone: string;
   email: string;
   showIcons: boolean;
@@ -292,7 +412,10 @@ export const ContactInfo: ComponentConfig<{
 }> = {
   label: "Contact Info",
   defaultProps: {
-    address: "227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM",
+    address: {
+      vi: "227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP.HCM",
+      en: "227 Nguyen Van Cu, Ward 4, District 5, HCMC",
+    },
     phone: "+84 28 38355272",
     email: "phys@hcmus.edu.vn",
     showIcons: true,
@@ -301,7 +424,7 @@ export const ContactInfo: ComponentConfig<{
     alignment: "left",
   },
   fields: {
-    address: { type: "text", label: "Address" },
+    address: localizedTextField("Address"),
     phone: { type: "text", label: "Phone" },
     email: { type: "text", label: "Email" },
     showIcons: {
@@ -312,7 +435,7 @@ export const ContactInfo: ComponentConfig<{
         { label: "No", value: false },
       ],
     },
-    color: { type: "text", label: "Text Color" },
+    color: colorField("Text Color"),
     layout: {
       type: "select",
       label: "Layout",
@@ -339,58 +462,91 @@ export const ContactInfo: ComponentConfig<{
     layout,
     alignment,
     puck,
-  }) => {
-    const items = [
-      { icon: "location_on", text: address, href: "" },
-      { icon: "phone", text: phone, href: `tel:${phone}` },
-      { icon: "mail", text: email, href: `mailto:${email}` },
-    ].filter((item) => item.text);
-    const isInline = layout === "inline";
-    const isCenter = alignment === "center";
-    return (
-      <div
-        className={
-          isInline
-            ? "flex flex-wrap items-center gap-x-6 gap-y-2" +
-              (isCenter ? " justify-center" : "")
-            : `space-y-2${isCenter ? " flex flex-col items-center" : ""}`
-        }
-      >
-        {items.map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
-            {showIcons !== false && (
-              <span
-                className="material-symbols-outlined text-lg shrink-0"
-                style={{ color: color || "#475569" }}
-              >
-                {item.icon}
-              </span>
-            )}
-            {item.href ? (
-              <a
-                href={puck?.isEditing ? "#" : item.href}
-                tabIndex={puck?.isEditing ? -1 : undefined}
-                className="text-sm hover:underline"
-                style={{ color: color || "#475569" }}
-              >
-                {item.text}
-              </a>
-            ) : (
-              <span className="text-sm" style={{ color: color || "#475569" }}>
-                {item.text}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  },
+  }) => (
+    <ContactInfoRender
+      address={address}
+      phone={phone}
+      email={email}
+      showIcons={showIcons}
+      color={color}
+      layout={layout}
+      alignment={alignment}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
 };
+
+function ContactInfoRender({
+  address,
+  phone,
+  email,
+  showIcons,
+  color,
+  layout,
+  alignment,
+  isEditing,
+}: {
+  address: LocalizedString;
+  phone: string;
+  email: string;
+  showIcons: boolean;
+  color: string;
+  layout: string;
+  alignment: string;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const addressText = t(address, locale);
+  const items = [
+    { icon: "location_on", text: addressText, href: "" },
+    { icon: "phone", text: phone, href: `tel:${phone}` },
+    { icon: "mail", text: email, href: `mailto:${email}` },
+  ].filter((item) => item.text);
+  const isInline = layout === "inline";
+  const isCenter = alignment === "center";
+  return (
+    <div
+      className={
+        isInline
+          ? "flex flex-wrap items-center gap-x-6 gap-y-2" +
+            (isCenter ? " justify-center" : "")
+          : `space-y-2${isCenter ? " flex flex-col items-center" : ""}`
+      }
+    >
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          {showIcons !== false && (
+            <span
+              className="material-symbols-outlined text-lg shrink-0"
+              style={{ color: color || "#475569" }}
+            >
+              {item.icon}
+            </span>
+          )}
+          {item.href ? (
+            <a
+              href={isEditing ? "#" : item.href}
+              tabIndex={isEditing ? -1 : undefined}
+              className="text-sm hover:underline"
+              style={{ color: color || "#475569" }}
+            >
+              {item.text}
+            </a>
+          ) : (
+            <span className="text-sm" style={{ color: color || "#475569" }}>
+              {item.text}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const NewsCard: ComponentConfig<{
   imageUrl: string;
-  title: string;
-  date: string;
+  title: LocalizedString;
+  date: LocalizedString;
   linkUrl: string;
   layout: string;
   widthPct: string;
@@ -400,8 +556,8 @@ export const NewsCard: ComponentConfig<{
   label: "News Card",
   defaultProps: {
     imageUrl: "",
-    title: "Tiêu đề bài viết",
-    date: "25/03/2026",
+    title: { vi: "Tiêu đề bài viết", en: "Article title" },
+    date: { vi: "25/03/2026", en: "25/03/2026" },
     linkUrl: "#",
     layout: "horizontal",
     widthPct: "100",
@@ -410,8 +566,8 @@ export const NewsCard: ComponentConfig<{
   },
   fields: {
     imageUrl: mediaPickerField("Image"),
-    title: { type: "text", label: "Title" },
-    date: { type: "text", label: "Date" },
+    title: localizedTextField("Title"),
+    date: localizedTextField("Date"),
     linkUrl: { type: "text", label: "Link URL" },
     tags: {
       type: "array",
@@ -459,105 +615,170 @@ export const NewsCard: ComponentConfig<{
     widthPct,
     align,
     puck,
-  }) => {
-    const isVertical = layout === "vertical";
-    const pct = parseInt(widthPct || "100", 10);
-    const wrapperClass =
-      align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
-    const wrapperStyle =
-      pct && pct < 100 ? { width: `${pct}%` } : { width: "100%" };
-    const inner = isVertical ? (
-      <a
-        href={puck?.isEditing ? "#" : linkUrl || "#"}
-        tabIndex={puck?.isEditing ? -1 : undefined}
-        className="block group"
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-full aspect-video object-cover rounded-md mb-2"
-          />
-        ) : (
-          <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
-            <span className="material-symbols-outlined text-2xl text-slate-300">
-              image
-            </span>
-          </div>
-        )}
-        <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
-          {title}
-        </h4>
-        <p className="text-xs text-slate-400 mt-1">{date}</p>
-      </a>
-    ) : (
-      <a
-        href={puck?.isEditing ? "#" : linkUrl || "#"}
-        tabIndex={puck?.isEditing ? -1 : undefined}
-        className="flex gap-3 group py-2 border-b border-slate-100 last:border-0"
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-20 h-14 object-cover rounded shrink-0"
-          />
-        ) : (
-          <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
-            <span className="material-symbols-outlined text-lg text-slate-300">
-              image
-            </span>
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
-            {title}
-          </h4>
-          <p className="text-xs text-slate-400 mt-1">{date}</p>
-        </div>
-      </a>
-    );
-    return (
-      <div className={wrapperClass} style={wrapperStyle}>
-        {inner}
-      </div>
-    );
-  },
+  }) => (
+    <NewsCardRender
+      imageUrl={imageUrl}
+      title={title}
+      date={date}
+      linkUrl={linkUrl}
+      layout={layout}
+      widthPct={widthPct}
+      align={align}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
 };
+
+function NewsCardRender({
+  imageUrl,
+  title,
+  date,
+  linkUrl,
+  layout,
+  widthPct,
+  align,
+  isEditing,
+}: {
+  imageUrl: string;
+  title: LocalizedString;
+  date: LocalizedString;
+  linkUrl: string;
+  layout: string;
+  widthPct: string;
+  align: string;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const titleText = t(title, locale);
+  const dateText = t(date, locale);
+  const isVertical = layout === "vertical";
+  const pct = parseInt(widthPct || "100", 10);
+  const wrapperClass =
+    align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
+  const wrapperStyle =
+    pct && pct < 100 ? { width: `${pct}%` } : { width: "100%" };
+  const inner = isVertical ? (
+    <a
+      href={isEditing ? "#" : linkUrl || "#"}
+      tabIndex={isEditing ? -1 : undefined}
+      className="block group"
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={titleText}
+          className="w-full aspect-video object-cover rounded-md mb-2"
+        />
+      ) : (
+        <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
+          <span className="material-symbols-outlined text-2xl text-slate-300">
+            image
+          </span>
+        </div>
+      )}
+      <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+        {titleText}
+      </h4>
+      <p className="text-xs text-slate-400 mt-1">{dateText}</p>
+    </a>
+  ) : (
+    <a
+      href={isEditing ? "#" : linkUrl || "#"}
+      tabIndex={isEditing ? -1 : undefined}
+      className="flex gap-3 group py-2 border-b border-slate-100 last:border-0"
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={titleText}
+          className="w-20 h-14 object-cover rounded shrink-0"
+        />
+      ) : (
+        <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
+          <span className="material-symbols-outlined text-lg text-slate-300">
+            image
+          </span>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+          {titleText}
+        </h4>
+        <p className="text-xs text-slate-400 mt-1">{dateText}</p>
+      </div>
+    </a>
+  );
+  return (
+    <div className={wrapperClass} style={wrapperStyle}>
+      {inner}
+    </div>
+  );
+}
 
 export const ProfileCard: ComponentConfig<{
   imageUrl: string;
-  name: string;
-  role: string;
-  description: string;
+  name: LocalizedString;
+  role: LocalizedString;
+  description: LocalizedString;
   linkUrl: string;
 }> = {
   label: "Profile Card",
   defaultProps: {
     imageUrl: "",
-    name: "Họ và Tên",
-    role: "Chức vụ",
-    description: "",
+    name: { vi: "Họ và Tên", en: "Full Name" },
+    role: { vi: "Chức vụ", en: "Title" },
+    description: { vi: "", en: "" },
     linkUrl: "#",
   },
   fields: {
     imageUrl: mediaPickerField("Photo"),
-    name: { type: "text", label: "Name" },
-    role: { type: "text", label: "Role/Title" },
-    description: { type: "textarea", label: "Description" },
+    name: localizedTextField("Name"),
+    role: localizedTextField("Role/Title"),
+    description: localizedTextareaField("Description"),
     linkUrl: { type: "text", label: "Link URL" },
   },
   render: ({ imageUrl, name, role, description, linkUrl, puck }) => (
+    <ProfileCardRender
+      imageUrl={imageUrl}
+      name={name}
+      role={role}
+      description={description}
+      linkUrl={linkUrl}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
+};
+
+function ProfileCardRender({
+  imageUrl,
+  name,
+  role,
+  description,
+  linkUrl,
+  isEditing,
+}: {
+  imageUrl: string;
+  name: LocalizedString;
+  role: LocalizedString;
+  description: LocalizedString;
+  linkUrl: string;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const nameText = t(name, locale);
+  const roleText = t(role, locale);
+  const descriptionText = t(description, locale);
+  return (
     <a
-      href={puck?.isEditing ? "#" : linkUrl || "#"}
-      tabIndex={puck?.isEditing ? -1 : undefined}
+      href={isEditing ? "#" : linkUrl || "#"}
+      tabIndex={isEditing ? -1 : undefined}
       className="block text-center group"
     >
       <div className="relative border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={name}
+            alt={nameText}
             className="w-full aspect-[3/4] object-cover"
           />
         ) : (
@@ -567,50 +788,73 @@ export const ProfileCard: ComponentConfig<{
             </span>
           </div>
         )}
-        {description && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-900/95 via-blue-900/80 to-transparent pt-12 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-            <p className="text-white font-semibold text-sm">{name}</p>
-            <p className="text-blue-200 text-xs mt-0.5">{role}</p>
-            <p className="text-white/80 text-xs mt-2 leading-relaxed">
-              {description}
+        {descriptionText && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-900/95 via-blue-900/85 to-transparent pt-16 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <p className="text-white font-bold text-base">{nameText}</p>
+            <p className="text-blue-200 text-sm mt-1">{roleText}</p>
+            <p className="text-white text-sm md:text-base mt-3 leading-relaxed font-medium">
+              {descriptionText}
             </p>
           </div>
         )}
       </div>
       <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-        {name}
+        {nameText}
       </h4>
-      <p className="text-xs text-slate-500 mt-1">{role}</p>
+      <p className="text-xs text-slate-500 mt-1">{roleText}</p>
     </a>
-  ),
-};
+  );
+}
 
 export const DepartmentCard: ComponentConfig<{
   imageUrl: string;
-  title: string;
+  title: LocalizedString;
   linkUrl: string;
 }> = {
   label: "Department Card",
   defaultProps: {
     imageUrl: "",
-    title: "Tên bộ môn",
+    title: { vi: "Tên bộ môn", en: "Department name" },
     linkUrl: "#",
   },
   fields: {
     imageUrl: mediaPickerField("Background Image"),
-    title: { type: "text", label: "Title" },
+    title: localizedTextField("Title"),
     linkUrl: { type: "text", label: "Link URL" },
   },
   render: ({ imageUrl, title, linkUrl, puck }) => (
+    <DepartmentCardRender
+      imageUrl={imageUrl}
+      title={title}
+      linkUrl={linkUrl}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
+};
+
+function DepartmentCardRender({
+  imageUrl,
+  title,
+  linkUrl,
+  isEditing,
+}: {
+  imageUrl: string;
+  title: LocalizedString;
+  linkUrl: string;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const titleText = t(title, locale);
+  return (
     <a
-      href={puck?.isEditing ? "#" : linkUrl || "#"}
-      tabIndex={puck?.isEditing ? -1 : undefined}
+      href={isEditing ? "#" : linkUrl || "#"}
+      tabIndex={isEditing ? -1 : undefined}
       className="block relative aspect-[16/10] rounded-lg overflow-hidden group"
     >
       {imageUrl ? (
         <img
           src={imageUrl}
-          alt={title}
+          alt={titleText}
           className="w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
         />
       ) : (
@@ -619,12 +863,14 @@ export const DepartmentCard: ComponentConfig<{
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3 text-center">
         <span className="text-white text-sm font-semibold drop-shadow-lg">
-          {title}
+          {titleText}
         </span>
       </div>
     </a>
-  ),
-};
+  );
+}
+
+type ImageTextStat = { value: string; label: LocalizedString };
 
 function ImageTextBlockClient({
   imageUrl,
@@ -642,15 +888,19 @@ function ImageTextBlockClient({
   imageUrl: string;
   imageAlt: string;
   imagePosition: string;
-  headline: string;
-  body: string;
-  stats: { value: string; label: string }[];
-  ctaLabel: string;
+  headline: LocalizedString;
+  body: LocalizedString;
+  stats: ImageTextStat[];
+  ctaLabel: LocalizedString;
   ctaUrl: string;
   bgColor: string;
   fullBleed: boolean;
   isEditing: boolean;
 }) {
+  const { locale } = useLocale();
+  const headlineText = t(headline, locale);
+  const bodyText = t(body, locale);
+  const ctaText = t(ctaLabel, locale);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -712,14 +962,14 @@ function ImageTextBlockClient({
             transition: "opacity 0.8s ease, transform 0.8s ease",
           }}
         >
-          {headline && (
+          {headlineText && (
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-              {headline}
+              {headlineText}
             </h2>
           )}
-          {body && (
+          {bodyText && (
             <p className="text-lg text-slate-600 leading-relaxed mb-8">
-              {body}
+              {bodyText}
             </p>
           )}
           {stats && stats.length > 0 && (
@@ -730,19 +980,19 @@ function ImageTextBlockClient({
                     {s.value}
                   </div>
                   <div className="text-sm text-slate-500 mt-1 uppercase tracking-wider">
-                    {s.label}
+                    {t(s.label, locale)}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          {ctaLabel && (
+          {ctaText && (
             <a
               href={isEditing ? "#" : ctaUrl || "#"}
               tabIndex={isEditing ? -1 : undefined}
               className="inline-block px-8 py-4 bg-blue-800 text-white text-base font-semibold rounded hover:bg-blue-900 transition-colors self-start"
             >
-              {ctaLabel}
+              {ctaText}
             </a>
           )}
         </div>
@@ -791,14 +1041,14 @@ function ImageTextBlockClient({
             transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s",
           }}
         >
-          {headline && (
+          {headlineText && (
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
-              {headline}
+              {headlineText}
             </h2>
           )}
-          {body && (
+          {bodyText && (
             <p className="text-base text-slate-600 leading-relaxed mb-6">
-              {body}
+              {bodyText}
             </p>
           )}
           {stats && stats.length > 0 && (
@@ -808,18 +1058,20 @@ function ImageTextBlockClient({
                   <div className="text-3xl font-bold text-blue-800">
                     {s.value}
                   </div>
-                  <div className="text-sm text-slate-500 mt-1">{s.label}</div>
+                  <div className="text-sm text-slate-500 mt-1">
+                    {t(s.label, locale)}
+                  </div>
                 </div>
               ))}
             </div>
           )}
-          {ctaLabel && (
+          {ctaText && (
             <a
               href={isEditing ? "#" : ctaUrl || "#"}
               tabIndex={isEditing ? -1 : undefined}
               className="inline-block px-6 py-3 bg-blue-800 text-white text-sm font-semibold rounded hover:bg-blue-900 transition-colors"
             >
-              {ctaLabel}
+              {ctaText}
             </a>
           )}
         </div>
@@ -832,10 +1084,10 @@ export const ImageTextBlock: ComponentConfig<{
   imageUrl: string;
   imageAlt: string;
   imagePosition: string;
-  headline: string;
-  body: string;
-  stats: { value: string; label: string }[];
-  ctaLabel: string;
+  headline: LocalizedString;
+  body: LocalizedString;
+  stats: ImageTextStat[];
+  ctaLabel: LocalizedString;
   ctaUrl: string;
   bgColor: string;
   fullBleed: boolean;
@@ -845,10 +1097,10 @@ export const ImageTextBlock: ComponentConfig<{
     imageUrl: "",
     imageAlt: "",
     imagePosition: "left",
-    headline: "Tiêu đề",
-    body: "Mô tả nội dung",
+    headline: { vi: "Tiêu đề", en: "Heading" },
+    body: { vi: "Mô tả nội dung", en: "Content description" },
     stats: [],
-    ctaLabel: "",
+    ctaLabel: { vi: "", en: "" },
     ctaUrl: "#",
     bgColor: "",
     fullBleed: false,
@@ -872,19 +1124,19 @@ export const ImageTextBlock: ComponentConfig<{
         { label: "Right", value: "right" },
       ],
     },
-    headline: { type: "text", label: "Headline" },
-    body: { type: "textarea", label: "Body Text" },
+    headline: localizedTextField("Headline"),
+    body: localizedTextareaField("Body Text"),
     stats: {
       type: "array",
       label: "Stats",
       arrayFields: {
         value: { type: "text", label: "Value (e.g. 50+)" },
-        label: { type: "text", label: "Label" },
+        label: localizedTextField("Label"),
       },
     },
-    ctaLabel: { type: "text", label: "CTA Label" },
+    ctaLabel: localizedTextField("CTA Label"),
     ctaUrl: { type: "text", label: "CTA URL" },
-    bgColor: { type: "text", label: "Background Color" },
+    bgColor: colorField("Background Color"),
   },
   render: (props) => (
     <ImageTextBlockClient

@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import {
   postApi,
@@ -49,7 +48,6 @@ const layoutStatusText = (layout: PostLayoutRef): string => {
 };
 
 export function PostListView() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const listQuery = useQuery({
@@ -164,14 +162,9 @@ export function PostListView() {
                           </span>
                         ) : (
                           post.layouts.map((layout) => (
-                            <button
+                            <Link
                               key={layout.id}
-                              type="button"
-                              onClick={() =>
-                                router.push(
-                                  `/admin/widgets-layout?edit=${layout.id}`,
-                                )
-                              }
+                              href={`/admin/widgets-layout?edit=${layout.id}`}
                               className={
                                 "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium " +
                                 layoutBadgeStyle(layout)
@@ -182,7 +175,7 @@ export function PostListView() {
                               <span className="text-[9px] uppercase opacity-70">
                                 {layoutStatusText(layout)}
                               </span>
-                            </button>
+                            </Link>
                           ))
                         )}
                       </div>

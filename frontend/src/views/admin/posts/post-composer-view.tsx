@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -233,13 +234,12 @@ export function PostComposerView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => router.push("/admin/posts/list")}
+          <Link
+            href="/admin/posts/list"
             className="px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50"
           >
             Danh sách bài đăng
-          </button>
+          </Link>
           <button
             type="button"
             onClick={saveDraft}
@@ -510,13 +510,7 @@ export function PostComposerView() {
               </p>
               <div className="flex flex-wrap gap-2">
                 {attachedLayouts.map((layout) => (
-                  <LayoutBadge
-                    key={layout.id}
-                    layout={layout}
-                    onClick={() =>
-                      router.push(`/admin/widgets-layout?edit=${layout.id}`)
-                    }
-                  />
+                  <LayoutBadge key={layout.id} layout={layout} />
                 ))}
               </div>
             </div>
@@ -602,7 +596,6 @@ type LayoutBadgeProps = {
     isPublished: boolean;
     scheduledAt: string | null;
   };
-  onClick: () => void;
 };
 
 const layoutBadgeStyle = (layout: LayoutBadgeProps["layout"]): string => {
@@ -619,11 +612,10 @@ const layoutBadgeLabel = (layout: LayoutBadgeProps["layout"]): string => {
   return "Draft";
 };
 
-function LayoutBadge({ layout, onClick }: LayoutBadgeProps) {
+function LayoutBadge({ layout }: LayoutBadgeProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Link
+      href={`/admin/widgets-layout?edit=${layout.id}`}
       className={
         "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors " +
         layoutBadgeStyle(layout)
@@ -634,6 +626,6 @@ function LayoutBadge({ layout, onClick }: LayoutBadgeProps) {
       <span className="text-[10px] uppercase tracking-wide opacity-70">
         {layoutBadgeLabel(layout)}
       </span>
-    </button>
+    </Link>
   );
 }

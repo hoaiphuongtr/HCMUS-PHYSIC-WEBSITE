@@ -492,6 +492,56 @@ export type UpsertPostBody = {
   eventLocation?: string | null;
 };
 
+export type PostPublicCard = {
+  id: string;
+  title: string | { vi?: string; en?: string };
+  slug: string;
+  excerpt: string | { vi?: string; en?: string } | null;
+  category: PostCategoryValue;
+  coverUrl: string | null;
+  coverAlt: string | null;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  eventLocation: string | { vi?: string; en?: string } | null;
+  publishedAt: string;
+  layoutSlug: string | null;
+};
+
+export type PostPagedResponse = {
+  items: PostPublicCard[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
+export const postPublicApi = {
+  latest: (limit = 4) =>
+    apiFetch<PostPublicCard[]>(`/posts/public/latest?limit=${limit}`),
+  upcomingEvents: (limit = 4) =>
+    apiFetch<PostPublicCard[]>(`/posts/public/upcoming-events?limit=${limit}`),
+  list: (params: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    fromDate?: string;
+    toDate?: string;
+    search?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params.page) sp.set("page", String(params.page));
+    if (params.pageSize) sp.set("pageSize", String(params.pageSize));
+    if (params.category) sp.set("category", params.category);
+    if (params.fromDate) sp.set("fromDate", params.fromDate);
+    if (params.toDate) sp.set("toDate", params.toDate);
+    if (params.search) sp.set("search", params.search);
+    const query = sp.toString();
+    return apiFetch<PostPagedResponse>(
+      `/posts/public/list${query ? `?${query}` : ""}`,
+    );
+  },
+};
+
 export const postApi = {
   list: () => authFetch<PostRecord[]>(`/posts`),
   getById: (id: string) => authFetch<PostRecord>(`/posts/${id}`),

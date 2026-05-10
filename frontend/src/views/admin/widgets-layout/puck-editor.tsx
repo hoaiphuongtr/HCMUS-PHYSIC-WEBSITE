@@ -6,6 +6,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "@puckeditor/core/puck.css";
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
+import { LOCALES, LOCALE_LABELS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { LocaleProvider, useLocale } from "@/lib/locale-context";
 import { ModalPortal, PortalMenu } from "./portal-menu";
 import { puckConfig } from "./puck-config";
 
@@ -628,6 +630,7 @@ export function PuckEditor({
     () => ({
       headerActions: () => (
         <div className="inline-flex items-center gap-2">
+          <PuckLocaleTabs />
           <EditJsonButton />
           <PublishMenu
             layout={layout}
@@ -653,16 +656,43 @@ export function PuckEditor({
   );
 
   return (
-    <div className="puck-editor-wrapper h-full">
-      <Puck
-        config={puckConfig}
-        data={initialData}
-        onPublish={handlePublish}
-        onAction={handleAction}
-        overrides={overrides}
-        headerTitle={layout.name}
-        headerPath={`/${layout.slug}`}
-      />
+    <LocaleProvider initialLocale={DEFAULT_LOCALE}>
+      <div className="puck-editor-wrapper h-full">
+        <Puck
+          config={puckConfig}
+          data={initialData}
+          onPublish={handlePublish}
+          onAction={handleAction}
+          overrides={overrides}
+          headerTitle={layout.name}
+          headerPath={`/${layout.slug}`}
+        />
+      </div>
+    </LocaleProvider>
+  );
+}
+
+function PuckLocaleTabs() {
+  const { locale, setLocale } = useLocale();
+  return (
+    <div className="inline-flex items-center gap-1 mr-2 px-1.5 py-1 rounded-md border border-slate-200 bg-slate-50">
+      {LOCALES.map((code) => {
+        const isActive = code === locale;
+        const className = isActive
+          ? "px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-600 text-white"
+          : "px-2 py-0.5 rounded text-[11px] font-medium text-slate-600 hover:bg-white hover:text-slate-900";
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setLocale(code)}
+            className={className}
+            title={LOCALE_LABELS[code] || code}
+          >
+            {code.toUpperCase()}
+          </button>
+        );
+      })}
     </div>
   );
 }

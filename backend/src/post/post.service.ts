@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { PageLayoutRepository } from '../page-layout/page-layout.repo';
@@ -16,6 +17,23 @@ import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
 import { toSlug, toSlugPath } from '../shared/helpers';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 
+const parseLocalized = (
+  value: string | null,
+): string | { vi?: string; en?: string } | null => {
+  if (value == null) return null;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('{')) return value;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+      return parsed;
+  } catch {
+    // fall through
+  }
+  return value;
+};
+
 const postInclude = {
   postTags: { include: { tag: true } },
   layouts: {
@@ -32,11 +50,46 @@ const postInclude = {
 
 @Injectable()
 export class PostService {
+  private readonly logger = new Logger(PostService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly pageLayoutRepo: PageLayoutRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
+
+  @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDuePosts' })
+  async handleScheduledPublish() {
+    const now = new Date();
+    const due = await this.prisma.post.findMany({
+      where: {
+        status: 'SCHEDULED',
+        scheduledAt: { lte: now },
+      },
+      select: { id: true },
+    });
+    if (due.length === 0) return;
+    for (const row of due) {
+      try {
+        await this.prisma.post.update({
+          where: { id: row.id },
+          data: {
+            status: 'PUBLISHED',
+            publishedAt: now,
+            scheduledAt: null,
+          },
+        });
+        this.logger.log(`Auto-published scheduled post ${row.id}`);
+      } catch (err) {
+        this.logger.error(
+          `Failed to auto-publish post ${row.id}`,
+          err as Error,
+        );
+      }
+    }
+    await this.syncNewsFeedSnapshots();
+    await this.cache.clear();
+  }
 
   async create(body: UpsertPostBodyType, userId: string) {
     const slug = toSlug(body.slug || body.title);
@@ -64,6 +117,9 @@ export class PostService {
       },
       include: postInclude,
     });
+    if (created.status === 'PUBLISHED') {
+      await this.syncNewsFeedSnapshots();
+    }
     return this.serialize(created);
   }
 
@@ -103,6 +159,9 @@ export class PostService {
       });
     });
     await this.syncAttachedLayouts(id);
+    if (updated.status === 'PUBLISHED' || existing.status === 'PUBLISHED') {
+      await this.syncNewsFeedSnapshots();
+    }
     await this.cache.clear();
     return this.serialize(updated);
   }
@@ -115,6 +174,101 @@ export class PostService {
     return posts.map((p) => this.serialize(p));
   }
 
+  async listLatestPublic(limit: number) {
+    const posts = await this.prisma.post.findMany({
+      where: { status: 'PUBLISHED', eventStartAt: null },
+      orderBy: { updatedAt: 'desc' },
+      include: postInclude,
+      take: limit,
+    });
+    return posts.map((p) => this.serializePublic(p));
+  }
+
+  async listUpcomingEventsPublic(limit: number) {
+    const now = new Date();
+    const posts = await this.prisma.post.findMany({
+      where: { status: 'PUBLISHED', eventStartAt: { gte: now } },
+      orderBy: { eventStartAt: 'asc' },
+      include: postInclude,
+      take: limit,
+    });
+    return posts.map((p) => this.serializePublic(p));
+  }
+
+  async listPagedPublic(params: {
+    page: number;
+    pageSize: number;
+    category?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    search?: string;
+  }) {
+    const { page, pageSize, category, fromDate, toDate, search } = params;
+    const where: Record<string, unknown> = { status: 'PUBLISHED' };
+    if (category) where.category = category;
+    if (fromDate || toDate) {
+      const range: Record<string, Date> = {};
+      if (fromDate) range.gte = fromDate;
+      if (toDate) range.lte = toDate;
+      where.updatedAt = range;
+    }
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { excerpt: { contains: q, mode: 'insensitive' } },
+        { slug: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    const [total, posts] = await Promise.all([
+      this.prisma.post.count({ where: where as any }),
+      this.prisma.post.findMany({
+        where: where as any,
+        orderBy: { updatedAt: 'desc' },
+        include: postInclude,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return {
+      items: posts.map((p) => this.serializePublic(p)),
+      total,
+      page,
+      pageSize,
+      hasMore: page * pageSize < total,
+    };
+  }
+
+  private serializePublic(
+    record: Awaited<ReturnType<PrismaService['post']['findFirstOrThrow']>> & {
+      postTags: Array<{ tag: { slug: string; name: string } }>;
+      layouts: Array<{
+        id: string;
+        name: string;
+        slug: string;
+        isPublished: boolean;
+        scheduledAt: Date | null;
+        publishedAt: Date | null;
+      }>;
+    },
+  ) {
+    const publishedLayout = record.layouts.find((l) => l.isPublished) ?? null;
+    return {
+      id: record.id,
+      title: parseLocalized(record.title),
+      slug: record.slug,
+      excerpt: parseLocalized(record.excerpt),
+      category: record.category,
+      coverUrl: record.coverUrl,
+      coverAlt: record.coverAlt,
+      eventStartAt: record.eventStartAt,
+      eventEndAt: record.eventEndAt,
+      eventLocation: parseLocalized(record.eventLocation),
+      publishedAt: record.updatedAt,
+      layoutSlug: publishedLayout?.slug ?? null,
+    };
+  }
+
   async findById(id: string) {
     const record = await this.findByIdOrThrow(id);
     return this.serialize(record);
@@ -124,6 +278,9 @@ export class PostService {
     const existing = await this.prisma.post.findUnique({ where: { id } });
     if (!existing) throw PostNotFoundException;
     await this.prisma.post.delete({ where: { id } });
+    if (existing.status === 'PUBLISHED') {
+      await this.syncNewsFeedSnapshots();
+    }
     await this.cache.clear();
     return { ok: true };
   }
@@ -200,6 +357,80 @@ export class PostService {
     });
     if (!record) throw PostNotFoundException;
     return record;
+  }
+
+  async syncNewsFeedSnapshots() {
+    const [latest, events] = await Promise.all([
+      this.listLatestPublic(12),
+      this.listUpcomingEventsPublic(12),
+    ]);
+
+    const layouts = await this.prisma.pageLayout.findMany({
+      select: {
+        id: true,
+        puckData: true,
+        publishedPuckData: true,
+      },
+    });
+
+    const transformNode = (node: any): any => {
+      if (Array.isArray(node)) return node.map(transformNode);
+      if (!node || typeof node !== 'object') return node;
+      const out = { ...node };
+      if (out.props) out.props = { ...out.props };
+      if (out.type === 'LatestNewsAuto' && out.props) {
+        const limit = Math.max(1, Math.min(Number(out.props.limit) || 4, 12));
+        out.props.posts = latest.slice(0, limit);
+      } else if (out.type === 'UpcomingEventsAuto' && out.props) {
+        const limit = Math.max(1, Math.min(Number(out.props.limit) || 4, 12));
+        out.props.posts = events.slice(0, limit);
+      }
+      if (out.props) {
+        for (const k of Object.keys(out.props)) {
+          out.props[k] = transformNode(out.props[k]);
+        }
+      }
+      return out;
+    };
+
+    const transformTree = (data: any): any => {
+      if (!data || typeof data !== 'object') return data;
+      const out = { ...data };
+      if (Array.isArray(out.content)) out.content = out.content.map(transformNode);
+      if (out.zones && typeof out.zones === 'object') {
+        const z: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(out.zones)) {
+          z[k] = Array.isArray(v) ? v.map(transformNode) : v;
+        }
+        out.zones = z;
+      }
+      return out;
+    };
+
+    let changed = 0;
+    for (const layout of layouts) {
+      const orig = JSON.stringify(layout.puckData);
+      const origPub = JSON.stringify(layout.publishedPuckData);
+      const next = transformTree(layout.puckData);
+      const nextPub = transformTree(layout.publishedPuckData);
+      if (
+        JSON.stringify(next) !== orig ||
+        JSON.stringify(nextPub) !== origPub
+      ) {
+        await this.prisma.pageLayout.update({
+          where: { id: layout.id },
+          data: {
+            puckData: next as InputJsonValue,
+            publishedPuckData: (nextPub ?? undefined) as
+              | InputJsonValue
+              | undefined,
+          },
+        });
+        changed++;
+      }
+    }
+    if (changed) await this.cache.clear();
+    return { layoutsUpdated: changed };
   }
 
   private async syncAttachedLayouts(postId: string) {

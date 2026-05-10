@@ -2,12 +2,19 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/lib/locale-context";
+import { t, type LocalizedString } from "@/lib/i18n";
+import { colorField } from "../fields/color-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import {
+  localizedTextField,
+  localizedTextareaField,
+} from "../fields/localized-text-field";
 
 export const ImageBlock: ComponentConfig<{
   src: string;
   alt: string;
-  caption: string;
+  caption: LocalizedString;
   fit: string;
   borderRadius: string;
 }> = {
@@ -15,14 +22,14 @@ export const ImageBlock: ComponentConfig<{
   defaultProps: {
     src: "",
     alt: "",
-    caption: "",
+    caption: { vi: "", en: "" },
     fit: "cover",
     borderRadius: "md",
   },
   fields: {
     src: mediaPickerField("Image"),
     alt: { type: "text", label: "Alt Text" },
-    caption: { type: "text", label: "Caption" },
+    caption: localizedTextField("Caption"),
     fit: {
       type: "select",
       label: "Fit",
@@ -44,39 +51,65 @@ export const ImageBlock: ComponentConfig<{
       ],
     },
   },
-  render: ({ src, alt, caption, fit, borderRadius }) => {
-    const radii: Record<string, string> = {
-      none: "rounded-none",
-      sm: "rounded-sm",
-      md: "rounded-md",
-      lg: "rounded-lg",
-      full: "rounded-full",
-    };
-    return (
-      <div>
-        {src ? (
-          <img
-            src={src}
-            alt={alt}
-            className={`w-full ${radii[borderRadius] || "rounded-md"}`}
-            style={{ objectFit: (fit as any) || "cover" }}
-          />
-        ) : (
-          <div
-            className={`w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
-          >
-            <span className="material-symbols-outlined text-4xl text-slate-300">
-              image
-            </span>
-          </div>
-        )}
-        {caption && (
-          <p className="text-sm text-slate-500 text-center mt-2">{caption}</p>
-        )}
-      </div>
-    );
-  },
+  render: ({ src, alt, caption, fit, borderRadius }) => (
+    <ImageBlockRender
+      src={src}
+      alt={alt}
+      caption={caption}
+      fit={fit}
+      borderRadius={borderRadius}
+    />
+  ),
 };
+
+function ImageBlockRender({
+  src,
+  alt,
+  caption,
+  fit,
+  borderRadius,
+}: {
+  src: string;
+  alt: string;
+  caption: LocalizedString;
+  fit: string;
+  borderRadius: string;
+}) {
+  const { locale } = useLocale();
+  const captionText = t(caption, locale);
+  const radii: Record<string, string> = {
+    none: "rounded-none",
+    sm: "rounded-sm",
+    md: "rounded-md",
+    lg: "rounded-lg",
+    full: "rounded-full",
+  };
+  return (
+    <div>
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className={`w-full ${radii[borderRadius] || "rounded-md"}`}
+          style={{ objectFit: (fit as any) || "cover" }}
+        />
+      ) : (
+        <div
+          className={`w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
+        >
+          <span className="material-symbols-outlined text-4xl text-slate-300">
+            image
+          </span>
+        </div>
+      )}
+      {captionText && (
+        <p className="text-sm text-slate-500 text-center mt-2">
+          {captionText}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export const ImageGallery: ComponentConfig<{
   images: { src: string; alt: string }[];
@@ -212,6 +245,15 @@ export const VideoEmbed: ComponentConfig<{
   },
 };
 
+type ImageSliderSlide = {
+  src: string;
+  alt: string;
+  caption: LocalizedString;
+  linkUrl: string;
+};
+
+const SLIDER_DETAILS_LABEL = { vi: "Chi tiết", en: "Details" };
+
 function ImageSliderClient({
   slides,
   autoplay,
@@ -222,7 +264,7 @@ function ImageSliderClient({
   showArrows,
   isEditing,
 }: {
-  slides: { src: string; alt: string; caption: string; linkUrl: string }[];
+  slides: ImageSliderSlide[];
   autoplay: boolean;
   intervalMs: number;
   h: string;
@@ -231,6 +273,7 @@ function ImageSliderClient({
   showArrows: boolean;
   isEditing: boolean;
 }) {
+  const { locale } = useLocale();
   const [current, setCurrent] = useState(0);
   const count = slides.length || 1;
 
@@ -259,6 +302,7 @@ function ImageSliderClient({
   }
 
   const slide = slides[current] || slides[0];
+  const captionText = t(slide?.caption, locale);
 
   return (
     <div className={`relative overflow-hidden ${r}`} style={{ height: h }}>
@@ -275,15 +319,15 @@ function ImageSliderClient({
               photo_library
             </span>
             <p className="text-lg font-semibold opacity-80">
-              {slide?.caption || `Slide ${current + 1}`}
+              {captionText || `Slide ${current + 1}`}
             </p>
           </div>
         </div>
       )}
-      {slide?.caption && slide?.src && (
+      {captionText && slide?.src && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
           <p className="text-white text-xl font-bold drop-shadow-lg">
-            {slide.caption}
+            {captionText}
           </p>
           {slide.linkUrl && (
             <a
@@ -291,7 +335,7 @@ function ImageSliderClient({
               tabIndex={isEditing ? -1 : undefined}
               className="inline-block mt-2 px-4 py-1.5 text-sm text-white bg-white/20 rounded-md border border-white/30 hover:bg-white/30 transition-colors"
             >
-              Chi tiết
+              {t(SLIDER_DETAILS_LABEL, locale)}
             </a>
           )}
         </div>
@@ -335,7 +379,7 @@ function ImageSliderClient({
 }
 
 export const ImageSlider: ComponentConfig<{
-  slides: { src: string; alt: string; caption: string; linkUrl: string }[];
+  slides: ImageSliderSlide[];
   autoplay: boolean;
   intervalMs: number;
   height: string;
@@ -346,9 +390,24 @@ export const ImageSlider: ComponentConfig<{
   label: "Image Slider",
   defaultProps: {
     slides: [
-      { src: "", alt: "Slide 1", caption: "Slide 1", linkUrl: "" },
-      { src: "", alt: "Slide 2", caption: "Slide 2", linkUrl: "" },
-      { src: "", alt: "Slide 3", caption: "Slide 3", linkUrl: "" },
+      {
+        src: "",
+        alt: "Slide 1",
+        caption: { vi: "Slide 1", en: "Slide 1" },
+        linkUrl: "",
+      },
+      {
+        src: "",
+        alt: "Slide 2",
+        caption: { vi: "Slide 2", en: "Slide 2" },
+        linkUrl: "",
+      },
+      {
+        src: "",
+        alt: "Slide 3",
+        caption: { vi: "Slide 3", en: "Slide 3" },
+        linkUrl: "",
+      },
     ],
     autoplay: true,
     intervalMs: 5000,
@@ -364,7 +423,7 @@ export const ImageSlider: ComponentConfig<{
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
-        caption: { type: "text", label: "Caption" },
+        caption: localizedTextField("Caption"),
         linkUrl: { type: "text", label: "Link URL" },
       },
     },
@@ -544,8 +603,8 @@ export const LogoGrid: ComponentConfig<{
 export const LogoSlider: ComponentConfig<{
   logos: { src: string; alt: string; linkUrl: string }[];
   bgImageUrl: string;
-  title: string;
-  description: string;
+  title: LocalizedString;
+  description: LocalizedString;
   logoSize: string;
 }> = {
   label: "Logo Slider",
@@ -558,8 +617,8 @@ export const LogoSlider: ComponentConfig<{
       { src: "", alt: "Đại học Bách Khoa", linkUrl: "#" },
     ],
     bgImageUrl: "",
-    title: "Liên kết",
-    description: "",
+    title: { vi: "Liên kết", en: "Affiliations" },
+    description: { vi: "", en: "" },
     logoSize: "80",
   },
   fields: {
@@ -573,8 +632,8 @@ export const LogoSlider: ComponentConfig<{
       },
     },
     bgImageUrl: mediaPickerField("Background Image"),
-    title: { type: "text", label: "Title" },
-    description: { type: "textarea", label: "Description" },
+    title: localizedTextField("Title"),
+    description: localizedTextareaField("Description"),
     logoSize: {
       type: "select",
       label: "Logo Size",
@@ -585,239 +644,323 @@ export const LogoSlider: ComponentConfig<{
       ],
     },
   },
-  render: ({ logos, bgImageUrl, title, description, logoSize, puck }) => {
-    const size = parseInt(logoSize, 10) || 80;
-    return (
-      <div className="relative py-12 px-6 overflow-hidden">
-        {bgImageUrl ? (
-          <img
-            src={bgImageUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200" />
-        )}
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 text-center">
-          {title && (
-            <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
-          )}
-          {description && (
-            <p className="text-sm text-white/80 mb-8 max-w-2xl mx-auto">
-              {description}
-            </p>
-          )}
-          <div className="flex items-center justify-around flex-wrap gap-y-6">
-            {(logos || []).map(
-              (
-                logo: { src: string; alt: string; linkUrl: string },
-                i: number,
-              ) => (
-                <a
-                  key={i}
-                  href={puck?.isEditing ? "#" : logo.linkUrl || "#"}
-                  tabIndex={puck?.isEditing ? -1 : undefined}
-                  className="flex flex-col items-center gap-3 group"
-                >
-                  <div
-                    className="bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                    style={{ width: `${size}px`, height: `${size}px` }}
-                  >
-                    {logo.src ? (
-                      <img
-                        src={logo.src}
-                        alt={logo.alt}
-                        className="object-contain rounded-full"
-                        style={{
-                          width: `${size * 0.7}px`,
-                          height: `${size * 0.7}px`,
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-400 text-center px-1 leading-tight">
-                        {logo.alt}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-medium text-white mt-1 group-hover:underline">
-                    {logo.alt}
-                  </span>
-                </a>
-              ),
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  },
+  render: ({ logos, bgImageUrl, title, description, logoSize, puck }) => (
+    <LogoSliderRender
+      logos={logos || []}
+      bgImageUrl={bgImageUrl}
+      title={title}
+      description={description}
+      logoSize={logoSize}
+      isEditing={!!puck?.isEditing}
+    />
+  ),
 };
 
-function PartnerShowcaseClient({
-  partners,
+function LogoSliderRender({
+  logos,
+  bgImageUrl,
   title,
-  bgColor,
+  description,
+  logoSize,
   isEditing,
 }: {
-  partners: {
-    name: string;
-    logoUrl: string;
-    description: string;
-    linkUrl: string;
-  }[];
-  title: string;
-  bgColor: string;
+  logos: { src: string; alt: string; linkUrl: string }[];
+  bgImageUrl: string;
+  title: LocalizedString;
+  description: LocalizedString;
+  logoSize: string;
   isEditing: boolean;
 }) {
-  const [visibleSet, setVisibleSet] = useState<Set<number>>(new Set());
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    if (isEditing) {
-      setVisibleSet(new Set(partners.map((_, i) => i)));
-      return;
-    }
-    const observers: IntersectionObserver[] = [];
-    rowRefs.current.forEach((el, i) => {
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setVisibleSet((prev) => new Set(prev).add(i));
-          } else {
-            setVisibleSet((prev) => {
-              const next = new Set(prev);
-              next.delete(i);
-              return next;
-            });
-          }
-        },
-        { threshold: 0.2 },
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-    return () => {
-      for (const o of observers) o.disconnect();
-    };
-  }, [isEditing, partners]);
-
+  const { locale } = useLocale();
+  const titleText = t(title, locale);
+  const descriptionText = t(description, locale);
+  const size = parseInt(logoSize, 10) || 80;
   return (
-    <div
-      className="relative py-20 px-6 overflow-hidden"
-      style={{ backgroundColor: bgColor || "#0c2340" }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40" />
-      <div className="relative z-10">
-        {title && (
-          <h2 className="text-3xl font-bold text-white text-center mb-14">
-            {title}
-          </h2>
+    <div className="relative py-12 px-6 overflow-hidden">
+      {bgImageUrl ? (
+        <img
+          src={bgImageUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200" />
+      )}
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative z-10 text-center">
+        {titleText && (
+          <h2 className="text-2xl font-bold text-white mb-2">{titleText}</h2>
         )}
-        <div className="max-w-4xl mx-auto space-y-6">
-          {partners.map((partner, i) => {
-            const alignLeft = i % 2 === 0;
-            const isVisible = visibleSet.has(i);
-            return (
+        {descriptionText && (
+          <p className="text-sm text-white/80 mb-8 max-w-2xl mx-auto">
+            {descriptionText}
+          </p>
+        )}
+        <div className="flex items-center justify-around flex-wrap gap-y-6">
+          {logos.map((logo, i) => (
+            <a
+              key={i}
+              href={isEditing ? "#" : logo.linkUrl || "#"}
+              tabIndex={isEditing ? -1 : undefined}
+              className="flex flex-col items-center gap-3 group"
+            >
               <div
-                key={i}
-                ref={(el) => {
-                  rowRefs.current[i] = el;
-                }}
-                className={`flex items-center gap-6 md:gap-10 p-5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-colors ${alignLeft ? "flex-row" : "flex-row-reverse"}`}
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible
-                    ? "translateX(0)"
-                    : alignLeft
-                      ? "translateX(100%)"
-                      : "translateX(-100%)",
-                  transition:
-                    "opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)",
-                }}
+                className="bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                style={{ width: `${size}px`, height: `${size}px` }}
               >
-                <a
-                  href={isEditing ? "#" : partner.linkUrl || "#"}
-                  tabIndex={isEditing ? -1 : undefined}
-                  className="shrink-0"
-                >
-                  {partner.logoUrl ? (
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-xl flex items-center justify-center p-2">
-                      <img
-                        src={partner.logoUrl}
-                        alt={partner.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 rounded-xl flex items-center justify-center">
-                      <span className="text-xs text-white/60 text-center px-2">
-                        {partner.name}
-                      </span>
-                    </div>
-                  )}
-                </a>
-                <div className={alignLeft ? "" : "text-right"}>
-                  <h3 className="text-lg font-semibold text-white">
-                    {partner.name}
-                  </h3>
-                  {partner.description && (
-                    <p className="text-sm text-white/60 mt-1 line-clamp-2">
-                      {partner.description}
-                    </p>
-                  )}
-                </div>
+                {logo.src ? (
+                  <img
+                    src={logo.src}
+                    alt={logo.alt}
+                    className="object-contain rounded-full"
+                    style={{
+                      width: `${size * 0.7}px`,
+                      height: `${size * 0.7}px`,
+                    }}
+                  />
+                ) : (
+                  <span className="text-xs text-slate-400 text-center px-1 leading-tight">
+                    {logo.alt}
+                  </span>
+                )}
               </div>
-            );
-          })}
+              <span className="text-xs font-medium text-white mt-1 group-hover:underline">
+                {logo.alt}
+              </span>
+            </a>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-export const PartnerShowcase: ComponentConfig<{
-  partners: {
-    name: string;
-    logoUrl: string;
-    description: string;
-    linkUrl: string;
-  }[];
-  title: string;
+type PartnerItem = {
+  name: string;
+  logoUrl: string;
+  description?: string;
+  linkUrl: string;
+};
+
+function PartnerShowcaseClient({
+  partners,
+  title,
+  bgColor,
+  textColor,
+  speed,
+  isEditing,
+}: {
+  partners: PartnerItem[];
+  title: LocalizedString;
   bgColor: string;
+  textColor: string;
+  speed: string;
+  isEditing: boolean;
+}) {
+  const { locale } = useLocale();
+  const titleText = t(title, locale);
+  const items = partners.length ? partners : [];
+  const duration =
+    speed === "fast" ? "20s" : speed === "slow" ? "60s" : "40s";
+  const fadeBg = bgColor || "#ffffff";
+
+  return (
+    <div
+      className="relative py-16 px-6 overflow-hidden"
+      style={{ backgroundColor: fadeBg }}
+    >
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {titleText && (
+          <h2
+            className="text-2xl md:text-3xl font-semibold text-center mb-12"
+            style={{ color: textColor || "#0c2340" }}
+          >
+            {titleText}
+          </h2>
+        )}
+        {items.length === 0 ? (
+          <p
+            className="text-center text-sm opacity-50"
+            style={{ color: textColor || "#0c2340" }}
+          >
+            Chưa có đối tác. Thêm logo trong panel bên phải.
+          </p>
+        ) : (
+          <div
+            className="group relative"
+            style={
+              {
+                ["--marquee-duration" as string]: duration,
+                ["--partner-bg" as string]: fadeBg,
+              } as React.CSSProperties
+            }
+          >
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[var(--partner-bg)] to-transparent z-10" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[var(--partner-bg)] to-transparent z-10" />
+            <div className="overflow-hidden">
+              <div
+                className={
+                  "flex items-center gap-16 w-max " +
+                  (isEditing
+                    ? ""
+                    : "animate-[partner-marquee_var(--marquee-duration)_linear_infinite] group-hover:[animation-play-state:paused]")
+                }
+              >
+                {[...items, ...items].map((partner, i) => (
+                  <a
+                    key={`${partner.name}-${i}`}
+                    href={isEditing ? "#" : partner.linkUrl || "#"}
+                    tabIndex={isEditing ? -1 : undefined}
+                    target={isEditing ? undefined : "_blank"}
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center justify-center grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all"
+                    title={partner.name}
+                  >
+                    {partner.logoUrl ? (
+                      <img
+                        src={partner.logoUrl}
+                        alt={partner.name}
+                        className="h-20 max-h-20 max-w-[240px] object-contain"
+                      />
+                    ) : (
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: textColor || "#0c2340" }}
+                      >
+                        {partner.name}
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <style>{`@keyframes partner-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
+    </div>
+  );
+}
+
+export const PartnerShowcase: ComponentConfig<{
+  partners: PartnerItem[];
+  title: LocalizedString;
+  bgColor: string;
+  textColor: string;
+  speed: string;
 }> = {
-  label: "Partner Showcase",
+  label: "Partner Logo Marquee",
   defaultProps: {
     partners: [
       {
-        name: "Đối tác 1",
-        logoUrl: "",
+        name: "Đại học Quốc Gia TP.HCM",
+        logoUrl: "/partner-logos/dhqg.png",
         description: "",
-        linkUrl: "#",
+        linkUrl: "https://vnuhcm.edu.vn/",
+      },
+      {
+        name: "Đại học Bách Khoa",
+        logoUrl: "/partner-logos/bku.png",
+        description: "",
+        linkUrl: "https://hcmut.edu.vn/",
+      },
+      {
+        name: "Đại học Kinh Tế - Luật",
+        logoUrl: "/partner-logos/uel.png",
+        description: "",
+        linkUrl: "https://uel.edu.vn/",
+      },
+      {
+        name: "Đại học Sài Gòn",
+        logoUrl: "/partner-logos/saigon.png",
+        description: "",
+        linkUrl: "https://sgu.edu.vn/",
+      },
+      {
+        name: "Đại học Cần Thơ",
+        logoUrl: "/partner-logos/cantho.png",
+        description: "",
+        linkUrl: "https://www.ctu.edu.vn/",
+      },
+      {
+        name: "Đại học Đà Lạt",
+        logoUrl: "/partner-logos/dalat.png",
+        description: "",
+        linkUrl: "https://dlu.edu.vn/",
+      },
+      {
+        name: "Bosch",
+        logoUrl: "/partner-logos/bosch.svg",
+        description: "",
+        linkUrl: "https://www.bosch.com.vn/",
+      },
+      {
+        name: "Synopsys",
+        logoUrl: "/partner-logos/synopsys.png",
+        description: "",
+        linkUrl: "https://www.synopsys.com/",
+      },
+      {
+        name: "Renesas",
+        logoUrl: "/partner-logos/renesas.svg",
+        description: "",
+        linkUrl: "https://www.renesas.com/",
+      },
+      {
+        name: "Mantis",
+        logoUrl: "/partner-logos/mantis.jpg",
+        description: "",
+        linkUrl: "http://mantis.vn/",
+      },
+      {
+        name: "ESTEC",
+        logoUrl: "/partner-logos/estec.png",
+        description: "",
+        linkUrl: "https://biendongco.vn/",
+      },
+      {
+        name: "TMA Solutions",
+        logoUrl: "/partner-logos/tma.png",
+        description: "",
+        linkUrl: "https://www.tmasolutions.vn/",
       },
     ],
-    title: "Đối tác & Liên kết",
-    bgColor: "#f8fafc",
+    title: { vi: "Đối tác & Liên kết", en: "Partners & Affiliations" },
+    bgColor: "#ffffff",
+    textColor: "#0c2340",
+    speed: "normal",
   },
   fields: {
-    title: { type: "text", label: "Title" },
-    bgColor: { type: "text", label: "Background Color" },
+    title: localizedTextField("Title"),
+    bgColor: colorField("Background Color"),
+    textColor: colorField("Title Color"),
+    speed: {
+      type: "select",
+      label: "Scroll Speed",
+      options: [
+        { label: "Slow", value: "slow" },
+        { label: "Normal", value: "normal" },
+        { label: "Fast", value: "fast" },
+      ],
+    },
     partners: {
       type: "array",
       label: "Partners",
       arrayFields: {
         name: { type: "text", label: "Name" },
         logoUrl: mediaPickerField("Logo"),
-        description: { type: "textarea", label: "Description" },
+        description: { type: "textarea", label: "Description (unused)" },
         linkUrl: { type: "text", label: "Link URL" },
       },
     },
   },
-  render: ({ partners, title, bgColor, puck }) => (
+  render: ({ partners, title, bgColor, textColor, speed, puck }) => (
     <PartnerShowcaseClient
       partners={partners || []}
       title={title}
       bgColor={bgColor}
+      textColor={textColor}
+      speed={speed}
       isEditing={!!puck?.isEditing}
     />
   ),
