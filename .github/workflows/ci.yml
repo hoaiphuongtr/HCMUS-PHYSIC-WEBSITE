@@ -10,53 +10,80 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
 
-      - run: npm install
+      - run: pnpm install --frozen-lockfile
 
-      - run: npx prisma generate
+      - run: pnpm --filter backend exec prisma generate
 
-      - run: npm run lint
+      - run: pnpm --filter backend lint
 
-      - run: npm run build
+      - run: pnpm --filter backend build
 
-      - run: npm run test
+      - run: pnpm --filter backend test
 
-  frontend:
-    name: Frontend
+  admin:
+    name: Admin frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     env:
       NEXT_PUBLIC_API_URL: http://localhost:3001
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
 
-      - run: npm install
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run lint
+      - run: pnpm --filter admin lint
 
-      - run: npm run build
+      - run: pnpm --filter admin build
 
-      - run: npm run test
+      - run: pnpm --filter admin test
+
+  public:
+    name: Public frontend
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter public lint
+
+      - run: pnpm --filter public build
 
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend, admin, public]
     steps:
       - uses: actions/checkout@v4
 

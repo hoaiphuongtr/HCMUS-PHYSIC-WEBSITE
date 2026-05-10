@@ -2,40 +2,51 @@
   "name": "hcmus-physic-website",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend",
-    "frontend-public"
-  ],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:public": "npm run dev --workspace=frontend-public",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:public\"",
-    "build:backend": "npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:public": "npm run build --workspace=frontend-public",
-    "build": "npm run build:backend && npm run build:frontend && npm run build:public",
-    "test:backend": "npm run test --workspace=backend",
-    "test:frontend": "npm run test --workspace=frontend",
-    "test": "npm run test:backend && npm run test:frontend",
-    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
-    "format": "npm run format --workspace=backend && npm run format --workspace=frontend",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:public": "pnpm --filter public dev",
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:admin\" \"pnpm dev:public\"",
+    "build:backend": "pnpm --filter backend build",
+    "build:admin": "pnpm --filter admin build",
+    "build:public": "pnpm --filter public build",
+    "build": "pnpm build:backend && pnpm build:admin && pnpm build:public",
+    "test:backend": "pnpm --filter backend test",
+    "test:admin": "pnpm --filter admin test",
+    "test": "pnpm test:backend && pnpm test:admin",
+    "lint": "pnpm --filter backend lint && pnpm --filter admin lint && pnpm --filter public lint",
+    "format": "pnpm --filter backend format && pnpm --filter admin format",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "db:seed": "npm run db:seed --workspace=backend",
-    "db:seed-widgets": "npm run db:seed-widgets --workspace=backend",
-    "db:seed-all": "npm run db:seed-all --workspace=backend",
-    "prisma:generate": "npm run prisma:generate --workspace=backend",
-    "prisma:migrate": "npm run prisma:migrate --workspace=backend",
-    "prisma:studio": "npm run prisma:studio --workspace=backend",
-    "check-types": "npm run check-types --workspace=backend"
+    "db:seed": "pnpm --filter backend db:seed",
+    "db:seed-widgets": "pnpm --filter backend db:seed-widgets",
+    "db:seed-all": "pnpm --filter backend db:seed-all",
+    "prisma:generate": "pnpm --filter backend prisma:generate",
+    "prisma:migrate": "pnpm --filter backend prisma:migrate",
+    "prisma:studio": "pnpm --filter backend prisma:studio",
+    "tc": "pnpm -r exec tsc --noEmit"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.29.3",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
+      "@sentry/cli",
+      "bcrypt",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
