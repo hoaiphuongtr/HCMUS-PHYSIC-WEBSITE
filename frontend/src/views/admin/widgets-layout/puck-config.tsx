@@ -43,6 +43,7 @@ import {
   ImageSlider,
   LogoGrid,
   LogoSlider,
+  MapEmbed,
   PartnerShowcase,
   VideoEmbed,
 } from "./components/media";
@@ -57,6 +58,8 @@ import {
   PostBody,
   PostCoverImage,
   PostEventInfo,
+  PostHeader,
+  PostReaderTools,
   PostTagList,
   PostTitle,
 } from "./components/post-placeholders";
@@ -109,6 +112,7 @@ export const puckConfig: Config = {
         "LogoSlider",
         "PartnerShowcase",
         "VideoEmbed",
+        "MapEmbed",
       ],
     },
     interactive: {
@@ -140,11 +144,13 @@ export const puckConfig: Config = {
     post: {
       title: "Post Placeholders",
       components: [
+        "PostHeader",
         "PostTitle",
         "PostCoverImage",
         "PostTagList",
         "PostBody",
         "PostEventInfo",
+        "PostReaderTools",
       ],
     },
   },
@@ -164,6 +170,7 @@ export const puckConfig: Config = {
     Grid,
     ImageGallery,
     VideoEmbed,
+    MapEmbed,
     ImageSlider,
     SectionHeader,
     NewsCard,
@@ -196,5 +203,7 @@ export const puckConfig: Config = {
     PostCoverImage,
     PostTagList,
     PostEventInfo,
+    PostHeader,
+    PostReaderTools,
   } as any,
 };

@@ -6,6 +6,8 @@ export type PostInjectPayload = {
   coverAlt: string | null;
   tags: { slug: string; name: string }[];
   category: string;
+  categoryLabel: string;
+  publishedAt: string | null;
   eventStartAt: string | null;
   eventEndAt: string | null;
   eventLocation: string | null;
@@ -30,6 +32,7 @@ const PLACEHOLDER_TYPES = new Set([
   'PostCoverImage',
   'PostTagList',
   'PostEventInfo',
+  'PostHeader',
 ]);
 
 const buildInjectedProps = (
@@ -56,6 +59,13 @@ const buildInjectedProps = (
         startAt: post.eventStartAt,
         endAt: post.eventEndAt,
         location: post.eventLocation,
+      };
+    case 'PostHeader':
+      return {
+        ...original,
+        text: post.title,
+        categoryLabel: post.categoryLabel,
+        publishedAt: post.publishedAt ?? '',
       };
     default:
       return original;
