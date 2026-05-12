@@ -470,6 +470,8 @@ export type PostRecord = {
   eventStartAt: string | null;
   eventEndAt: string | null;
   eventLocation: string | null;
+  publishedAt: string | null;
+  scheduledAt: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -542,8 +544,32 @@ export const postPublicApi = {
   },
 };
 
+export type PostListPage = {
+  items: PostRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export const postApi = {
   list: () => authFetch<PostRecord[]>(`/posts`),
+  listPaged: (params: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+    status?: string;
+    search?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params.page) sp.set("page", String(params.page));
+    if (params.pageSize) sp.set("pageSize", String(params.pageSize));
+    if (params.category) sp.set("category", params.category);
+    if (params.status) sp.set("status", params.status);
+    if (params.search) sp.set("search", params.search);
+    const query = sp.toString();
+    return authFetch<PostListPage>(`/posts${query ? `?${query}` : ""}`);
+  },
   getById: (id: string) => authFetch<PostRecord>(`/posts/${id}`),
   create: (body: UpsertPostBody) =>
     authFetch<PostRecord>(`/posts`, {

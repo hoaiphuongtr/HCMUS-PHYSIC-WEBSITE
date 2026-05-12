@@ -34,6 +34,29 @@ const parseLocalized = (
   return value;
 };
 
+// Extract Vietnamese (or first available) plain string for admin display.
+const extractVi = (value: string | null): string | null => {
+  const parsed = parseLocalized(value);
+  if (parsed == null) return null;
+  if (typeof parsed === 'string') return parsed;
+  if (typeof parsed === 'object') {
+    const obj = parsed as Record<string, string>;
+    return obj.vi || obj.en || Object.values(obj).find(Boolean) || null;
+  }
+  return null;
+};
+
+const POST_CATEGORY_LABELS_VI: Record<string, string> = {
+  EDUCATIONAL_NEWS: 'Tin học vụ',
+  SCIENTIFIC_INFORMATION: 'Thông tin khoa học',
+  RECRUITMENT: 'Tuyển dụng',
+  EVENT: 'Sự kiện',
+  SCHOLARSHIP: 'Học bổng',
+};
+
+const categoryLabel = (category: string): string =>
+  POST_CATEGORY_LABELS_VI[category] ?? category;
+
 const postInclude = {
   postTags: { include: { tag: true } },
   layouts: {
@@ -96,6 +119,7 @@ export class PostService {
     const existing = await this.prisma.post.findUnique({ where: { slug } });
     if (existing) throw PostSlugExistsException;
     const tagIds = await this.upsertTagIds(body.tagSlugs ?? []);
+    const status = body.status ?? 'DRAFT';
     const created = await this.prisma.post.create({
       data: {
         title: body.title,
@@ -103,7 +127,8 @@ export class PostService {
         body: body.body ?? null,
         excerpt: body.excerpt ?? null,
         category: body.category,
-        status: body.status ?? 'DRAFT',
+        status,
+        publishedAt: status === 'PUBLISHED' ? new Date() : null,
         coverMediaId: body.coverMediaId ?? null,
         coverUrl: body.coverUrl ?? null,
         coverAlt: body.coverAlt ?? null,
@@ -132,6 +157,16 @@ export class PostService {
       if (other && other.id !== id) throw PostSlugExistsException;
     }
     const tagIds = await this.upsertTagIds(body.tagSlugs ?? []);
+    const nextStatus = body.status ?? existing.status;
+    const becamePublished =
+      nextStatus === 'PUBLISHED' && existing.status !== 'PUBLISHED';
+    const leftPublished =
+      nextStatus !== 'PUBLISHED' && existing.status === 'PUBLISHED';
+    const publishedAtPatch = becamePublished
+      ? { publishedAt: new Date() }
+      : leftPublished
+        ? { publishedAt: null }
+        : {};
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.postTag.deleteMany({ where: { postId: id } });
       return tx.post.update({
@@ -142,7 +177,8 @@ export class PostService {
           body: body.body ?? null,
           excerpt: body.excerpt ?? null,
           category: body.category,
-          status: body.status ?? existing.status,
+          status: nextStatus,
+          ...publishedAtPatch,
           coverMediaId: body.coverMediaId ?? null,
           coverUrl: body.coverUrl ?? null,
           coverAlt: body.coverAlt ?? null,
@@ -174,9 +210,51 @@ export class PostService {
     return posts.map((p) => this.serialize(p));
   }
 
+  async listAdminPaged(params: {
+    page: number;
+    pageSize: number;
+    category?: string;
+    status?: string;
+    search?: string;
+  }) {
+    const { page, pageSize, category, status, search } = params;
+    const where: Record<string, unknown> = {};
+    if (category) where.category = category;
+    if (status) where.status = status;
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { slug: { contains: q, mode: 'insensitive' } },
+        { excerpt: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    const [total, posts] = await Promise.all([
+      this.prisma.post.count({ where: where as any }),
+      this.prisma.post.findMany({
+        where: where as any,
+        orderBy: { updatedAt: 'desc' },
+        include: postInclude,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return {
+      items: posts.map((p) => this.serialize(p)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
   async listLatestPublic(limit: number) {
+    const now = new Date();
     const posts = await this.prisma.post.findMany({
-      where: { status: 'PUBLISHED', eventStartAt: null },
+      where: {
+        status: 'PUBLISHED',
+        OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }],
+      },
       orderBy: { updatedAt: 'desc' },
       include: postInclude,
       take: limit,
@@ -253,6 +331,7 @@ export class PostService {
     },
   ) {
     const publishedLayout = record.layouts.find((l) => l.isPublished) ?? null;
+    const coverAltParsed = parseLocalized(record.coverAlt);
     return {
       id: record.id,
       title: parseLocalized(record.title),
@@ -260,7 +339,14 @@ export class PostService {
       excerpt: parseLocalized(record.excerpt),
       category: record.category,
       coverUrl: record.coverUrl,
-      coverAlt: record.coverAlt,
+      coverAlt:
+        typeof coverAltParsed === 'string'
+          ? coverAltParsed
+          : coverAltParsed && typeof coverAltParsed === 'object'
+            ? (coverAltParsed as Record<string, string>).vi ||
+              (coverAltParsed as Record<string, string>).en ||
+              null
+            : null,
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
       eventLocation: parseLocalized(record.eventLocation),
@@ -321,6 +407,10 @@ export class PostService {
         name: pt.tag.name,
       })),
       category: post.category,
+      categoryLabel: categoryLabel(post.category),
+      publishedAt: post.publishedAt
+        ? post.publishedAt.toISOString()
+        : null,
       eventStartAt: post.eventStartAt
         ? post.eventStartAt.toISOString()
         : null,
@@ -454,6 +544,10 @@ export class PostService {
         name: pt.tag.name,
       })),
       category: post.category,
+      categoryLabel: categoryLabel(post.category),
+      publishedAt: post.publishedAt
+        ? post.publishedAt.toISOString()
+        : null,
       eventStartAt: post.eventStartAt
         ? post.eventStartAt.toISOString()
         : null,
@@ -512,22 +606,24 @@ export class PostService {
   ) {
     return {
       id: record.id,
-      title: record.title,
+      title: extractVi(record.title) ?? record.title,
       slug: record.slug,
       body: record.body,
-      excerpt: record.excerpt,
+      excerpt: extractVi(record.excerpt),
       category: record.category,
       status: record.status,
       coverMediaId: record.coverMediaId,
       coverUrl: record.coverUrl,
-      coverAlt: record.coverAlt,
+      coverAlt: extractVi(record.coverAlt),
       tags: record.postTags.map((pt) => ({
         slug: pt.tag.slug,
         name: pt.tag.name,
       })),
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
-      eventLocation: record.eventLocation,
+      eventLocation: extractVi(record.eventLocation),
+      publishedAt: record.publishedAt,
+      scheduledAt: record.scheduledAt,
       createdBy: record.createdBy,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,

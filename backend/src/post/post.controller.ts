@@ -86,8 +86,23 @@ export class PostController {
   }
 
   @Get()
-  list() {
-    return this.postService.list();
+  list(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    if (page === undefined && pageSize === undefined) return this.postService.list();
+    const pageNum = Math.max(1, Number(page) || 1);
+    const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 12));
+    return this.postService.listAdminPaged({
+      page: pageNum,
+      pageSize: sizeNum,
+      category,
+      status,
+      search,
+    });
   }
 
   @Get(':id')

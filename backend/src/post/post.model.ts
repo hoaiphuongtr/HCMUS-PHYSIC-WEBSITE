@@ -58,6 +58,8 @@ export const PostResSchema = z.object({
   eventStartAt: z.date().nullable(),
   eventEndAt: z.date().nullable(),
   eventLocation: z.string().nullable(),
+  publishedAt: z.date().nullable(),
+  scheduledAt: z.date().nullable(),
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
