@@ -3,7 +3,11 @@
 import type { ComponentConfig } from "@puckeditor/core";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { type PostPublicCard, postPublicApi } from "@/lib/api";
+import {
+  type PostPublicCard,
+  postPublicApi,
+  resolveMediaUrl,
+} from "@/lib/api";
 import { t, type LocalizedString } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
@@ -90,7 +94,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
       <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
         {post.coverUrl ? (
           <img
-            src={post.coverUrl}
+            src={resolveMediaUrl(post.coverUrl)}
             alt={post.coverAlt || title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -166,7 +170,7 @@ function EventCard({
           <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
             {post.coverUrl ? (
               <img
-                src={post.coverUrl}
+                src={resolveMediaUrl(post.coverUrl)}
                 alt={post.coverAlt || title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -183,7 +187,7 @@ function EventCard({
         <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
           {post.coverUrl ? (
             <img
-              src={post.coverUrl}
+              src={resolveMediaUrl(post.coverUrl)}
               alt={post.coverAlt || title}
               className="w-full h-full object-cover"
             />
@@ -532,39 +536,68 @@ function NewsListPaginatedRender({
   }, [category, search, fromDate, toDate]);
 
   // Infinite scroll (disabled in editor preview)
+  // Only re-attach observer when filters or hasMore flag changes, NOT on
+  // every page/loading state change (would cause re-fire loop on failure).
+  const stateRef = useRef({
+    page,
+    loading,
+    failed: false,
+    category,
+    search,
+    fromDate,
+    toDate,
+  });
+  stateRef.current = {
+    page,
+    loading,
+    failed: stateRef.current.failed,
+    category,
+    search,
+    fromDate,
+    toDate,
+  };
+  // Reset failed flag when filters change
+  useEffect(() => {
+    stateRef.current.failed = false;
+  }, [category, search, fromDate, toDate]);
+
   useEffect(() => {
     if (isEditing) return;
-    if (!hasMore || loading) return;
+    if (!hasMore) return;
     const el = sentinelRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          const nextPage = page + 1;
-          setLoading(true);
-          postPublicApi
-            .list({
-              page: nextPage,
-              pageSize: PAGE_SIZE,
-              category: category || undefined,
-              search: search || undefined,
-              fromDate: fromDate || undefined,
-              toDate: toDate || undefined,
-            })
-            .then((res) => {
-              setItems((prev) => [...prev, ...res.items]);
-              setPage(nextPage);
-              setHasMore(res.hasMore);
-              setLoading(false);
-            })
-            .catch(() => setLoading(false));
-        }
+        if (!entries[0]?.isIntersecting) return;
+        const s = stateRef.current;
+        if (s.loading || s.failed) return;
+        const nextPage = s.page + 1;
+        setLoading(true);
+        postPublicApi
+          .list({
+            page: nextPage,
+            pageSize: PAGE_SIZE,
+            category: s.category || undefined,
+            search: s.search || undefined,
+            fromDate: s.fromDate || undefined,
+            toDate: s.toDate || undefined,
+          })
+          .then((res) => {
+            setItems((prev) => [...prev, ...res.items]);
+            setPage(nextPage);
+            setHasMore(res.hasMore);
+            setLoading(false);
+          })
+          .catch(() => {
+            stateRef.current.failed = true;
+            setLoading(false);
+          });
       },
       { rootMargin: "200px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [isEditing, hasMore, loading, page, category, search, fromDate, toDate]);
+  }, [isEditing, hasMore]);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();

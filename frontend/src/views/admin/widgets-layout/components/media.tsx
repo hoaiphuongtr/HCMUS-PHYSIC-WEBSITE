@@ -245,6 +245,54 @@ export const VideoEmbed: ComponentConfig<{
   },
 };
 
+export const MapEmbed: ComponentConfig<{
+  src: string;
+  height: string;
+  rounded: boolean;
+}> = {
+  label: "Map (Google Maps embed)",
+  defaultProps: {
+    src: "https://maps.google.com/maps?q=227+Nguyen+Van+Cu,+District+5,+Ho+Chi+Minh+City,+Vietnam&hl=en&z=15&output=embed",
+    height: "240",
+    rounded: true,
+  },
+  fields: {
+    src: {
+      type: "text",
+      label: "Embed URL (output=embed from Google Maps)",
+    },
+    height: { type: "text", label: "Height (px)" },
+    rounded: {
+      type: "radio",
+      label: "Rounded corners",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
+  },
+  render: ({ src, height, rounded }) => {
+    if (!src)
+      return (
+        <div className="w-full h-40 bg-slate-100 border-2 border-dashed border-slate-300 rounded-md flex items-center justify-center">
+          <span className="material-symbols-outlined text-3xl text-slate-300">
+            map
+          </span>
+        </div>
+      );
+    return (
+      <iframe
+        src={src}
+        title="Map"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className={`w-full border-0 ${rounded ? "rounded-lg" : ""}`}
+        style={{ height: `${height || 240}px` }}
+      />
+    );
+  },
+};
+
 type ImageSliderSlide = {
   src: string;
   alt: string;
