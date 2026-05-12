@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
+import { useConfirm } from "@/components/use-confirm";
 import { ModalPortal } from "@/views/admin/widgets-layout/portal-menu";
 
 type MediaDetailModalProps = {
@@ -19,6 +20,7 @@ export function MediaDetailModal({
   onClose,
   onChanged,
 }: MediaDetailModalProps) {
+  const confirm = useConfirm();
   const [alt, setAlt] = useState(item.alt ?? "");
   const [name, setName] = useState(item.name);
   const [tagSlugs, setTagSlugs] = useState<string[]>(
@@ -72,10 +74,14 @@ export function MediaDetailModal({
     );
   };
 
-  const confirmDelete = () => {
-    if (confirm("Xóa ảnh này? Hành động không thể hoàn tác.")) {
-      deleteMutation.mutate();
-    }
+  const confirmDelete = async () => {
+    const ok = await confirm({
+      title: "Xóa ảnh này?",
+      description: "Hành động không thể hoàn tác.",
+      confirmLabel: "Xóa",
+      destructive: true,
+    });
+    if (ok) deleteMutation.mutate();
   };
 
   return (

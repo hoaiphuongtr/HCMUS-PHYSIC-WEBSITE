@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { type WidgetType, widgetApi } from "@/lib/api";
+import { useConfirm } from "@/components/use-confirm";
 import { WidgetFormModal } from "./widget-form-modal";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -28,6 +29,7 @@ const CATEGORY_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
 
 export function WidgetsManageView() {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editingWidget, setEditingWidget] = useState<WidgetType | null>(null);
@@ -178,9 +180,14 @@ export function WidgetsManageView() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
-                      onClick={() => {
-                        if (confirm(`Delete "${w.name}"?`))
-                          deleteMutation.mutate(w.id);
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: `Xoá widget "${w.name}"?`,
+                          description: "Hành động này không thể hoàn tác.",
+                          confirmLabel: "Xoá",
+                          destructive: true,
+                        });
+                        if (ok) deleteMutation.mutate(w.id);
                       }}
                       className="text-destructive hover:text-destructive"
                     >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ConfirmProvider } from "@/components/use-confirm";
 import { QueryProvider } from "@/providers/query-provider";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
@@ -38,7 +39,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
       >
         <QueryProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </TooltipProvider>
         </QueryProvider>
         <ToastContainer position="bottom-center" autoClose={3000} />
       </body>

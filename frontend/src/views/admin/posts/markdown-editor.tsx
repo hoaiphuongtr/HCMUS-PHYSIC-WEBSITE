@@ -82,6 +82,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [tableOpen, setTableOpen] = useState(false);
+  const [tableRows, setTableRows] = useState("3");
+  const [tableCols, setTableCols] = useState("3");
   const savedRange = useRef<Range | null>(null);
   const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(
     null,
@@ -119,8 +122,16 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   };
 
   const insertTable = () => {
-    const rows = Number(window.prompt("Số dòng?", "3") || 0);
-    const cols = Number(window.prompt("Số cột?", "3") || 0);
+    saveSelection();
+    setTableRows("3");
+    setTableCols("3");
+    setTableOpen(true);
+  };
+
+  const confirmInsertTable = () => {
+    const rows = Number(tableRows) || 0;
+    const cols = Number(tableCols) || 0;
+    setTableOpen(false);
     if (!rows || !cols) return;
     let html =
       '<table style="width:100%;border-collapse:collapse" border="1"><tbody>';
@@ -133,6 +144,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       html += "</tr>";
     }
     html += "</tbody></table><p><br/></p>";
+    restoreSelection();
     runCommand("insertHTML", html);
   };
 
@@ -574,6 +586,48 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   setLinkOpen(false);
                   setLinkUrl("");
                 }}
+                className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700"
+              >
+                Hủy
+              </button>
+            </div>
+          ) : null}
+
+          {tableOpen ? (
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-blue-50 text-xs">
+              <label className="flex items-center gap-1">
+                <span className="text-slate-600">Số dòng:</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={tableRows}
+                  onChange={(e) => setTableRows(e.target.value)}
+                  className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
+                  autoFocus
+                />
+              </label>
+              <label className="flex items-center gap-1">
+                <span className="text-slate-600">Số cột:</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={tableCols}
+                  onChange={(e) => setTableCols(e.target.value)}
+                  className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={confirmInsertTable}
+                className="px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded hover:bg-blue-700"
+              >
+                Chèn bảng
+              </button>
+              <button
+                type="button"
+                onClick={() => setTableOpen(false)}
                 className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700"
               >
                 Hủy
