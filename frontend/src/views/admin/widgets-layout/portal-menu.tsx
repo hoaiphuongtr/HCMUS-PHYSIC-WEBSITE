@@ -86,6 +86,7 @@ export function PortalMenu({
     <div
       ref={menuRef}
       role="menu"
+      data-portal-menu
       style={{
         position: "fixed",
         top: pos.top,

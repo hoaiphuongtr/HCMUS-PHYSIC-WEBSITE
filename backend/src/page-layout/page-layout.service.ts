@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { toSlug } from '../shared/helpers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
@@ -211,11 +217,23 @@ export class PageLayoutService {
     const original = await this.pageLayoutRepository.findById(id);
     if (!original) throw PageLayoutNotFoundException;
     const baseName = body.name || `Copy of ${original.name}`;
-    const slug =
-      baseName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || original.slug;
+    const baseSlug =
+      toSlug(baseName) || `${toSlug(original.slug) || 'layout'}-copy`;
+    // Find an unused draft slug. Repo allows multi-draft per slug only if no
+    // draft conflict exists; loop until we hit a free one.
+    let slug = baseSlug;
+    let suffix = 1;
+    while (
+      await this.pageLayoutRepository.findConflictBySlugAndStatus(slug, false)
+    ) {
+      suffix += 1;
+      slug = `${baseSlug}-${suffix}`;
+      if (suffix > 50) {
+        throw new ConflictException(
+          'Cannot find a free slug for the duplicated layout',
+        );
+      }
+    }
     const duplicated = await this.pageLayoutRepository.duplicateWithWidgets(
       {
         name: original.name,

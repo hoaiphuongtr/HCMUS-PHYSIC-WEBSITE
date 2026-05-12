@@ -162,149 +162,74 @@ export function WidgetsLayoutView() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-2 border-b border-slate-200/60 bg-white flex items-center gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 flex-1 overflow-x-auto">
-          {(() => {
-            const pending = layouts.filter((l) => l.scheduledAt);
-            const published = layouts.filter(
-              (l) => l.isPublished && !l.scheduledAt,
-            );
-            const drafts = layouts.filter(
-              (l) => !l.isPublished && !l.scheduledAt,
-            );
-            const groups = [
-              {
-                label: "Published",
-                items: published,
-                dot: "bg-green-500",
-              },
-              {
-                label: "Pending",
-                items: pending,
-                dot: "bg-amber-500",
-              },
-              {
-                label: "Draft",
-                items: drafts,
-                dot: "bg-slate-400",
-              },
-            ];
-            return groups.map(
-              (group) =>
-                group.items.length > 0 && (
-                  <div
-                    key={group.label}
-                    className="flex items-center gap-1.5 shrink-0"
-                  >
-                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-medium px-1">
-                      {group.label}
-                    </span>
-                    {group.items.map((l) => {
-                      const isActive = selectedLayoutId === l.id;
-                      const tabClassName = isActive
-                        ? "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-blue-300 bg-blue-50"
-                        : "shrink-0 px-3 py-1.5 rounded-md border text-left transition-all inline-flex items-center gap-2 border-slate-200 bg-white hover:border-slate-300";
-                      return (
-                        <div key={l.id} className={tabClassName}>
-                          <button
-                            type="button"
-                            onClick={() => selectLayout(l.id)}
-                            className="text-left"
-                          >
-                            <div className="text-[11px] font-semibold text-slate-800 flex items-center gap-1.5">
-                              {l.name}
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${group.dot}`}
-                              />
-                            </div>
-                            <div className="text-[9px] text-slate-400">
-                              /{l.slug}
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              menuTriggerRef.current = e.currentTarget;
-                              setLayoutMenuId(
-                                layoutMenuId === l.id ? null : l.id,
-                              );
-                            }}
-                            className="p-0.5 rounded hover:bg-slate-200/60 text-slate-400"
-                            aria-label="Layout options"
-                            aria-haspopup="menu"
-                            aria-expanded={layoutMenuId === l.id}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">
-                              more_vert
-                            </span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                    <div className="w-px h-5 bg-slate-200 mx-1" />
-                  </div>
-                ),
-            );
-          })()}
-          {openMenuLayout && (
-            <PortalMenu
-              anchorRef={menuTriggerRef}
-              open={true}
-              onClose={() => setLayoutMenuId(null)}
-              widthPx={180}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setEditTargetId(openMenuLayout.id);
-                  setLayoutMenuId(null);
-                }}
-                className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px] text-slate-400">
-                  edit
-                </span>
-                Edit name & slug
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  duplicateLayoutMutation.mutate(openMenuLayout.id);
-                  setLayoutMenuId(null);
-                }}
-                className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px] text-slate-400">
-                  content_copy
-                </span>
-                Duplicate
-              </button>
-              <div className="border-t border-slate-100 my-0.5" />
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteTargetId(openMenuLayout.id);
-                  setLayoutMenuId(null);
-                }}
-                className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 inline-flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">
-                  delete
-                </span>
-                Delete
-              </button>
-            </PortalMenu>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors flex items-center gap-1.5 text-slate-400 hover:text-blue-500"
+      <div className="px-4 py-2 border-b border-slate-200/60 bg-white flex justify-between items-center gap-2 shrink-0">
+        <LayoutPicker
+          layouts={layouts}
+          selectedLayoutId={selectedLayoutId}
+          onSelect={(id) => selectLayout(id)}
+          onOpenItemMenu={(layoutId, target) => {
+            menuTriggerRef.current = target;
+            setLayoutMenuId(layoutId);
+          }}
+          openMenuId={layoutMenuId}
+        />
+        {openMenuLayout && (
+          <PortalMenu
+            anchorRef={menuTriggerRef}
+            open={true}
+            onClose={() => setLayoutMenuId(null)}
+            widthPx={180}
           >
-            <span className="material-symbols-outlined text-[14px]">add</span>
-            <span className="text-[11px] font-medium">New</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditTargetId(openMenuLayout.id);
+                setLayoutMenuId(null);
+              }}
+              className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px] text-slate-400">
+                edit
+              </span>
+              Edit name & slug
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                duplicateLayoutMutation.mutate(openMenuLayout.id);
+                setLayoutMenuId(null);
+              }}
+              className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px] text-slate-400">
+                content_copy
+              </span>
+              Duplicate
+            </button>
+            <div className="border-t border-slate-100 my-0.5" />
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteTargetId(openMenuLayout.id);
+                setLayoutMenuId(null);
+              }}
+              className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 inline-flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                delete
+              </span>
+              Delete
+            </button>
+          </PortalMenu>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowCreateModal(true)}
+          className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors flex items-center gap-1.5 text-slate-400 hover:text-blue-500"
+        >
+          <span className="material-symbols-outlined text-[14px]">add</span>
+          <span className="text-[11px] font-medium">New</span>
+        </button>
       </div>
 
       <div className="flex-1 overflow-hidden">
@@ -382,6 +307,252 @@ export function WidgetsLayoutView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+type LayoutStatus = "published" | "scheduled" | "draft";
+
+const computeStatus = (layout: PageLayout): LayoutStatus => {
+  if (layout.scheduledAt) return "scheduled";
+  if (layout.isPublished) return "published";
+  return "draft";
+};
+
+const STATUS_META: Record<
+  LayoutStatus,
+  { label: string; chip: string; dot: string }
+> = {
+  published: {
+    label: "Published",
+    chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  scheduled: {
+    label: "Scheduled",
+    chip: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-500",
+  },
+  draft: {
+    label: "Draft",
+    chip: "bg-slate-100 text-slate-700 border-slate-200",
+    dot: "bg-slate-400",
+  },
+};
+
+function LayoutPicker({
+  layouts,
+  selectedLayoutId,
+  onSelect,
+  onOpenItemMenu,
+  openMenuId,
+}: {
+  layouts: PageLayout[];
+  selectedLayoutId: string | null;
+  onSelect: (id: string) => void;
+  onOpenItemMenu: (layoutId: string, target: HTMLButtonElement) => void;
+  openMenuId: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [groupFilter, setGroupFilter] = useState<LayoutStatus>("published");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Keep dropdown open when interacting with the per-item PortalMenu
+      // (it renders outside containerRef via React portal).
+      if (target.closest("[data-portal-menu]")) return;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (!selectedLayoutId) return;
+    const layout = layouts.find((l) => l.id === selectedLayoutId);
+    if (layout) setGroupFilter(computeStatus(layout));
+  }, [selectedLayoutId, layouts]);
+
+  const counts: Record<LayoutStatus, number> = {
+    published: 0,
+    scheduled: 0,
+    draft: 0,
+  };
+  for (const l of layouts) counts[computeStatus(l)]++;
+
+  const filtered = layouts
+    .filter((l) => computeStatus(l) === groupFilter)
+    .filter((l) => {
+      if (!search.trim()) return true;
+      const q = search.trim().toLowerCase();
+      return (
+        l.name.toLowerCase().includes(q) || l.slug.toLowerCase().includes(q)
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
+
+  const selected = layouts.find((l) => l.id === selectedLayoutId);
+  const selectedStatus = selected ? computeStatus(selected) : null;
+
+  return (
+    <div ref={containerRef} className="relative flex-1 min-w-0 max-w-[480px]">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-md border border-slate-200 hover:border-slate-300 bg-white text-left transition-colors"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="material-symbols-outlined text-[18px] text-slate-400 shrink-0">
+          dashboard_customize
+        </span>
+        <div className="min-w-0 flex-1">
+          {selected ? (
+            <>
+              <div className="text-[13px] font-semibold text-slate-800 truncate flex items-center gap-2">
+                {selected.name}
+                {selectedStatus && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded border ${STATUS_META[selectedStatus].chip}`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${STATUS_META[selectedStatus].dot}`}
+                    />
+                    {STATUS_META[selectedStatus].label}
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                /{selected.slug}
+              </div>
+            </>
+          ) : (
+            <div className="text-[13px] text-slate-500">
+              Chọn layout để bắt đầu chỉnh sửa
+            </div>
+          )}
+        </div>
+        <span className="material-symbols-outlined text-[16px] text-slate-400 shrink-0">
+          {open ? "expand_less" : "expand_more"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-slate-100">
+            <div className="relative">
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm theo tên hoặc slug..."
+                className="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+                autoFocus
+              />
+              <span className="material-symbols-outlined text-[16px] text-slate-400 absolute left-2 top-1/2 -translate-y-1/2">
+                search
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              {(["published", "scheduled", "draft"] as LayoutStatus[]).map(
+                (status) => {
+                  const meta = STATUS_META[status];
+                  const isActive = status === groupFilter;
+                  const cls = isActive
+                    ? "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded border " +
+                    meta.chip
+                    : "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded border border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50";
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setGroupFilter(status)}
+                      className={cls}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${meta.dot}`}
+                        />
+                        {meta.label} ({counts[status]})
+                      </span>
+                    </button>
+                  );
+                },
+              )}
+            </div>
+          </div>
+
+          <ul role="listbox" className="max-h-[60vh] overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-6 text-center text-xs text-slate-400">
+                {search.trim()
+                  ? "Không có layout phù hợp"
+                  : "Không có layout"}
+              </li>
+            ) : (
+              filtered.map((l) => {
+                const isActive = selectedLayoutId === l.id;
+                const status = computeStatus(l);
+                const meta = STATUS_META[status];
+                const itemClass = isActive
+                  ? "flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  : "flex items-center gap-2 px-3 py-2 hover:bg-slate-50 transition-colors";
+                return (
+                  <li key={l.id} role="option" aria-selected={isActive}>
+                    <div className={itemClass}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelect(l.id);
+                          setOpen(false);
+                        }}
+                        className="flex-1 min-w-0 text-left"
+                      >
+                        <div className="text-[12px] font-semibold text-slate-800 truncate flex items-center gap-1.5">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`}
+                          />
+                          <span className="truncate">{l.name}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate ml-3">
+                          /{l.slug}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenItemMenu(l.id, e.currentTarget);
+                        }}
+                        className="shrink-0 p-1 rounded hover:bg-slate-200/60 text-slate-400"
+                        aria-label="Layout options"
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuId === l.id}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          more_vert
+                        </span>
+                      </button>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
