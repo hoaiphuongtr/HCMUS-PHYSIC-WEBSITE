@@ -1,7 +1,22 @@
 "use client";
 
+import {
+  Globe,
+  Info,
+  LayoutGrid,
+  Menu as MenuIcon,
+  Newspaper,
+  type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 import type { WidgetType } from "@/lib/api";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  DynamicIcon,
+  PlusCircleIcon,
+  SearchIcon,
+} from "@/components/admin/icons";
 import { WidgetPreview } from "./widget-previews";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -11,11 +26,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   UTILITY_INFO: "Utility & Info",
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  NAVIGATION: "menu",
-  FEED_COMPONENTS: "newspaper",
-  CONTENT: "web",
-  UTILITY_INFO: "info",
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  NAVIGATION: MenuIcon,
+  FEED_COMPONENTS: Newspaper,
+  CONTENT: Globe,
+  UTILITY_INFO: Info,
 };
 
 export function ComponentLibrary({
@@ -56,9 +71,7 @@ export function ComponentLibrary({
           Components
         </h3>
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-slate-400">
-            search
-          </span>
+          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search widgets..."
@@ -74,6 +87,7 @@ export function ComponentLibrary({
           const items = grouped[cat];
           if (!items?.length) return null;
           const isCollapsed = collapsed[cat];
+          const CategoryIcon = CATEGORY_ICONS[cat] ?? LayoutGrid;
           return (
             <div key={cat}>
               <button
@@ -82,18 +96,18 @@ export function ComponentLibrary({
                 className="flex items-center justify-between w-full py-2 px-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-700"
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">
-                    {CATEGORY_ICONS[cat] || "category"}
-                  </span>
+                  <CategoryIcon className="w-3.5 h-3.5" />
                   {CATEGORY_LABELS[cat] || cat}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-semibold">
                     {items.length}
                   </span>
-                  <span className="material-symbols-outlined text-[14px]">
-                    {isCollapsed ? "expand_more" : "expand_less"}
-                  </span>
+                  {isCollapsed ? (
+                    <ChevronDownIcon className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronUpIcon className="w-3.5 h-3.5" />
+                  )}
                 </span>
               </button>
               {!isCollapsed && (
@@ -120,9 +134,10 @@ export function ComponentLibrary({
                         />
                       </div>
                       <div className="px-2.5 py-2 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-blue-500">
-                          {w.icon || "widgets"}
-                        </span>
+                        <DynamicIcon
+                          name={w.icon || "widgets"}
+                          className="w-4 h-4 text-slate-400 group-hover:text-blue-500"
+                        />
                         <div className="min-w-0">
                           <div className="text-[11px] font-semibold text-slate-700 group-hover:text-blue-600 truncate">
                             {w.name}
@@ -133,9 +148,7 @@ export function ComponentLibrary({
                             </div>
                           )}
                         </div>
-                        <span className="material-symbols-outlined text-[14px] text-slate-300 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                          add_circle
-                        </span>
+                        <PlusCircleIcon className="w-3.5 h-3.5 text-slate-300 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </button>
                   ))}

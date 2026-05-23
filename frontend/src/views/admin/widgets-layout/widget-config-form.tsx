@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlusIcon, XIcon } from "@/components/admin/icons";
 import {
   Select,
   SelectContent,
@@ -232,12 +233,12 @@ function ArrayFieldEditor({
             onClick={() => removeItem(idx)}
             className="text-muted-foreground hover:text-destructive shrink-0 mt-0.5"
           >
-            <span className="material-symbols-outlined text-[12px]">close</span>
+            <XIcon className="w-3 h-3" />
           </Button>
         </div>
       ))}
       <Button variant="outline" size="xs" className="w-full" onClick={addItem}>
-        <span className="material-symbols-outlined text-[12px]">add</span>
+        <PlusIcon className="w-3 h-3" />
         Add Item
       </Button>
     </div>

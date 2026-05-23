@@ -3,6 +3,11 @@
 import { useState } from "react";
 import type { PageLayout, WidgetInstance } from "@/lib/api";
 import { WidgetInstanceCard } from "./widget-instance-card";
+import {
+  GripVerticalIcon,
+  PlusCircleIcon,
+  PlusIcon,
+} from "@/components/admin/icons";
 
 type RowGroup = { row: number; instances: WidgetInstance[] };
 
@@ -228,9 +233,7 @@ export function PageCanvas({
                     onDragEnd={resetDrag}
                   >
                     <div className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10">
-                      <span className="material-symbols-outlined text-[14px] text-slate-300 bg-white rounded shadow-sm p-0.5 border border-slate-200">
-                        drag_indicator
-                      </span>
+                      <GripVerticalIcon className="w-3.5 h-3.5 text-slate-300 bg-white rounded shadow-sm p-0.5 border border-slate-200" />
                     </div>
 
                     <div className="grid grid-cols-12 gap-2">
@@ -295,9 +298,7 @@ export function PageCanvas({
                                   : "opacity-0 group-hover/row:opacity-40")
                               }
                             >
-                              <span className="material-symbols-outlined text-[20px] text-slate-400 block">
-                                add
-                              </span>
+                              <PlusIcon className="w-5 h-5 text-slate-400 mx-auto block" />
                               <span className="text-[9px] text-slate-400 font-medium">
                                 Drop here ({12 - colUsed}/12)
                               </span>
@@ -394,9 +395,7 @@ function DropZonePlaceholder({
         onDrop(e);
       }}
     >
-      <span className="material-symbols-outlined text-4xl mb-2">
-        add_circle_outline
-      </span>
+      <PlusCircleIcon className="w-9 h-9 mb-2" />
       <p className="text-sm font-medium">{label}</p>
       {sublabel && <p className="text-xs mt-1">{sublabel}</p>}
     </div>
