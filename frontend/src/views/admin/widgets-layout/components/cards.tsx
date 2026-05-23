@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import { Clock, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { t, type LocalizedString } from "@/lib/i18n";
@@ -221,17 +222,13 @@ function EventCardRender({
         <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
           {time && (
             <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">
-                schedule
-              </span>
+              <Clock className="w-3.5 h-3.5" />
               {time}
             </span>
           )}
           {locationText && (
             <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">
-                location_on
-              </span>
+              <MapPin className="w-3.5 h-3.5" />
               {locationText}
             </span>
           )}

@@ -1,7 +1,17 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Globe,
+  Search,
+  X,
+} from "lucide-react";
 import { useState } from "react";
+import { DynamicIcon } from "@/components/admin/icons";
 import { useLocale } from "@/lib/locale-context";
 import { LOCALES, LOCALE_LABELS, t, type LocalizedString } from "@/lib/i18n";
 import { colorField } from "../fields/color-field";
@@ -152,9 +162,7 @@ function NavbarChildItem({
       >
         <span>{t(child.label, locale)}</span>
         {hasSubs && (
-          <span className="material-symbols-outlined text-[16px] opacity-50">
-            chevron_right
-          </span>
+          <ChevronRight className="w-4 h-4 opacity-50" />
         )}
       </a>
       {hasSubs && open && (
@@ -276,7 +284,7 @@ function NavbarClient({
               style={{ color: textColor || "#1e293b" }}
               aria-label="Search"
             >
-              <span className="material-symbols-outlined text-xl">search</span>
+              <Search className="w-5 h-5" />
             </button>
           )}
           {showLanguageSwitcher && (
@@ -290,9 +298,7 @@ function NavbarClient({
                 aria-expanded={langOpen}
                 aria-label="Language"
               >
-                <span className="material-symbols-outlined text-xl">
-                  language
-                </span>
+                <Globe className="w-5 h-5" />
               </button>
               {langOpen && (
                 <>
@@ -326,9 +332,7 @@ function NavbarClient({
                               </span>
                               <span>{LOCALE_LABELS[code] || code}</span>
                               {isActive && (
-                                <span className="material-symbols-outlined text-[16px] ml-auto">
-                                  check
-                                </span>
+                                <Check className="w-4 h-4 ml-auto" />
                               )}
                             </button>
                           </li>
@@ -356,7 +360,7 @@ function NavbarClient({
             }}
             className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
           >
-            <span className="material-symbols-outlined text-3xl">close</span>
+            <X className="w-8 h-8" />
           </button>
           <div className="flex flex-col items-center justify-start pt-[18vh] px-6 animate-[slideUp_0.35s_ease]">
             <p className="text-white/50 text-xs uppercase tracking-[0.25em] mb-6">
@@ -370,9 +374,7 @@ function NavbarClient({
                 placeholder={t(searchPlaceholder, locale) || "Nhập từ khóa..."}
                 className="w-full bg-transparent border-b-2 border-white/30 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/30 transition-colors"
               />
-              <span className="material-symbols-outlined absolute right-0 top-1 text-white/50 text-3xl">
-                search
-              </span>
+              <Search className="absolute right-0 top-1 w-8 h-8 text-white/50" />
             </div>
             {searchSuggestions?.length > 0 && (
               <div className="mt-10 w-full max-w-2xl">
@@ -809,9 +811,10 @@ function QuickLinksRender({
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
             style={{ backgroundColor: link.color || "#3b82f6" }}
           >
-            <span className="material-symbols-outlined text-xl">
-              {link.icon || "link"}
-            </span>
+            <DynamicIcon
+              name={link.icon || "link"}
+              className="w-5 h-5"
+            />
           </div>
           <span className="text-xs font-medium text-slate-600 text-center">
             {t(link.label, locale)}
@@ -949,12 +952,10 @@ export const SocialIcons: ComponentConfig<{
         );
       }
       return (
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: `${s.px}px`, color: fillColor }}
-        >
-          {icon || "link"}
-        </span>
+        <DynamicIcon
+          name={icon || "link"}
+          style={{ width: s.px, height: s.px, color: fillColor }}
+        />
       );
     };
 
@@ -1056,11 +1057,9 @@ function LanguageSwitcherClient({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="material-symbols-outlined text-[18px]">language</span>
+        <Globe className="w-[18px] h-[18px]" />
         {variant !== "compact" && <span>{localeLabel}</span>}
-        <span className="material-symbols-outlined text-[14px] opacity-60">
-          {open ? "expand_less" : "expand_more"}
-        </span>
+        {open ? <ChevronUp className="w-3.5 h-3.5 opacity-60" /> : <ChevronDown className="w-3.5 h-3.5 opacity-60" />}
       </button>
       {open && (
         <>
@@ -1093,9 +1092,7 @@ function LanguageSwitcherClient({
                     </span>
                     <span>{opt.label}</span>
                     {opt.code === locale && (
-                      <span className="material-symbols-outlined text-[16px] ml-auto">
-                        check
-                      </span>
+                      <Check className="w-4 h-4 ml-auto" />
                     )}
                   </button>
                 </li>

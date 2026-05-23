@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { t, type LocalizedString } from "@/lib/i18n";
@@ -184,9 +185,7 @@ function HeroFullScreenClient({
       )}
       {showScrollIndicator && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce hidden md:block">
-          <span className="material-symbols-outlined text-white/60 text-3xl">
-            keyboard_arrow_down
-          </span>
+          <ChevronDown className="w-8 h-8 text-white/60" />
         </div>
       )}
     </div>

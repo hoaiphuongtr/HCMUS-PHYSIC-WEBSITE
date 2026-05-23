@@ -1,6 +1,14 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Images,
+  Map,
+  PlayCircle,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { t, type LocalizedString } from "@/lib/i18n";
@@ -97,9 +105,7 @@ function ImageBlockRender({
         <div
           className={`w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
         >
-          <span className="material-symbols-outlined text-4xl text-slate-300">
-            image
-          </span>
+          <ImageIcon className="w-9 h-9 text-slate-300" />
         </div>
       )}
       {captionText && (
@@ -162,9 +168,7 @@ export const ImageGallery: ComponentConfig<{
               key={i}
               className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center"
             >
-              <span className="material-symbols-outlined text-2xl text-slate-300">
-                image
-              </span>
+              <ImageIcon className="w-6 h-6 text-slate-300" />
             </div>
           ))}
         </div>
@@ -185,9 +189,7 @@ export const ImageGallery: ComponentConfig<{
               />
             ) : (
               <div className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-slate-300">
-                  image
-                </span>
+                <ImageIcon className="w-6 h-6 text-slate-300" />
               </div>
             )}
           </div>
@@ -233,9 +235,7 @@ export const VideoEmbed: ComponentConfig<{
           <div
             className={`w-full ${ratio} rounded-lg bg-slate-900 flex items-center justify-center`}
           >
-            <span className="material-symbols-outlined text-5xl text-white/30">
-              play_circle
-            </span>
+            <PlayCircle className="w-12 h-12 text-white/30" />
           </div>
         )}
       </div>
@@ -273,9 +273,7 @@ export const MapEmbed: ComponentConfig<{
     if (!src)
       return (
         <div className="w-full h-40 bg-slate-100 border-2 border-dashed border-slate-300 rounded-md flex items-center justify-center">
-          <span className="material-symbols-outlined text-3xl text-slate-300">
-            map
-          </span>
+          <Map className="w-8 h-8 text-slate-300" />
         </div>
       );
     return (
@@ -340,9 +338,7 @@ function ImageSliderClient({
         className={`relative overflow-hidden bg-slate-200 flex items-center justify-center ${r}`}
         style={{ height: h }}
       >
-        <span className="material-symbols-outlined text-5xl text-slate-400">
-          photo_library
-        </span>
+        <Images className="w-12 h-12 text-slate-400" />
       </div>
     );
   }
@@ -361,9 +357,7 @@ function ImageSliderClient({
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-blue-900 to-indigo-800 flex items-center justify-center">
           <div className="text-center text-white">
-            <span className="material-symbols-outlined text-5xl mb-2 block opacity-50">
-              photo_library
-            </span>
+            <Images className="w-12 h-12 mb-2 mx-auto block opacity-50" />
             <p className="text-lg font-semibold opacity-80">
               {captionText || `Slide ${current + 1}`}
             </p>
@@ -393,18 +387,14 @@ function ImageSliderClient({
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
-            <span className="material-symbols-outlined text-xl">
-              chevron_left
-            </span>
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             type="button"
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors"
           >
-            <span className="material-symbols-outlined text-xl">
-              chevron_right
-            </span>
+            <ChevronRight className="w-5 h-5" />
           </button>
         </>
       )}

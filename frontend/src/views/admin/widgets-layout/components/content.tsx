@@ -1,7 +1,9 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import { Image as ImageIcon, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { DynamicIcon } from "@/components/admin/icons";
 import { useLocale } from "@/lib/locale-context";
 import { t, type LocalizedString } from "@/lib/i18n";
 import { colorField } from "../fields/color-field";
@@ -236,12 +238,11 @@ function IconTextRender({
     <div
       className={`flex ${isVertical ? "flex-col items-center text-center" : "items-start"} gap-3 p-4`}
     >
-      <span
-        className="material-symbols-outlined text-3xl"
+      <DynamicIcon
+        name={icon || "info"}
+        className="w-8 h-8"
         style={{ color: iconColor || "#3b82f6" }}
-      >
-        {icon || "info"}
-      </span>
+      />
       <div>
         <div className="text-base font-semibold text-slate-800">
           {titleText || "Feature"}
@@ -516,12 +517,11 @@ function ContactInfoRender({
       {items.map((item, i) => (
         <div key={i} className="flex items-center gap-2">
           {showIcons !== false && (
-            <span
-              className="material-symbols-outlined text-lg shrink-0"
+            <DynamicIcon
+              name={item.icon}
+              className="w-[18px] h-[18px] shrink-0"
               style={{ color: color || "#475569" }}
-            >
-              {item.icon}
-            </span>
+            />
           )}
           {item.href ? (
             <a
@@ -671,9 +671,7 @@ function NewsCardRender({
         />
       ) : (
         <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
-          <span className="material-symbols-outlined text-2xl text-slate-300">
-            image
-          </span>
+          <ImageIcon className="w-6 h-6 text-slate-300" />
         </div>
       )}
       <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
@@ -695,9 +693,7 @@ function NewsCardRender({
         />
       ) : (
         <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
-          <span className="material-symbols-outlined text-lg text-slate-300">
-            image
-          </span>
+          <ImageIcon className="w-[18px] h-[18px] text-slate-300" />
         </div>
       )}
       <div className="flex-1 min-w-0">
@@ -783,9 +779,7 @@ function ProfileCardRender({
           />
         ) : (
           <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
-            <span className="material-symbols-outlined text-5xl text-slate-300">
-              person
-            </span>
+            <User className="w-12 h-12 text-slate-300" />
           </div>
         )}
         {descriptionText && (
@@ -948,9 +942,7 @@ function ImageTextBlockClient({
             />
           ) : (
             <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
-              <span className="material-symbols-outlined text-5xl text-slate-400">
-                image
-              </span>
+              <ImageIcon className="w-12 h-12 text-slate-400" />
             </div>
           )}
         </div>
@@ -1027,9 +1019,7 @@ function ImageTextBlockClient({
             />
           ) : (
             <div className="w-full aspect-[4/3] bg-slate-200 flex items-center justify-center">
-              <span className="material-symbols-outlined text-5xl text-slate-400">
-                image
-              </span>
+              <ImageIcon className="w-12 h-12 text-slate-400" />
             </div>
           )}
         </div>

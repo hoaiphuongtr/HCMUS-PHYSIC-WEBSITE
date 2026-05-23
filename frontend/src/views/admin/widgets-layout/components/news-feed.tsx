@@ -1,6 +1,12 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import {
+  Calendar,
+  CalendarPlus,
+  Image as ImageIcon,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
@@ -90,9 +96,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-            <span className="material-symbols-outlined text-4xl text-slate-400">
-              image
-            </span>
+            <ImageIcon className="w-9 h-9 text-slate-400" />
           </div>
         )}
       </div>
@@ -162,9 +166,7 @@ function EventCard({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-                <span className="material-symbols-outlined text-4xl text-slate-400">
-                  event
-                </span>
+                <Calendar className="w-9 h-9 text-slate-400" />
               </div>
             )}
           </div>
@@ -179,9 +181,7 @@ function EventCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-              <span className="material-symbols-outlined text-4xl text-slate-400">
-                event
-              </span>
+              <Calendar className="w-9 h-9 text-slate-400" />
             </div>
           )}
         </div>
@@ -219,9 +219,7 @@ function EventCard({
           title={ariaLabel}
           aria-label={ariaLabel}
         >
-          <span className="material-symbols-outlined text-[22px]">
-            calendar_add_on
-          </span>
+          <CalendarPlus className="w-[22px] h-[22px]" />
         </a>
       </div>
     </article>
@@ -636,9 +634,7 @@ function NewsListPaginatedRender({
               className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900"
               aria-label="Search"
             >
-              <span className="material-symbols-outlined text-[18px]">
-                search
-              </span>
+              <Search className="w-[18px] h-[18px]" />
             </button>
           </div>
         </form>

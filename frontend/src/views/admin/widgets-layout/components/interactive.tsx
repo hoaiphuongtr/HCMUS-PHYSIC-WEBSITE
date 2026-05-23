@@ -1,7 +1,9 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import { BellRing, Clock, Flame, History, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { DynamicIcon } from "@/components/admin/icons";
 import { subscriptionApi, visitorApi } from "@/lib/api";
 import { useLocale } from "@/lib/locale-context";
 import { t, type LocalizedString } from "@/lib/i18n";
@@ -363,9 +365,7 @@ function AnnouncementBarRender({
       }}
     >
       {icon && (
-        <span className="material-symbols-outlined text-lg shrink-0">
-          {icon}
-        </span>
+        <DynamicIcon name={icon} className="w-[18px] h-[18px] shrink-0" />
       )}
       {linkUrl ? (
         <a
@@ -597,7 +597,7 @@ function SearchOverlayClient({
         onClick={() => !isEditing && setOpen(true)}
         className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 text-white/80 hover:text-white hover:border-white transition-all text-sm backdrop-blur-sm"
       >
-        <span className="material-symbols-outlined text-lg">search</span>
+        <Search className="w-[18px] h-[18px]" />
         <span className="hidden sm:inline">{placeholderText}</span>
       </button>
       {open && (
@@ -610,7 +610,7 @@ function SearchOverlayClient({
             onClick={() => setOpen(false)}
             className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
           >
-            <span className="material-symbols-outlined text-3xl">close</span>
+            <X className="w-8 h-8" />
           </button>
           <div className="w-full max-w-2xl px-6 pb-16 animate-[slideUp_0.4s_ease]">
             <div className="relative">
@@ -624,17 +624,13 @@ function SearchOverlayClient({
                 placeholder={placeholderText}
                 className="w-full bg-transparent border-b-2 border-white/40 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/40 transition-colors"
               />
-              <span className="material-symbols-outlined absolute right-0 top-1 text-white/60 text-3xl">
-                search
-              </span>
+              <Search className="absolute right-0 top-1 w-8 h-8 text-white/60" />
             </div>
 
             {effectiveHot.length > 0 && (
               <div className="mt-8">
                 <p className="text-orange-300/80 text-xs uppercase tracking-widest mb-4 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px]">
-                    local_fire_department
-                  </span>
+                  <Flame className="w-4 h-4" />
                   {t(SEARCH_LABELS.trending, locale)}
                 </p>
                 <div className="flex flex-wrap gap-3">
@@ -676,9 +672,7 @@ function SearchOverlayClient({
               <div className="mt-8">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-white/50 text-xs uppercase tracking-widest flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">
-                      history
-                    </span>
+                    <History className="w-4 h-4" />
                     {t(SEARCH_LABELS.recent, locale)}
                   </p>
                   <button
@@ -696,9 +690,7 @@ function SearchOverlayClient({
                       href={item.url}
                       className="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm inline-flex items-center gap-1.5"
                     >
-                      <span className="material-symbols-outlined text-[14px]">
-                        schedule
-                      </span>
+                      <Clock className="w-3.5 h-3.5" />
                       {item.label}
                     </a>
                   ))}
@@ -812,9 +804,7 @@ function PersonaSelectorRender({
               className="flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white group"
             >
               <div className="w-16 h-16 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-4 transition-colors">
-                <span className="material-symbols-outlined text-2xl text-blue-700">
-                  {p.icon}
-                </span>
+                <DynamicIcon name={p.icon} className="w-6 h-6 text-blue-700" />
               </div>
               <h3 className="font-bold text-slate-900 mb-1">
                 {t(p.label, locale)}
@@ -1143,9 +1133,7 @@ function TagNotificationBarClient({
         color: textColor || "#ffffff",
       }}
     >
-      <span className="material-symbols-outlined text-lg shrink-0">
-        notifications_active
-      </span>
+      <BellRing className="w-[18px] h-[18px] shrink-0" />
       <span className="text-sm font-medium flex-1">{messageText}</span>
       {linkLabelText && (
         <a
@@ -1163,7 +1151,7 @@ function TagNotificationBarClient({
           className="shrink-0 opacity-70 hover:opacity-100"
           aria-label="Dismiss"
         >
-          <span className="material-symbols-outlined text-[18px]">close</span>
+          <X className="w-[18px] h-[18px]" />
         </button>
       )}
     </div>
