@@ -4,6 +4,7 @@ import type { CustomField } from "@puckeditor/core";
 import { useState } from "react";
 import { resolveMediaUrl } from "@/lib/api";
 import { MediaPickerModal } from "./media-picker-modal";
+import { DynamicIcon } from "@/components/admin/icons";
 
 type MediaPickerFieldProps = {
   value: string;
@@ -32,9 +33,7 @@ const MediaPickerInput = ({
         onClick={() => setOpen(true)}
         className="w-full px-2.5 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center justify-center gap-1"
       >
-        <span className="material-symbols-outlined text-[14px]">
-          photo_library
-        </span>
+        <DynamicIcon name="photo_library" className="w-3.5 h-3.5" />
         Chọn từ thư viện
       </button>
       {preview && (

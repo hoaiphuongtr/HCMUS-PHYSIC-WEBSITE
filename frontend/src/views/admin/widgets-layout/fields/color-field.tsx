@@ -3,6 +3,7 @@
 import type { CustomField } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
+import { PaletteIcon } from "@/components/admin/icons";
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
@@ -140,9 +141,7 @@ export const colorField = (label: string): CustomField<string> => ({
   render: ({ value, onChange }) => (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-        <span className="material-symbols-outlined text-[14px] text-slate-400">
-          palette
-        </span>
+        <PaletteIcon className="w-3.5 h-3.5 text-slate-400" />
         {label}
       </div>
       <ColorInput

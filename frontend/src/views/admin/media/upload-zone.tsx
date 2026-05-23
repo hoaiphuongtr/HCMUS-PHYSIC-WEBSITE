@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { mediaApi } from "@/lib/api";
+import { UploadCloudIcon } from "@/components/admin/icons";
 
 type UploadZoneProps = {
   tagSlugs?: string[];
@@ -92,9 +93,7 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
         hidden
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <span className="material-symbols-outlined text-4xl text-slate-400">
-        cloud_upload
-      </span>
+      <UploadCloudIcon className="w-9 h-9 text-slate-400" />
       <p className="mt-2 text-sm text-slate-600">
         Kéo thả ảnh vào đây, hoặc
         <button

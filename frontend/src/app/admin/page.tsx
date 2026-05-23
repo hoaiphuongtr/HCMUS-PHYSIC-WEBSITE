@@ -1,3 +1,5 @@
+import { SearchIcon } from "@/components/admin/icons";
+
 export default function AdminDashboardPage() {
   return (
     <>
@@ -9,9 +11,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400">
-              search
-            </span>
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400" />
             <input
               type="text"
               placeholder="Search..."

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
 import { useConfirm } from "@/components/use-confirm";
+import { XIcon } from "@/components/admin/icons";
 import { ModalPortal } from "@/views/admin/widgets-layout/portal-menu";
 
 type MediaDetailModalProps = {
@@ -120,9 +121,7 @@ export function MediaDetailModal({
                 onClick={onClose}
                 className="text-slate-400 hover:text-slate-700"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  close
-                </span>
+                <XIcon className="w-5 h-5" />
               </button>
             </header>
 

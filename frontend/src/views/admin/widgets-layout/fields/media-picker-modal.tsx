@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { mediaApi, resolveMediaUrl } from "@/lib/api";
 import { ModalPortal } from "../portal-menu";
+import { XIcon } from "@/components/admin/icons";
 
 const PAGE_SIZE = 24;
 
@@ -67,9 +68,7 @@ export function MediaPickerModal({ onSelect, onClose }: MediaPickerModalProps) {
               onClick={onClose}
               className="text-slate-400 hover:text-slate-700"
             >
-              <span className="material-symbols-outlined text-[20px]">
-                close
-              </span>
+              <XIcon className="w-5 h-5" />
             </button>
           </header>
 

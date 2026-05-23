@@ -9,6 +9,7 @@ import {
   ensureLocalized,
   type LocalizedString,
 } from "@/lib/i18n";
+import { DynamicIcon } from "@/components/admin/icons";
 
 type LocalizedTextInputProps = {
   label: string;
@@ -132,9 +133,7 @@ const LocalizedTextInput = ({
   return (
     <div className="space-y-2 min-w-0">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-        <span className="material-symbols-outlined text-[14px] text-slate-400">
-          translate
-        </span>
+        <DynamicIcon name="translate" className="w-3.5 h-3.5 text-slate-400" />
         {label}
       </div>
       {LOCALES.map((locale) => (
