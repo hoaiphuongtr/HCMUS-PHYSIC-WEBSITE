@@ -19,6 +19,17 @@ import { CreateLayoutModal } from "./create-layout-modal";
 import { EditLayoutModal } from "./edit-layout-modal";
 import { PortalMenu } from "./portal-menu";
 import { PuckEditor } from "./puck-editor";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CopyIcon,
+  DynamicIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "@/components/admin/icons";
 
 export function WidgetsLayoutView() {
   const queryClient = useQueryClient();
@@ -188,9 +199,7 @@ export function WidgetsLayoutView() {
               }}
               className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[14px] text-slate-400">
-                edit
-              </span>
+              <PencilIcon className="w-3.5 h-3.5 text-slate-400" />
               Edit name & slug
             </button>
             <button
@@ -201,9 +210,7 @@ export function WidgetsLayoutView() {
               }}
               className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[14px] text-slate-400">
-                content_copy
-              </span>
+              <CopyIcon className="w-3.5 h-3.5 text-slate-400" />
               Duplicate
             </button>
             <div className="border-t border-slate-100 my-0.5" />
@@ -215,9 +222,7 @@ export function WidgetsLayoutView() {
               }}
               className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 inline-flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[14px]">
-                delete
-              </span>
+              <TrashIcon className="w-3.5 h-3.5" />
               Delete
             </button>
           </PortalMenu>
@@ -227,7 +232,7 @@ export function WidgetsLayoutView() {
           onClick={() => setShowCreateModal(true)}
           className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors flex items-center gap-1.5 text-slate-400 hover:text-blue-500"
         >
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <PlusIcon className="w-3.5 h-3.5" />
           <span className="text-[11px] font-medium">New</span>
         </button>
       </div>
@@ -244,9 +249,10 @@ export function WidgetsLayoutView() {
         ) : (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-slate-400">
-              <span className="material-symbols-outlined text-5xl mb-3 block">
-                dashboard_customize
-              </span>
+              <DynamicIcon
+                name="dashboard_customize"
+                className="w-12 h-12 mb-3 mx-auto block"
+              />
               <p className="text-sm font-medium">
                 Select or create a layout to start building
               </p>
@@ -412,9 +418,10 @@ function LayoutPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="material-symbols-outlined text-[18px] text-slate-400 shrink-0">
-          dashboard_customize
-        </span>
+        <DynamicIcon
+          name="dashboard_customize"
+          className="w-[18px] h-[18px] text-slate-400 shrink-0"
+        />
         <div className="min-w-0 flex-1">
           {selected ? (
             <>
@@ -441,9 +448,11 @@ function LayoutPicker({
             </div>
           )}
         </div>
-        <span className="material-symbols-outlined text-[16px] text-slate-400 shrink-0">
-          {open ? "expand_less" : "expand_more"}
-        </span>
+        {open ? (
+          <ChevronUpIcon className="w-4 h-4 text-slate-400 shrink-0" />
+        ) : (
+          <ChevronDownIcon className="w-4 h-4 text-slate-400 shrink-0" />
+        )}
       </button>
 
       {open && (
@@ -458,9 +467,7 @@ function LayoutPicker({
                 className="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
                 autoFocus
               />
-              <span className="material-symbols-outlined text-[16px] text-slate-400 absolute left-2 top-1/2 -translate-y-1/2">
-                search
-              </span>
+              <SearchIcon className="w-4 h-4 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
             </div>
             <div className="flex items-center gap-1 mt-2">
               {(["published", "scheduled", "draft"] as LayoutStatus[]).map(
@@ -536,9 +543,7 @@ function LayoutPicker({
                         aria-haspopup="menu"
                         aria-expanded={openMenuId === l.id}
                       >
-                        <span className="material-symbols-outlined text-[16px]">
-                          more_vert
-                        </span>
+                        <MoreVerticalIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </li>

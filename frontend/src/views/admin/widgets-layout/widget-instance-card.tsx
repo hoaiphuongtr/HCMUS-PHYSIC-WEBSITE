@@ -2,6 +2,12 @@
 
 import type { WidgetInstance } from "@/lib/api";
 import { WidgetPreview } from "./widget-previews";
+import {
+  DynamicIcon,
+  EyeIcon,
+  EyeOffIcon,
+  XIcon,
+} from "@/components/admin/icons";
 
 const COL_SPAN_OPTIONS = [
   { value: 3, label: "1/4" },
@@ -75,9 +81,11 @@ export function WidgetInstanceCard({
           className="p-1 rounded-md bg-white/90 shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-500"
           title={instance.isVisible ? "Hide" : "Show"}
         >
-          <span className="material-symbols-outlined text-[14px]">
-            {instance.isVisible ? "visibility" : "visibility_off"}
-          </span>
+          {instance.isVisible ? (
+            <EyeIcon className="w-3.5 h-3.5" />
+          ) : (
+            <EyeOffIcon className="w-3.5 h-3.5" />
+          )}
         </button>
         <button
           type="button"
@@ -88,7 +96,7 @@ export function WidgetInstanceCard({
           className="p-1 rounded-md bg-white/90 shadow-sm border border-red-200 hover:bg-red-50 text-red-400 hover:text-red-600"
           title="Remove"
         >
-          <span className="material-symbols-outlined text-[14px]">close</span>
+          <XIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -104,9 +112,10 @@ export function WidgetInstanceCard({
 
         <div className="px-3 py-2 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px] text-slate-400">
-              {widget?.icon || "widgets"}
-            </span>
+            <DynamicIcon
+              name={widget?.icon || "widgets"}
+              className="w-3.5 h-3.5 text-slate-400"
+            />
             <span className="text-[11px] font-medium text-slate-600">
               {widget?.name || "Unknown"}
             </span>
