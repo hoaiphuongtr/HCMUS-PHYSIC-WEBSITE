@@ -8,6 +8,19 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import ImageResize from "tiptap-extension-resize-image";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Eraser,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Link2Off,
+  Minus,
+  Redo2,
+  Table as TableIcon,
+  Undo2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
@@ -48,7 +61,7 @@ const ToolbarButton = ({
     title={title}
     aria-label={title}
     className={
-      "min-w-[28px] h-7 px-2 text-xs font-semibold rounded border " +
+      "min-w-[28px] h-7 px-2 text-xs font-semibold rounded border inline-flex items-center justify-center " +
       (active
         ? "bg-blue-50 border-blue-300 text-blue-700"
         : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50") +
@@ -284,7 +297,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               onClick={() => editor.chain().focus().setTextAlign("left").run()}
               title="Align left"
             >
-              ⟸
+              <AlignLeft className="w-3.5 h-3.5" />
             </ToolbarButton>
             <ToolbarButton
               active={editor.isActive({ textAlign: "center" })}
@@ -293,14 +306,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               }
               title="Align center"
             >
-              ≡
+              <AlignCenter className="w-3.5 h-3.5" />
             </ToolbarButton>
             <ToolbarButton
               active={editor.isActive({ textAlign: "right" })}
               onClick={() => editor.chain().focus().setTextAlign("right").run()}
               title="Align right"
             >
-              ⟹
+              <AlignRight className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarDivider />
@@ -327,21 +340,21 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               onClick={openLinkBar}
               title="Link"
             >
-              🔗
+              <LinkIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().unsetLink().run()}
               title="Unlink"
               disabled={!editor.isActive("link")}
             >
-              ⛓️‍💥
+              <Link2Off className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarButton
               onClick={() => setImagePickerOpen(true)}
               title="Chèn ảnh từ thư viện"
             >
-              🖼
+              <ImageIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarButton
@@ -352,14 +365,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               }}
               title="Table"
             >
-              ⊞
+              <TableIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarButton
               onClick={() => editor.chain().focus().setHorizontalRule().run()}
               title="Divider"
             >
-              ―
+              <Minus className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarButton
@@ -368,7 +381,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               }
               title="Clear formatting"
             >
-              ⌫
+              <Eraser className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarDivider />
@@ -378,14 +391,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               title="Undo"
               disabled={!editor.can().chain().focus().undo().run()}
             >
-              ↶
+              <Undo2 className="w-3.5 h-3.5" />
             </ToolbarButton>
             <ToolbarButton
               onClick={() => editor.chain().focus().redo().run()}
               title="Redo"
               disabled={!editor.can().chain().focus().redo().run()}
             >
-              ↷
+              <Redo2 className="w-3.5 h-3.5" />
             </ToolbarButton>
           </div>
 

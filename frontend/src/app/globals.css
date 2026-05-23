@@ -279,6 +279,15 @@
   height: auto !important;
   box-sizing: border-box;
 }
+/* Contain floated image wrappers from tiptap-extension-resize-image so they
+   don't escape the editor's bounding box. The extension applies
+   `float: left` to inline images; without a clearfix the parent collapses
+   and the image visually bleeds past the editor border. */
+.ProseMirror::after {
+  content: "";
+  display: block;
+  clear: both;
+}
 .ProseMirror [data-resize-image-ui="resize-handle"] {
   /* Make the corner dots clearly hit-able by enlarging the touch target */
   width: 12px !important;
