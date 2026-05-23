@@ -8,6 +8,14 @@ import "@puckeditor/core/puck.css";
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
 import { LOCALES, LOCALE_LABELS, DEFAULT_LOCALE } from "@/lib/i18n";
 import { LocaleProvider, useLocale } from "@/lib/locale-context";
+import {
+  ChevronDownIcon,
+  ClockIcon,
+  ExternalLinkIcon,
+  EyeOffIcon,
+  UploadIcon,
+  XIcon,
+} from "@/components/admin/icons";
 import { ModalPortal, PortalMenu } from "./portal-menu";
 import { puckConfig } from "./puck-config";
 
@@ -208,9 +216,7 @@ function EditJsonButton() {
                   className="text-slate-400 hover:text-slate-600"
                   aria-label="Close"
                 >
-                  <span className="material-symbols-outlined text-[20px]">
-                    close
-                  </span>
+                  <XIcon className="w-5 h-5" />
                 </button>
               </div>
               <div className="p-5 flex-1 overflow-hidden flex flex-col gap-2">
@@ -402,9 +408,7 @@ function PublishMenu({
           rel="noopener noreferrer"
           className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 bg-white hover:bg-slate-50 inline-flex items-center gap-1"
         >
-          <span className="material-symbols-outlined text-[14px]">
-            open_in_new
-          </span>
+          <ExternalLinkIcon className="w-3.5 h-3.5" />
           View live
         </a>
       )}
@@ -435,9 +439,7 @@ function PublishMenu({
           aria-expanded={open}
           className="px-2 py-1.5 rounded-r-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 border-l border-blue-500"
         >
-          <span className="material-symbols-outlined text-[16px] align-middle">
-            arrow_drop_down
-          </span>
+          <ChevronDownIcon className="w-4 h-4 align-middle" />
         </button>
       </div>
       <PortalMenu
@@ -452,9 +454,7 @@ function PublishMenu({
           disabled={disabled}
           className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
         >
-          <span className="material-symbols-outlined text-[16px] text-blue-600">
-            publish
-          </span>
+          <UploadIcon className="w-4 h-4 text-blue-600" />
           Publish now
         </button>
         <button
@@ -466,9 +466,7 @@ function PublishMenu({
           disabled={disabled}
           className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
         >
-          <span className="material-symbols-outlined text-[16px] text-slate-500">
-            schedule
-          </span>
+          <ClockIcon className="w-4 h-4 text-slate-500" />
           Schedule publish...
         </button>
         {layout.isPublished || layout.scheduledAt ? (
@@ -480,9 +478,7 @@ function PublishMenu({
               disabled={disabled}
               className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 inline-flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[16px]">
-                unpublished
-              </span>
+              <EyeOffIcon className="w-4 h-4" />
               Unpublish
             </button>
           </>
