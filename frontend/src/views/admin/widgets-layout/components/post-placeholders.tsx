@@ -13,7 +13,10 @@ import {
   localizedTextareaField,
 } from "../fields/localized-text-field";
 
-const formatDate = (value: string | null | undefined, locale: string): string => {
+const formatDate = (
+  value: string | null | undefined,
+  locale: string,
+): string => {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -119,7 +122,8 @@ function PostTitleRender({
   alignment: string;
 }) {
   const { locale } = useLocale();
-  const placeholder = t(defaultText, locale) || t(POST_LABELS.titleFallback, locale);
+  const placeholder =
+    t(defaultText, locale) || t(POST_LABELS.titleFallback, locale);
   const content = text || placeholder;
   return (
     <h1
@@ -656,10 +660,7 @@ function PostReaderToolsRender({
   }, [gap]);
 
   const changeLevel = (next: number) => {
-    const clamped = Math.max(
-      0,
-      Math.min(FONT_SIZE_LEVELS.length - 1, next),
-    );
+    const clamped = Math.max(0, Math.min(FONT_SIZE_LEVELS.length - 1, next));
     setLevel(clamped);
     applyFontLevel(clamped);
     window.localStorage.setItem(FONT_SIZE_KEY, String(clamped));
@@ -723,7 +724,11 @@ function PostReaderToolsRender({
           type="button"
           onClick={onCopyLink}
           aria-label={t(TOOL_LABELS.copyLink, locale)}
-          title={copied ? t(TOOL_LABELS.copied, locale) : t(TOOL_LABELS.copyLink, locale)}
+          title={
+            copied
+              ? t(TOOL_LABELS.copied, locale)
+              : t(TOOL_LABELS.copyLink, locale)
+          }
           className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900"
         >
           <svg

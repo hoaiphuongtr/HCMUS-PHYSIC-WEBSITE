@@ -87,7 +87,9 @@ const LocaleInputRow = ({
         <span
           className={
             "px-1.5 py-0.5 rounded " +
-            (isDefault ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-700")
+            (isDefault
+              ? "bg-blue-600 text-white"
+              : "bg-slate-200 text-slate-700")
           }
         >
           {locale}

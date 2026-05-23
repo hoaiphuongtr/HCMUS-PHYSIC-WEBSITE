@@ -63,9 +63,8 @@ export function PostComposerView() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [excerpt, setExcerpt] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<PostCategoryValue>(
-    "EDUCATIONAL_NEWS",
-  );
+  const [category, setCategory] =
+    useState<PostCategoryValue>("EDUCATIONAL_NEWS");
   const [status, setStatus] = useState<ContentStatusValue>("DRAFT");
   const [tagSlugs, setTagSlugs] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState("");
@@ -153,9 +152,7 @@ export function PostComposerView() {
       coverUrl: coverUrl || null,
       coverAlt: coverAlt || null,
       tagSlugs: finalTagSlugs,
-      eventStartAt: eventStartAt
-        ? new Date(eventStartAt).toISOString()
-        : null,
+      eventStartAt: eventStartAt ? new Date(eventStartAt).toISOString() : null,
       eventEndAt: eventEndAt ? new Date(eventEndAt).toISOString() : null,
       eventLocation: eventLocation || null,
     };
@@ -164,9 +161,7 @@ export function PostComposerView() {
   const saveMutation = useMutation({
     mutationKey: ["POSTS", postId ?? "NEW", "SAVE"],
     mutationFn: async (payload: UpsertPostBody) =>
-      postId
-        ? postApi.update(postId, payload)
-        : postApi.create(payload),
+      postId ? postApi.update(postId, payload) : postApi.create(payload),
     onSuccess: (data) => {
       toast.success(postId ? "Đã cập nhật bài đăng" : "Đã lưu draft");
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
@@ -229,8 +224,8 @@ export function PostComposerView() {
             {postId ? "Chỉnh sửa bài đăng" : "Tạo bài đăng mới"}
           </h1>
           <p className="text-xs text-slate-500">
-            Lưu draft để soạn nội dung. Tạo layout để có trang public —
-            một bài có thể được gắn vào nhiều layout khác nhau.
+            Lưu draft để soạn nội dung. Tạo layout để có trang public — một bài
+            có thể được gắn vào nhiều layout khác nhau.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -323,9 +318,7 @@ export function PostComposerView() {
             <select
               id="post-category"
               value={category}
-              onChange={(e) =>
-                setCategory(e.target.value as PostCategoryValue)
-              }
+              onChange={(e) => setCategory(e.target.value as PostCategoryValue)}
               className="w-full p-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
             >
               {CATEGORY_OPTIONS.map((option) => (
@@ -497,10 +490,10 @@ export function PostComposerView() {
             Layout public
           </h2>
           <p className="text-xs text-slate-500 mb-3">
-            Bạn có thể để trống — bài đăng sẽ là draft trong hệ thống. Khi
-            muốn xuất hiện ở public, chọn 1 layout mẫu và bấm "Tạo layout từ
-            bài đăng". Mỗi layout độc lập: bạn có thể tạo nhiều layout khác
-            nhau từ cùng bài đăng.
+            Bạn có thể để trống — bài đăng sẽ là draft trong hệ thống. Khi muốn
+            xuất hiện ở public, chọn 1 layout mẫu và bấm "Tạo layout từ bài
+            đăng". Mỗi layout độc lập: bạn có thể tạo nhiều layout khác nhau từ
+            cùng bài đăng.
           </p>
 
           {attachedLayouts.length ? (
@@ -542,9 +535,7 @@ export function PostComposerView() {
             <button
               type="button"
               onClick={createLayoutFromPost}
-              disabled={
-                !postId || !templateLayoutId || cloneMutation.isPending
-              }
+              disabled={!postId || !templateLayoutId || cloneMutation.isPending}
               className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
             >
               {cloneMutation.isPending

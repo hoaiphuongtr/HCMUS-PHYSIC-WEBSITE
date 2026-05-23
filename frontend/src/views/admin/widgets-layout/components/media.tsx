@@ -103,9 +103,7 @@ function ImageBlockRender({
         </div>
       )}
       {captionText && (
-        <p className="text-sm text-slate-500 text-center mt-2">
-          {captionText}
-        </p>
+        <p className="text-sm text-slate-500 text-center mt-2">{captionText}</p>
       )}
     </div>
   );
@@ -808,8 +806,7 @@ function PartnerShowcaseClient({
   const { locale } = useLocale();
   const titleText = t(title, locale);
   const items = partners.length ? partners : [];
-  const duration =
-    speed === "fast" ? "20s" : speed === "slow" ? "60s" : "40s";
+  const duration = speed === "fast" ? "20s" : speed === "slow" ? "60s" : "40s";
   const fadeBg = bgColor || "#ffffff";
 
   return (

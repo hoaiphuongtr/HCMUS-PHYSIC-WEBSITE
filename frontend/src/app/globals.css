@@ -257,3 +257,37 @@
     transform: scale(1.03) translate(1%, 0.5%);
   }
 }
+
+/* Tiptap post editor: inline images side-by-side, draggable */
+.post-img {
+  display: inline-block;
+  max-width: 48%;
+  height: auto;
+  margin: 4px;
+  vertical-align: top;
+  border-radius: 6px;
+  cursor: grab;
+}
+.post-img:active {
+  cursor: grabbing;
+}
+/* Hard ceiling so the resize handles can't push the image past the editor.
+   Wins over the inline `width:<px>` the resize extension sets, because CSS
+   max-width always trumps the width attribute / inline width. */
+.ProseMirror img {
+  max-width: 100% !important;
+  height: auto !important;
+  box-sizing: border-box;
+}
+.ProseMirror [data-resize-image-ui="resize-handle"] {
+  /* Make the corner dots clearly hit-able by enlarging the touch target */
+  width: 12px !important;
+  height: 12px !important;
+}
+@media (max-width: 600px) {
+  .post-img {
+    display: block;
+    max-width: 100%;
+    margin: 6px 0;
+  }
+}

@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
 import { toSlug } from '../shared/helpers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';

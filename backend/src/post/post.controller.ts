@@ -93,7 +93,8 @@ export class PostController {
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
-    if (page === undefined && pageSize === undefined) return this.postService.list();
+    if (page === undefined && pageSize === undefined)
+      return this.postService.list();
     const pageNum = Math.max(1, Number(page) || 1);
     const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 12));
     return this.postService.listAdminPaged({

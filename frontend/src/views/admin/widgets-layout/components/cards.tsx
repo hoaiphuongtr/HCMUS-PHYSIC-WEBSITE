@@ -240,4 +240,3 @@ function EventCardRender({
     </a>
   );
 }
-

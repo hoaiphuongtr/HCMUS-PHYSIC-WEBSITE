@@ -229,8 +229,7 @@ function HeroFullScreenText({
           style={{
             color: taglineColor || "#ffffff",
             backgroundColor: "rgba(0, 0, 0, 0.25)",
-            textShadow:
-              "0 2px 12px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.5)",
+            textShadow: "0 2px 12px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.5)",
             ...(taglineStyle || {}),
           }}
         >
@@ -243,8 +242,7 @@ function HeroFullScreenText({
           className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-none whitespace-nowrap font-heading italic"
           style={{
             fontSize: "clamp(2rem, 7vw, 6.5rem)",
-            textShadow:
-              "0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
+            textShadow: "0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
             WebkitTextStroke: "0.5px rgba(0,0,0,0.2)",
           }}
         >

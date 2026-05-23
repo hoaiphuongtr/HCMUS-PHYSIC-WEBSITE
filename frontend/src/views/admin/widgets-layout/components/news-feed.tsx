@@ -3,11 +3,7 @@
 import type { ComponentConfig } from "@puckeditor/core";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import {
-  type PostPublicCard,
-  postPublicApi,
-  resolveMediaUrl,
-} from "@/lib/api";
+import { type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
 import { t, type LocalizedString } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
@@ -49,9 +45,7 @@ const formatDate = (iso: string | null, locale: string): string => {
 };
 
 const formatGCalDate = (iso: string): string =>
-  new Date(iso)
-    .toISOString()
-    .replace(/[-:]|\.\d{3}/g, "");
+  new Date(iso).toISOString().replace(/[-:]|\.\d{3}/g, "");
 
 const buildGCalUrl = (post: PostPublicCard, locale: string): string => {
   if (!post.eventStartAt) return "#";
@@ -77,11 +71,7 @@ type NewsCardProps = {
 
 function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
   const cat = CATEGORY_LABELS[post.category];
-  const catLabel = cat
-    ? locale === "en"
-      ? cat.en
-      : cat.vi
-    : post.category;
+  const catLabel = cat ? (locale === "en" ? cat.en : cat.vi) : post.category;
   const catColor = cat?.color ?? "#2563eb";
   const dateText = showEventTime
     ? formatDate(post.eventStartAt, locale)
@@ -150,11 +140,7 @@ function EventCard({
   prefix: string;
 }) {
   const cat = CATEGORY_LABELS[post.category];
-  const catLabel = cat
-    ? locale === "en"
-      ? cat.en
-      : cat.vi
-    : post.category;
+  const catLabel = cat ? (locale === "en" ? cat.en : cat.vi) : post.category;
   const catColor = cat?.color ?? "#059669";
   const dateText = formatDate(post.eventStartAt, locale);
   const title = localizeWithFallback(post.title, locale);
@@ -254,7 +240,8 @@ function NewsFeedHeader({
   accentColor: string;
 }) {
   return (
-    <div className="flex items-end justify-between mb-5 border-b-2 pb-2"
+    <div
+      className="flex items-end justify-between mb-5 border-b-2 pb-2"
       style={{ borderColor: accentColor }}
     >
       <h2
@@ -450,11 +437,18 @@ function UpcomingEventsAutoRender({
   );
 }
 
-
 const ALL_CATEGORIES = [
   { value: "", labelVi: "Tất cả", labelEn: "All" },
-  { value: "EDUCATIONAL_NEWS", labelVi: "Tin học vụ", labelEn: "Educational News" },
-  { value: "SCIENTIFIC_INFORMATION", labelVi: "Thông tin khoa học", labelEn: "Scientific Information" },
+  {
+    value: "EDUCATIONAL_NEWS",
+    labelVi: "Tin học vụ",
+    labelEn: "Educational News",
+  },
+  {
+    value: "SCIENTIFIC_INFORMATION",
+    labelVi: "Thông tin khoa học",
+    labelEn: "Scientific Information",
+  },
   { value: "RECRUITMENT", labelVi: "Tuyển dụng", labelEn: "Recruitment" },
   { value: "EVENT", labelVi: "Sự kiện", labelEn: "Event" },
   { value: "SCHOLARSHIP", labelVi: "Học bổng", labelEn: "Scholarship" },
@@ -631,7 +625,9 @@ function NewsListPaginatedRender({
               value={searchDraft}
               onChange={(e) => setSearchDraft(e.target.value)}
               placeholder={
-                locale === "en" ? "Title, slug, excerpt..." : "Tiêu đề, slug, tóm tắt..."
+                locale === "en"
+                  ? "Title, slug, excerpt..."
+                  : "Tiêu đề, slug, tóm tắt..."
               }
               className="w-full px-3 py-2 pr-10 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
             />
@@ -640,7 +636,9 @@ function NewsListPaginatedRender({
               className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900"
               aria-label="Search"
             >
-              <span className="material-symbols-outlined text-[18px]">search</span>
+              <span className="material-symbols-outlined text-[18px]">
+                search
+              </span>
             </button>
           </div>
         </form>

@@ -9,10 +9,7 @@ import {
   PostSlugExistsException,
   TemplateLayoutNotFoundException,
 } from './post.error';
-import {
-  CloneIntoLayoutBodyType,
-  UpsertPostBodyType,
-} from './post.model';
+import { CloneIntoLayoutBodyType, UpsertPostBodyType } from './post.model';
 import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
 import { toSlug, toSlugPath } from '../shared/helpers';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
@@ -182,9 +179,7 @@ export class PostService {
           coverMediaId: body.coverMediaId ?? null,
           coverUrl: body.coverUrl ?? null,
           coverAlt: body.coverAlt ?? null,
-          eventStartAt: body.eventStartAt
-            ? new Date(body.eventStartAt)
-            : null,
+          eventStartAt: body.eventStartAt ? new Date(body.eventStartAt) : null,
           eventEndAt: body.eventEndAt ? new Date(body.eventEndAt) : null,
           eventLocation: body.eventLocation ?? null,
           postTags: {
@@ -390,17 +385,14 @@ export class PostService {
       layoutSlug,
       false,
     );
-    if (conflict)
-      throw slugExistsInStatusException('draft', conflict.name);
+    if (conflict) throw slugExistsInStatusException('draft', conflict.name);
 
     const injectPayload: PostInjectPayload = {
       title: post.title,
       body: post.body ?? '',
       excerpt: post.excerpt ?? null,
       coverUrl:
-        post.coverUrl ??
-        (post.coverMedia ? post.coverMedia.url : null) ??
-        null,
+        post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
       tags: post.postTags.map((pt) => ({
         slug: pt.tag.slug,
@@ -408,12 +400,8 @@ export class PostService {
       })),
       category: post.category,
       categoryLabel: categoryLabel(post.category),
-      publishedAt: post.publishedAt
-        ? post.publishedAt.toISOString()
-        : null,
-      eventStartAt: post.eventStartAt
-        ? post.eventStartAt.toISOString()
-        : null,
+      publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
+      eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
       eventLocation: post.eventLocation ?? null,
     };
@@ -486,7 +474,8 @@ export class PostService {
     const transformTree = (data: any): any => {
       if (!data || typeof data !== 'object') return data;
       const out = { ...data };
-      if (Array.isArray(out.content)) out.content = out.content.map(transformNode);
+      if (Array.isArray(out.content))
+        out.content = out.content.map(transformNode);
       if (out.zones && typeof out.zones === 'object') {
         const z: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(out.zones)) {
@@ -535,9 +524,7 @@ export class PostService {
       body: post.body ?? '',
       excerpt: post.excerpt ?? null,
       coverUrl:
-        post.coverUrl ??
-        (post.coverMedia ? post.coverMedia.url : null) ??
-        null,
+        post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
       tags: post.postTags.map((pt) => ({
         slug: pt.tag.slug,
@@ -545,12 +532,8 @@ export class PostService {
       })),
       category: post.category,
       categoryLabel: categoryLabel(post.category),
-      publishedAt: post.publishedAt
-        ? post.publishedAt.toISOString()
-        : null,
-      eventStartAt: post.eventStartAt
-        ? post.eventStartAt.toISOString()
-        : null,
+      publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
+      eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
       eventLocation: post.eventLocation ?? null,
     };

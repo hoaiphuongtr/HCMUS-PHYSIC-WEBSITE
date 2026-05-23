@@ -260,3 +260,20 @@
     transform: scale(1.03) translate(1%, 0.5%);
   }
 }
+
+/* Post body: inline images side-by-side (admin-authored content) */
+.post-img {
+  display: inline-block;
+  max-width: 48%;
+  height: auto;
+  margin: 4px;
+  vertical-align: top;
+  border-radius: 6px;
+}
+@media (max-width: 600px) {
+  .post-img {
+    display: block;
+    max-width: 100%;
+    margin: 6px 0;
+  }
+}

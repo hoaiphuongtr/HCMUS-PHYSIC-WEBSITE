@@ -100,7 +100,9 @@ const ColorInput = ({ value, onChange }: ColorInputProps) => {
           onClick={() => setPickerOpen((p) => !p)}
           className={
             "shrink-0 w-8 h-8 rounded-full border-2 border-slate-200 hover:border-slate-300 transition-colors " +
-            (valid ? "" : "bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#fff_0%_50%)_50%_/_8px_8px]")
+            (valid
+              ? ""
+              : "bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#fff_0%_50%)_50%_/_8px_8px]")
           }
           style={valid ? { backgroundColor: swatchColor } : undefined}
           aria-label="Mở bảng chọn màu"

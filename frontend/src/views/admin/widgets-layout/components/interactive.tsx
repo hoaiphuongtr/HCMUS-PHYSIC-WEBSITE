@@ -176,9 +176,7 @@ function ButtonBlockRender({
     center: "justify-center",
     right: "justify-end",
   };
-  const style: Record<string, string> = labelColor
-    ? { color: labelColor }
-    : {};
+  const style: Record<string, string> = labelColor ? { color: labelColor } : {};
   const labelText = t(label, locale);
   return (
     <div className={`flex ${aligns[alignment] || "justify-start"}`}>
@@ -428,12 +426,18 @@ export const SearchOverlay: ComponentConfig<{
     bgColor: "#0c2340",
     suggestedLinks: [
       { label: { vi: "Tuyển sinh", en: "Admissions" }, url: "/tuyen-sinh" },
-      { label: { vi: "Chương trình đào tạo", en: "Programs" }, url: "/dao-tao" },
+      {
+        label: { vi: "Chương trình đào tạo", en: "Programs" },
+        url: "/dao-tao",
+      },
       { label: { vi: "Nghiên cứu", en: "Research" }, url: "/nghien-cuu" },
       { label: { vi: "Liên hệ", en: "Contact" }, url: "/lien-he" },
     ],
     hotLinks: [
-      { label: { vi: "Học bổng 2026", en: "Scholarships 2026" }, url: "/hoc-bong" },
+      {
+        label: { vi: "Học bổng 2026", en: "Scholarships 2026" },
+        url: "/hoc-bong",
+      },
       { label: { vi: "Bán dẫn", en: "Semiconductors" }, url: "/ban-dan" },
     ],
     showRecent: true,
@@ -564,19 +568,14 @@ function SearchOverlayClient({
   }, [open, autoPersonalize, isEditing]);
 
   const placeholderText = t(placeholder, locale);
-  const renderLabel = (
-    link: SearchLink | SearchLinkPlain,
-  ): string =>
+  const renderLabel = (link: SearchLink | SearchLinkPlain): string =>
     typeof link.label === "string" ? link.label : t(link.label, locale);
 
-  const usePersonalSuggested =
-    autoPersonalize && personalSuggested.length > 0;
+  const usePersonalSuggested = autoPersonalize && personalSuggested.length > 0;
   const effectiveSuggested: (SearchLink | SearchLinkPlain)[] =
     usePersonalSuggested ? personalSuggested : suggestedLinks || [];
   const effectiveHot: (SearchLink | SearchLinkPlain)[] =
-    autoPersonalize && personalHot.length > 0
-      ? personalHot
-      : hotLinks || [];
+    autoPersonalize && personalHot.length > 0 ? personalHot : hotLinks || [];
 
   const submitQuery = () => {
     const trimmed = query.trim();

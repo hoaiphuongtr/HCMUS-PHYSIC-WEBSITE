@@ -69,11 +69,7 @@ export const authApi = {
       body: JSON.stringify(body),
     });
   },
-  verifyOTP(body: {
-    email: string;
-    code: string;
-    type: "FORGOT_PASSWORD";
-  }) {
+  verifyOTP(body: { email: string; code: string; type: "FORGOT_PASSWORD" }) {
     return apiFetch<{ message: string }>("/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify(body),
@@ -591,8 +587,8 @@ export const postApi = {
       layoutSlug?: string;
     },
   ) =>
-    authFetch<{ id: string; slug: string }>(
-      `/posts/${id}/clone-into-layout`,
-      { method: "POST", body: JSON.stringify(body) },
-    ),
+    authFetch<{ id: string; slug: string }>(`/posts/${id}/clone-into-layout`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

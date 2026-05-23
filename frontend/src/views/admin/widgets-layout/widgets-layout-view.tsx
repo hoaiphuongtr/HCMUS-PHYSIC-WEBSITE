@@ -365,10 +365,7 @@ function LayoutPicker({
       // Keep dropdown open when interacting with the per-item PortalMenu
       // (it renders outside containerRef via React portal).
       if (target.closest("[data-portal-menu]")) return;
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setOpen(false);
       }
     };
@@ -472,7 +469,7 @@ function LayoutPicker({
                   const isActive = status === groupFilter;
                   const cls = isActive
                     ? "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded border " +
-                    meta.chip
+                      meta.chip
                     : "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded border border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50";
                   return (
                     <button
@@ -497,9 +494,7 @@ function LayoutPicker({
           <ul role="listbox" className="max-h-[60vh] overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-xs text-slate-400">
-                {search.trim()
-                  ? "Không có layout phù hợp"
-                  : "Không có layout"}
+                {search.trim() ? "Không có layout phù hợp" : "Không có layout"}
               </li>
             ) : (
               filtered.map((l) => {

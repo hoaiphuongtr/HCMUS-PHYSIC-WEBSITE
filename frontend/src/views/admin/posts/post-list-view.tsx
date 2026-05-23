@@ -160,12 +160,10 @@ export function PostListView() {
     <div className="flex flex-col h-full overflow-auto">
       <header className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-content-1000">
-            Bài đăng
-          </h1>
+          <h1 className="text-lg font-semibold text-content-1000">Bài đăng</h1>
           <p className="text-xs text-slate-500">
-            Danh sách tất cả bài đăng. Mỗi bài có thể được gắn vào nhiều
-            layout public.
+            Danh sách tất cả bài đăng. Mỗi bài có thể được gắn vào nhiều layout
+            public.
           </p>
         </div>
         <Link

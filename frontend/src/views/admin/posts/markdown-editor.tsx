@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import TurndownService from "turndown";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
+import ImageResize from "tiptap-extension-resize-image";
+import { useEffect, useRef, useState } from "react";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type MarkdownEditorProps = {
@@ -9,75 +16,73 @@ type MarkdownEditorProps = {
   onChange: (value: string) => void;
 };
 
-const FONT_FAMILIES = [
-  { label: "Sans (default)", value: "" },
-  { label: "Serif", value: "Georgia, 'Times New Roman', serif" },
-  { label: "Mono", value: "'JetBrains Mono', 'Courier New', monospace" },
-  { label: "Inter", value: "Inter, system-ui, sans-serif" },
-  { label: "Roboto", value: "Roboto, system-ui, sans-serif" },
-];
-
-const FONT_SIZES = [
-  { label: "Small", value: "2" },
-  { label: "Normal", value: "3" },
-  { label: "Medium", value: "4" },
-  { label: "Large", value: "5" },
-  { label: "XLarge", value: "6" },
-  { label: "Huge", value: "7" },
-];
-
-const BLOCK_TYPES = [
-  { label: "Paragraph", value: "p" },
+const BLOCK_OPTIONS = [
+  { label: "Paragraph", value: "paragraph" },
   { label: "Heading 1", value: "h1" },
   { label: "Heading 2", value: "h2" },
   { label: "Heading 3", value: "h3" },
   { label: "Heading 4", value: "h4" },
   { label: "Quote", value: "blockquote" },
-];
+] as const;
 
-const buildTurndown = () => {
-  const td = new TurndownService({
-    headingStyle: "atx",
-    codeBlockStyle: "fenced",
-    bulletListMarker: "-",
-  });
-  td.remove(["style", "script", "meta", "link"]);
-  return td;
-};
+type EditorInstance = NonNullable<ReturnType<typeof useEditor>>;
 
-const exec = (command: string, value?: string) => {
-  document.execCommand(command, false, value);
-};
+const ToolbarButton = ({
+  active,
+  onClick,
+  disabled,
+  title,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
+    aria-label={title}
+    className={
+      "min-w-[28px] h-7 px-2 text-xs font-semibold rounded border " +
+      (active
+        ? "bg-blue-50 border-blue-300 text-blue-700"
+        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50") +
+      " disabled:opacity-40 disabled:cursor-not-allowed"
+    }
+  >
+    {children}
+  </button>
+);
 
-const htmlLooksLikeHtml = (value: string) =>
-  /<\w+[^>]*>/.test(value.trim());
+const ToolbarDivider = () => (
+  <span aria-hidden="true" className="w-px h-5 bg-slate-200 mx-1" />
+);
 
-type PreviewFrameProps = {
-  html: string;
-  markdownFallback: string;
-};
-
-const PreviewFrame = ({ html, markdownFallback }: PreviewFrameProps) => {
-  if (html.trim().length === 0 && markdownFallback.trim().length === 0) {
-    return (
-      <p className="text-xs text-slate-400">
-        Preview hiển thị tại đây khi bạn nhập nội dung.
-      </p>
-    );
+function setBlockType(editor: EditorInstance, value: string) {
+  const chain = editor.chain().focus();
+  if (value === "paragraph") chain.setParagraph().run();
+  else if (value === "blockquote") chain.toggleBlockquote().run();
+  else if (value.startsWith("h")) {
+    const level = Number.parseInt(value.slice(1), 10) as 1 | 2 | 3 | 4;
+    chain.toggleHeading({ level }).run();
   }
-  return (
-    <article
-      className="prose prose-slate max-w-none prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted admin-authored content
-      dangerouslySetInnerHTML={{ __html: html || markdownFallback }}
-    />
-  );
-};
+}
+
+function currentBlock(editor: EditorInstance): string {
+  if (editor.isActive("heading", { level: 1 })) return "h1";
+  if (editor.isActive("heading", { level: 2 })) return "h2";
+  if (editor.isActive("heading", { level: 3 })) return "h3";
+  if (editor.isActive("heading", { level: 4 })) return "h4";
+  if (editor.isActive("blockquote")) return "blockquote";
+  return "paragraph";
+}
 
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const isInternalUpdate = useRef(false);
-  const turndown = useMemo(() => buildTurndown(), []);
   const [tab, setTab] = useState<"editor" | "preview">("editor");
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -85,252 +90,116 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const [tableOpen, setTableOpen] = useState(false);
   const [tableRows, setTableRows] = useState("3");
   const [tableCols, setTableCols] = useState("3");
-  const savedRange = useRef<Range | null>(null);
-  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(
-    null,
-  );
-  const [imageBox, setImageBox] = useState<{
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  const skipNextUpdate = useRef(false);
+
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+        alignments: ["left", "center", "right"],
+      }),
+      ImageResize.configure({
+        inline: true,
+        allowBase64: false,
+        maxWidth: 720,
+        HTMLAttributes: {
+          class: "post-img",
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: { class: "post-table" },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+    ],
+    content: value || "",
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-slate max-w-none min-h-[300px] focus:outline-none px-4 py-3 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1",
+      },
+    },
+    onUpdate({ editor: ed }) {
+      if (skipNextUpdate.current) {
+        skipNextUpdate.current = false;
+        return;
+      }
+      const html = ed.getHTML();
+      onChange(html === "<p></p>" ? "" : html);
+    },
+  });
 
   useEffect(() => {
-    if (!editorRef.current) return;
-    if (isInternalUpdate.current) {
-      isInternalUpdate.current = false;
-      return;
-    }
-    if (editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || "";
-      setSelectedImage(null);
-      setImageBox(null);
-    }
-  }, [value]);
+    if (!editor) return;
+    const current = editor.getHTML();
+    const next = value || "";
+    if (current === next) return;
+    if (current === "<p></p>" && next === "") return;
+    skipNextUpdate.current = true;
+    editor.commands.setContent(next, { emitUpdate: false });
+  }, [value, editor]);
 
-  const emit = () => {
-    if (!editorRef.current) return;
-    isInternalUpdate.current = true;
-    onChange(editorRef.current.innerHTML);
-  };
+  if (!editor) {
+    return (
+      <div className="border border-slate-200 rounded-lg bg-white h-[380px] flex items-center justify-center text-xs text-slate-400">
+        Loading editor…
+      </div>
+    );
+  }
 
-  const runCommand = (command: string, arg?: string) => {
-    editorRef.current?.focus();
-    exec(command, arg);
-    emit();
-  };
-
-  const insertTable = () => {
-    saveSelection();
-    setTableRows("3");
-    setTableCols("3");
-    setTableOpen(true);
-  };
-
-  const confirmInsertTable = () => {
-    const rows = Number(tableRows) || 0;
-    const cols = Number(tableCols) || 0;
-    setTableOpen(false);
-    if (!rows || !cols) return;
-    let html =
-      '<table style="width:100%;border-collapse:collapse" border="1"><tbody>';
-    for (let r = 0; r < rows; r += 1) {
-      html += "<tr>";
-      for (let c = 0; c < cols; c += 1) {
-        const tag = r === 0 ? "th" : "td";
-        html += `<${tag} style="border:1px solid #cbd5e1;padding:6px 8px">${r === 0 ? `Cột ${c + 1}` : "&nbsp;"}</${tag}>`;
-      }
-      html += "</tr>";
-    }
-    html += "</tbody></table><p><br/></p>";
-    restoreSelection();
-    runCommand("insertHTML", html);
-  };
-
-  const saveSelection = () => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      savedRange.current = selection.getRangeAt(0);
-    }
-  };
-
-  const restoreSelection = () => {
-    const range = savedRange.current;
-    if (!range) return;
-    const selection = window.getSelection();
-    if (!selection) return;
-    selection.removeAllRanges();
-    selection.addRange(range);
+  const openLinkBar = () => {
+    const existing = editor.getAttributes("link").href as string | undefined;
+    setLinkUrl(existing || "");
+    setLinkOpen(true);
   };
 
   const confirmLink = () => {
-    const trimmed = linkUrl.trim();
-    if (!trimmed) {
-      setLinkOpen(false);
+    setLinkOpen(false);
+    const url = linkUrl.trim();
+    if (!url) {
+      editor.chain().focus().unsetLink().run();
       return;
     }
-    editorRef.current?.focus();
-    restoreSelection();
-    const selection = window.getSelection();
-    const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
-    if (range && !range.collapsed) {
-      const text = range.toString();
-      const anchor = document.createElement("a");
-      anchor.href = trimmed;
-      anchor.target = "_blank";
-      anchor.rel = "noopener noreferrer";
-      anchor.style.color = "#2563eb";
-      anchor.style.textDecoration = "underline";
-      anchor.textContent = text;
-      range.deleteContents();
-      range.insertNode(anchor);
-      range.setStartAfter(anchor);
-      range.setEndAfter(anchor);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-    } else {
-      const html = `<a href="${trimmed}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline">${trimmed}</a>`;
-      exec("insertHTML", html);
-    }
-    emit();
+    const normalized = /^(https?:|mailto:|tel:|\/)/i.test(url)
+      ? url
+      : `https://${url}`;
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({ href: normalized })
+      .run();
     setLinkUrl("");
-    setLinkOpen(false);
   };
 
-  const insertImageAtCursor = (url: string) => {
-    editorRef.current?.focus();
-    restoreSelection();
-    const html = `<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:6px;margin:8px 0" draggable="false" />`;
-    exec("insertHTML", html);
-    emit();
+  const confirmInsertTable = () => {
+    const rows = Math.max(1, Math.min(20, Number(tableRows) || 0));
+    const cols = Math.max(1, Math.min(10, Number(tableCols) || 0));
+    setTableOpen(false);
+    if (!rows || !cols) return;
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows, cols, withHeaderRow: true })
+      .run();
   };
 
-  const updateImageBox = (img: HTMLImageElement) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const editorRect = editor.getBoundingClientRect();
-    const imgRect = img.getBoundingClientRect();
-    setImageBox({
-      top: imgRect.top - editorRect.top + editor.scrollTop,
-      left: imgRect.left - editorRect.left + editor.scrollLeft,
-      width: imgRect.width,
-      height: imgRect.height,
-    });
+  const insertImage = (url: string) => {
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "imageResize",
+        attrs: { src: url, alt: "" },
+      })
+      .run();
   };
 
-  const handleEditorClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (target.tagName === "IMG") {
-      const img = target as HTMLImageElement;
-      setSelectedImage(img);
-      updateImageBox(img);
-    } else if (!target.closest("[data-image-resize-handle]")) {
-      setSelectedImage(null);
-      setImageBox(null);
-    }
-  };
-
-  useEffect(() => {
-    if (!selectedImage) return;
-    const reposition = () => updateImageBox(selectedImage);
-    window.addEventListener("resize", reposition);
-    const editor = editorRef.current;
-    editor?.addEventListener("scroll", reposition);
-    return () => {
-      window.removeEventListener("resize", reposition);
-      editor?.removeEventListener("scroll", reposition);
-    };
-  }, [selectedImage]);
-
-  const startImageResize = (
-    event: React.MouseEvent<HTMLDivElement>,
-    corner: "nw" | "ne" | "sw" | "se",
-  ) => {
-    if (!selectedImage) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const img = selectedImage;
-    const startX = event.clientX;
-    const startWidth = img.getBoundingClientRect().width;
-    const naturalRatio =
-      img.naturalHeight > 0 && img.naturalWidth > 0
-        ? img.naturalHeight / img.naturalWidth
-        : img.getBoundingClientRect().height / Math.max(startWidth, 1);
-    const editor = editorRef.current;
-    const maxWidth = editor
-      ? editor.getBoundingClientRect().width -
-        parseFloat(getComputedStyle(editor).paddingLeft) -
-        parseFloat(getComputedStyle(editor).paddingRight)
-      : startWidth * 3;
-    const direction = corner === "ne" || corner === "se" ? 1 : -1;
-
-    const onMove = (e: MouseEvent) => {
-      const delta = (e.clientX - startX) * direction;
-      const nextWidth = Math.max(40, Math.min(maxWidth, startWidth + delta));
-      img.style.width = `${Math.round(nextWidth)}px`;
-      img.style.height = `${Math.round(nextWidth * naturalRatio)}px`;
-      img.style.maxWidth = "100%";
-      updateImageBox(img);
-    };
-    const onUp = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      emit();
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  };
-
-  const setImageAlignment = (align: "left" | "center" | "right") => {
-    if (!selectedImage) return;
-    if (align === "center") {
-      selectedImage.style.display = "block";
-      selectedImage.style.marginLeft = "auto";
-      selectedImage.style.marginRight = "auto";
-      selectedImage.style.float = "";
-    } else {
-      selectedImage.style.display = "";
-      selectedImage.style.marginLeft = "";
-      selectedImage.style.marginRight = "";
-      selectedImage.style.float = align;
-    }
-    updateImageBox(selectedImage);
-    emit();
-  };
-
-  const removeSelectedImage = () => {
-    if (!selectedImage) return;
-    selectedImage.remove();
-    setSelectedImage(null);
-    setImageBox(null);
-    emit();
-  };
-
-  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
-    const html = event.clipboardData.getData("text/html");
-    const text = event.clipboardData.getData("text/plain");
-    if (!html && !text) return;
-    event.preventDefault();
-    const cleanHtml = html
-      ? html
-          .replace(/<meta[^>]*>/gi, "")
-          .replace(/<style[\s\S]*?<\/style>/gi, "")
-          .replace(/<!--[\s\S]*?-->/g, "")
-      : text.replace(/\n/g, "<br/>");
-    runCommand("insertHTML", cleanHtml);
-  };
-
-  const markdownFallback = useMemo(() => {
-    if (!value) return "";
-    if (htmlLooksLikeHtml(value)) return "";
-    return `<p>${value.replace(/\n/g, "<br/>")}</p>`;
-  }, [value]);
-
-  const copyAsMarkdown = () => {
-    const md = turndown.turndown(value || "");
-    navigator.clipboard.writeText(md).catch(() => undefined);
-  };
+  const block = currentBlock(editor);
 
   return (
     <div className="border border-slate-200 rounded-lg bg-white">
@@ -359,209 +228,165 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         >
           Preview
         </button>
-        <div className="ml-auto pr-2">
-          <button
-            type="button"
-            onClick={copyAsMarkdown}
-            className="px-2 py-1 text-[11px] text-slate-500 hover:text-slate-700"
-            title="Copy dưới dạng markdown"
-          >
-            Copy markdown
-          </button>
-        </div>
       </div>
 
       {tab === "editor" ? (
         <>
           <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-slate-200 bg-slate-50 text-xs">
             <select
-              onChange={(e) => {
-                runCommand("formatBlock", e.target.value);
-                e.currentTarget.value = "";
-              }}
-              defaultValue=""
-              className="px-2 py-1 border border-slate-200 rounded bg-white"
+              value={block}
+              onChange={(e) => setBlockType(editor, e.target.value)}
+              className="h-7 px-2 text-xs border border-slate-200 rounded bg-white"
               title="Block style"
             >
-              <option value="" disabled>
-                Block
-              </option>
-              {BLOCK_TYPES.map((b) => (
+              {BLOCK_OPTIONS.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
                 </option>
               ))}
             </select>
 
-            <select
-              onChange={(e) => {
-                runCommand("fontName", e.target.value);
-                e.currentTarget.value = "";
-              }}
-              defaultValue=""
-              className="px-2 py-1 border border-slate-200 rounded bg-white"
-              title="Font family"
-            >
-              <option value="" disabled>
-                Font
-              </option>
-              {FONT_FAMILIES.map((f) => (
-                <option key={f.label} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              onChange={(e) => {
-                runCommand("fontSize", e.target.value);
-                e.currentTarget.value = "";
-              }}
-              defaultValue=""
-              className="px-2 py-1 border border-slate-200 rounded bg-white"
-              title="Font size"
-            >
-              <option value="" disabled>
-                Size
-              </option>
-              {FONT_SIZES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-
-            <span className="w-px h-5 bg-slate-300 mx-1" />
+            <ToolbarDivider />
 
             <ToolbarButton
+              active={editor.isActive("bold")}
+              onClick={() => editor.chain().focus().toggleBold().run()}
               title="Bold"
-              onClick={() => runCommand("bold")}
-              label="B"
-              bold
-            />
+            >
+              B
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive("italic")}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
               title="Italic"
-              onClick={() => runCommand("italic")}
-              label="I"
-              italic
-            />
+            >
+              <span className="italic">I</span>
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive("underline")}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
               title="Underline"
-              onClick={() => runCommand("underline")}
-              label="U"
-              underline
-            />
+            >
+              <span className="underline">U</span>
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive("strike")}
+              onClick={() => editor.chain().focus().toggleStrike().run()}
               title="Strike"
-              onClick={() => runCommand("strikeThrough")}
-              label="S"
-              strike
-            />
-
-            <span className="w-px h-5 bg-slate-300 mx-1" />
-
-            <label
-              className="flex items-center gap-1 px-2 py-1 border border-slate-200 rounded bg-white cursor-pointer"
-              title="Text color"
             >
-              <span className="text-slate-600">A</span>
-              <input
-                type="color"
-                className="w-4 h-4 border-0 p-0 bg-transparent cursor-pointer"
-                onChange={(e) => runCommand("foreColor", e.target.value)}
-              />
-            </label>
+              <span className="line-through">S</span>
+            </ToolbarButton>
 
-            <label
-              className="flex items-center gap-1 px-2 py-1 border border-slate-200 rounded bg-white cursor-pointer"
-              title="Highlight"
-            >
-              <span className="text-slate-600">bg</span>
-              <input
-                type="color"
-                className="w-4 h-4 border-0 p-0 bg-transparent cursor-pointer"
-                onChange={(e) => {
-                  runCommand("hiliteColor", e.target.value);
-                  runCommand("backColor", e.target.value);
-                }}
-              />
-            </label>
-
-            <span className="w-px h-5 bg-slate-300 mx-1" />
+            <ToolbarDivider />
 
             <ToolbarButton
+              active={editor.isActive({ textAlign: "left" })}
+              onClick={() => editor.chain().focus().setTextAlign("left").run()}
               title="Align left"
-              onClick={() => runCommand("justifyLeft")}
-              label="⯇"
-            />
+            >
+              ⟸
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive({ textAlign: "center" })}
+              onClick={() =>
+                editor.chain().focus().setTextAlign("center").run()
+              }
               title="Align center"
-              onClick={() => runCommand("justifyCenter")}
-              label="≡"
-            />
+            >
+              ≡
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive({ textAlign: "right" })}
+              onClick={() => editor.chain().focus().setTextAlign("right").run()}
               title="Align right"
-              onClick={() => runCommand("justifyRight")}
-              label="⯈"
-            />
+            >
+              ⟹
+            </ToolbarButton>
 
-            <span className="w-px h-5 bg-slate-300 mx-1" />
+            <ToolbarDivider />
 
             <ToolbarButton
+              active={editor.isActive("bulletList")}
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
               title="Bulleted list"
-              onClick={() => runCommand("insertUnorderedList")}
-              label="• List"
-            />
+            >
+              •
+            </ToolbarButton>
             <ToolbarButton
+              active={editor.isActive("orderedList")}
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
               title="Numbered list"
-              onClick={() => runCommand("insertOrderedList")}
-              label="1. List"
-            />
-            <ToolbarButton
-              title="Indent"
-              onClick={() => runCommand("indent")}
-              label="→|"
-            />
-            <ToolbarButton
-              title="Outdent"
-              onClick={() => runCommand("outdent")}
-              label="|←"
-            />
+            >
+              1.
+            </ToolbarButton>
 
-            <span className="w-px h-5 bg-slate-300 mx-1" />
+            <ToolbarDivider />
 
             <ToolbarButton
+              active={editor.isActive("link")}
+              onClick={openLinkBar}
               title="Link"
-              onClick={() => {
-                saveSelection();
-                setLinkOpen(true);
-              }}
-              label="🔗"
-            />
+            >
+              🔗
+            </ToolbarButton>
             <ToolbarButton
+              onClick={() => editor.chain().focus().unsetLink().run()}
               title="Unlink"
-              onClick={() => runCommand("unlink")}
-              label="⛓̸"
-            />
+              disabled={!editor.isActive("link")}
+            >
+              ⛓️‍💥
+            </ToolbarButton>
+
             <ToolbarButton
+              onClick={() => setImagePickerOpen(true)}
               title="Chèn ảnh từ thư viện"
+            >
+              🖼
+            </ToolbarButton>
+
+            <ToolbarButton
               onClick={() => {
-                saveSelection();
-                setImagePickerOpen(true);
+                setTableRows("3");
+                setTableCols("3");
+                setTableOpen(true);
               }}
-              label="🖼️"
-            />
-            <ToolbarButton title="Table" onClick={insertTable} label="⊞" />
+              title="Table"
+            >
+              ⊞
+            </ToolbarButton>
+
             <ToolbarButton
+              onClick={() => editor.chain().focus().setHorizontalRule().run()}
               title="Divider"
-              onClick={() => runCommand("insertHorizontalRule")}
-              label="—"
-            />
+            >
+              ―
+            </ToolbarButton>
+
             <ToolbarButton
+              onClick={() =>
+                editor.chain().focus().unsetAllMarks().clearNodes().run()
+              }
               title="Clear formatting"
-              onClick={() => runCommand("removeFormat")}
-              label="⌫"
-            />
+            >
+              ⌫
+            </ToolbarButton>
+
+            <ToolbarDivider />
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().undo().run()}
+              title="Undo"
+              disabled={!editor.can().chain().focus().undo().run()}
+            >
+              ↶
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().redo().run()}
+              title="Redo"
+              disabled={!editor.can().chain().focus().redo().run()}
+            >
+              ↷
+            </ToolbarButton>
           </div>
 
           {linkOpen ? (
@@ -569,8 +394,18 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               <input
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    confirmLink();
+                  } else if (e.key === "Escape") {
+                    setLinkOpen(false);
+                    setLinkUrl("");
+                  }
+                }}
                 placeholder="https://..."
                 className="flex-1 px-2 py-1 text-xs border border-slate-200 rounded bg-white outline-none"
+                // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
                 autoFocus
               />
               <button
@@ -600,10 +435,11 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 <input
                   type="number"
                   min={1}
-                  max={50}
+                  max={20}
                   value={tableRows}
                   onChange={(e) => setTableRows(e.target.value)}
                   className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
+                  // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
                   autoFocus
                 />
               </label>
@@ -612,7 +448,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 <input
                   type="number"
                   min={1}
-                  max={20}
+                  max={10}
                   value={tableCols}
                   onChange={(e) => setTableCols(e.target.value)}
                   className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
@@ -635,179 +471,30 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             </div>
           ) : null}
 
-          <div className="relative">
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={emit}
-              onBlur={emit}
-              onPaste={handlePaste}
-              onClick={handleEditorClick}
-              className="min-h-[420px] px-5 py-4 text-sm text-content-1000 leading-relaxed outline-none prose prose-slate max-w-none focus:bg-white"
-            />
-            {selectedImage && imageBox ? (
-              <>
-                <div
-                  data-image-resize-handle
-                  className="absolute pointer-events-none border-2 border-blue-500"
-                  style={{
-                    top: imageBox.top,
-                    left: imageBox.left,
-                    width: imageBox.width,
-                    height: imageBox.height,
-                  }}
-                />
-                <ImageResizeHandle
-                  top={imageBox.top - 6}
-                  left={imageBox.left - 6}
-                  cursor="nwse-resize"
-                  onMouseDown={(e) => startImageResize(e, "nw")}
-                />
-                <ImageResizeHandle
-                  top={imageBox.top - 6}
-                  left={imageBox.left + imageBox.width - 6}
-                  cursor="nesw-resize"
-                  onMouseDown={(e) => startImageResize(e, "ne")}
-                />
-                <ImageResizeHandle
-                  top={imageBox.top + imageBox.height - 6}
-                  left={imageBox.left - 6}
-                  cursor="nesw-resize"
-                  onMouseDown={(e) => startImageResize(e, "sw")}
-                />
-                <ImageResizeHandle
-                  top={imageBox.top + imageBox.height - 6}
-                  left={imageBox.left + imageBox.width - 6}
-                  cursor="nwse-resize"
-                  onMouseDown={(e) => startImageResize(e, "se")}
-                />
-                <div
-                  data-image-resize-handle
-                  className="absolute flex items-center gap-1 bg-slate-900 text-white text-[11px] rounded-md px-2 py-1 shadow-lg"
-                  style={{
-                    top: Math.max(0, imageBox.top - 34),
-                    left: imageBox.left,
-                  }}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <span className="font-mono text-[10px] opacity-70">
-                    {Math.round(imageBox.width)}×{Math.round(imageBox.height)}
-                  </span>
-                  <span className="w-px h-3 bg-white/20 mx-1" />
-                  <button
-                    type="button"
-                    onClick={() => setImageAlignment("left")}
-                    className="px-1 hover:text-blue-300"
-                    title="Align left"
-                  >
-                    ⯇
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageAlignment("center")}
-                    className="px-1 hover:text-blue-300"
-                    title="Align center"
-                  >
-                    ≡
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageAlignment("right")}
-                    className="px-1 hover:text-blue-300"
-                    title="Align right"
-                  >
-                    ⯈
-                  </button>
-                  <span className="w-px h-3 bg-white/20 mx-1" />
-                  <button
-                    type="button"
-                    onClick={removeSelectedImage}
-                    className="px-1 hover:text-rose-300"
-                    title="Xóa ảnh"
-                  >
-                    🗑
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
+          <EditorContent editor={editor} />
         </>
       ) : (
-        <div className="min-h-[420px] px-5 py-4 bg-slate-50 overflow-auto">
-          <PreviewFrame html={value} markdownFallback={markdownFallback} />
+        <div className="px-4 py-3 min-h-[300px]">
+          {value.trim() ? (
+            <article
+              className="prose prose-slate max-w-none prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored content
+              dangerouslySetInnerHTML={{ __html: value }}
+            />
+          ) : (
+            <p className="text-xs text-slate-400">
+              Preview hiển thị tại đây khi bạn nhập nội dung.
+            </p>
+          )}
         </div>
       )}
 
       {imagePickerOpen ? (
         <MediaPickerModal
-          onSelect={(url) => insertImageAtCursor(url)}
+          onSelect={(url) => insertImage(url)}
           onClose={() => setImagePickerOpen(false)}
         />
       ) : null}
     </div>
   );
 }
-
-type ToolbarButtonProps = {
-  title: string;
-  label: string;
-  onClick: () => void;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strike?: boolean;
-};
-
-type ImageResizeHandleProps = {
-  top: number;
-  left: number;
-  cursor: string;
-  onMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
-};
-
-const ImageResizeHandle = ({
-  top,
-  left,
-  cursor,
-  onMouseDown,
-}: ImageResizeHandleProps) => (
-  <div
-    data-image-resize-handle
-    role="presentation"
-    onMouseDown={onMouseDown}
-    className="absolute w-3 h-3 bg-white border-2 border-blue-500 rounded-sm shadow"
-    style={{ top, left, cursor }}
-  />
-);
-
-const ToolbarButton = ({
-  title,
-  label,
-  onClick,
-  bold,
-  italic,
-  underline,
-  strike,
-}: ToolbarButtonProps) => {
-  const style = [
-    "px-2 py-1 border border-slate-200 rounded bg-white hover:bg-slate-100 min-w-[28px]",
-    bold ? "font-bold" : "",
-    italic ? "italic" : "",
-    underline ? "underline" : "",
-    strike ? "line-through" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return (
-    <button
-      type="button"
-      title={title}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={style}
-    >
-      {label}
-    </button>
-  );
-};

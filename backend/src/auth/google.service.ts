@@ -57,10 +57,9 @@ export class GoogleService {
     const oauth2 = google.oauth2({ auth: this.oauth2Client, version: 'v2' });
     const { data } = await oauth2.userinfo.get();
     if (!data.email) throw new Error('Cannot get user information from Google');
-    const user =
-      await this.authRepository.findUniqueUserByEmailButOmitPassword(
-        data.email,
-      );
+    const user = await this.authRepository.findUniqueUserByEmailButOmitPassword(
+      data.email,
+    );
     if (!user)
       throw new UnauthorizedException(
         'No admin account is registered with this Google email',

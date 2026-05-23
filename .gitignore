@@ -16,3 +16,8 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+
+# Agent / Claude Code artifacts
+.claude/
+CONTEXT.md
+docs/adr/
