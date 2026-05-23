@@ -52,6 +52,7 @@ export function LoginView() {
                 alt="HCMUS Physics Logo"
                 width={280}
                 height={80}
+                style={{ width: "auto", height: "auto" }}
                 priority
               />
             </div>
