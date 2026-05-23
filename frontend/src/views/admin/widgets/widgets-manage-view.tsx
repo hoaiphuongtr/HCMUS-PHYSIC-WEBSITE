@@ -12,6 +12,13 @@ import { Switch } from "@/components/ui/switch";
 import { type WidgetType, widgetApi } from "@/lib/api";
 import { useConfirm } from "@/components/use-confirm";
 import { WidgetFormModal } from "./widget-form-modal";
+import {
+  DynamicIcon,
+  PencilIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "@/components/admin/icons";
 
 const CATEGORY_LABELS: Record<string, string> = {
   NAVIGATION: "Navigation",
@@ -76,14 +83,15 @@ export function WidgetsManageView() {
     <>
       <header className="flex h-12 items-center justify-between border-b bg-card px-5 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[18px] text-muted-foreground">
-            extension
-          </span>
+          <DynamicIcon
+            name="extension"
+            className="w-[18px] h-[18px] text-muted-foreground"
+          />
           <h1 className="text-sm font-semibold">Widget Types</h1>
           <Badge variant="secondary">{widgets.length}</Badge>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <PlusIcon className="w-3.5 h-3.5" />
           Create Widget
         </Button>
       </header>
@@ -91,9 +99,7 @@ export function WidgetsManageView() {
       <div className="flex-1 overflow-y-auto p-5">
         <div className="flex items-center gap-2 mb-5">
           <div className="relative flex-1 max-w-xs">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[16px] text-muted-foreground">
-              search
-            </span>
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search widgets..."
               value={search}
@@ -134,9 +140,10 @@ export function WidgetsManageView() {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2.5">
                     <div className="size-8 rounded-md bg-muted flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[18px] text-muted-foreground">
-                        {w.icon || "widgets"}
-                      </span>
+                      <DynamicIcon
+                        name={w.icon || "widgets"}
+                        className="w-[18px] h-[18px] text-muted-foreground"
+                      />
                     </div>
                     <div>
                       <h3 className="text-xs font-semibold">{w.name}</h3>
@@ -173,9 +180,7 @@ export function WidgetsManageView() {
                       size="icon-xs"
                       onClick={() => setEditingWidget(w)}
                     >
-                      <span className="material-symbols-outlined text-[14px]">
-                        edit
-                      </span>
+                      <PencilIcon className="w-3.5 h-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -191,9 +196,7 @@ export function WidgetsManageView() {
                       }}
                       className="text-destructive hover:text-destructive"
                     >
-                      <span className="material-symbols-outlined text-[14px]">
-                        delete
-                      </span>
+                      <TrashIcon className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
@@ -204,9 +207,10 @@ export function WidgetsManageView() {
 
         {filtered.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
-            <span className="material-symbols-outlined text-4xl mb-2 block">
-              extension_off
-            </span>
+            <DynamicIcon
+              name="extension_off"
+              className="w-9 h-9 mb-2 mx-auto block"
+            />
             <p className="text-sm">No widget types found</p>
           </div>
         )}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { type WidgetType, widgetApi } from "@/lib/api";
 import { SchemaBuilder } from "./schema-builder";
+import { DynamicIcon, XIcon } from "@/components/admin/icons";
 
 const CATEGORIES = [
   { value: "NAVIGATION", label: "Navigation" },
@@ -133,7 +134,7 @@ export function WidgetFormModal({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"
           >
-            <span className="material-symbols-outlined">close</span>
+            <XIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -213,9 +214,10 @@ export function WidgetFormModal({
               </label>
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-xl text-slate-500">
-                    {icon || "widgets"}
-                  </span>
+                  <DynamicIcon
+                    name={icon || "widgets"}
+                    className="w-5 h-5 text-slate-500"
+                  />
                 </div>
                 <input
                   value={icon}
@@ -249,9 +251,10 @@ export function WidgetFormModal({
                 onClick={() => setShowRawJson(!showRawJson)}
                 className="text-[10px] font-medium text-blue-600 hover:underline flex items-center gap-1"
               >
-                <span className="material-symbols-outlined text-[12px]">
-                  {showRawJson ? "view_list" : "code"}
-                </span>
+                <DynamicIcon
+                  name={showRawJson ? "view_list" : "code"}
+                  className="w-3 h-3"
+                />
                 {showRawJson ? "Visual Editor" : "Raw JSON"}
               </button>
             </div>

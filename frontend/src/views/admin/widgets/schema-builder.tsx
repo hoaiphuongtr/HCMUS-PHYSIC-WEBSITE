@@ -1,6 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import {
+  ChevronUpIcon,
+  PlusIcon,
+  SettingsIcon,
+  XIcon,
+} from "@/components/admin/icons";
 
 type FieldDef = {
   type: string;
@@ -85,7 +91,7 @@ export function SchemaBuilder({
           disabled={!newKey.trim()}
           className="px-3 py-1.5 text-xs font-medium text-blue-600 border border-dashed border-blue-300 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-40 flex items-center gap-1"
         >
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <PlusIcon className="w-3.5 h-3.5" />
           Add Field
         </button>
       </div>
@@ -146,9 +152,11 @@ function FieldRow({
             onClick={() => setExpanded(!expanded)}
             className="p-0.5 rounded hover:bg-slate-100 text-slate-400"
           >
-            <span className="material-symbols-outlined text-[14px]">
-              {expanded ? "expand_less" : "settings"}
-            </span>
+            {expanded ? (
+              <ChevronUpIcon className="w-3.5 h-3.5" />
+            ) : (
+              <SettingsIcon className="w-3.5 h-3.5" />
+            )}
           </button>
         )}
         <button
@@ -156,7 +164,7 @@ function FieldRow({
           onClick={onRemove}
           className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
         >
-          <span className="material-symbols-outlined text-[14px]">close</span>
+          <XIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -317,9 +325,7 @@ function ItemSchemaEditor({
               }}
               className="text-slate-400 hover:text-red-500"
             >
-              <span className="material-symbols-outlined text-[12px]">
-                close
-              </span>
+              <XIcon className="w-3 h-3" />
             </button>
           </div>
         ))}
