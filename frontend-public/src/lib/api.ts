@@ -1,6 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  options?: RequestInit,
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -19,24 +22,24 @@ export const resolveMediaUrl = (url: string | null | undefined): string => {
 };
 
 export type {
+  MediaItem,
   PageLayout,
+  PostCategoryValue,
+  PostPagedResponse,
+  PostPublicCard,
   Subscription,
   VisitorProfile,
   VisitorSuggestions,
-  MediaItem,
-  PostCategoryValue,
-  PostPublicCard,
-  PostPagedResponse,
 } from "@admin/lib/api";
 
 import type {
+  MediaItem,
   PageLayout,
+  PostPagedResponse,
+  PostPublicCard,
   Subscription,
   VisitorProfile,
   VisitorSuggestions,
-  MediaItem,
-  PostPublicCard,
-  PostPagedResponse,
 } from "@admin/lib/api";
 
 export async function getLayoutBySlug(slug: string): Promise<PageLayout> {

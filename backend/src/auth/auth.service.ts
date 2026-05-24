@@ -94,7 +94,7 @@ export class AuthService {
     await this.authRepository.createVerificationCode({
       email: body.email,
       code,
-      type: body.type as unknown as VerificationCodeType,
+      type: body.type,
       expiresAt: addMilliseconds(
         new Date(),
         ms(envConfig.OTP_EXPIRES_IN as StringValue),
@@ -108,7 +108,7 @@ export class AuthService {
     await this.validateVerificationCode({
       email: body.email,
       code: body.code,
-      type: body.type as unknown as VerificationMethod,
+      type: body.type,
     });
     return { message: 'Verification code is valid' };
   }
@@ -125,7 +125,7 @@ export class AuthService {
     const existing = await this.authRepository.findVerificationCode({
       email,
       code,
-      type: type as unknown as VerificationCodeType,
+      type: type,
     });
     if (!existing || existing.code !== code) throw InvalidOTPException;
     if (new Date(existing.expiresAt) < new Date()) throw ExpiredOTPException;

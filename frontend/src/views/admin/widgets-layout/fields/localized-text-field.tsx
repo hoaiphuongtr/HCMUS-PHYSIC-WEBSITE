@@ -2,14 +2,14 @@
 
 import type { CustomField } from "@puckeditor/core";
 import { useEffect, useRef, useState } from "react";
+import { DynamicIcon } from "@/components/admin/icons";
 import {
   DEFAULT_LOCALE,
-  LOCALES,
-  LOCALE_LABELS,
   ensureLocalized,
+  LOCALE_LABELS,
+  LOCALES,
   type LocalizedString,
 } from "@/lib/i18n";
-import { DynamicIcon } from "@/components/admin/icons";
 
 type LocalizedTextInputProps = {
   label: string;

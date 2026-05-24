@@ -52,7 +52,7 @@ export class MediaRepository {
         { alt: { contains: search, mode: 'insensitive' } },
       ];
     }
-    if (type) where.type = type as MediaType;
+    if (type) where.type = type;
     if (tagSlug) {
       where.mediaTags = { some: { tag: { slug: tagSlug } } };
     }

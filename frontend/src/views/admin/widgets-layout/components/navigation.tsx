@@ -12,14 +12,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { DynamicIcon } from "@/components/admin/icons";
+import { LOCALE_LABELS, LOCALES, type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
-import { LOCALES, LOCALE_LABELS, t, type LocalizedString } from "@/lib/i18n";
 import { colorField } from "../fields/color-field";
-import { mediaPickerField } from "../fields/media-picker-field";
 import {
-  localizedTextField,
   localizedTextareaField,
+  localizedTextField,
 } from "../fields/localized-text-field";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 type NavbarSubItem = {
   label: LocalizedString;
@@ -161,9 +161,7 @@ function NavbarChildItem({
         }
       >
         <span>{t(child.label, locale)}</span>
-        {hasSubs && (
-          <ChevronRight className="w-4 h-4 opacity-50" />
-        )}
+        {hasSubs && <ChevronRight className="w-4 h-4 opacity-50" />}
       </a>
       {hasSubs && open && (
         <div className="absolute left-full top-0 pl-1 z-50">
@@ -811,10 +809,7 @@ function QuickLinksRender({
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
             style={{ backgroundColor: link.color || "#3b82f6" }}
           >
-            <DynamicIcon
-              name={link.icon || "link"}
-              className="w-5 h-5"
-            />
+            <DynamicIcon name={link.icon || "link"} className="w-5 h-5" />
           </div>
           <span className="text-xs font-medium text-slate-600 text-center">
             {t(link.label, locale)}
@@ -1059,7 +1054,11 @@ function LanguageSwitcherClient({
       >
         <Globe className="w-[18px] h-[18px]" />
         {variant !== "compact" && <span>{localeLabel}</span>}
-        {open ? <ChevronUp className="w-3.5 h-3.5 opacity-60" /> : <ChevronDown className="w-3.5 h-3.5 opacity-60" />}
+        {open ? (
+          <ChevronUp className="w-3.5 h-3.5 opacity-60" />
+        ) : (
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+        )}
       </button>
       {open && (
         <>

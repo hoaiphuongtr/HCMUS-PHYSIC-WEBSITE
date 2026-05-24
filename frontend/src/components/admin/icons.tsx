@@ -1,5 +1,6 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowDown,
   ArrowRight,
@@ -32,17 +33,17 @@ import {
   Hash,
   HelpCircle,
   History,
-  Image as LucideImage,
   Images,
   Info,
   LayoutDashboard,
   LayoutGrid,
   LayoutPanelLeft,
-  Link as LinkIconLucide,
   Link2Off,
+  Link as LinkIconLucide,
   List,
   ListVideo,
   LogOut,
+  Image as LucideImage,
   Mail,
   Map,
   MapPin,
@@ -72,8 +73,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-
-import type { LucideIcon } from "lucide-react";
 
 /**
  * Translates Material Symbols Outlined glyph names (stored in DB and frontend
@@ -223,12 +222,12 @@ export {
   Folder as FolderIcon,
   GripVertical as GripVerticalIcon,
   HelpCircle as HelpCircleIcon,
-  LucideImage as ImageIcon,
   Info as InfoIcon,
   LayoutGrid as LayoutGridIcon,
-  LinkIconLucide as LinkIcon,
   Link2Off as Link2OffIcon,
+  LinkIconLucide as LinkIcon,
   LogOut as LogOutIcon,
+  LucideImage as ImageIcon,
   Menu as MenuIcon,
   MoreVertical as MoreVerticalIcon,
   Palette as PaletteIcon,

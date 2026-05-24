@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PlusIcon, XIcon } from "@/components/admin/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusIcon, XIcon } from "@/components/admin/icons";
 import {
   Select,
   SelectContent,

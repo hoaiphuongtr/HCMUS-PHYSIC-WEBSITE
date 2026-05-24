@@ -3,15 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { type WidgetType, widgetApi } from "@/lib/api";
-import { useConfirm } from "@/components/use-confirm";
-import { WidgetFormModal } from "./widget-form-modal";
 import {
   DynamicIcon,
   PencilIcon,
@@ -19,6 +10,15 @@ import {
   SearchIcon,
   TrashIcon,
 } from "@/components/admin/icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useConfirm } from "@/components/use-confirm";
+import { type WidgetType, widgetApi } from "@/lib/api";
+import { WidgetFormModal } from "./widget-form-modal";
 
 const CATEGORY_LABELS: Record<string, string> = {
   NAVIGATION: "Navigation",

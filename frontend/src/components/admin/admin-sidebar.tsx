@@ -9,12 +9,12 @@ import {
   LayoutDashboard,
   LayoutPanelLeft,
   LogOut,
+  type LucideIcon,
   Mail,
   Menu,
   Puzzle,
   Settings,
   Users,
-  type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

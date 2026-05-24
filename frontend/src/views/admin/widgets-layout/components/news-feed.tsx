@@ -10,11 +10,11 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
-import { t, type LocalizedString } from "@/lib/i18n";
+import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
+import { POST_CATEGORY_META } from "@/lib/post-categories";
 import { colorField } from "../fields/color-field";
 import { localizedTextField } from "../fields/localized-text-field";
-import { POST_CATEGORY_META } from "@/lib/post-categories";
 
 const CATEGORY_LABELS = POST_CATEGORY_META;
 

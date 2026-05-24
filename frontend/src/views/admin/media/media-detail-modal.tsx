@@ -3,9 +3,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
-import { useConfirm } from "@/components/use-confirm";
 import { XIcon } from "@/components/admin/icons";
+import { useConfirm } from "@/components/use-confirm";
+import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
 import { ModalPortal } from "@/views/admin/widgets-layout/portal-menu";
 
 type MediaDetailModalProps = {

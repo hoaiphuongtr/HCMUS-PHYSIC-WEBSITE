@@ -3,11 +3,6 @@
 import type { Config } from "@puckeditor/core";
 import { EventCard, NewsOverlayCard } from "./components/cards";
 import {
-  LatestNewsAuto,
-  NewsListPaginated,
-  UpcomingEventsAuto,
-} from "./components/news-feed";
-import {
   ContactInfo,
   DepartmentCard,
   Heading,
@@ -54,6 +49,11 @@ import {
   QuickLinks,
   SocialIcons,
 } from "./components/navigation";
+import {
+  LatestNewsAuto,
+  NewsListPaginated,
+  UpcomingEventsAuto,
+} from "./components/news-feed";
 import {
   PostBody,
   PostCoverImage,

@@ -48,7 +48,7 @@ const buildInjectedProps = (
     case 'PostCoverImage':
       return {
         ...original,
-        src: post.coverUrl ?? (original.src as string | undefined) ?? '',
+        src: post.coverUrl ?? original.src ?? '',
         alt: post.coverAlt ?? post.title,
       };
     case 'PostTagList':
@@ -75,7 +75,7 @@ const buildInjectedProps = (
 const walkNode = (node: PuckNode, post: PostInjectPayload): PuckNode => {
   if (!node || typeof node !== 'object') return node;
   const type = node.type;
-  const originalProps = (node.props ?? {}) as Record<string, unknown>;
+  const originalProps = node.props ?? {};
 
   const nextProps: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(originalProps)) {
@@ -97,7 +97,7 @@ const walkValue = (value: unknown, post: PostInjectPayload): unknown => {
     );
   }
   if (value && typeof value === 'object') {
-    if ('type' in (value as object) && 'props' in (value as object)) {
+    if ('type' in value && 'props' in value) {
       return walkNode(value as PuckNode, post);
     }
     const obj = value as Record<string, unknown>;

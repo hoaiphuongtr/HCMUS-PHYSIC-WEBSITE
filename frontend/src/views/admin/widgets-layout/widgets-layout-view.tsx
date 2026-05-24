@@ -5,6 +5,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CopyIcon,
+  DynamicIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "@/components/admin/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -19,17 +30,6 @@ import { CreateLayoutModal } from "./create-layout-modal";
 import { EditLayoutModal } from "./edit-layout-modal";
 import { PortalMenu } from "./portal-menu";
 import { PuckEditor } from "./puck-editor";
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CopyIcon,
-  DynamicIcon,
-  MoreVerticalIcon,
-  PencilIcon,
-  PlusIcon,
-  SearchIcon,
-  TrashIcon,
-} from "@/components/admin/icons";
 
 export function WidgetsLayoutView() {
   const queryClient = useQueryClient();

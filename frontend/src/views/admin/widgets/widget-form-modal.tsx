@@ -3,9 +3,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { DynamicIcon, XIcon } from "@/components/admin/icons";
 import { type WidgetType, widgetApi } from "@/lib/api";
 import { SchemaBuilder } from "./schema-builder";
-import { DynamicIcon, XIcon } from "@/components/admin/icons";
 
 const CATEGORIES = [
   { value: "NAVIGATION", label: "Navigation" },

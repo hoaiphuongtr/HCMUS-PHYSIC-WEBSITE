@@ -26,6 +26,7 @@ const parseLocalized = (
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
       return parsed;
   } catch {
+    return value;
   }
   return value;
 };

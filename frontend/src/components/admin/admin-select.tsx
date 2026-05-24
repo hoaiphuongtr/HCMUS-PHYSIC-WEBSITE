@@ -54,10 +54,7 @@ export function AdminSelect({
           </span>
         )}
       </SelectTrigger>
-      <SelectContent
-        align="start"
-        alignItemWithTrigger={false}
-      >
+      <SelectContent align="start" alignItemWithTrigger={false}>
         {clearLabel ? (
           <SelectItem value={null} className="text-sm italic text-slate-500">
             {clearLabel}

@@ -2,9 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { XIcon } from "@/components/admin/icons";
 import { mediaApi, resolveMediaUrl } from "@/lib/api";
 import { ModalPortal } from "../portal-menu";
-import { XIcon } from "@/components/admin/icons";
 
 const PAGE_SIZE = 24;
 

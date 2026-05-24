@@ -1,13 +1,13 @@
 "use client";
 
-import type { WidgetInstance } from "@/lib/api";
-import { WidgetPreview } from "./widget-previews";
 import {
   DynamicIcon,
   EyeIcon,
   EyeOffIcon,
   XIcon,
 } from "@/components/admin/icons";
+import type { WidgetInstance } from "@/lib/api";
+import { WidgetPreview } from "./widget-previews";
 
 const COL_SPAN_OPTIONS = [
   { value: 3, label: "1/4" },

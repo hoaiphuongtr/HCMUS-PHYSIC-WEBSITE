@@ -13,7 +13,7 @@ export class WidgetRepository {
         type: data.type,
         name: data.name,
         description: data.description,
-        category: data.category as WidgetCategory,
+        category: data.category,
         icon: data.icon,
         configSchema: data.configSchema,
         defaultConfig: data.defaultConfig ?? {},
@@ -45,7 +45,7 @@ export class WidgetRepository {
       where: { id },
       data: {
         ...rest,
-        ...(category && { category: category as WidgetCategory }),
+        ...(category && { category: category }),
         ...(configSchema !== undefined && {
           configSchema: configSchema,
         }),

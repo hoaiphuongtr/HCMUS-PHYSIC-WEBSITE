@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { PageLayout, WidgetInstance } from "@/lib/api";
-import { WidgetInstanceCard } from "./widget-instance-card";
 import {
   GripVerticalIcon,
   PlusCircleIcon,
   PlusIcon,
 } from "@/components/admin/icons";
+import type { PageLayout, WidgetInstance } from "@/lib/api";
+import { WidgetInstanceCard } from "./widget-instance-card";
 
 type RowGroup = { row: number; instances: WidgetInstance[] };
 

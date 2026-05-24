@@ -5,9 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import "@puckeditor/core/puck.css";
-import { type PageLayout, pageLayoutApi } from "@/lib/api";
-import { LOCALES, LOCALE_LABELS, DEFAULT_LOCALE } from "@/lib/i18n";
-import { LocaleProvider, useLocale } from "@/lib/locale-context";
 import {
   ChevronDownIcon,
   ClockIcon,
@@ -16,6 +13,9 @@ import {
   UploadIcon,
   XIcon,
 } from "@/components/admin/icons";
+import { type PageLayout, pageLayoutApi } from "@/lib/api";
+import { DEFAULT_LOCALE, LOCALE_LABELS, LOCALES } from "@/lib/i18n";
+import { LocaleProvider, useLocale } from "@/lib/locale-context";
 import { ModalPortal, PortalMenu } from "./portal-menu";
 import { puckConfig } from "./puck-config";
 

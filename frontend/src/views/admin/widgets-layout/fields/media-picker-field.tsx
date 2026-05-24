@@ -2,9 +2,9 @@
 
 import type { CustomField } from "@puckeditor/core";
 import { useState } from "react";
+import { DynamicIcon } from "@/components/admin/icons";
 import { resolveMediaUrl } from "@/lib/api";
 import { MediaPickerModal } from "./media-picker-modal";
-import { DynamicIcon } from "@/components/admin/icons";
 
 type MediaPickerFieldProps = {
   value: string;

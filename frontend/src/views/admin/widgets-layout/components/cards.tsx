@@ -3,14 +3,14 @@
 import type { ComponentConfig } from "@puckeditor/core";
 import { Clock, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
-import { t, type LocalizedString } from "@/lib/i18n";
 import { colorField } from "../fields/color-field";
-import { mediaPickerField } from "../fields/media-picker-field";
 import {
-  localizedTextField,
   localizedTextareaField,
+  localizedTextField,
 } from "../fields/localized-text-field";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 export const NewsOverlayCard: ComponentConfig<{
   imageUrl: string;

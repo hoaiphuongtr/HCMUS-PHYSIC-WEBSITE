@@ -1,8 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../../../frontend/src/app/shared.css";
 
 @source "../../../frontend/src/views/admin/widgets-layout/**/*.{ts,tsx,js,jsx}";
 @source "../../../frontend/src/components/**/*.{ts,tsx,js,jsx}";
-
-@import "../../../frontend/src/app/shared.css";

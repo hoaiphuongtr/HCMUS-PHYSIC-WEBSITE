@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  DynamicIcon,
-  ImageIcon,
-  SearchIcon,
-} from "@/components/admin/icons";
+import { DynamicIcon, ImageIcon, SearchIcon } from "@/components/admin/icons";
 
 type PreviewProps = { config: Record<string, any> };
 
@@ -141,7 +137,10 @@ function VideoEmbedPreview({ config }: PreviewProps) {
         className={`${ratio} max-h-32 bg-slate-900 rounded-lg flex items-center justify-center`}
       >
         <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-          <DynamicIcon name="play_arrow" className="w-[18px] h-[18px] text-white" />
+          <DynamicIcon
+            name="play_arrow"
+            className="w-[18px] h-[18px] text-white"
+          />
         </div>
       </div>
     </div>

@@ -4,12 +4,11 @@ import {
   Globe,
   Info,
   LayoutGrid,
+  type LucideIcon,
   Menu as MenuIcon,
   Newspaper,
-  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
-import type { WidgetType } from "@/lib/api";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -17,6 +16,7 @@ import {
   PlusCircleIcon,
   SearchIcon,
 } from "@/components/admin/icons";
+import type { WidgetType } from "@/lib/api";
 import { WidgetPreview } from "./widget-previews";
 
 const CATEGORY_LABELS: Record<string, string> = {

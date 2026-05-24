@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n";
 
 const LOCALE_PREFIXES = LOCALES.map((l) => `/${l}`);

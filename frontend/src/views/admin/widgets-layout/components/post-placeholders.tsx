@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { resolveMediaUrl } from "@/lib/api";
-import { t, type LocalizedString } from "@/lib/i18n";
+import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
-import { mediaPickerField } from "../fields/media-picker-field";
 import {
-  localizedTextField,
   localizedTextareaField,
+  localizedTextField,
 } from "../fields/localized-text-field";
+import { mediaPickerField } from "../fields/media-picker-field";
 
 const formatDate = (
   value: string | null | undefined,

@@ -20,7 +20,8 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS",
-  description: "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+  description:
+    "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
 };
 
 export default function RootLayout({

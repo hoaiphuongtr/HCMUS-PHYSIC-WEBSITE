@@ -3,8 +3,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { mediaApi } from "@/lib/api";
 import { UploadCloudIcon } from "@/components/admin/icons";
+import { mediaApi } from "@/lib/api";
 
 type UploadZoneProps = {
   tagSlugs?: string[];

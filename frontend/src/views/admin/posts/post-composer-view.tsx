@@ -5,18 +5,18 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
+import { AdminSelect } from "@/components/admin/admin-select";
 import {
+  type ContentStatusValue,
+  type PostCategoryValue,
   pageLayoutApi,
   postApi,
   resolveMediaUrl,
-  type ContentStatusValue,
-  type PostCategoryValue,
   type UpsertPostBody,
 } from "@/lib/api";
-import { toSlug } from "@/lib/utils";
-import { AdminSelect } from "@/components/admin/admin-select";
 import { POST_CATEGORY_OPTIONS_VI } from "@/lib/post-categories";
+import { toSlug } from "@/lib/utils";
+import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
 
 const CATEGORY_OPTIONS = POST_CATEGORY_OPTIONS_VI;
@@ -542,8 +542,9 @@ export function PostComposerView() {
                 placeholder="— Chọn layout mẫu —"
                 options={(layoutsQuery.data ?? []).map((layout) => ({
                   value: layout.id,
-                  label: `${layout.name} · /${layout.slug} ${layout.isPublished ? "(published)" : "(draft)"
-                    }`,
+                  label: `${layout.name} · /${layout.slug} ${
+                    layout.isPublished ? "(published)" : "(draft)"
+                  }`,
                 }))}
               />
             </div>
@@ -605,8 +606,8 @@ export function PostComposerView() {
               Lên lịch xuất bản
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Cron worker chuyển trạng thái sang PUBLISHED và đồng bộ lại
-              các layout đã đính kèm khi đến thời điểm.
+              Cron worker chuyển trạng thái sang PUBLISHED và đồng bộ lại các
+              layout đã đính kèm khi đến thời điểm.
             </p>
             <label
               className="block text-xs font-semibold text-slate-700 mb-1"
