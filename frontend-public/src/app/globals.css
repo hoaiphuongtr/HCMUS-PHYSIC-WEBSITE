@@ -261,11 +261,37 @@
   }
 }
 
-/* Post body: block images aligned via wrapper alignment from the editor. */
-.post-img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 12px 0;
+/* Post body images: render exactly the layout the admin set in Tiptap,
+   including newspaper-style float-wrap. Match by structure (img[src])
+   because the resize extension's NodeView strips the class attribute. */
+[data-post-body] img,
+.prose img {
+  max-width: 100% !important;
+  height: auto !important;
+  box-sizing: border-box;
   border-radius: 6px;
+  vertical-align: middle;
 }
+[data-post-body] div:has(> img[src]),
+[data-post-body] div:has(> div > img[src]),
+.prose div:has(> img[src]),
+.prose div:has(> div > img[src]) {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Newspaper wrap: collapse paragraph margins inside the float zone so the
+   text reads as one continuous flow next to the picture instead of stair-
+   stepping down by one <p>-margin per line. */
+[data-post-body] p:has(div[style*="float: left"]),
+[data-post-body] p:has(div[style*="float: right"]),
+.prose p:has(div[style*="float: left"]),
+.prose p:has(div[style*="float: right"]) {
+  margin-bottom: 0 !important;
+}
+[data-post-body] p:has(div[style*="float: left"]) ~ p,
+[data-post-body] p:has(div[style*="float: right"]) ~ p,
+.prose p:has(div[style*="float: left"]) ~ p,
+.prose p:has(div[style*="float: right"]) ~ p {
+  margin-top: 0 !important;
+}
+

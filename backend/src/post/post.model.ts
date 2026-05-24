@@ -12,6 +12,7 @@ export const UpsertPostBodySchema = z.object({
   excerpt: z.string().max(1000).optional().nullable(),
   category: PostCategoryEnum,
   status: ContentStatusEnum.optional(),
+  scheduledAt: z.string().datetime().nullable().optional(),
   coverMediaId: z.string().nullable().optional(),
   coverUrl: z.string().nullable().optional(),
   coverAlt: z.string().nullable().optional(),

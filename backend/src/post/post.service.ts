@@ -26,12 +26,10 @@ const parseLocalized = (
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
       return parsed;
   } catch {
-    // fall through
   }
   return value;
 };
 
-// Extract Vietnamese (or first available) plain string for admin display.
 const extractVi = (value: string | null): string | null => {
   const parsed = parseLocalized(value);
   if (parsed == null) return null;
@@ -99,6 +97,7 @@ export class PostService {
             scheduledAt: null,
           },
         });
+        await this.syncAttachedLayouts(row.id);
         this.logger.log(`Auto-published scheduled post ${row.id}`);
       } catch (err) {
         this.logger.error(
@@ -117,6 +116,10 @@ export class PostService {
     if (existing) throw PostSlugExistsException;
     const tagIds = await this.upsertTagIds(body.tagSlugs ?? []);
     const status = body.status ?? 'DRAFT';
+    const scheduledAtValue =
+      status === 'SCHEDULED' && body.scheduledAt
+        ? new Date(body.scheduledAt)
+        : null;
     const created = await this.prisma.post.create({
       data: {
         title: body.title,
@@ -126,6 +129,7 @@ export class PostService {
         category: body.category,
         status,
         publishedAt: status === 'PUBLISHED' ? new Date() : null,
+        scheduledAt: scheduledAtValue,
         coverMediaId: body.coverMediaId ?? null,
         coverUrl: body.coverUrl ?? null,
         coverAlt: body.coverAlt ?? null,
@@ -164,6 +168,10 @@ export class PostService {
       : leftPublished
         ? { publishedAt: null }
         : {};
+    const scheduledAtValue =
+      nextStatus === 'SCHEDULED' && body.scheduledAt
+        ? new Date(body.scheduledAt)
+        : null;
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.postTag.deleteMany({ where: { postId: id } });
       return tx.post.update({
@@ -175,6 +183,7 @@ export class PostService {
           excerpt: body.excerpt ?? null,
           category: body.category,
           status: nextStatus,
+          scheduledAt: scheduledAtValue,
           ...publishedAtPatch,
           coverMediaId: body.coverMediaId ?? null,
           coverUrl: body.coverUrl ?? null,

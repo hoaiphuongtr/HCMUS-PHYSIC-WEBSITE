@@ -11,6 +11,7 @@ import {
   type PostRecord,
 } from "@/lib/api";
 import { useConfirm } from "@/components/use-confirm";
+import { AdminSelect } from "@/components/admin/admin-select";
 
 const PAGE_SIZE = 12;
 
@@ -183,36 +184,36 @@ export function PostListView() {
             placeholder="Tìm theo tiêu đề, slug, mô tả…"
             className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <select
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tất cả danh mục</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
-              </option>
-            ))}
-          </select>
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tất cả status</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[200px]">
+            <AdminSelect
+              value={category}
+              onChange={(next) => {
+                setCategory(next);
+                setPage(1);
+              }}
+              placeholder="Tất cả danh mục"
+              clearLabel="Tất cả danh mục"
+              options={CATEGORY_OPTIONS.map((c) => ({
+                value: c,
+                label: CATEGORY_LABELS[c],
+              }))}
+            />
+          </div>
+          <div className="min-w-[180px]">
+            <AdminSelect
+              value={status}
+              onChange={(next) => {
+                setStatus(next);
+                setPage(1);
+              }}
+              placeholder="Tất cả status"
+              clearLabel="Tất cả status"
+              options={STATUS_OPTIONS.map((s) => ({
+                value: s,
+                label: STATUS_LABELS[s],
+              }))}
+            />
+          </div>
           {hasFilters ? (
             <button
               type="button"

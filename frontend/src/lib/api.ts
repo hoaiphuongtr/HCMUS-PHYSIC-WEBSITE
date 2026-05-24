@@ -481,6 +481,7 @@ export type UpsertPostBody = {
   excerpt?: string | null;
   category: PostCategoryValue;
   status?: ContentStatusValue;
+  scheduledAt?: string | null;
   coverMediaId?: string | null;
   coverUrl?: string | null;
   coverAlt?: string | null;

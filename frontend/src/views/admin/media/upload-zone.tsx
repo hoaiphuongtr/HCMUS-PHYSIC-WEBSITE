@@ -79,7 +79,7 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
         handleFiles(e.dataTransfer.files);
       }}
       className={
-        "rounded-xl border-2 border-dashed p-8 text-center transition-colors " +
+        "flex flex-col items-center rounded-xl border-2 border-dashed p-8 text-center transition-colors " +
         (dragOver
           ? "border-blue-400 bg-blue-50"
           : "border-slate-200 bg-slate-50/60 hover:bg-slate-50")

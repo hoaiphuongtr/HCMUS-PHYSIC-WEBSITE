@@ -15,6 +15,7 @@ import {
   type UpsertPostBody,
 } from "@/lib/api";
 import { toSlug } from "@/lib/utils";
+import { AdminSelect } from "@/components/admin/admin-select";
 import { MarkdownEditor } from "./markdown-editor";
 
 const CATEGORY_OPTIONS: { value: PostCategoryValue; label: string }[] = [
@@ -74,8 +75,10 @@ export function PostComposerView() {
   const [eventStartAt, setEventStartAt] = useState("");
   const [eventEndAt, setEventEndAt] = useState("");
   const [eventLocation, setEventLocation] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
   const [templateLayoutId, setTemplateLayoutId] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   useEffect(() => {
     setPostId(idParam);
@@ -104,6 +107,7 @@ export function PostComposerView() {
     setEventStartAt(toLocalInput(data.eventStartAt));
     setEventEndAt(toLocalInput(data.eventEndAt));
     setEventLocation(data.eventLocation ?? "");
+    setScheduledAt(toLocalInput(data.scheduledAt));
   }, [postQuery.data]);
 
   const layoutsQuery = useQuery({
@@ -148,6 +152,10 @@ export function PostComposerView() {
       excerpt: excerpt || null,
       category,
       status,
+      scheduledAt:
+        status === "SCHEDULED" && scheduledAt
+          ? new Date(scheduledAt).toISOString()
+          : null,
       coverMediaId: coverMediaId ?? null,
       coverUrl: coverUrl || null,
       coverAlt: coverAlt || null,
@@ -198,10 +206,28 @@ export function PostComposerView() {
       toast.warn("Nhập tiêu đề trước khi lưu");
       return;
     }
+    if (canSchedule) {
+      setScheduleModalOpen(true);
+      return;
+    }
     saveMutation.mutate(buildPayload());
   };
 
-  const createLayoutFromPost = () => {
+  const confirmSchedule = () => {
+    if (!scheduledAt) {
+      toast.warn("Chọn thời gian xuất bản");
+      return;
+    }
+    const at = new Date(scheduledAt);
+    if (Number.isNaN(at.getTime()) || at.getTime() <= Date.now()) {
+      toast.error("Thời gian xuất bản phải ở tương lai");
+      return;
+    }
+    setScheduleModalOpen(false);
+    saveMutation.mutate(buildPayload());
+  };
+
+  const createLayoutFromPost = async () => {
     if (!postId) {
       toast.warn("Lưu draft trước khi tạo layout mới");
       return;
@@ -210,11 +236,18 @@ export function PostComposerView() {
       toast.warn("Chọn layout mẫu trước");
       return;
     }
+    try {
+      await saveMutation.mutateAsync(buildPayload());
+    } catch {
+      return;
+    }
     cloneMutation.mutate({ templateLayoutId });
   };
 
   const previewCover = resolveMediaUrl(coverUrl);
   const attachedLayouts = postQuery.data?.layouts ?? [];
+  const hasPublishedLayout = attachedLayouts.some((l) => l.isPublished);
+  const canSchedule = status === "SCHEDULED" && hasPublishedLayout;
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -243,9 +276,11 @@ export function PostComposerView() {
           >
             {saveMutation.isPending
               ? "Đang lưu…"
-              : postId
-                ? "Cập nhật bài đăng"
-                : "Lưu draft"}
+              : canSchedule
+                ? "Lên lịch xuất bản"
+                : postId
+                  ? "Cập nhật bài đăng"
+                  : "Lưu draft"}
           </button>
         </div>
       </header>
@@ -274,18 +309,12 @@ export function PostComposerView() {
             >
               Trạng thái bài đăng
             </label>
-            <select
+            <AdminSelect
               id="post-status"
               value={status}
-              onChange={(e) => setStatus(e.target.value as ContentStatusValue)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => setStatus(next as ContentStatusValue)}
+              options={STATUS_OPTIONS}
+            />
           </div>
         </section>
 
@@ -315,18 +344,12 @@ export function PostComposerView() {
             >
               Danh mục
             </label>
-            <select
+            <AdminSelect
               id="post-category"
               value={category}
-              onChange={(e) => setCategory(e.target.value as PostCategoryValue)}
-              className="w-full p-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-            >
-              {CATEGORY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => setCategory(next as PostCategoryValue)}
+              options={CATEGORY_OPTIONS}
+            />
           </div>
         </section>
 
@@ -378,7 +401,7 @@ export function PostComposerView() {
                 setCoverMediaId(null);
               }}
               placeholder="URL ảnh hoặc chọn từ thư viện"
-              className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+              className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
             />
             <button
               type="button"
@@ -392,7 +415,7 @@ export function PostComposerView() {
                 value={coverAlt}
                 onChange={(e) => setCoverAlt(e.target.value)}
                 placeholder="Alt text"
-                className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
               />
             ) : null}
           </div>
@@ -517,20 +540,17 @@ export function PostComposerView() {
               >
                 Layout mẫu
               </label>
-              <select
+              <AdminSelect
                 id="template-layout"
                 value={templateLayoutId}
-                onChange={(e) => setTemplateLayoutId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-              >
-                <option value="">— Chọn layout mẫu —</option>
-                {layoutsQuery.data?.map((layout) => (
-                  <option key={layout.id} value={layout.id}>
-                    {layout.name} · /{layout.slug}{" "}
-                    {layout.isPublished ? "(published)" : "(draft)"}
-                  </option>
-                ))}
-              </select>
+                onChange={setTemplateLayoutId}
+                placeholder="— Chọn layout mẫu —"
+                options={(layoutsQuery.data ?? []).map((layout) => ({
+                  value: layout.id,
+                  label: `${layout.name} · /${layout.slug} ${layout.isPublished ? "(published)" : "(draft)"
+                    }`,
+                }))}
+              />
             </div>
             <button
               type="button"
@@ -574,6 +594,59 @@ export function PostComposerView() {
           }}
           onClose={() => setPickerOpen(false)}
         />
+      ) : null}
+
+      {scheduleModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setScheduleModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+            <h3 className="text-base font-semibold text-slate-900 mb-1">
+              Lên lịch xuất bản
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Cron worker chuyển trạng thái sang PUBLISHED và đồng bộ lại
+              các layout đã đính kèm khi đến thời điểm.
+            </p>
+            <label
+              className="block text-xs font-semibold text-slate-700 mb-1"
+              htmlFor="post-scheduled-at"
+            >
+              Thời gian xuất bản
+            </label>
+            <input
+              id="post-scheduled-at"
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+              // biome-ignore lint/a11y/noAutofocus: modal entry point
+              autoFocus
+            />
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setScheduleModalOpen(false)}
+                className="px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={confirmSchedule}
+                disabled={saveMutation.isPending}
+                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saveMutation.isPending ? "Đang lưu…" : "Xác nhận lên lịch"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

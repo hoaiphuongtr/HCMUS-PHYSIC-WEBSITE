@@ -95,14 +95,259 @@ function currentBlock(editor: EditorInstance): string {
   return "paragraph";
 }
 
+type ImageLayoutMode =
+  | "inline"
+  | "wrapSquareLeft"
+  | "wrapSquareRight"
+  | "topBottom"
+  | "behindText"
+  | "frontText";
+
+const IMAGE_LAYOUT_OPTIONS: {
+  mode: ImageLayoutMode;
+  label: string;
+  group: "inline" | "wrap";
+  preview: React.ReactNode;
+}[] = [
+  {
+    mode: "inline",
+    label: "Cùng dòng với văn bản",
+    group: "inline",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="6" y="6" width="24" height="2.5" fill="#94a3b8" />
+        <rect x="6" y="10.5" width="24" height="2.5" fill="#94a3b8" />
+        <rect x="6" y="16" width="10" height="10" fill="#1d4ed8" />
+        <rect x="18" y="17" width="12" height="2" fill="#94a3b8" />
+        <rect x="18" y="21" width="12" height="2" fill="#94a3b8" />
+        <rect x="6" y="29" width="24" height="2" fill="#94a3b8" />
+      </svg>
+    ),
+  },
+  {
+    mode: "wrapSquareLeft",
+    label: "Wrap vuông - ảnh trái",
+    group: "wrap",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="6" y="6" width="10" height="10" fill="#1d4ed8" />
+        <rect x="18" y="6" width="12" height="2" fill="#94a3b8" />
+        <rect x="18" y="10" width="12" height="2" fill="#94a3b8" />
+        <rect x="18" y="14" width="12" height="2" fill="#94a3b8" />
+        <rect x="6" y="20" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="24" width="24" height="2" fill="#94a3b8" />
+      </svg>
+    ),
+  },
+  {
+    mode: "wrapSquareRight",
+    label: "Wrap vuông - ảnh phải",
+    group: "wrap",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="20" y="6" width="10" height="10" fill="#1d4ed8" />
+        <rect x="6" y="6" width="12" height="2" fill="#94a3b8" />
+        <rect x="6" y="10" width="12" height="2" fill="#94a3b8" />
+        <rect x="6" y="14" width="12" height="2" fill="#94a3b8" />
+        <rect x="6" y="20" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="24" width="24" height="2" fill="#94a3b8" />
+      </svg>
+    ),
+  },
+  {
+    mode: "topBottom",
+    label: "Trên & dưới",
+    group: "wrap",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="6" y="6" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="10" width="24" height="2" fill="#94a3b8" />
+        <rect x="11" y="15" width="14" height="8" fill="#1d4ed8" />
+        <rect x="6" y="25" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="29" width="24" height="2" fill="#94a3b8" />
+      </svg>
+    ),
+  },
+  {
+    mode: "behindText",
+    label: "Phía sau văn bản",
+    group: "wrap",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="9" y="9" width="18" height="18" fill="#cbd5e1" />
+        <rect x="6" y="11" width="24" height="2" fill="#1d4ed8" />
+        <rect x="6" y="15" width="24" height="2" fill="#1d4ed8" />
+        <rect x="6" y="19" width="24" height="2" fill="#1d4ed8" />
+        <rect x="6" y="23" width="24" height="2" fill="#1d4ed8" />
+      </svg>
+    ),
+  },
+  {
+    mode: "frontText",
+    label: "Trước văn bản",
+    group: "wrap",
+    preview: (
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        <rect x="6" y="11" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="15" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="19" width="24" height="2" fill="#94a3b8" />
+        <rect x="6" y="23" width="24" height="2" fill="#94a3b8" />
+        <rect x="9" y="9" width="18" height="18" fill="#1d4ed8" />
+      </svg>
+    ),
+  },
+];
+
+function ImageLayoutControl({
+  img,
+  open,
+  onToggle,
+  onPick,
+  onClose,
+}: {
+  img: HTMLImageElement;
+  open: boolean;
+  onToggle: () => void;
+  onPick: (mode: ImageLayoutMode) => void;
+  onClose: () => void;
+}) {
+  const [rect, setRect] = useState<DOMRect>(() => img.getBoundingClientRect());
+  useEffect(() => {
+    let rafId = 0;
+    const tick = () => {
+      const next = img.getBoundingClientRect();
+      setRect((prev) =>
+        prev.top === next.top &&
+        prev.right === next.right &&
+        prev.width === next.width
+          ? prev
+          : next,
+      );
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [img]);
+
+  const POPUP_WIDTH = 280;
+  const BUTTON_SIZE = 32;
+  const viewportRight = document.documentElement.clientWidth;
+  const fitsRight =
+    rect.right + 4 + BUTTON_SIZE + 8 + POPUP_WIDTH < viewportRight;
+  const btnLeft = fitsRight
+    ? rect.right + 4
+    : Math.max(8, rect.right - BUTTON_SIZE - 4);
+  const popupLeft = fitsRight
+    ? rect.right + 4 + BUTTON_SIZE + 8
+    : Math.max(8, btnLeft - POPUP_WIDTH - 8);
+  const btnStyle: React.CSSProperties = {
+    position: "fixed",
+    top: rect.top - 2,
+    left: btnLeft,
+    zIndex: 50,
+  };
+  const popupStyle: React.CSSProperties = {
+    position: "fixed",
+    top: rect.top - 2,
+    left: popupLeft,
+    zIndex: 51,
+    width: POPUP_WIDTH,
+  };
+  return (
+    <>
+      <button
+        type="button"
+        data-image-layout-ui="anchor-button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onToggle}
+        style={btnStyle}
+        className="w-9 h-9 rounded-md border border-slate-300 bg-white shadow-md hover:bg-slate-50 flex items-center justify-center text-slate-700"
+        title="Tùy chọn bố trí"
+        aria-label="Tùy chọn bố trí"
+      >
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="3" width="8" height="8" />
+          <line x1="13" y1="5" x2="21" y2="5" />
+          <line x1="13" y1="9" x2="21" y2="9" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="3" y1="19" x2="21" y2="19" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          data-image-layout-ui="popup"
+          style={popupStyle}
+          className="bg-white border border-slate-200 rounded-lg shadow-xl"
+        >
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+            <span className="text-xs font-semibold text-slate-700">Tùy chọn bố trí</span>
+            <button
+              type="button"
+              onClick={onClose}
+              onMouseDown={(e) => e.preventDefault()}
+              className="text-slate-400 hover:text-slate-700 text-sm leading-none"
+              aria-label="Đóng"
+            >
+              ×
+            </button>
+          </div>
+          <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-500">
+            Cùng dòng với văn bản
+          </div>
+          <div className="px-3 pb-2 flex">
+            {IMAGE_LAYOUT_OPTIONS.filter((o) => o.group === "inline").map((o) => (
+              <button
+                type="button"
+                key={o.mode}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onPick(o.mode)}
+                title={o.label}
+                aria-label={o.label}
+                className="w-12 h-12 border border-slate-200 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
+              >
+                {o.preview}
+              </button>
+            ))}
+          </div>
+          <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wide text-slate-500">
+            Có ngắt dòng
+          </div>
+          <div className="px-3 pb-3 grid grid-cols-3 gap-2">
+            {IMAGE_LAYOUT_OPTIONS.filter((o) => o.group === "wrap").map((o) => (
+              <button
+                type="button"
+                key={o.mode}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onPick(o.mode)}
+                title={o.label}
+                aria-label={o.label}
+                className="w-full aspect-square border border-slate-200 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
+              >
+                {o.preview}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const [tab, setTab] = useState<"editor" | "preview">("editor");
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [tableOpen, setTableOpen] = useState(false);
-  const [tableRows, setTableRows] = useState("3");
-  const [tableCols, setTableCols] = useState("3");
+  const [tableSize, setTableSize] = useState<{ rows: string; cols: string }>({
+    rows: "3",
+    cols: "3",
+  });
+  const [imageLayout, setImageLayout] = useState<{
+    img: HTMLImageElement;
+    pos: number;
+  } | null>(null);
+  const [imageLayoutOpen, setImageLayoutOpen] = useState(false);
   const skipNextUpdate = useRef(false);
 
   const editor = useEditor({
@@ -113,13 +358,29 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         types: ["heading", "paragraph"],
         alignments: ["left", "center", "right"],
       }),
-      ImageResize.configure({
-        inline: false,
-        allowBase64: false,
-        maxWidth: 720,
-        HTMLAttributes: {
-          class: "post-img",
+      ImageResize.extend({
+        renderHTML({ node, HTMLAttributes }) {
+          const wrapperStyle =
+            (node.attrs.wrapperStyle as string | null) ??
+            "display: inline-block; max-width: 100%;";
+          const containerStyle =
+            (node.attrs.containerStyle as string | null) ??
+            "max-width: 100%; height: auto; display: inline-block;";
+          const { containerStyle: _c, wrapperStyle: _w, ...imgAttrs } =
+            node.attrs;
+          return [
+            "div",
+            { style: wrapperStyle },
+            [
+              "div",
+              { style: containerStyle },
+              ["img", { ...imgAttrs, ...HTMLAttributes }],
+            ],
+          ];
         },
+      }).configure({
+        inline: true,
+        allowBase64: false,
       }),
       Table.configure({
         resizable: true,
@@ -156,6 +417,32 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     editor.commands.setContent(next, { emitUpdate: false });
   }, [value, editor]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const img = target.closest("img");
+      if (
+        img &&
+        !img.classList.contains("ProseMirror-separator") &&
+        dom.contains(img)
+      ) {
+        const pos = editor.view.posAtDOM(img, 0);
+        setImageLayout({ img: img as HTMLImageElement, pos });
+        setImageLayoutOpen(false);
+        return;
+      }
+      if (!target.closest("[data-image-layout-ui]")) {
+        setImageLayout(null);
+        setImageLayoutOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [editor]);
+
   if (!editor) {
     return (
       <div className="border border-slate-200 rounded-lg bg-white h-[380px] flex items-center justify-center text-xs text-slate-400">
@@ -190,8 +477,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   };
 
   const confirmInsertTable = () => {
-    const rows = Math.max(1, Math.min(20, Number(tableRows) || 0));
-    const cols = Math.max(1, Math.min(10, Number(tableCols) || 0));
+    const rows = Math.max(1, Math.min(20, Number(tableSize.rows) || 0));
+    const cols = Math.max(1, Math.min(10, Number(tableSize.cols) || 0));
     setTableOpen(false);
     if (!rows || !cols) return;
     editor
@@ -207,9 +494,72 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       .focus()
       .insertContent({
         type: "imageResize",
-        attrs: { src: url, alt: "" },
+        attrs: {
+          src: url,
+          alt: "",
+          containerStyle:
+            "width: 480px; max-width: 100%; height: auto; display: inline-block; cursor: pointer;",
+          wrapperStyle: "display: inline-block; max-width: 100%;",
+        },
       })
       .run();
+  };
+
+  const IMAGE_LAYOUT_STYLES: Record<
+    ImageLayoutMode,
+    { containerStyle: string; wrapperStyle: string }
+  > = {
+    inline: {
+      containerStyle:
+        "max-width: 100%; height: auto; display: inline-block; cursor: pointer;",
+      wrapperStyle: "display: inline-block; max-width: 100%;",
+    },
+    wrapSquareLeft: {
+      containerStyle:
+        "max-width: 100%; height: auto; display: inline-block; float: left; margin: 0 12px 8px 0; cursor: pointer;",
+      wrapperStyle: "display: inline; max-width: 100%;",
+    },
+    wrapSquareRight: {
+      containerStyle:
+        "max-width: 100%; height: auto; display: inline-block; float: right; margin: 0 0 8px 12px; cursor: pointer;",
+      wrapperStyle: "display: inline; max-width: 100%;",
+    },
+    topBottom: {
+      containerStyle:
+        "max-width: 100%; height: auto; display: block; margin: 12px auto; cursor: pointer;",
+      wrapperStyle: "display: block; margin: 12px auto; max-width: 100%;",
+    },
+    behindText: {
+      containerStyle:
+        "max-width: 50%; height: auto; display: block; opacity: 0.55; cursor: pointer;",
+      wrapperStyle:
+        "display: block; position: relative; z-index: -1; max-width: 50%;",
+    },
+    frontText: {
+      containerStyle:
+        "max-width: 50%; height: auto; display: block; cursor: pointer;",
+      wrapperStyle:
+        "display: block; position: relative; z-index: 10; max-width: 50%;",
+    },
+  };
+
+  const applyImageLayout = (mode: ImageLayoutMode) => {
+    if (!imageLayout) return;
+    const node = editor.state.doc.nodeAt(imageLayout.pos);
+    if (!node || node.type.name !== "imageResize") return;
+    const prevContainer = (node.attrs.containerStyle as string | null) ?? "";
+    const widthMatch = prevContainer.match(/width:\s*[^;]+;/i);
+    const base = IMAGE_LAYOUT_STYLES[mode];
+    const nextContainer = widthMatch
+      ? `${widthMatch[0]} ${base.containerStyle}`
+      : base.containerStyle;
+    const tr = editor.state.tr.setNodeMarkup(imageLayout.pos, undefined, {
+      ...node.attrs,
+      containerStyle: nextContainer,
+      wrapperStyle: base.wrapperStyle,
+    });
+    editor.view.dispatch(tr);
+    setImageLayoutOpen(false);
   };
 
   const block = currentBlock(editor);
@@ -357,10 +707,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               <ImageIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
 
+
             <ToolbarButton
               onClick={() => {
-                setTableRows("3");
-                setTableCols("3");
+                setTableSize({ rows: "3", cols: "3" });
                 setTableOpen(true);
               }}
               title="Table"
@@ -449,8 +799,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   type="number"
                   min={1}
                   max={20}
-                  value={tableRows}
-                  onChange={(e) => setTableRows(e.target.value)}
+                  value={tableSize.rows}
+                  onChange={(e) =>
+                    setTableSize((prev) => ({ ...prev, rows: e.target.value }))
+                  }
                   className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
                   // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
                   autoFocus
@@ -462,8 +814,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   type="number"
                   min={1}
                   max={10}
-                  value={tableCols}
-                  onChange={(e) => setTableCols(e.target.value)}
+                  value={tableSize.cols}
+                  onChange={(e) =>
+                    setTableSize((prev) => ({ ...prev, cols: e.target.value }))
+                  }
                   className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
                 />
               </label>
@@ -485,6 +839,16 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           ) : null}
 
           <EditorContent editor={editor} />
+
+          {imageLayout ? (
+            <ImageLayoutControl
+              img={imageLayout.img}
+              open={imageLayoutOpen}
+              onToggle={() => setImageLayoutOpen((v) => !v)}
+              onPick={applyImageLayout}
+              onClose={() => setImageLayoutOpen(false)}
+            />
+          ) : null}
         </>
       ) : (
         <div className="px-4 py-3 min-h-[300px]">
