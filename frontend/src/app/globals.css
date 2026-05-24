@@ -258,13 +258,13 @@
   }
 }
 
-/* Tiptap post editor: inline images side-by-side, draggable */
+/* Tiptap post editor: block images aligned left/center/right via the
+   position controls that the resize extension renders above the image. */
 .post-img {
-  display: inline-block;
-  max-width: 48%;
+  display: block;
+  max-width: 100%;
   height: auto;
-  margin: 4px;
-  vertical-align: top;
+  margin: 12px 0;
   border-radius: 6px;
   cursor: grab;
 }
@@ -278,15 +278,6 @@
   max-width: 100% !important;
   height: auto !important;
   box-sizing: border-box;
-}
-/* Contain floated image wrappers from tiptap-extension-resize-image so they
-   don't escape the editor's bounding box. The extension applies
-   `float: left` to inline images; without a clearfix the parent collapses
-   and the image visually bleeds past the editor border. */
-.ProseMirror::after {
-  content: "";
-  display: block;
-  clear: both;
 }
 .ProseMirror [data-resize-image-ui="resize-handle"] {
   /* Make the corner dots clearly hit-able by enlarging the touch target */

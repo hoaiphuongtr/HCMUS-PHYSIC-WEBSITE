@@ -114,7 +114,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         alignments: ["left", "center", "right"],
       }),
       ImageResize.configure({
-        inline: true,
+        inline: false,
         allowBase64: false,
         maxWidth: 720,
         HTMLAttributes: {
