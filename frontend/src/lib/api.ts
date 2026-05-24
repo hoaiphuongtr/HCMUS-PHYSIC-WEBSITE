@@ -140,10 +140,7 @@ export type PageLayout = {
 
 export const widgetApi = {
   list(params?: { category?: string; isActive?: string }) {
-    const query = new URLSearchParams(
-      Object.entries(params ?? {}).filter(([, v]) => v !== undefined),
-    ).toString();
-    return apiFetch<WidgetType[]>(`/widgets${query ? `?${query}` : ""}`);
+    return apiFetch<WidgetType[]>(`/widgets${buildQuery(params ?? {})}`);
   },
   getById(id: string) {
     return apiFetch<WidgetType>(`/widgets/${id}`);
@@ -527,16 +524,8 @@ export const postPublicApi = {
     toDate?: string;
     search?: string;
   }) => {
-    const sp = new URLSearchParams();
-    if (params.page) sp.set("page", String(params.page));
-    if (params.pageSize) sp.set("pageSize", String(params.pageSize));
-    if (params.category) sp.set("category", params.category);
-    if (params.fromDate) sp.set("fromDate", params.fromDate);
-    if (params.toDate) sp.set("toDate", params.toDate);
-    if (params.search) sp.set("search", params.search);
-    const query = sp.toString();
     return apiFetch<PostPagedResponse>(
-      `/posts/public/list${query ? `?${query}` : ""}`,
+      `/posts/public/list${buildQuery(params)}`,
     );
   },
 };
@@ -558,14 +547,7 @@ export const postApi = {
     status?: string;
     search?: string;
   }) => {
-    const sp = new URLSearchParams();
-    if (params.page) sp.set("page", String(params.page));
-    if (params.pageSize) sp.set("pageSize", String(params.pageSize));
-    if (params.category) sp.set("category", params.category);
-    if (params.status) sp.set("status", params.status);
-    if (params.search) sp.set("search", params.search);
-    const query = sp.toString();
-    return authFetch<PostListPage>(`/posts${query ? `?${query}` : ""}`);
+    return authFetch<PostListPage>(`/posts${buildQuery(params)}`);
   },
   getById: (id: string) => authFetch<PostRecord>(`/posts/${id}`),
   create: (body: UpsertPostBody) =>
