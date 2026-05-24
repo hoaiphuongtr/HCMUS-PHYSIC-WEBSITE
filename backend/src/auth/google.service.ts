@@ -50,7 +50,6 @@ export class GoogleService {
         ip = clientInfo.ip;
       }
     } catch {
-      // ignore state parsing errors
     }
     const { tokens } = await this.oauth2Client.getToken(code);
     this.oauth2Client.setCredentials(tokens);

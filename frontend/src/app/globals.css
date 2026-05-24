@@ -258,14 +258,6 @@
   }
 }
 
-/* Tiptap post editor (and public-side article body): inline images that
-   live inside a paragraph so that floating one left or right makes the
-   following paragraphs wrap around it, newspaper-style.
-
-   The resize extension renders its NodeView WITHOUT applying `HTMLAttributes`
-   to the <img>, so we can't rely on `.post-img` matching at runtime. Match
-   the extension's wrapper/container structure directly: any <div> inside the
-   ProseMirror tree whose subtree contains an <img[src]>. */
 .ProseMirror img,
 .prose img {
   max-width: 100% !important;
@@ -274,12 +266,6 @@
   border-radius: 6px;
   vertical-align: middle;
 }
-/* Clamp the resize-extension wrapper + container so dragging a corner past
-   the editor edge can never push the floated image out of the column. The
-   extension writes inline `width:<px>` here; `max-width: 100%` overrides it.
-   `box-sizing: border-box` folds the 8px padding the extension adds on float
-   so the wrapper width stays within the column. The `.prose` parallel keeps
-   the preview pane visually identical to the live editor. */
 .ProseMirror div:has(> img[src]),
 .ProseMirror div:has(> div > img[src]),
 .prose div:has(> img[src]),
@@ -287,13 +273,6 @@
   max-width: 100% !important;
   box-sizing: border-box !important;
 }
-/* Newspaper-style wrap: when a paragraph contains a floated image, the next
-   paragraphs' top margins create big vertical gaps inside the float zone
-   (the float is taller than one paragraph, so the wrap text gets pushed
-   down by every subsequent <p>'s margin). Tighten those paragraph margins
-   so the text flows around the image as one continuous block. The :has()
-   parent selector targets only the paragraph holding the float; the sibling
-   selector reaches the paragraphs that wrap next to the float zone. */
 .ProseMirror p:has(div[style*="float: left"]),
 .ProseMirror p:has(div[style*="float: right"]),
 .prose p:has(div[style*="float: left"]),
@@ -314,10 +293,6 @@
   width: 12px !important;
   height: 12px !important;
 }
-/* Hide the in-place LEFT/RIGHT alignment controller the extension renders
-   above a selected image. Alignment is driven by the toolbar buttons
-   (Inline / Float-Left / Center / Float-Right) so users have a single,
-   discoverable place to switch modes instead of two competing controls. */
 .ProseMirror [data-resize-image-ui="position-controller"] {
   display: none !important;
 }

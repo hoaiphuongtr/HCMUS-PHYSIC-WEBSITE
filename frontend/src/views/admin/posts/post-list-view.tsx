@@ -12,6 +12,10 @@ import {
 } from "@/lib/api";
 import { useConfirm } from "@/components/use-confirm";
 import { AdminSelect } from "@/components/admin/admin-select";
+import {
+  POST_CATEGORY_OPTIONS_VI,
+  categoryLabelVi,
+} from "@/lib/post-categories";
 
 const PAGE_SIZE = 12;
 
@@ -39,15 +43,6 @@ const STATUS_OPTIONS: ContentStatusValue[] = [
   "REJECTED",
 ];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  EDUCATIONAL_NEWS: "Tin học vụ",
-  SCIENTIFIC_INFORMATION: "Thông tin khoa học",
-  RECRUITMENT: "Tuyển dụng",
-  EVENT: "Sự kiện",
-  SCHOLARSHIP: "Học bổng",
-};
-
-const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS);
 
 const layoutBadgeStyle = (layout: PostLayoutRef): string => {
   if (layout.isPublished)
@@ -193,10 +188,7 @@ export function PostListView() {
               }}
               placeholder="Tất cả danh mục"
               clearLabel="Tất cả danh mục"
-              options={CATEGORY_OPTIONS.map((c) => ({
-                value: c,
-                label: CATEGORY_LABELS[c],
-              }))}
+              options={POST_CATEGORY_OPTIONS_VI}
             />
           </div>
           <div className="min-w-[180px]">
@@ -281,7 +273,7 @@ export function PostListView() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600">
-                        {CATEGORY_LABELS[post.category] ?? post.category}
+                        {categoryLabelVi(post.category)}
                       </td>
                       <td className="px-4 py-3">
                         <span

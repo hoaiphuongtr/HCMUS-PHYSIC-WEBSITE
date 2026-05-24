@@ -261,9 +261,6 @@
   }
 }
 
-/* Post body images: render exactly the layout the admin set in Tiptap,
-   including newspaper-style float-wrap. Match by structure (img[src])
-   because the resize extension's NodeView strips the class attribute. */
 [data-post-body] img,
 .prose img {
   max-width: 100% !important;
@@ -279,9 +276,6 @@
   max-width: 100% !important;
   box-sizing: border-box !important;
 }
-/* Newspaper wrap: collapse paragraph margins inside the float zone so the
-   text reads as one continuous flow next to the picture instead of stair-
-   stepping down by one <p>-margin per line. */
 [data-post-body] p:has(div[style*="float: left"]),
 [data-post-body] p:has(div[style*="float: right"]),
 .prose p:has(div[style*="float: left"]),

@@ -37,7 +37,6 @@ const LocaleInputRow = ({
   const composingRef = useRef(false);
   const focusedRef = useRef(false);
 
-  // Sync external value when not focused/composing (prevents resetting caret while typing).
   useEffect(() => {
     if (!focusedRef.current && !composingRef.current && text !== local) {
       setLocal(text);
@@ -76,7 +75,6 @@ const LocaleInputRow = ({
       e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
       setLocal(e.target.value);
-      // Skip mid-composition commits to avoid IME caret jump.
       if (composingRef.current) return;
       commit(e.target.value);
     },

@@ -16,15 +16,10 @@ import {
 } from "@/lib/api";
 import { toSlug } from "@/lib/utils";
 import { AdminSelect } from "@/components/admin/admin-select";
+import { POST_CATEGORY_OPTIONS_VI } from "@/lib/post-categories";
 import { MarkdownEditor } from "./markdown-editor";
 
-const CATEGORY_OPTIONS: { value: PostCategoryValue; label: string }[] = [
-  { value: "EDUCATIONAL_NEWS", label: "Tin học vụ / Thông báo" },
-  { value: "SCIENTIFIC_INFORMATION", label: "Thông tin khoa học" },
-  { value: "RECRUITMENT", label: "Tuyển dụng" },
-  { value: "EVENT", label: "Sự kiện" },
-  { value: "SCHOLARSHIP", label: "Học bổng" },
-];
+const CATEGORY_OPTIONS = POST_CATEGORY_OPTIONS_VI;
 
 const STATUS_OPTIONS: { value: ContentStatusValue; label: string }[] = [
   { value: "DRAFT", label: "Draft" },

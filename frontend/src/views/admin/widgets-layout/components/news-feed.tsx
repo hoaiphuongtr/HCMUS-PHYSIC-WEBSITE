@@ -14,25 +14,9 @@ import { t, type LocalizedString } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
 import { localizedTextField } from "../fields/localized-text-field";
+import { POST_CATEGORY_META } from "@/lib/post-categories";
 
-const CATEGORY_LABELS: Record<
-  string,
-  { vi: string; en: string; color: string }
-> = {
-  EDUCATIONAL_NEWS: {
-    vi: "Tin học vụ",
-    en: "Educational News",
-    color: "#2563eb",
-  },
-  SCIENTIFIC_INFORMATION: {
-    vi: "Thông tin khoa học",
-    en: "Scientific Information",
-    color: "#7c3aed",
-  },
-  RECRUITMENT: { vi: "Tuyển dụng", en: "Recruitment", color: "#dc2626" },
-  EVENT: { vi: "Sự kiện", en: "Event", color: "#059669" },
-  SCHOLARSHIP: { vi: "Học bổng", en: "Scholarship", color: "#d97706" },
-};
+const CATEGORY_LABELS = POST_CATEGORY_META;
 
 const formatDate = (iso: string | null, locale: string): string => {
   if (!iso) return "";
