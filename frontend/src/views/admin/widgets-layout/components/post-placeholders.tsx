@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -256,12 +257,19 @@ function PostCoverImageRender({
     );
   }
   return (
-    <img
-      src={finalSrc}
-      alt={finalAlt}
-      className="w-full rounded-lg object-cover my-4"
+    <div
+      className="relative w-full rounded-lg overflow-hidden my-4"
       style={{ aspectRatio }}
-    />
+    >
+      <Image
+        src={finalSrc}
+        alt={finalAlt}
+        fill
+        sizes="(max-width: 768px) 100vw, 800px"
+        priority
+        className="object-cover"
+      />
+    </div>
   );
 }
 

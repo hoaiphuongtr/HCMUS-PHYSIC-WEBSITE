@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import { ChevronDown } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
@@ -142,10 +143,13 @@ function HeroFullScreenClient({
             }}
           >
             {s.src ? (
-              <img
+              <Image
                 src={s.src}
                 alt={s.alt}
-                className="w-full h-full object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
+                fill
+                sizes="100vw"
+                priority={isActive}
+                className="object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />

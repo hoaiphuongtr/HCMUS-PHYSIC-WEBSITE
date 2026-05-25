@@ -100,6 +100,8 @@ function ImageBlockRender({
           alt={alt}
           className={`w-full ${radii[borderRadius] || "rounded-md"}`}
           style={{ objectFit: (fit as any) || "cover" }}
+          loading="lazy"
+        decoding="async"
         />
       ) : (
         <div
@@ -186,6 +188,8 @@ export const ImageGallery: ComponentConfig<{
                 src={img.src}
                 alt={img.alt || ""}
                 className="w-full aspect-square object-cover rounded-md"
+                loading="lazy"
+              decoding="async"
               />
             ) : (
               <div className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
@@ -353,6 +357,8 @@ function ImageSliderClient({
           src={slide.src}
           alt={slide.alt || ""}
           className="w-full h-full object-cover transition-opacity duration-500"
+          loading="lazy"
+        decoding="async"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-r from-blue-900 to-indigo-800 flex items-center justify-center">
@@ -617,6 +623,8 @@ export const LogoGrid: ComponentConfig<{
                   alt={logo.alt || ""}
                   style={{ height: `${h}px` }}
                   className="object-contain"
+                  loading="lazy"
+                decoding="async"
                 />
               ) : (
                 <div
@@ -718,6 +726,8 @@ function LogoSliderRender({
           src={bgImageUrl}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        decoding="async"
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200" />
@@ -753,6 +763,8 @@ function LogoSliderRender({
                       width: `${size * 0.7}px`,
                       height: `${size * 0.7}px`,
                     }}
+                    loading="lazy"
+                  decoding="async"
                   />
                 ) : (
                   <span className="text-xs text-slate-400 text-center px-1 leading-tight">
@@ -856,6 +868,8 @@ function PartnerShowcaseClient({
                         src={partner.logoUrl}
                         alt={partner.name}
                         className="h-20 max-h-20 max-w-[240px] object-contain"
+                        loading="lazy"
+                      decoding="async"
                       />
                     ) : (
                       <span
