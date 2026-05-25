@@ -21,6 +21,7 @@ import {
   slugExistsInStatusException,
 } from './page-layout.error';
 import { WidgetNotFoundException } from '../widget/widget.error';
+import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 
 @Injectable()
 export class PageLayoutService {
@@ -30,12 +31,14 @@ export class PageLayoutService {
     private readonly pageLayoutRepository: PageLayoutRepository,
     private readonly widgetRepository: WidgetRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly publicRevalidate: PublicRevalidateService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDueLayouts' })
   async handleScheduledPublish() {
     const due = await this.pageLayoutRepository.findDueForPublish(new Date());
     if (due.length === 0) return;
+    const publishedSlugs: string[] = [];
     for (const dueLayout of due) {
       try {
         const layout = await this.pageLayoutRepository.findById(dueLayout.id);
@@ -52,6 +55,7 @@ export class PageLayoutService {
           );
         }
         await this.pageLayoutRepository.publish(layout.id);
+        publishedSlugs.push(layout.slug);
         this.logger.log(`Auto-published scheduled layout ${layout.id}`);
       } catch (err) {
         this.logger.error(
@@ -61,6 +65,12 @@ export class PageLayoutService {
       }
     }
     await this.cache.clear();
+    if (publishedSlugs.length > 0) {
+      this.publicRevalidate.trigger([
+        'sitemap',
+        ...publishedSlugs.map((s) => `page:${s}`),
+      ]);
+    }
   }
 
   async create(body: CreatePageLayoutBodyType, userId: string) {
@@ -124,6 +134,7 @@ export class PageLayoutService {
     if (conflict) throw PageLayoutSlugExistsException;
     const result = await this.pageLayoutRepository.publish(id);
     await this.cache.clear();
+    this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     return result;
   }
 
@@ -156,6 +167,7 @@ export class PageLayoutService {
     if (conflict) throw slugExistsInStatusException('draft', conflict.name);
     const result = await this.pageLayoutRepository.unpublish(id);
     await this.cache.clear();
+    this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     return result;
   }
 

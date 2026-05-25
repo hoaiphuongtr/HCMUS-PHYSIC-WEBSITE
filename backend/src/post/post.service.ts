@@ -12,6 +12,7 @@ import {
 import { CloneIntoLayoutBodyType, UpsertPostBodyType } from './post.model';
 import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
 import { toSlug, toSlugPath } from '../shared/helpers';
+import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 
 const parseLocalized = (
@@ -75,6 +76,7 @@ export class PostService {
     private readonly prisma: PrismaService,
     private readonly pageLayoutRepo: PageLayoutRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly publicRevalidate: PublicRevalidateService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDuePosts' })
@@ -109,6 +111,10 @@ export class PostService {
     }
     await this.syncNewsFeedSnapshots();
     await this.cache.clear();
+    this.publicRevalidate.trigger([
+      'sitemap',
+      ...due.map((r) => `post:${r.id}`),
+    ]);
   }
 
   async create(body: UpsertPostBodyType, userId: string) {
@@ -146,6 +152,7 @@ export class PostService {
     });
     if (created.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
+      this.publicRevalidate.trigger(['sitemap', `post:${created.id}`]);
     }
     return this.serialize(created);
   }
@@ -204,6 +211,7 @@ export class PostService {
       await this.syncNewsFeedSnapshots();
     }
     await this.cache.clear();
+    this.publicRevalidate.trigger(['sitemap', `post:${id}`]);
     return this.serialize(updated);
   }
 

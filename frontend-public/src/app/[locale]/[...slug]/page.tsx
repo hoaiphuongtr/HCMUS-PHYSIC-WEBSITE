@@ -6,8 +6,7 @@ import { JsonLd, breadcrumbListSchema } from "@/components/JsonLd";
 import { getLayoutBySlug } from "@/lib/api";
 import { buildCanonical, buildOgImage, getBaseUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 3600;
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;

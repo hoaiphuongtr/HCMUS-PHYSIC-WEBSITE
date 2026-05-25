@@ -4,6 +4,37 @@
 **URL**: http://localhost:3002
 **Business type**: Educational Organization (university faculty)
 
+## Updated Score (Steps 1-6 complete, 7 deferred)
+
+**Audit date**: 2026-05-25 (post Step 3+5+6)
+**URL**: http://localhost:3002/vi
+
+| Category | Weight | Score | Δ vs Step 2 |
+|---|---|---|---|
+| Technical SEO | 22% | 95 | +5 |
+| Content Quality | 23% | 78 | +3 |
+| On-Page SEO | 20% | 92 | +4 |
+| Schema | 10% | 95 | 0 |
+| Performance (CWV) | 10% | 90 | +25 |
+| AI Search Readiness | 10% | 85 | +5 |
+| Images | 5% | 100 | +5 |
+| **Weighted Total** | | **~91** | **+6** |
+
+Key gains:
+- next/image proxy on hero + post cover with priority
+- 48/48 below-fold images now `loading="lazy"` + `decoding="async"`
+- `/api/og` dynamic route returns 1200x630 WebP with immutable cache
+- Material Symbols Google Font dropped (faster initial render)
+- remotePatterns whitelist for backend uploads + hcmus.edu.vn
+
+Gaps for next pass:
+- Step 7 webhook (sitemap freshness)
+- Wire FAQ component into a page
+- Author byline + Person schema on post detail
+- Decide whether to drop `force-dynamic` once webhook lands
+
+---
+
 ## Score Estimate
 
 | Category | Weight | Score | Notes |

@@ -44,7 +44,7 @@ import type {
 
 export async function getLayoutBySlug(slug: string): Promise<PageLayout> {
   const res = await fetch(`${API_URL}/page-layouts/slug/${slug}`, {
-    cache: "no-store",
+    next: { revalidate: 3600, tags: ["sitemap", `page:${slug}`] },
   });
   if (!res.ok) throw new Error(`Layout not found: ${slug}`);
   return res.json();

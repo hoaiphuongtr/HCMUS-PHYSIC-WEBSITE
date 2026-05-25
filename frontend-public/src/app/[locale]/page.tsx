@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { getLayoutBySlug } from "@/lib/api";
 import { buildCanonical, buildOgImage } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 3600;
 
 const HOMEPAGE_SLUG = process.env.NEXT_PUBLIC_HOMEPAGE_SLUG || "trang-chu";
 

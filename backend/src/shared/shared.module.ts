@@ -7,8 +7,14 @@ import { AuthenticationGuard } from './guards/authentication.guard';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { EmailService } from './email/email.service';
+import { PublicRevalidateService } from './services/public-revalidate.service';
 
-const sharedServices = [TokenService, HashingService, EmailService];
+const sharedServices = [
+  TokenService,
+  HashingService,
+  EmailService,
+  PublicRevalidateService,
+];
 
 @Global()
 @Module({
