@@ -110,21 +110,21 @@ export function ScheduledModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-[#1a2436] border-slate-800 text-slate-100">
+      <DialogContent className="max-w-2xl bg-white dark:bg-[#1a2436] border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-slate-100">
-            Bài đăng & layout đã lên lịch
+          <DialogTitle className="text-slate-900 dark:text-slate-100">
+            Bài đăng và layout đã lên lịch
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-500 dark:text-slate-400">
             Chỉnh sửa thời gian xuất bản. Mỗi dòng lưu riêng.
           </DialogDescription>
         </DialogHeader>
         {items.length === 0 ? (
-          <p className="py-10 text-center text-sm text-slate-400">
+          <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
             Chưa có nội dung nào được lên lịch.
           </p>
         ) : (
-          <ul className="divide-y divide-slate-800 max-h-[60vh] overflow-auto">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-800 max-h-[60vh] overflow-auto">
             {items.map((item) => {
               const key = `${item.kind}:${item.id}`;
               return (
@@ -135,13 +135,13 @@ export function ScheduledModal({
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                       item.kind === "post"
-                        ? "bg-blue-700/30 text-blue-300"
-                        : "bg-purple-700/30 text-purple-300"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300"
+                        : "bg-purple-100 text-purple-700 dark:bg-purple-700/30 dark:text-purple-300"
                     }`}
                   >
                     {item.kind === "post" ? "Post" : "Layout"}
                   </span>
-                  <span className="flex-1 min-w-[200px] text-sm text-slate-200">
+                  <span className="flex-1 min-w-[200px] text-sm text-slate-700 dark:text-slate-200">
                     {item.title}
                   </span>
                   <input
@@ -150,7 +150,7 @@ export function ScheduledModal({
                     onChange={(e) =>
                       setDrafts((prev) => ({ ...prev, [key]: e.target.value }))
                     }
-                    className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-100 outline-none focus:border-blue-500"
+                    className="rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"

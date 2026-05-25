@@ -1,16 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Settings as SettingsIcon } from "lucide-react";
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   authApi,
   type PageLayout,
   type PostRecord,
   pageLayoutApi,
   postApi,
-  resolveMediaUrl,
 } from "@/lib/api";
 import { RecentActivity } from "./recent-activity";
 import { ScheduledModal } from "./scheduled-modal";
@@ -21,14 +19,27 @@ const NEW_ACCOUNT_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 const isNewAccount = (createdAt: string): boolean =>
   Date.now() - new Date(createdAt).getTime() < NEW_ACCOUNT_THRESHOLD_MS;
 
-const initials = (first: string | null, last: string | null): string => {
-  const f = first?.[0] ?? "";
-  const l = last?.[0] ?? "";
-  return (f + l || "AD").toUpperCase();
-};
+const THEME_KEY = "admin-dashboard-theme";
+type ThemeMode = "dark" | "light";
 
 export function AdminDashboardView() {
   const [scheduledOpen, setScheduledOpen] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_KEY);
+    if (stored === "dark" || stored === "light") setTheme(stored);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next: ThemeMode = prev === "dark" ? "light" : "dark";
+      window.localStorage.setItem(THEME_KEY, next);
+      return next;
+    });
+  };
+
+  const isDark = theme === "dark";
 
   const userQuery = useQuery({
     queryKey: ["AUTH", "PROFILE"],
@@ -122,40 +133,26 @@ export function AdminDashboardView() {
     : "Welcome";
 
   return (
-    <div className="dark min-h-full bg-[#101622] text-slate-100">
-      <header className="flex h-14 items-center justify-between border-b border-slate-800 bg-[#0f1422] px-6 shrink-0">
+    <div
+      className={`${isDark ? "dark" : ""} min-h-full bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100`}
+    >
+      <header className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f1422] px-6 shrink-0">
         <div className="text-sm font-medium">
-          <span className="text-slate-500">Physics Faculty</span>
-          <span className="mx-2 text-slate-700">/</span>
-          <span className="text-slate-100">Dashboard</span>
+          <span className="text-slate-400 dark:text-slate-500">
+            Physics Faculty
+          </span>
+          <span className="mx-2 text-slate-300 dark:text-slate-700">/</span>
+          <span className="text-slate-900 dark:text-slate-100">Dashboard</span>
         </div>
-        <Link
-          href="/admin/settings"
-          className="flex items-center gap-3 rounded-full bg-slate-800/60 px-2 py-1.5 hover:bg-slate-800 transition-colors"
-          title="Open settings"
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={isDark ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+          aria-label="Toggle theme"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
         >
-          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-semibold text-white">
-            {user?.avatarUrl ? (
-              // biome-ignore lint/performance/noImgElement: avatar from arbitrary remote
-              <img
-                src={resolveMediaUrl(user.avatarUrl)}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              initials(user?.firstName ?? null, user?.lastName ?? null)
-            )}
-          </div>
-          <div className="hidden sm:flex flex-col text-left pr-2">
-            <span className="text-xs font-semibold text-slate-100 leading-none">
-              {user?.firstName ?? "Admin"} {user?.lastName ?? ""}
-            </span>
-            <span className="text-[10px] text-slate-400 leading-none mt-1">
-              {user?.role ?? ""}
-            </span>
-          </div>
-          <SettingsIcon className="w-4 h-4 text-slate-400 mr-2" />
-        </Link>
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </header>
 
       <div className="px-6 py-6 space-y-6">
@@ -164,16 +161,10 @@ export function AdminDashboardView() {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               {greeting}
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm mt-1 text-slate-500 dark:text-slate-400">
               Here&apos;s what&apos;s happening with your content today.
             </p>
           </div>
-          <Link
-            href="/admin/posts"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow"
-          >
-            + Create New Post
-          </Link>
         </section>
 
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -200,9 +191,7 @@ export function AdminDashboardView() {
           />
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-          <RecentActivity items={recentItems} />
-        </section>
+        <RecentActivity items={recentItems} />
       </div>
 
       <ScheduledModal

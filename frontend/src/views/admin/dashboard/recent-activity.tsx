@@ -34,9 +34,9 @@ const relativeTime = (iso: string): string => {
 
 export function RecentActivity({ items }: { items: ActivityItem[] }) {
   return (
-    <section className="rounded-xl border border-slate-800 bg-[#1a2436] p-5">
+    <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] p-5">
       <header className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           Recent Activity
         </h2>
       </header>
@@ -45,12 +45,12 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
           Chưa có hoạt động nào.
         </p>
       ) : (
-        <ul className="divide-y divide-slate-800">
+        <ul className="divide-y divide-slate-200 dark:divide-slate-800">
           {items.map((item) => (
             <li key={`${item.kind}:${item.id}`}>
               <Link
                 href={item.href}
-                className="flex items-start gap-3 py-3 hover:bg-slate-800/50 -mx-2 px-2 rounded-md transition-colors"
+                className="flex items-start gap-3 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/50 -mx-2 px-2 rounded-md transition-colors"
               >
                 <span
                   className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
@@ -59,10 +59,10 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
                   aria-hidden="true"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-100 line-clamp-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-1">
                     {item.title}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
                     <span className="uppercase tracking-wider">
                       {item.kind === "post" ? "Post" : "Layout"}
                     </span>
