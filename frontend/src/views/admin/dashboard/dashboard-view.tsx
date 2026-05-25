@@ -1,8 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Moon, Sun } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   authApi,
   type PageLayout,
@@ -19,27 +18,8 @@ const NEW_ACCOUNT_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 const isNewAccount = (createdAt: string): boolean =>
   Date.now() - new Date(createdAt).getTime() < NEW_ACCOUNT_THRESHOLD_MS;
 
-const THEME_KEY = "admin-dashboard-theme";
-type ThemeMode = "dark" | "light";
-
 export function AdminDashboardView() {
   const [scheduledOpen, setScheduledOpen] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>("dark");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(THEME_KEY);
-    if (stored === "dark" || stored === "light") setTheme(stored);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next: ThemeMode = prev === "dark" ? "light" : "dark";
-      window.localStorage.setItem(THEME_KEY, next);
-      return next;
-    });
-  };
-
-  const isDark = theme === "dark";
 
   const userQuery = useQuery({
     queryKey: ["AUTH", "PROFILE"],
@@ -133,9 +113,7 @@ export function AdminDashboardView() {
     : "Welcome";
 
   return (
-    <div
-      className={`${isDark ? "dark" : ""} min-h-full bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100`}
-    >
+    <div className="min-h-full bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100">
       <header className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f1422] px-6 shrink-0">
         <div className="text-sm font-medium">
           <span className="text-slate-400 dark:text-slate-500">
@@ -144,15 +122,6 @@ export function AdminDashboardView() {
           <span className="mx-2 text-slate-300 dark:text-slate-700">/</span>
           <span className="text-slate-900 dark:text-slate-100">Dashboard</span>
         </div>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          title={isDark ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
-          aria-label="Toggle theme"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
       </header>
 
       <div className="px-6 py-6 space-y-6">

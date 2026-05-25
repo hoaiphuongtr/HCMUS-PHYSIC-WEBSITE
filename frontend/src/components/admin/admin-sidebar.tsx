@@ -12,14 +12,17 @@ import {
   type LucideIcon,
   Mail,
   Menu,
+  Moon,
   Puzzle,
   Settings,
+  Sun,
   Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAdminTheme } from "@/components/admin/admin-theme";
 import { authApi } from "@/lib/api";
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
@@ -58,6 +61,8 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, toggle: toggleTheme } = useAdminTheme();
+  const isDark = theme === "dark";
 
   const { data: profile } = useQuery({
     queryKey: ["AUTH", "PROFILE"],
@@ -95,8 +100,8 @@ export function AdminSidebar() {
           "flex items-center gap-3 rounded-lg text-[13px] font-medium transition-colors " +
           (collapsed ? "justify-center px-0 py-2.5 " : "px-3 py-2 ") +
           (isActive
-            ? "bg-blue-600/20 text-blue-400"
-            : "text-slate-400 hover:bg-white/[0.05] hover:text-white")
+            ? "bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-blue-400"
+            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white")
         }
       >
         <Icon className="w-5 h-5" />
@@ -108,13 +113,13 @@ export function AdminSidebar() {
   return (
     <aside
       className={
-        "flex flex-col bg-[#0B1120] h-full shrink-0 transition-all duration-200 " +
+        "flex flex-col bg-white dark:bg-[#0B1120] border-r border-slate-200 dark:border-transparent h-full shrink-0 transition-all duration-200 " +
         (collapsed ? "w-[64px]" : "w-[240px]")
       }
     >
       <div
         className={
-          "flex items-center h-[64px] shrink-0 border-b border-white/[0.06] " +
+          "flex items-center h-[64px] shrink-0 border-b border-slate-200 dark:border-white/[0.06] " +
           (collapsed ? "justify-center px-0" : "gap-3 px-5")
         }
       >
@@ -123,18 +128,18 @@ export function AdminSidebar() {
             src="/Logo_Phys-blue.png"
             alt="Physics Faculty"
             fill
-            className="object-contain brightness-0 invert"
+            className="object-contain dark:brightness-0 dark:invert"
           />
         </div>
         {!collapsed && (
-          <span className="text-sm font-bold text-white tracking-tight">
+          <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
             Phys.HCMUS
           </span>
         )}
       </div>
 
       {profile && !collapsed && (
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
             <Image
               src={profile.avatarUrl}
@@ -151,16 +156,18 @@ export function AdminSidebar() {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
               {displayName}
             </p>
-            <p className="text-[11px] text-slate-400 truncate">{roleLabel}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              {roleLabel}
+            </p>
           </div>
         </div>
       )}
 
       {profile && collapsed && (
-        <div className="flex justify-center py-4 border-b border-white/[0.06]">
+        <div className="flex justify-center py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
             <Image
               src={profile.avatarUrl}
@@ -192,7 +199,7 @@ export function AdminSidebar() {
 
       <div
         className={
-          "py-3 border-t border-white/[0.06] space-y-1 " +
+          "py-3 border-t border-slate-200 dark:border-white/[0.06] space-y-1 " +
           (collapsed ? "px-2" : "px-3")
         }
       >
@@ -204,7 +211,7 @@ export function AdminSidebar() {
           onClick={handleLogout}
           title={collapsed ? "Log Out" : undefined}
           className={
-            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full " +
+            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-colors w-full " +
             (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
           }
         >
@@ -214,9 +221,22 @@ export function AdminSidebar() {
 
         <button
           type="button"
+          onClick={toggleTheme}
+          title={collapsed ? (isDark ? "Light mode" : "Dark mode") : undefined}
+          className={
+            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-amber-300 transition-colors w-full " +
+            (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
+          }
+        >
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          {!collapsed && (isDark ? "Light mode" : "Dark mode")}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
           className={
-            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-400 hover:bg-white/[0.05] hover:text-white transition-colors w-full " +
+            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white transition-colors w-full " +
             (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
           }
         >

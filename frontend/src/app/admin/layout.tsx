@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminThemeProvider } from "@/components/admin/admin-theme";
 import { AuthGuard } from "@/components/auth-guard";
 
 export default function AdminLayout({
@@ -8,12 +9,14 @@ export default function AdminLayout({
 }) {
   return (
     <AuthGuard roles={["ADMIN", "SUPER_ADMIN"]}>
-      <div className="flex h-screen w-full overflow-hidden">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col h-full overflow-hidden bg-[#F8FAFC]">
-          {children}
+      <AdminThemeProvider>
+        <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100">
+          <AdminSidebar />
+          <div className="flex flex-1 flex-col h-full overflow-hidden bg-[#F8FAFC] dark:bg-[#101622]">
+            {children}
+          </div>
         </div>
-      </div>
+      </AdminThemeProvider>
     </AuthGuard>
   );
 }
