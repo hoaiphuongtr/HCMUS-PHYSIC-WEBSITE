@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
+import { AuthFooter } from "@/components/auth-footer";
 
 export function LoginView() {
   const [email, setEmail] = useState("");
@@ -175,21 +176,7 @@ export function LoginView() {
         </div>
       </main>
 
-      <footer className="py-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 text-hcmus-gray text-xs">
-            <svg
-              aria-hidden="true"
-              className="w-4 h-4"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5a1 1 0 112 0v4h3a1 1 0 110 2h-4a1 1 0 01-1-1z" />
-            </svg>
-            &copy; 2024 Faculty of Physics. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <AuthFooter />
     </div>
   );
 }

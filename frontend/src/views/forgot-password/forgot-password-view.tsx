@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { authApi } from "@/lib/api";
+import { AuthFooter } from "@/components/auth-footer";
 
 type Step = "email" | "otp" | "password";
 
@@ -400,13 +401,7 @@ export function ForgotPasswordView() {
         </div>
       </main>
 
-      <footer className="py-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 text-hcmus-gray text-xs">
-            &copy; 2024 HCMUS Faculty of Physics. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <AuthFooter />
     </div>
   );
 }

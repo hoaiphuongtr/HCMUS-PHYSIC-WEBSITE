@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { JsonLd, organizationSchema, websiteSchema } from "@/components/JsonLd";
+import { defaultMetadata, facultyOrganization } from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,10 +20,12 @@ const playfair = Playfair_Display({
   weight: ["400", "700", "900"],
 });
 
-export const metadata: Metadata = {
-  title: "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS",
-  description:
-    "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+export const metadata: Metadata = defaultMetadata;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1d4ed8",
 };
 
 export default function RootLayout({
@@ -30,11 +34,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-          rel="stylesheet"
+        <JsonLd
+          schema={[
+            organizationSchema(),
+            websiteSchema(),
+            facultyOrganization(),
+          ]}
         />
       </head>
       <body
