@@ -10,12 +10,18 @@ export const buildCanonical = (path: string): string => {
   return `${base}${cleaned}`;
 };
 
-export const buildOgImage = (slug?: string): string => {
+export const buildOgImage = (args?: {
+  slug?: string;
+  title?: string;
+  subtitle?: string;
+}): string => {
   const base = getBaseUrl().replace(/\/$/, "");
-  if (slug) {
-    return `${base}/api/og?slug=${encodeURIComponent(slug)}`;
-  }
-  return `${base}/Logo_Phys-blue.png`;
+  const params = new URLSearchParams();
+  if (args?.slug) params.set("slug", args.slug);
+  if (args?.title) params.set("title", args.title);
+  if (args?.subtitle) params.set("subtitle", args.subtitle);
+  const query = params.toString();
+  return `${base}/api/og${query ? `?${query}` : ""}`;
 };
 
 export const defaultMetadata: Metadata = {

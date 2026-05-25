@@ -38,7 +38,7 @@ export async function generateMetadata({
         locale: "vi_VN",
         images: [
           {
-            url: buildOgImage(slugPath),
+            url: buildOgImage({ slug: slugPath, title, subtitle: description }),
             width: 1200,
             height: 630,
             alt: title,
@@ -49,7 +49,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImage(slugPath)],
+        images: [buildOgImage({ slug: slugPath, title, subtitle: description })],
       },
       robots: { index: true, follow: true },
     };

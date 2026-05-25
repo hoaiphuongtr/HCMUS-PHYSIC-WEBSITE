@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
         locale: "vi_VN",
         images: [
           {
-            url: buildOgImage(),
+            url: buildOgImage({ title, subtitle: description }),
             width: 1200,
             height: 630,
             alt: title,
@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImage()],
+        images: [buildOgImage({ title, subtitle: description })],
       },
     };
   } catch {
