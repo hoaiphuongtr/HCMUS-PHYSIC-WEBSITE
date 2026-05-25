@@ -7,8 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { authApi } from "@/lib/api";
 import { AuthFooter } from "@/components/auth-footer";
+import { authApi } from "@/lib/api";
 
 type Step = "email" | "otp" | "password";
 

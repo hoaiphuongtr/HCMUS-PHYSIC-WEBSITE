@@ -256,7 +256,7 @@ function NavbarClient({
               alt={logoAlt || "Logo"}
               className="h-10 object-contain"
               loading="lazy"
-            decoding="async"
+              decoding="async"
             />
           ) : (
             <div className="h-10 w-10 bg-blue-600 rounded-md flex items-center justify-center">

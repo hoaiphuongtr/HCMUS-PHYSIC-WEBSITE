@@ -96,7 +96,7 @@ function NewsOverlayCardRender({
           alt={titleText}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
-        decoding="async"
+          decoding="async"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-blue-800 to-blue-950" />

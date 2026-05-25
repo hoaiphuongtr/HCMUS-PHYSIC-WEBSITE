@@ -1,4 +1,4 @@
-import { JsonLd, faqPageSchema } from "@/components/JsonLd";
+import { faqPageSchema, JsonLd } from "@/components/JsonLd";
 
 type FaqItem = {
   question: string;
@@ -22,11 +22,8 @@ export function Faq({
         </h2>
       ) : null}
       <div className="divide-y divide-slate-200 border-y border-slate-200">
-        {items.map((item, idx) => (
-          <details
-            key={`faq-${idx}`}
-            className="group py-4"
-          >
+        {items.map((item) => (
+          <details key={item.question} className="group py-4">
             <summary className="flex justify-between items-center cursor-pointer text-base font-semibold text-slate-900 hover:text-blue-700">
               <span>{item.question}</span>
               <span className="text-blue-700 group-open:rotate-45 transition-transform text-2xl leading-none">

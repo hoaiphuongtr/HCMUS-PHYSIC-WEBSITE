@@ -29,7 +29,8 @@ const fetchPageLayouts = async (): Promise<PageLayoutListItem[]> => {
     const now = Date.now();
     return data.filter((l) => {
       if (!l.isPublished) return false;
-      if (l.scheduledAt && new Date(l.scheduledAt).getTime() > now) return false;
+      if (l.scheduledAt && new Date(l.scheduledAt).getTime() > now)
+        return false;
       return true;
     });
   } catch {
@@ -53,7 +54,10 @@ const fetchPosts = async (): Promise<PostListItem[]> => {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getBaseUrl().replace(/\/$/, "");
-  const [layouts, posts] = await Promise.all([fetchPageLayouts(), fetchPosts()]);
+  const [layouts, posts] = await Promise.all([
+    fetchPageLayouts(),
+    fetchPosts(),
+  ]);
   const now = new Date();
 
   const layoutEntries: MetadataRoute.Sitemap = layouts.map((layout) => ({

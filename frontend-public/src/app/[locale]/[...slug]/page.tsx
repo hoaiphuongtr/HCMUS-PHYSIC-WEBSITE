@@ -1,8 +1,8 @@
 import { PuckRenderer } from "@admin/views/admin/widgets-layout/puck-renderer";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { breadcrumbListSchema, JsonLd } from "@/components/JsonLd";
 import { VisitorTracker } from "@/components/visitor-tracker";
-import { JsonLd, breadcrumbListSchema } from "@/components/JsonLd";
 import { getLayoutBySlug } from "@/lib/api";
 import { buildCanonical, buildOgImage, getBaseUrl } from "@/lib/seo";
 
@@ -48,7 +48,9 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [buildOgImage({ slug: slugPath, title, subtitle: description })],
+        images: [
+          buildOgImage({ slug: slugPath, title, subtitle: description }),
+        ],
       },
       robots: { index: true, follow: true },
     };

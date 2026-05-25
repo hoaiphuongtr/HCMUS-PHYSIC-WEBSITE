@@ -13,8 +13,7 @@ export async function GET(request: Request) {
     140,
   );
   const subtitle = (
-    searchParams.get("subtitle") ??
-    "Khoa Vật lý - Vật lý Kỹ thuật, ĐHQG TP.HCM"
+    searchParams.get("subtitle") ?? "Khoa Vật lý - Vật lý Kỹ thuật, ĐHQG TP.HCM"
   ).slice(0, 200);
   const slug = searchParams.get("slug") ?? "";
 

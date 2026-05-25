@@ -6,8 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { authApi } from "@/lib/api";
 import { AuthFooter } from "@/components/auth-footer";
+import { authApi } from "@/lib/api";
 
 export function LoginView() {
   const [email, setEmail] = useState("");

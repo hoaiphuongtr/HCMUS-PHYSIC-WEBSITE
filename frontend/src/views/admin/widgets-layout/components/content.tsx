@@ -669,7 +669,7 @@ function NewsCardRender({
           alt={titleText}
           className="w-full aspect-video object-cover rounded-md mb-2"
           loading="lazy"
-        decoding="async"
+          decoding="async"
         />
       ) : (
         <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
@@ -693,7 +693,7 @@ function NewsCardRender({
           alt={titleText}
           className="w-20 h-14 object-cover rounded shrink-0"
           loading="lazy"
-        decoding="async"
+          decoding="async"
         />
       ) : (
         <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
@@ -781,7 +781,7 @@ function ProfileCardRender({
             alt={nameText}
             className="w-full aspect-[3/4] object-cover"
             loading="lazy"
-          decoding="async"
+            decoding="async"
           />
         ) : (
           <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
@@ -857,7 +857,7 @@ function DepartmentCardRender({
           alt={titleText}
           className="w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
           loading="lazy"
-        decoding="async"
+          decoding="async"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
@@ -948,7 +948,7 @@ function ImageTextBlockClient({
               alt={imageAlt}
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
-            decoding="async"
+              decoding="async"
             />
           ) : (
             <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
@@ -1027,7 +1027,7 @@ function ImageTextBlockClient({
               alt={imageAlt}
               className="w-full h-auto object-cover"
               loading="lazy"
-            decoding="async"
+              decoding="async"
             />
           ) : (
             <div className="w-full aspect-[4/3] bg-slate-200 flex items-center justify-center">

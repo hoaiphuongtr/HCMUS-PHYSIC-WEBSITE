@@ -19,7 +19,10 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as { tags?: unknown };
   } catch {
-    return NextResponse.json({ ok: false, reason: "invalid body" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, reason: "invalid body" },
+      { status: 400 },
+    );
   }
   const tags = Array.isArray(body.tags)
     ? (body.tags as unknown[]).filter((t): t is string => typeof t === "string")

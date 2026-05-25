@@ -6,14 +6,17 @@ export function JsonLd({ schema }: { schema: Schema | Schema[] }) {
   const items = Array.isArray(schema) ? schema : [schema];
   return (
     <>
-      {items.map((item, idx) => (
-        <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD payload
-          key={`jsonld-${idx}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-        />
-      ))}
+      {items.map((item) => {
+        const json = JSON.stringify(item);
+        return (
+          <script
+            key={json}
+            type="application/ld+json"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: server-rendered JSON-LD string
+            dangerouslySetInnerHTML={{ __html: json }}
+          />
+        );
+      })}
     </>
   );
 }
