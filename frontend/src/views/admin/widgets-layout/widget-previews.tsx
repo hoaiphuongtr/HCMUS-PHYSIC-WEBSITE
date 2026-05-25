@@ -9,15 +9,15 @@ function NavBarPreview({ config }: PreviewProps) {
     <div className="bg-[#0B1120] rounded px-3 py-2 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded bg-blue-500/30" />
-        <div className="w-16 h-2 rounded bg-white/30" />
+        <div className="w-16 h-2 rounded bg-white dark:bg-[#1a2436]/30" />
       </div>
       <div className="flex items-center gap-2">
         {(config.menuItems || []).slice(0, 5).map((_: unknown, i: number) => (
-          <div key={i} className="w-10 h-1.5 rounded bg-white/20" />
+          <div key={i} className="w-10 h-1.5 rounded bg-white dark:bg-[#1a2436]/20" />
         ))}
       </div>
       {config.showSearch && (
-        <div className="w-20 h-5 rounded bg-white/10 border border-white/10" />
+        <div className="w-20 h-5 rounded bg-white dark:bg-[#1a2436]/10 border border-white/10" />
       )}
     </div>
   );
@@ -32,10 +32,10 @@ function HeroCarouselPreview({ config }: PreviewProps) {
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-48 h-3 rounded bg-white/40 mx-auto mb-2" />
-          <div className="w-32 h-2 rounded bg-white/25 mx-auto mb-3" />
+          <div className="w-48 h-3 rounded bg-white dark:bg-[#1a2436]/40 mx-auto mb-2" />
+          <div className="w-32 h-2 rounded bg-white dark:bg-[#1a2436]/25 mx-auto mb-3" />
           {config.showOverlayText && (
-            <div className="w-20 h-5 rounded bg-white/20 mx-auto" />
+            <div className="w-20 h-5 rounded bg-white dark:bg-[#1a2436]/20 mx-auto" />
           )}
         </div>
       </div>
@@ -44,7 +44,7 @@ function HeroCarouselPreview({ config }: PreviewProps) {
           (_, i) => (
             <div
               key={i}
-              className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-white" : "bg-white/40"}`}
+              className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-white dark:bg-[#1a2436]" : "bg-white dark:bg-[#1a2436]/40"}`}
             />
           ),
         )}
@@ -69,11 +69,11 @@ function ThreeColumnNewsPreview({ config }: PreviewProps) {
           {Array.from({ length: 3 }).map((_, j) => (
             <div key={j} className="flex gap-1.5">
               {config.showThumbnails !== false && (
-                <div className="w-8 h-6 rounded bg-slate-200 shrink-0" />
+                <div className="w-8 h-6 rounded bg-slate-200 dark:bg-[#202c44] shrink-0" />
               )}
               <div className="flex-1 space-y-1">
-                <div className="w-full h-1.5 rounded bg-slate-200" />
-                <div className="w-3/4 h-1 rounded bg-slate-100" />
+                <div className="w-full h-1.5 rounded bg-slate-200 dark:bg-[#202c44]" />
+                <div className="w-3/4 h-1 rounded bg-slate-100 dark:bg-[#1a2436]" />
               </div>
             </div>
           ))}
@@ -90,13 +90,13 @@ function LatestNewsPreview({ config }: PreviewProps) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex gap-2 items-start">
           {config.showThumbnail !== false && (
-            <div className="w-12 h-9 rounded bg-slate-200 shrink-0" />
+            <div className="w-12 h-9 rounded bg-slate-200 dark:bg-[#202c44] shrink-0" />
           )}
           <div className="flex-1 space-y-1">
-            <div className="w-full h-1.5 rounded bg-slate-200" />
-            <div className="w-2/3 h-1.5 rounded bg-slate-100" />
+            <div className="w-full h-1.5 rounded bg-slate-200 dark:bg-[#202c44]" />
+            <div className="w-2/3 h-1.5 rounded bg-slate-100 dark:bg-[#1a2436]" />
             {config.showDate !== false && (
-              <div className="w-12 h-1 rounded bg-slate-100" />
+              <div className="w-12 h-1 rounded bg-slate-100 dark:bg-[#1a2436]" />
             )}
           </div>
         </div>
@@ -117,8 +117,8 @@ function AnnouncementsPreview({ config }: PreviewProps) {
     <div className={`${bg} rounded px-3 py-2 flex items-center gap-2`}>
       <DynamicIcon name="campaign" className="w-3.5 h-3.5 text-white/80" />
       <div className="flex-1 flex items-center gap-3 overflow-hidden">
-        <div className="w-32 h-1.5 rounded bg-white/40" />
-        <div className="w-24 h-1.5 rounded bg-white/30" />
+        <div className="w-32 h-1.5 rounded bg-white dark:bg-[#1a2436]/40" />
+        <div className="w-24 h-1.5 rounded bg-white dark:bg-[#1a2436]/30" />
       </div>
     </div>
   );
@@ -129,14 +129,14 @@ function VideoEmbedPreview({ config }: PreviewProps) {
   return (
     <div className="space-y-2">
       {config.title && (
-        <div className="text-[10px] font-bold text-slate-700">
+        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
           {config.title}
         </div>
       )}
       <div
         className={`${ratio} max-h-32 bg-slate-900 rounded-lg flex items-center justify-center`}
       >
-        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-white dark:bg-[#1a2436]/20 flex items-center justify-center">
           <DynamicIcon
             name="play_arrow"
             className="w-[18px] h-[18px] text-white"
@@ -155,12 +155,12 @@ function DepartmentsGridPreview({ config }: PreviewProps) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex flex-col items-center gap-1 p-2 rounded bg-slate-50"
+          className="flex flex-col items-center gap-1 p-2 rounded bg-slate-50 dark:bg-[#121a2b]"
         >
           {config.showAvatar !== false && (
             <div className="w-6 h-6 rounded-full bg-blue-100" />
           )}
-          <div className="w-10 h-1.5 rounded bg-slate-200" />
+          <div className="w-10 h-1.5 rounded bg-slate-200 dark:bg-[#202c44]" />
         </div>
       ))}
     </div>
@@ -171,7 +171,7 @@ function LeadershipPreview({ config }: PreviewProps) {
   return (
     <div className="space-y-2">
       {config.title && (
-        <div className="text-[10px] font-bold text-slate-700 text-center">
+        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center">
           {config.title}
         </div>
       )}
@@ -181,11 +181,11 @@ function LeadershipPreview({ config }: PreviewProps) {
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col items-center gap-1.5 p-2 rounded bg-slate-50 flex-1"
+            className="flex flex-col items-center gap-1.5 p-2 rounded bg-slate-50 dark:bg-[#121a2b] flex-1"
           >
             <div className="w-10 h-10 rounded-full bg-blue-100" />
-            <div className="w-14 h-1.5 rounded bg-slate-200" />
-            <div className="w-10 h-1 rounded bg-slate-100" />
+            <div className="w-14 h-1.5 rounded bg-slate-200 dark:bg-[#202c44]" />
+            <div className="w-10 h-1 rounded bg-slate-100 dark:bg-[#1a2436]" />
           </div>
         ))}
       </div>
@@ -204,7 +204,7 @@ function PartnersGridPreview({ config }: PreviewProps) {
   return (
     <div className="space-y-2">
       {config.title && (
-        <div className="text-[10px] font-bold text-slate-700 text-center">
+        <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 text-center">
           {config.title}
         </div>
       )}
@@ -212,9 +212,9 @@ function PartnersGridPreview({ config }: PreviewProps) {
         {Array.from({ length: Math.min(count, 8) }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square rounded bg-slate-100 flex items-center justify-center"
+            className="aspect-square rounded bg-slate-100 dark:bg-[#1a2436] flex items-center justify-center"
           >
-            <div className="w-6 h-6 rounded bg-slate-200" />
+            <div className="w-6 h-6 rounded bg-slate-200 dark:bg-[#202c44]" />
           </div>
         ))}
       </div>
@@ -227,20 +227,20 @@ function EventsCalendarPreview({ config }: PreviewProps) {
     return (
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
-          <div className="text-[10px] font-bold text-slate-700">
+          <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
             Tháng 3, 2026
           </div>
         </div>
         <div className="grid grid-cols-7 gap-px text-center">
           {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
-            <div key={d} className="text-[7px] text-slate-400 font-medium">
+            <div key={d} className="text-[7px] text-slate-400 dark:text-slate-500 font-medium">
               {d}
             </div>
           ))}
           {Array.from({ length: 14 }).map((_, i) => (
             <div
               key={i}
-              className={`text-[8px] py-0.5 rounded ${i === 5 ? "bg-blue-500 text-white" : "text-slate-500"}`}
+              className={`text-[8px] py-0.5 rounded ${i === 5 ? "bg-blue-500 text-white" : "text-slate-500 dark:text-slate-400"}`}
             >
               {i + 1}
             </div>
@@ -259,8 +259,8 @@ function EventsCalendarPreview({ config }: PreviewProps) {
               <div className="text-[6px] text-blue-400">Mar</div>
             </div>
             <div className="flex-1 space-y-0.5">
-              <div className="w-full h-1.5 rounded bg-slate-200" />
-              <div className="w-1/2 h-1 rounded bg-slate-100" />
+              <div className="w-full h-1.5 rounded bg-slate-200 dark:bg-[#202c44]" />
+              <div className="w-1/2 h-1 rounded bg-slate-100 dark:bg-[#1a2436]" />
             </div>
           </div>
         ),
@@ -286,7 +286,7 @@ function QuickLinksPreview({ config }: PreviewProps) {
             name={links[i]?.icon || "link"}
             className="w-3.5 h-3.5 text-blue-500"
           />
-          <div className="text-[7px] text-slate-600 text-center truncate w-full">
+          <div className="text-[7px] text-slate-600 dark:text-slate-300 text-center truncate w-full">
             {links[i]?.label || "Link"}
           </div>
         </div>
@@ -298,9 +298,9 @@ function QuickLinksPreview({ config }: PreviewProps) {
 function SearchBarPreview({ config }: PreviewProps) {
   return (
     <div className="flex justify-center py-2">
-      <div className="w-72 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center px-3 gap-2">
-        <SearchIcon className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-[10px] text-slate-400">
+      <div className="w-72 h-8 rounded-lg bg-slate-100 dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 flex items-center px-3 gap-2">
+        <SearchIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+        <span className="text-[10px] text-slate-400 dark:text-slate-500">
           {config.placeholder || "Tìm kiếm..."}
         </span>
       </div>
@@ -313,25 +313,25 @@ function FooterPreview({ config }: PreviewProps) {
     <div className="bg-[#0B1120] rounded px-3 py-3">
       <div className="grid grid-cols-3 gap-3 mb-2">
         <div className="space-y-1">
-          <div className="w-12 h-1.5 rounded bg-white/30" />
-          <div className="w-20 h-1 rounded bg-white/15" />
-          <div className="w-16 h-1 rounded bg-white/15" />
+          <div className="w-12 h-1.5 rounded bg-white dark:bg-[#1a2436]/30" />
+          <div className="w-20 h-1 rounded bg-white dark:bg-[#1a2436]/15" />
+          <div className="w-16 h-1 rounded bg-white dark:bg-[#1a2436]/15" />
         </div>
         <div className="space-y-1">
-          <div className="w-10 h-1.5 rounded bg-white/30" />
+          <div className="w-10 h-1.5 rounded bg-white dark:bg-[#1a2436]/30" />
           {(config.footerLinks || [])
             .slice(0, 3)
             .map((_: unknown, i: number) => (
-              <div key={i} className="w-14 h-1 rounded bg-white/15" />
+              <div key={i} className="w-14 h-1 rounded bg-white dark:bg-[#1a2436]/15" />
             ))}
         </div>
         <div className="space-y-1">
-          <div className="w-12 h-1.5 rounded bg-white/30" />
-          <div className="w-20 h-1 rounded bg-white/15" />
+          <div className="w-12 h-1.5 rounded bg-white dark:bg-[#1a2436]/30" />
+          <div className="w-20 h-1 rounded bg-white dark:bg-[#1a2436]/15" />
         </div>
       </div>
       <div className="border-t border-white/10 pt-1.5">
-        <div className="w-40 h-1 rounded bg-white/10 mx-auto" />
+        <div className="w-40 h-1 rounded bg-white dark:bg-[#1a2436]/10 mx-auto" />
       </div>
     </div>
   );
@@ -343,7 +343,7 @@ function DefaultPreview({
   name,
 }: PreviewProps & { icon?: string; name: string }) {
   return (
-    <div className="flex items-center justify-center py-6 text-slate-400">
+    <div className="flex items-center justify-center py-6 text-slate-400 dark:text-slate-500">
       <div className="text-center">
         <DynamicIcon
           name={icon || "widgets"}
@@ -416,10 +416,10 @@ function ImagePreview({ config }: PreviewProps) {
   return (
     <div className="space-y-1">
       <div
-        className={`w-full aspect-video bg-slate-100 border border-slate-200 flex items-center justify-center ${radii[config.borderRadius] || "rounded-md"}`}
+        className={`w-full aspect-video bg-slate-100 dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 flex items-center justify-center ${radii[config.borderRadius] || "rounded-md"}`}
       >
         {config.src ? (
-          <div className="text-[9px] text-slate-400 truncate px-2">
+          <div className="text-[9px] text-slate-400 dark:text-slate-500 truncate px-2">
             {config.src}
           </div>
         ) : (
@@ -427,7 +427,7 @@ function ImagePreview({ config }: PreviewProps) {
         )}
       </div>
       {config.caption && (
-        <div className="text-[9px] text-slate-400 text-center">
+        <div className="text-[9px] text-slate-400 dark:text-slate-500 text-center">
           {config.caption}
         </div>
       )}
@@ -473,7 +473,7 @@ function SpacerPreview({ config }: PreviewProps) {
   };
   return (
     <div
-      className={`${heights[config.height] || heights.md} w-full bg-slate-50/50 border border-dashed border-slate-200 rounded flex items-center justify-center`}
+      className={`${heights[config.height] || heights.md} w-full bg-slate-50 dark:bg-[#121a2b]/50 border border-dashed border-slate-200 dark:border-slate-800 rounded flex items-center justify-center`}
     >
       <span className="text-[8px] text-slate-300">spacer</span>
     </div>
@@ -504,11 +504,11 @@ function DividerPreview({ config }: PreviewProps) {
 function CardPreview({ config }: PreviewProps) {
   return (
     <div
-      className={`rounded-lg overflow-hidden ${config.showBorder !== false ? "border border-slate-200" : ""} ${config.showShadow !== false ? "shadow-sm" : ""}`}
+      className={`rounded-lg overflow-hidden ${config.showBorder !== false ? "border border-slate-200 dark:border-slate-800" : ""} ${config.showShadow !== false ? "shadow-sm" : ""}`}
     >
       {config.imageUrl ? (
-        <div className="h-16 bg-slate-100 flex items-center justify-center">
-          <span className="text-[9px] text-slate-400 truncate px-2">
+        <div className="h-16 bg-slate-100 dark:bg-[#1a2436] flex items-center justify-center">
+          <span className="text-[9px] text-slate-400 dark:text-slate-500 truncate px-2">
             {config.imageUrl}
           </span>
         </div>
@@ -516,11 +516,11 @@ function CardPreview({ config }: PreviewProps) {
         <div className="h-12 bg-gradient-to-r from-slate-100 to-slate-50" />
       )}
       <div className="p-2">
-        <div className="text-xs font-semibold text-slate-700">
+        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
           {config.title || "Card Title"}
         </div>
         {config.description && (
-          <div className="text-[9px] text-slate-400 mt-0.5 line-clamp-2">
+          <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-2">
             {config.description}
           </div>
         )}
@@ -541,11 +541,11 @@ function IconTextPreview({ config }: PreviewProps) {
         style={{ color: config.iconColor || "#3b82f6" }}
       />
       <div>
-        <div className="text-xs font-semibold text-slate-700">
+        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
           {config.title || "Feature"}
         </div>
         {config.description && (
-          <div className="text-[9px] text-slate-400 mt-0.5">
+          <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
             {config.description}
           </div>
         )}
@@ -573,7 +573,7 @@ function ImageGalleryPreview({ config }: PreviewProps) {
       {Array.from({ length: Math.min(count, 6) }).map((_, i) => (
         <div
           key={i}
-          className="aspect-square rounded bg-slate-100 border border-slate-200 flex items-center justify-center"
+          className="aspect-square rounded bg-slate-100 dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 flex items-center justify-center"
         >
           <ImageIcon className="w-3.5 h-3.5 text-slate-300" />
         </div>
@@ -602,7 +602,7 @@ function BannerPreview({ config }: PreviewProps) {
       )}
       {config.buttonLabel && (
         <div className="mt-2">
-          <span className="px-3 py-1 text-[10px] font-medium rounded bg-white/20 border border-white/30">
+          <span className="px-3 py-1 text-[10px] font-medium rounded bg-white dark:bg-[#1a2436]/20 border border-white/30">
             {config.buttonLabel}
           </span>
         </div>
@@ -630,12 +630,12 @@ function NavLinksPreview({ config }: PreviewProps) {
       {links.map((link: { label: string; url: string }, i: number) => (
         <div
           key={i}
-          className={`flex items-center justify-between py-1.5 ${isVertical && i < links.length - 1 ? "border-b border-slate-100" : ""} ${sizes[config.fontSize] || "text-[11px]"} ${weights[config.fontWeight] || "font-medium"}`}
+          className={`flex items-center justify-between py-1.5 ${isVertical && i < links.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""} ${sizes[config.fontSize] || "text-[11px]"} ${weights[config.fontWeight] || "font-medium"}`}
           style={{ color: config.color || "#374151" }}
         >
           <span>{link.label}</span>
           {config.showArrow !== false && (
-            <span className="text-slate-400 ml-2">&raquo;</span>
+            <span className="text-slate-400 dark:text-slate-500 ml-2">&raquo;</span>
           )}
         </div>
       ))}

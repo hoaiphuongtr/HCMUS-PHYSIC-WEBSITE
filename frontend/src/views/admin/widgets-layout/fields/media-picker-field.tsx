@@ -26,7 +26,7 @@ const MediaPickerInput = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-w-0 px-2 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+        className="w-full min-w-0 px-2 py-1.5 text-xs border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
       />
       <button
         type="button"
@@ -37,7 +37,7 @@ const MediaPickerInput = ({
         Chọn từ thư viện
       </button>
       {preview && (
-        <div className="rounded-md overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
+        <div className="rounded-md overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b] aspect-video">
           {/** biome-ignore lint/performance/noImgElement: user uploads not allowlisted in next images */}
           <img
             src={preview}

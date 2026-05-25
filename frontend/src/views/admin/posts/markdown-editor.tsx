@@ -73,7 +73,7 @@ const ToolbarButton = ({
 );
 
 const ToolbarDivider = () => (
-  <span aria-hidden="true" className="w-px h-5 bg-slate-200 mx-1" />
+  <span aria-hidden="true" className="w-px h-5 bg-slate-200 dark:bg-[#202c44] mx-1" />
 );
 
 function setBlockType(editor: EditorInstance, value: string) {
@@ -261,7 +261,7 @@ function ImageLayoutControl({
         onMouseDown={(e) => e.preventDefault()}
         onClick={onToggle}
         style={btnStyle}
-        className="w-9 h-9 rounded-md border border-slate-300 bg-white shadow-md hover:bg-slate-50 flex items-center justify-center text-slate-700"
+        className="w-9 h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-md hover:bg-slate-50 dark:hover:bg-[#202c44] flex items-center justify-center text-slate-700 dark:text-slate-200"
         title="Tùy chọn bố trí"
         aria-label="Tùy chọn bố trí"
       >
@@ -283,23 +283,23 @@ function ImageLayoutControl({
         <div
           data-image-layout-ui="popup"
           style={popupStyle}
-          className="bg-white border border-slate-200 rounded-lg shadow-xl"
+          className="bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl"
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
-            <span className="text-xs font-semibold text-slate-700">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               Tùy chọn bố trí
             </span>
             <button
               type="button"
               onClick={onClose}
               onMouseDown={(e) => e.preventDefault()}
-              className="text-slate-400 hover:text-slate-700 text-sm leading-none"
+              className="text-slate-400 dark:text-slate-500 hover:text-slate-700 text-sm leading-none"
               aria-label="Đóng"
             >
               ×
             </button>
           </div>
-          <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-500">
+          <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Cùng dòng với văn bản
           </div>
           <div className="px-3 pb-2 flex">
@@ -312,14 +312,14 @@ function ImageLayoutControl({
                   onClick={() => onPick(o.mode)}
                   title={o.label}
                   aria-label={o.label}
-                  className="w-12 h-12 border border-slate-200 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
+                  className="w-12 h-12 border border-slate-200 dark:border-slate-800 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
                 >
                   {o.preview}
                 </button>
               ),
             )}
           </div>
-          <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wide text-slate-500">
+          <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Có ngắt dòng
           </div>
           <div className="px-3 pb-3 grid grid-cols-3 gap-2">
@@ -331,7 +331,7 @@ function ImageLayoutControl({
                 onClick={() => onPick(o.mode)}
                 title={o.label}
                 aria-label={o.label}
-                className="w-full aspect-square border border-slate-200 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
+                className="w-full aspect-square border border-slate-200 dark:border-slate-800 rounded hover:border-blue-500 hover:bg-blue-50 p-1"
               >
                 {o.preview}
               </button>
@@ -458,7 +458,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
 
   if (!editor) {
     return (
-      <div className="border border-slate-200 rounded-lg bg-white h-[380px] flex items-center justify-center text-xs text-slate-400">
+      <div className="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-[#1a2436] h-[380px] flex items-center justify-center text-xs text-slate-400 dark:text-slate-500">
         Loading editor…
       </div>
     );
@@ -578,8 +578,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const block = currentBlock(editor);
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white">
-      <div className="flex items-center gap-1 border-b border-slate-200 px-2">
+    <div className="border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-[#1a2436]">
+      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 px-2">
         <button
           type="button"
           onClick={() => setTab("editor")}
@@ -608,11 +608,11 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
 
       {tab === "editor" ? (
         <>
-          <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-slate-200 bg-slate-50 text-xs">
+          <div className="flex flex-wrap items-center gap-1 px-2 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b] text-xs">
             <select
               value={block}
               onChange={(e) => setBlockType(editor, e.target.value)}
-              className="h-7 px-2 text-xs border border-slate-200 rounded bg-white"
+              className="h-7 px-2 text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-[#1a2436]"
               title="Block style"
             >
               {BLOCK_OPTIONS.map((b) => (
@@ -765,7 +765,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           </div>
 
           {linkOpen ? (
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-blue-50">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-blue-50">
               <input
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
@@ -779,7 +779,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   }
                 }}
                 placeholder="https://..."
-                className="flex-1 px-2 py-1 text-xs border border-slate-200 rounded bg-white outline-none"
+                className="flex-1 px-2 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-[#1a2436] outline-none"
                 // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
                 autoFocus
               />
@@ -796,7 +796,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   setLinkOpen(false);
                   setLinkUrl("");
                 }}
-                className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700"
+                className="px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700"
               >
                 Hủy
               </button>
@@ -804,9 +804,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           ) : null}
 
           {tableOpen ? (
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-blue-50 text-xs">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-blue-50 text-xs">
               <label className="flex items-center gap-1">
-                <span className="text-slate-600">Số dòng:</span>
+                <span className="text-slate-600 dark:text-slate-300">Số dòng:</span>
                 <input
                   type="number"
                   min={1}
@@ -815,13 +815,13 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   onChange={(e) =>
                     setTableSize((prev) => ({ ...prev, rows: e.target.value }))
                   }
-                  className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
+                  className="w-16 px-2 py-1 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-[#1a2436] outline-none"
                   // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
                   autoFocus
                 />
               </label>
               <label className="flex items-center gap-1">
-                <span className="text-slate-600">Số cột:</span>
+                <span className="text-slate-600 dark:text-slate-300">Số cột:</span>
                 <input
                   type="number"
                   min={1}
@@ -830,7 +830,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                   onChange={(e) =>
                     setTableSize((prev) => ({ ...prev, cols: e.target.value }))
                   }
-                  className="w-16 px-2 py-1 border border-slate-200 rounded bg-white outline-none"
+                  className="w-16 px-2 py-1 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-[#1a2436] outline-none"
                 />
               </label>
               <button
@@ -843,7 +843,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               <button
                 type="button"
                 onClick={() => setTableOpen(false)}
-                className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700"
+                className="px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700"
               >
                 Hủy
               </button>
@@ -871,7 +871,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               dangerouslySetInnerHTML={{ __html: value }}
             />
           ) : (
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               Preview hiển thị tại đây khi bạn nhập nội dung.
             </p>
           )}

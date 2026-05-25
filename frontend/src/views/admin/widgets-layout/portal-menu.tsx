@@ -94,7 +94,7 @@ export function PortalMenu({
         width: widthPx,
         zIndex: 10000,
       }}
-      className={`bg-white border border-slate-200 rounded-lg shadow-xl py-1 ${className}`}
+      className={`bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl py-1 ${className}`}
     >
       {children}
     </div>,

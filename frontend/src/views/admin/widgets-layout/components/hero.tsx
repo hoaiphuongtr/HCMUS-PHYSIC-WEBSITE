@@ -182,7 +182,7 @@ function HeroFullScreenClient({
               type="button"
               key={i}
               onClick={() => goTo(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === current ? "bg-white w-8" : "bg-white/40 hover:bg-white/70"}`}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === current ? "bg-white dark:bg-[#1a2436] w-8" : "bg-white dark:bg-[#1a2436]/40 hover:bg-white/70"}`}
             />
           ))}
         </div>
@@ -266,7 +266,7 @@ function HeroFullScreenText({
           key={`c-${current}`}
           href={isEditing ? "#" : slide?.ctaUrl || "#"}
           tabIndex={isEditing ? -1 : undefined}
-          className="px-8 py-3 bg-white text-slate-900 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
+          className="px-8 py-3 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
         >
           {ctaLabel}
         </a>
@@ -486,7 +486,7 @@ function StatsCounterClient({
             {counts[i] || 0}
             {stat.suffix}
           </div>
-          <div className="text-sm text-slate-600 uppercase tracking-wider">
+          <div className="text-sm text-slate-600 dark:text-slate-300 uppercase tracking-wider">
             {t(stat.label, locale)}
           </div>
         </div>

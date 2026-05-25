@@ -294,7 +294,7 @@ function BannerRender({
           <a
             href={isEditing ? "#" : buttonUrl || "#"}
             tabIndex={isEditing ? -1 : undefined}
-            className="inline-block px-6 py-2 text-sm font-medium rounded-md bg-white/20 border border-white/30 hover:bg-white/30 transition-colors"
+            className="inline-block px-6 py-2 text-sm font-medium rounded-md bg-white dark:bg-[#1a2436]/20 border border-white/30 hover:bg-white/30 transition-colors"
           >
             {buttonText}
           </a>
@@ -688,7 +688,7 @@ function SearchOverlayClient({
                     <a
                       key={`rec-${i}`}
                       href={item.url}
-                      className="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-full border border-white/10 bg-white dark:bg-[#1a2436]/5 text-white/60 hover:text-white hover:border-white/40 transition-all text-sm inline-flex items-center gap-1.5"
                     >
                       <Clock className="w-3.5 h-3.5" />
                       {item.label}
@@ -801,15 +801,15 @@ function PersonaSelectorRender({
               key={i}
               href={isEditing ? "#" : p.linkUrl || "#"}
               tabIndex={isEditing ? -1 : undefined}
-              className="flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white group"
+              className="flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white dark:bg-[#1a2436] group"
             >
               <div className="w-16 h-16 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-4 transition-colors">
                 <DynamicIcon name={p.icon} className="w-6 h-6 text-blue-700" />
               </div>
-              <h3 className="font-bold text-slate-900 mb-1">
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
                 {t(p.label, locale)}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t(p.description, locale)}
               </p>
             </a>
@@ -923,7 +923,7 @@ function SubscribeBannerClient({
       </div>
       {alreadySubscribed && !isEditing ? (
         <div
-          className="rounded-lg border border-white/20 bg-white/5 px-4 py-6 text-center"
+          className="rounded-lg border border-white/20 bg-white dark:bg-[#1a2436]/5 px-4 py-6 text-center"
           style={{ color: textColor || "#ffffff" }}
         >
           <p className="text-sm font-medium">{successText}</p>
@@ -939,7 +939,7 @@ function SubscribeBannerClient({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="email@example.com"
             disabled={isEditing || status === "saving"}
-            className="w-full px-4 py-3 rounded-md text-slate-900 bg-white/95 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-3 rounded-md text-slate-900 dark:text-slate-100 bg-white dark:bg-[#1a2436]/95 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-400"
           />
           {tagOptions && tagOptions.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -1139,7 +1139,7 @@ function TagNotificationBarClient({
         <a
           href={isEditing ? "#" : linkUrl || "#"}
           tabIndex={isEditing ? -1 : undefined}
-          className="px-3 py-1 text-xs font-semibold rounded-md bg-white/15 hover:bg-white/25"
+          className="px-3 py-1 text-xs font-semibold rounded-md bg-white dark:bg-[#1a2436]/15 hover:bg-white/25"
         >
           {linkLabelText}
         </a>

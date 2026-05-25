@@ -133,11 +133,7 @@ export function ScheduledModal({
                   className="flex items-center gap-3 py-3 flex-wrap"
                 >
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                      item.kind === "post"
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300"
-                        : "bg-purple-100 text-purple-700 dark:bg-purple-700/30 dark:text-purple-300"
-                    }`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${ item.kind === "post" ? "bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300" : "bg-purple-100 text-purple-700 dark:bg-purple-700/30 dark:text-purple-300" }`}
                   >
                     {item.kind === "post" ? "Post" : "Layout"}
                   </span>

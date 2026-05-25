@@ -38,10 +38,10 @@ export function MediaLibraryView() {
     <div className="p-6 max-w-7xl mx-auto">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             Media Library
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {total} ảnh đã được tải lên
           </p>
         </div>
@@ -52,7 +52,7 @@ export function MediaLibraryView() {
             setPage(1);
           }}
           placeholder="Tìm theo tên, alt…"
-          className="w-64 px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+          className="w-64 px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
         />
       </header>
 
@@ -65,7 +65,7 @@ export function MediaLibraryView() {
 
       {(tagsQuery.data?.length ?? 0) > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500">Lọc theo tag:</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Lọc theo tag:</span>
           <button
             type="button"
             onClick={() => {
@@ -103,11 +103,11 @@ export function MediaLibraryView() {
       )}
 
       {listQuery.isLoading ? (
-        <div className="py-20 text-center text-slate-400 text-sm">
+        <div className="py-20 text-center text-slate-400 dark:text-slate-500 text-sm">
           Đang tải…
         </div>
       ) : items.length === 0 ? (
-        <div className="py-20 text-center text-slate-400 text-sm">
+        <div className="py-20 text-center text-slate-400 dark:text-slate-500 text-sm">
           {search || tagSlug
             ? "Không có ảnh phù hợp."
             : "Chưa có ảnh nào. Kéo thả vào vùng trên để bắt đầu."}
@@ -119,7 +119,7 @@ export function MediaLibraryView() {
               key={item.id}
               type="button"
               onClick={() => setSelected(item)}
-              className="group relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 hover:border-blue-400 transition-colors"
+              className="group relative aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 hover:border-blue-400 transition-colors"
             >
               {/** biome-ignore lint/performance/noImgElement: user uploads not allowlisted in next images */}
               <img
@@ -151,18 +151,18 @@ export function MediaLibraryView() {
             type="button"
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
-            className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+            className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#202c44]"
           >
             Trước
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             Trang {page} / {totalPages}
           </span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
-            className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+            className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-[#202c44]"
           >
             Sau
           </button>

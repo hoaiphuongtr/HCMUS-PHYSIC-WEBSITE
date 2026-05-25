@@ -117,13 +117,13 @@ const ColorInput = ({ value, onChange }: ColorInputProps) => {
         </p>
       )}
       {isEmpty && (
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">
           Nhập mã hex hợp lệ (ví dụ #2563eb) hoặc bấm vòng tròn để chọn.
         </p>
       )}
       {pickerOpen && (
         <div className="relative">
-          <div className="absolute right-0 z-50 mt-1 p-2 bg-white rounded-lg border border-slate-200 shadow-lg">
+          <div className="absolute right-0 z-50 mt-1 p-2 bg-white dark:bg-[#1a2436] rounded-lg border border-slate-200 dark:border-slate-800 shadow-lg">
             <HexColorPicker
               color={valid ? draft : "#2563eb"}
               onChange={handlePicker}
@@ -140,8 +140,8 @@ export const colorField = (label: string): CustomField<string> => ({
   label,
   render: ({ value, onChange }) => (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-        <PaletteIcon className="w-3.5 h-3.5 text-slate-400" />
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+        <PaletteIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
         {label}
       </div>
       <ColorInput

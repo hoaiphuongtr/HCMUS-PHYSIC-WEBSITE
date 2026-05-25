@@ -153,10 +153,12 @@ export function PostListView() {
 
   return (
     <div className="flex flex-col h-full overflow-auto">
-      <header className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
+      <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-content-1000">Bài đăng</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-lg font-semibold text-content-1000 dark:text-slate-100">
+            Bài đăng
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Danh sách tất cả bài đăng. Mỗi bài có thể được gắn vào nhiều layout
             public.
           </p>
@@ -170,13 +172,13 @@ export function PostListView() {
       </header>
 
       <div className="flex-1 p-6 space-y-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <div className="bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap items-center gap-3">
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Tìm theo tiêu đề, slug, mô tả…"
-            className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="min-w-[200px]">
             <AdminSelect
@@ -209,21 +211,23 @@ export function PostListView() {
             <button
               type="button"
               onClick={resetFilters}
-              className="px-3 py-2 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50"
+              className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44]"
             >
               Xóa lọc
             </button>
           ) : null}
-          <span className="ml-auto text-xs text-slate-500">
+          <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
             {listQuery.isLoading ? "Đang tải…" : `${total} kết quả`}
           </span>
         </div>
 
         {listQuery.isLoading && !data ? (
-          <p className="text-sm text-slate-400">Đang tải…</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Đang tải…
+          </p>
         ) : items.length === 0 ? (
-          <div className="bg-white border border-dashed border-slate-300 rounded-xl p-10 text-center">
-            <p className="text-sm text-slate-500">
+          <div className="bg-white dark:bg-[#1a2436] border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-10 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {hasFilters
                 ? "Không có bài đăng nào khớp với bộ lọc."
                 : 'Chưa có bài đăng nào. Bấm "Tạo bài đăng mới" để bắt đầu.'}
@@ -231,9 +235,9 @@ export function PostListView() {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-[#1a2436] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500">
+                <thead className="bg-slate-50 dark:bg-[#121a2b] border-b border-slate-200 dark:border-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">
                       Bài đăng
@@ -255,23 +259,26 @@ export function PostListView() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {items.map((post) => (
-                    <tr key={post.id} className="hover:bg-slate-50">
+                    <tr
+                      key={post.id}
+                      className="hover:bg-slate-50 dark:hover:bg-[#202c44]"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <Link
                             href={`/admin/posts?id=${post.id}`}
-                            className="text-sm font-medium text-blue-700 hover:underline"
+                            className="text-sm font-medium text-blue-700 dark:text-slate-100 hover:underline"
                           >
                             {post.title}
                           </Link>
-                          <span className="text-[11px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                             /{post.slug}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600">
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
                         {categoryLabelVi(post.category)}
                       </td>
                       <td className="px-4 py-3">
@@ -287,7 +294,7 @@ export function PostListView() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {post.layouts.length === 0 ? (
-                            <span className="text-[11px] text-slate-400 italic">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">
                               Chưa gắn layout
                             </span>
                           ) : (
@@ -310,14 +317,14 @@ export function PostListView() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         {formatPublicAt(post)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex gap-1">
                           <Link
                             href={`/admin/posts?id=${post.id}`}
-                            className="px-2 py-1 text-xs text-slate-700 border border-slate-200 rounded-md hover:bg-slate-50"
+                            className="px-2 py-1 text-xs text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44]"
                           >
                             Sửa
                           </Link>
@@ -366,7 +373,7 @@ function Pagination({
         type="button"
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page <= 1}
-        className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         ← Trước
       </button>
@@ -374,7 +381,7 @@ function Pagination({
         p === "…" ? (
           <span
             key={`gap-${idx}`}
-            className="px-2 text-xs text-slate-400 select-none"
+            className="px-2 text-xs text-slate-400 dark:text-slate-500 select-none"
           >
             …
           </span>
@@ -386,7 +393,7 @@ function Pagination({
             className={
               p === page
                 ? "px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md"
-                : "px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-md hover:bg-slate-50"
+                : "px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44]"
             }
           >
             {p}
@@ -397,7 +404,7 @@ function Pagination({
         type="button"
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page >= totalPages}
-        className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-md hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         Sau →
       </button>

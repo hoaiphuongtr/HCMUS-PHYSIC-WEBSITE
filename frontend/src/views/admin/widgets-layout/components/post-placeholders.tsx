@@ -129,7 +129,7 @@ function PostTitleRender({
   return (
     <h1
       data-post-body
-      className="text-4xl font-bold text-content-1000 scroll-mt-20 my-4"
+      className="text-4xl font-bold text-content-1000 dark:text-slate-100 scroll-mt-20 my-4"
       style={{ textAlign: alignment as any }}
     >
       {content}
@@ -172,7 +172,7 @@ function PostBodyRender({
     return (
       <article
         data-post-body
-        className="prose prose-slate max-w-none text-content-1000 leading-relaxed my-4 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
+        className="prose prose-slate max-w-none text-content-1000 dark:text-slate-100 leading-relaxed my-4 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored rich text
         dangerouslySetInnerHTML={{ __html: source }}
       />
@@ -181,7 +181,7 @@ function PostBodyRender({
   return (
     <article
       data-post-body
-      className="prose prose-slate max-w-none text-content-1000 leading-relaxed my-4"
+      className="prose prose-slate max-w-none text-content-1000 dark:text-slate-100 leading-relaxed my-4"
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{source}</ReactMarkdown>
     </article>
@@ -408,7 +408,7 @@ function PostEventInfoRender({
   return (
     <div
       data-post-body
-      className="rounded-lg border border-gray-200 bg-gray-50 p-4 my-4 space-y-2 text-sm text-content-1000"
+      className="rounded-lg border border-gray-200 bg-gray-50 p-4 my-4 space-y-2 text-sm text-content-1000 dark:text-slate-100"
     >
       {start ? (
         <div>
@@ -491,18 +491,18 @@ function PostHeaderRender({
   const cat = categoryLabel || t(defaultCategoryLabel, locale);
   const dateLine = formatPublishedHeader(publishedAt, locale);
   return (
-    <header data-post-body className="border-b border-slate-200 pb-5 mb-6">
+    <header data-post-body className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
       <div className="flex items-start justify-between gap-4 mb-3">
-        <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <span className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {cat}
         </span>
         {dateLine ? (
-          <time className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
+          <time className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap mt-0.5">
             {dateLine}
           </time>
         ) : null}
       </div>
-      <h1 className="text-3xl md:text-4xl font-bold text-content-1000 leading-tight">
+      <h1 className="text-3xl md:text-4xl font-bold text-content-1000 dark:text-slate-100 leading-tight">
         {title}
       </h1>
     </header>
@@ -704,24 +704,24 @@ function PostReaderToolsRender({
         }}
         className="hidden lg:flex flex-col items-center gap-3 fixed z-30 w-12"
       >
-        <div className="flex flex-col items-center bg-white border border-slate-200 rounded-full shadow-sm py-1.5">
+        <div className="flex flex-col items-center bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-full shadow-sm py-1.5">
           <button
             type="button"
             onClick={() => changeLevel(level + 1)}
             aria-label={t(TOOL_LABELS.increase, locale)}
-            className="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-slate-900 disabled:opacity-30"
+            className="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 disabled:opacity-30"
             disabled={level >= FONT_SIZE_LEVELS.length - 1}
           >
             <span className="text-lg leading-none">+</span>
           </button>
-          <span className="text-[11px] text-slate-500 font-semibold py-1 select-none">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold py-1 select-none">
             aA
           </span>
           <button
             type="button"
             onClick={() => changeLevel(level - 1)}
             aria-label={t(TOOL_LABELS.decrease, locale)}
-            className="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-slate-900 disabled:opacity-30"
+            className="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 disabled:opacity-30"
             disabled={level <= 0}
           >
             <span className="text-lg leading-none">−</span>
@@ -737,7 +737,7 @@ function PostReaderToolsRender({
               ? t(TOOL_LABELS.copied, locale)
               : t(TOOL_LABELS.copyLink, locale)
           }
-          className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900"
+          className="w-10 h-10 rounded-full bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

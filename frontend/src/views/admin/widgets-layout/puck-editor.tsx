@@ -103,16 +103,16 @@ function MoveToPicker() {
   }
 
   return (
-    <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+    <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b]">
       <label
         htmlFor="move-to-zone"
-        className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1"
+        className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
       >
         Move to container
       </label>
       <select
         id="move-to-zone"
-        className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white"
+        className="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-md px-2 py-1.5 bg-white dark:bg-[#1a2436]"
         value=""
         onChange={(e) => {
           const destZone = e.target.value;
@@ -143,7 +143,7 @@ function MoveToPicker() {
           </option>
         ))}
       </select>
-      <p className="text-[10px] text-slate-400 mt-1">
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
         Tip: you can also drag the component by its border in the canvas.
       </p>
     </div>
@@ -190,7 +190,7 @@ function EditJsonButton() {
         onClick={openModal}
         title="Edit raw JSON"
         aria-label="Edit raw JSON"
-        className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 max-w-[48px] w-full"
+        className="px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] text-slate-600 dark:text-slate-300 max-w-[48px] w-full"
       >
         {"{ }"}
       </button>
@@ -200,20 +200,20 @@ function EditJsonButton() {
             className="fixed inset-0 bg-black/40 flex items-center justify-center px-4"
             style={{ zIndex: 10001 }}
           >
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-              <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+            <div className="bg-white dark:bg-[#1a2436] rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+              <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Edit raw JSON
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Advanced — changes apply in-memory. Click Save draft after.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-600"
                   aria-label="Close"
                 >
                   <XIcon className="w-5 h-5" />
@@ -224,7 +224,7 @@ function EditJsonButton() {
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   spellCheck={false}
-                  className="flex-1 min-h-[60vh] w-full font-mono text-xs border border-slate-200 rounded-md p-3 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-h-[60vh] w-full font-mono text-xs border border-slate-200 dark:border-slate-800 rounded-md p-3 bg-slate-50 dark:bg-[#121a2b] focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {error && (
                   <p className="text-xs text-red-600 font-mono whitespace-pre-wrap">
@@ -232,11 +232,11 @@ function EditJsonButton() {
                   </p>
                 )}
               </div>
-              <div className="px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
+              <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-3 py-1.5 text-xs rounded-md border border-slate-200 hover:bg-slate-50"
+                  className="px-3 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#202c44]"
                 >
                   Cancel
                 </button>
@@ -398,7 +398,7 @@ function PublishMenu({
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span className="text-[11px] text-slate-500 hidden md:inline">
+      <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden md:inline">
         {statusLabel}
       </span>
       {layout.isPublished && (
@@ -406,7 +406,7 @@ function PublishMenu({
           href={publicLayoutUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 bg-white hover:bg-slate-50 inline-flex items-center gap-1"
+          className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-1"
         >
           <ExternalLinkIcon className="w-3.5 h-3.5" />
           View live
@@ -416,7 +416,7 @@ function PublishMenu({
         type="button"
         onClick={handleSaveOnly}
         disabled={disabled}
-        className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50"
+        className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-50"
       >
         Save draft
       </button>
@@ -452,7 +452,7 @@ function PublishMenu({
           type="button"
           onClick={publishNow}
           disabled={disabled}
-          className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+          className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
         >
           <UploadIcon className="w-4 h-4 text-blue-600" />
           Publish now
@@ -464,14 +464,14 @@ function PublishMenu({
             setOpen(false);
           }}
           disabled={disabled}
-          className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+          className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
         >
-          <ClockIcon className="w-4 h-4 text-slate-500" />
+          <ClockIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           Schedule publish...
         </button>
         {layout.isPublished || layout.scheduledAt ? (
           <>
-            <div className="border-t border-slate-100 my-0.5" />
+            <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
             <button
               type="button"
               onClick={unpublish}
@@ -491,17 +491,17 @@ function PublishMenu({
             className="fixed inset-0 bg-black/40 flex items-center justify-center px-4"
             style={{ zIndex: 10001 }}
           >
-            <div className="bg-white rounded-lg shadow-xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h3 className="text-sm font-semibold text-slate-800 mb-2">
+            <div className="bg-white dark:bg-[#1a2436] rounded-lg shadow-xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-2">
                 Schedule publish
               </h3>
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                 The selected layouts will be automatically published at the
                 chosen time.
               </p>
               <label
                 htmlFor="schedule-publish-at"
-                className="block text-xs font-medium text-slate-700 mb-1"
+                className="block text-xs font-medium text-slate-700 dark:text-slate-200 mb-1"
               >
                 Publish at
               </label>
@@ -510,33 +510,33 @@ function PublishMenu({
                 type="datetime-local"
                 value={scheduleValue}
                 onChange={(e) => setScheduleValue(e.target.value)}
-                className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-md px-3 py-2 text-sm"
               />
 
               <div className="mt-4">
-                <p className="text-xs font-medium text-slate-700 mb-2">
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mb-2">
                   Also publish together (optional)
                 </p>
-                <div className="border border-slate-200 rounded-md divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-md divide-y divide-slate-100 max-h-48 overflow-y-auto">
                   {otherLayouts.length === 0 ? (
-                    <p className="text-xs text-slate-400 px-3 py-2">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 px-3 py-2">
                       No other layouts available.
                     </p>
                   ) : (
                     otherLayouts.map((l) => (
                       <label
                         key={l.id}
-                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] cursor-pointer"
                       >
                         <input
                           type="checkbox"
                           checked={alsoScheduleIds.includes(l.id)}
                           onChange={() => toggleAlsoSchedule(l.id)}
-                          className="rounded border-slate-300"
+                          className="rounded border-slate-300 dark:border-slate-700"
                         />
                         <span className="flex-1 truncate">
                           <span className="font-semibold">{l.name}</span>
-                          <span className="text-slate-400 ml-1">/{l.slug}</span>
+                          <span className="text-slate-400 dark:text-slate-500 ml-1">/{l.slug}</span>
                         </span>
                         {l.isPublished ? (
                           <span className="text-[10px] text-green-600">
@@ -558,7 +558,7 @@ function PublishMenu({
                   type="button"
                   onClick={() => setShowScheduleModal(false)}
                   disabled={busy}
-                  className="px-3 py-1.5 text-xs rounded-md border border-slate-200 hover:bg-slate-50"
+                  className="px-3 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#202c44]"
                 >
                   Cancel
                 </button>
@@ -671,7 +671,7 @@ export function PuckEditor({
 function PuckLocaleTabs() {
   const { locale, setLocale } = useLocale();
   return (
-    <div className="inline-flex items-center gap-1 mr-2 px-1.5 py-1 rounded-md border border-slate-200 bg-slate-50">
+    <div className="inline-flex items-center gap-1 mr-2 px-1.5 py-1 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b]">
       {LOCALES.map((code) => {
         const isActive = code === locale;
         const className = isActive

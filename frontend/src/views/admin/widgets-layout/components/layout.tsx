@@ -218,7 +218,7 @@ export const Card: ComponentConfig<{
     };
     return (
       <div
-        className={`${paddings[padding] || "p-5"} ${radii[borderRadius] || "rounded-lg"} ${showBorder ? "border border-slate-200" : ""} ${showShadow ? "shadow-sm" : ""} ${resolveAlignClass(align || "left")}`}
+        className={`${paddings[padding] || "p-5"} ${radii[borderRadius] || "rounded-lg"} ${showBorder ? "border border-slate-200 dark:border-slate-800" : ""} ${showShadow ? "shadow-sm" : ""} ${resolveAlignClass(align || "left")}`}
         style={{
           backgroundColor: bgColor || "#ffffff",
           ...resolveWidthStyle(widthPct || "100"),

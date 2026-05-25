@@ -105,13 +105,13 @@ function ImageBlockRender({
         />
       ) : (
         <div
-          className={`w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
+          className={`w-full aspect-video bg-slate-100 dark:bg-[#1a2436] border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center ${radii[borderRadius] || "rounded-md"}`}
         >
           <ImageIcon className="w-9 h-9 text-slate-300" />
         </div>
       )}
       {captionText && (
-        <p className="text-sm text-slate-500 text-center mt-2">{captionText}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">{captionText}</p>
       )}
     </div>
   );
@@ -168,7 +168,7 @@ export const ImageGallery: ComponentConfig<{
           {Array.from({ length: cols }).map((_, i) => (
             <div
               key={i}
-              className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center"
+              className="aspect-square rounded-md bg-slate-100 dark:bg-[#1a2436] border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center"
             >
               <ImageIcon className="w-6 h-6 text-slate-300" />
             </div>
@@ -192,7 +192,7 @@ export const ImageGallery: ComponentConfig<{
                 decoding="async"
               />
             ) : (
-              <div className="aspect-square rounded-md bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
+              <div className="aspect-square rounded-md bg-slate-100 dark:bg-[#1a2436] border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center">
                 <ImageIcon className="w-6 h-6 text-slate-300" />
               </div>
             )}
@@ -227,7 +227,7 @@ export const VideoEmbed: ComponentConfig<{
     return (
       <div>
         {title && (
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">{title}</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">{title}</h3>
         )}
         {videoUrl ? (
           <iframe
@@ -276,7 +276,7 @@ export const MapEmbed: ComponentConfig<{
   render: ({ src, height, rounded }) => {
     if (!src)
       return (
-        <div className="w-full h-40 bg-slate-100 border-2 border-dashed border-slate-300 rounded-md flex items-center justify-center">
+        <div className="w-full h-40 bg-slate-100 dark:bg-[#1a2436] border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-md flex items-center justify-center">
           <Map className="w-8 h-8 text-slate-300" />
         </div>
       );
@@ -339,10 +339,10 @@ function ImageSliderClient({
   if (count === 0) {
     return (
       <div
-        className={`relative overflow-hidden bg-slate-200 flex items-center justify-center ${r}`}
+        className={`relative overflow-hidden bg-slate-200 dark:bg-[#202c44] flex items-center justify-center ${r}`}
         style={{ height: h }}
       >
-        <Images className="w-12 h-12 text-slate-400" />
+        <Images className="w-12 h-12 text-slate-400 dark:text-slate-500" />
       </div>
     );
   }
@@ -379,7 +379,7 @@ function ImageSliderClient({
             <a
               href={isEditing ? "#" : slide.linkUrl}
               tabIndex={isEditing ? -1 : undefined}
-              className="inline-block mt-2 px-4 py-1.5 text-sm text-white bg-white/20 rounded-md border border-white/30 hover:bg-white/30 transition-colors"
+              className="inline-block mt-2 px-4 py-1.5 text-sm text-white bg-white dark:bg-[#1a2436]/20 rounded-md border border-white/30 hover:bg-white/30 transition-colors"
             >
               {t(SLIDER_DETAILS_LABEL, locale)}
             </a>
@@ -411,7 +411,7 @@ function ImageSliderClient({
               type="button"
               key={i}
               onClick={() => setCurrent(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${i === current ? "bg-white dark:bg-[#1a2436]" : "bg-white dark:bg-[#1a2436]/40 hover:bg-white/60"}`}
             />
           ))}
         </div>
@@ -628,10 +628,10 @@ export const LogoGrid: ComponentConfig<{
                 />
               ) : (
                 <div
-                  className="bg-slate-100 rounded-md flex items-center justify-center px-4"
+                  className="bg-slate-100 dark:bg-[#1a2436] rounded-md flex items-center justify-center px-4"
                   style={{ height: `${h}px`, minWidth: `${h * 1.5}px` }}
                 >
-                  <span className="text-xs text-slate-400 text-center">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 text-center">
                     {logo.alt || "Logo"}
                   </span>
                 </div>
@@ -751,7 +751,7 @@ function LogoSliderRender({
               className="flex flex-col items-center gap-3 group"
             >
               <div
-                className="bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                className="bg-white dark:bg-[#1a2436] rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
                 style={{ width: `${size}px`, height: `${size}px` }}
               >
                 {logo.src ? (
@@ -767,7 +767,7 @@ function LogoSliderRender({
                     decoding="async"
                   />
                 ) : (
-                  <span className="text-xs text-slate-400 text-center px-1 leading-tight">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 text-center px-1 leading-tight">
                     {logo.alt}
                   </span>
                 )}

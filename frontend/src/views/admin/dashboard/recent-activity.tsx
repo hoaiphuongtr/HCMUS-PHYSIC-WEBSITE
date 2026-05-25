@@ -41,7 +41,7 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
         </h2>
       </header>
       {items.length === 0 ? (
-        <p className="py-8 text-center text-sm text-slate-500">
+        <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
           Chưa có hoạt động nào.
         </p>
       ) : (
@@ -53,9 +53,7 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
                 className="flex items-start gap-3 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/50 -mx-2 px-2 rounded-md transition-colors"
               >
                 <span
-                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                    STATUS_DOT[item.status] ?? "bg-slate-500"
-                  }`}
+                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${ STATUS_DOT[item.status] ?? "bg-slate-500" }`}
                   aria-hidden="true"
                 />
                 <div className="min-w-0 flex-1">

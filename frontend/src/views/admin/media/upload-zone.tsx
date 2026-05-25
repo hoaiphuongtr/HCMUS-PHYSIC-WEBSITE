@@ -81,8 +81,8 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
       className={
         "flex flex-col items-center rounded-xl border-2 border-dashed p-8 text-center transition-colors " +
         (dragOver
-          ? "border-blue-400 bg-blue-50"
-          : "border-slate-200 bg-slate-50/60 hover:bg-slate-50")
+          ? "border-blue-400 bg-blue-50 dark:bg-blue-500/10"
+          : "border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-[#1a2436]/60 hover:bg-slate-50 dark:hover:bg-[#202c44]/80")
       }
     >
       <input
@@ -93,8 +93,8 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
         hidden
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <UploadCloudIcon className="w-9 h-9 text-slate-400" />
-      <p className="mt-2 text-sm text-slate-600">
+      <UploadCloudIcon className="w-9 h-9 text-slate-400 dark:text-slate-500" />
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         Kéo thả ảnh vào đây, hoặc
         <button
           type="button"
@@ -104,11 +104,11 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
           chọn từ máy
         </button>
       </p>
-      <p className="text-xs text-slate-400 mt-1">
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
         Hỗ trợ JPG, PNG, WebP, GIF. Tối đa 10MB mỗi file.
       </p>
       <div className="mt-3 flex items-center justify-center gap-2 text-xs">
-        <span className="text-slate-400">hoặc</span>
+        <span className="text-slate-400 dark:text-slate-500">hoặc</span>
         <button
           type="button"
           onClick={() => setUrlMode((v) => !v)}
@@ -130,7 +130,7 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
             placeholder="https://… (ví dụ ảnh từ Pinterest, CDN…)"
-            className="flex-1 px-3 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+            className="flex-1 px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
           />
           <button
             type="submit"

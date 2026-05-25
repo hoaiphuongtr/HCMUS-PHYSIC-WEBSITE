@@ -12,15 +12,15 @@ export function SubscriptionsView() {
   return (
     <div className="p-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900">Subscribers</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Subscribers</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {subscriptions.length} người đã đăng ký nhận thông báo qua email.
         </p>
       </header>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-[#1a2436] rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+          <thead className="bg-slate-50 dark:bg-[#121a2b] text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-3 font-medium">Email</th>
               <th className="text-left px-4 py-3 font-medium">Tags</th>
@@ -33,7 +33,7 @@ export function SubscriptionsView() {
             {isLoading ? (
               <tr>
                 <td
-                  className="px-4 py-6 text-center text-slate-400"
+                  className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                   colSpan={5}
                 >
                   Loading…
@@ -42,7 +42,7 @@ export function SubscriptionsView() {
             ) : subscriptions.length === 0 ? (
               <tr>
                 <td
-                  className="px-4 py-6 text-center text-slate-400"
+                  className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                   colSpan={5}
                 >
                   Chưa có subscriber nào.
@@ -50,14 +50,14 @@ export function SubscriptionsView() {
               </tr>
             ) : (
               subscriptions.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/50">
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-[#202c44]/50">
+                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
                     {s.email}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {s.tagSlugs.length === 0 ? (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                       ) : (
                         s.tagSlugs.map((tag) => (
                           <span
@@ -70,7 +70,7 @@ export function SubscriptionsView() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-400 font-mono">
+                  <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 font-mono">
                     {s.visitorId ? s.visitorId.slice(0, 8) + "…" : "—"}
                   </td>
                   <td className="px-4 py-3 text-xs">
@@ -79,10 +79,10 @@ export function SubscriptionsView() {
                         {new Date(s.verifiedAt).toLocaleDateString()}
                       </span>
                     ) : (
-                      <span className="text-slate-400">Pending</span>
+                      <span className="text-slate-400 dark:text-slate-500">Pending</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
+                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
                     {new Date(s.createdAt).toLocaleString()}
                   </td>
                 </tr>

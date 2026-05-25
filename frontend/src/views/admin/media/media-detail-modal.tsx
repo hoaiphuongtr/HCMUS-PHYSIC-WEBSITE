@@ -96,7 +96,7 @@ export function MediaDetailModal({
         role="presentation"
       >
         <div
-          className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden grid grid-cols-1 md:grid-cols-[1fr_360px]"
+          className="bg-white dark:bg-[#1a2436] rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden grid grid-cols-1 md:grid-cols-[1fr_360px]"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role="dialog"
@@ -112,14 +112,14 @@ export function MediaDetailModal({
           </div>
 
           <div className="flex flex-col overflow-y-auto">
-            <header className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900 truncate">
+            <header className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                 {item.name}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -129,7 +129,7 @@ export function MediaDetailModal({
               <div>
                 <label
                   htmlFor="media-url"
-                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
                 >
                   URL
                 </label>
@@ -138,7 +138,7 @@ export function MediaDetailModal({
                     id="media-url"
                     readOnly
                     value={absoluteUrl}
-                    className="flex-1 px-2 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg"
+                    className="flex-1 px-2 py-1.5 text-xs font-mono bg-slate-50 dark:bg-[#121a2b] border border-slate-200 dark:border-slate-800 rounded-lg"
                   />
                   <button
                     type="button"
@@ -153,7 +153,7 @@ export function MediaDetailModal({
               <div>
                 <label
                   htmlFor="media-name"
-                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
                 >
                   Tên
                 </label>
@@ -161,14 +161,14 @@ export function MediaDetailModal({
                   id="media-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="media-alt"
-                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
                 >
                   Alt text
                 </label>
@@ -177,17 +177,17 @@ export function MediaDetailModal({
                   value={alt}
                   onChange={(e) => setAlt(e.target.value)}
                   placeholder="Mô tả ngắn cho ảnh"
-                  className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
 
               <div>
-                <div className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <div className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                   Tags
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {tagSlugs.length === 0 ? (
-                    <span className="text-xs text-slate-400">Chưa có tag</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">Chưa có tag</span>
                   ) : (
                     tagSlugs.map((slug) => (
                       <span
@@ -216,7 +216,7 @@ export function MediaDetailModal({
                     }
                   }}
                   placeholder="Thêm tag rồi Enter (slug: hoc-bong, tuyen-sinh…)"
-                  className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full px-2 py-1.5 text-xs border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
                 />
                 {allTags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -228,7 +228,7 @@ export function MediaDetailModal({
                           type="button"
                           key={t.slug}
                           onClick={() => addTag(t.slug)}
-                          className="px-2 py-0.5 text-[10px] rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          className="px-2 py-0.5 text-[10px] rounded-full bg-slate-100 dark:bg-[#1a2436] text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                         >
                           + {t.slug}
                         </button>
@@ -237,7 +237,7 @@ export function MediaDetailModal({
                 )}
               </div>
 
-              <dl className="text-xs text-slate-500 space-y-1 pt-2 border-t border-slate-100">
+              <dl className="text-xs text-slate-500 dark:text-slate-400 space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex justify-between">
                   <dt>Loại</dt>
                   <dd className="font-mono">{item.mimeType ?? "—"}</dd>
@@ -255,7 +255,7 @@ export function MediaDetailModal({
               </dl>
             </div>
 
-            <footer className="px-5 py-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <footer className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={confirmDelete}
@@ -268,7 +268,7 @@ export function MediaDetailModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50"
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44]"
                 >
                   Đóng
                 </button>

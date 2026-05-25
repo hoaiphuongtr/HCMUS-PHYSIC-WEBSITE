@@ -173,7 +173,7 @@ export function WidgetsLayoutView() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-2 border-b border-slate-200/60 bg-white flex justify-between items-center gap-2 shrink-0">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#1a2436] flex justify-between items-center gap-2 shrink-0">
         <LayoutPicker
           layouts={layouts}
           selectedLayoutId={selectedLayoutId}
@@ -197,9 +197,9 @@ export function WidgetsLayoutView() {
                 setEditTargetId(openMenuLayout.id);
                 setLayoutMenuId(null);
               }}
-              className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+              className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
             >
-              <PencilIcon className="w-3.5 h-3.5 text-slate-400" />
+              <PencilIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
               Edit name & slug
             </button>
             <button
@@ -208,12 +208,12 @@ export function WidgetsLayoutView() {
                 duplicateLayoutMutation.mutate(openMenuLayout.id);
                 setLayoutMenuId(null);
               }}
-              className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+              className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
             >
-              <CopyIcon className="w-3.5 h-3.5 text-slate-400" />
+              <CopyIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
               Duplicate
             </button>
-            <div className="border-t border-slate-100 my-0.5" />
+            <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
             <button
               type="button"
               onClick={() => {
@@ -230,7 +230,7 @@ export function WidgetsLayoutView() {
         <button
           type="button"
           onClick={() => setShowCreateModal(true)}
-          className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors flex items-center gap-1.5 text-slate-400 hover:text-blue-500"
+          className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 transition-colors flex items-center gap-1.5 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-300"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           <span className="text-[11px] font-medium">New</span>
@@ -248,7 +248,7 @@ export function WidgetsLayoutView() {
           />
         ) : (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center text-slate-400">
+            <div className="text-center text-slate-400 dark:text-slate-500">
               <DynamicIcon
                 name="dashboard_customize"
                 className="w-12 h-12 mb-3 mx-auto block"
@@ -414,18 +414,18 @@ function LayoutPicker({
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center gap-3 px-3 py-2 rounded-md border border-slate-200 hover:border-slate-300 bg-white text-left transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 bg-white dark:bg-[#1a2436] text-left transition-colors"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <DynamicIcon
           name="dashboard_customize"
-          className="w-[18px] h-[18px] text-slate-400 shrink-0"
+          className="w-[18px] h-[18px] text-slate-400 dark:text-slate-500 shrink-0"
         />
         <div className="min-w-0 flex-1">
           {selected ? (
             <>
-              <div className="text-[13px] font-semibold text-slate-800 truncate flex items-center gap-2">
+              <div className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 truncate flex items-center gap-2">
                 {selected.name}
                 {selectedStatus && (
                   <span
@@ -438,36 +438,36 @@ function LayoutPicker({
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-slate-400 truncate">
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
                 /{selected.slug}
               </div>
             </>
           ) : (
-            <div className="text-[13px] text-slate-500">
+            <div className="text-[13px] text-slate-500 dark:text-slate-400">
               Chọn layout để bắt đầu chỉnh sửa
             </div>
           )}
         </div>
         {open ? (
-          <ChevronUpIcon className="w-4 h-4 text-slate-400 shrink-0" />
+          <ChevronUpIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
         ) : (
-          <ChevronDownIcon className="w-4 h-4 text-slate-400 shrink-0" />
+          <ChevronDownIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
         )}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
-          <div className="p-2 border-b border-slate-100">
+        <div className="absolute left-0 top-full mt-1 z-50 w-[420px] max-w-[calc(100vw-2rem)] bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
             <div className="relative">
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tên hoặc slug..."
-                className="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
                 autoFocus
               />
-              <SearchIcon className="w-4 h-4 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
+              <SearchIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-2 top-1/2 -translate-y-1/2" />
             </div>
             <div className="flex items-center gap-1 mt-2">
               {(["published", "scheduled", "draft"] as LayoutStatus[]).map(
@@ -500,7 +500,7 @@ function LayoutPicker({
 
           <ul role="listbox" className="max-h-[60vh] overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <li className="px-3 py-6 text-center text-xs text-slate-400">
+              <li className="px-3 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
                 {search.trim() ? "Không có layout phù hợp" : "Không có layout"}
               </li>
             ) : (
@@ -509,8 +509,8 @@ function LayoutPicker({
                 const status = computeStatus(l);
                 const meta = STATUS_META[status];
                 const itemClass = isActive
-                  ? "flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 transition-colors"
-                  : "flex items-center gap-2 px-3 py-2 hover:bg-slate-50 transition-colors";
+                  ? "flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 transition-colors"
+                  : "flex items-center gap-2 px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors";
                 return (
                   <li key={l.id} role="option" aria-selected={isActive}>
                     <div className={itemClass}>
@@ -522,13 +522,13 @@ function LayoutPicker({
                         }}
                         className="flex-1 min-w-0 text-left"
                       >
-                        <div className="text-[12px] font-semibold text-slate-800 truncate flex items-center gap-1.5">
+                        <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
                           <span
                             className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`}
                           />
                           <span className="truncate">{l.name}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate ml-3">
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate ml-3">
                           /{l.slug}
                         </div>
                       </button>
@@ -538,7 +538,7 @@ function LayoutPicker({
                           e.stopPropagation();
                           onOpenItemMenu(l.id, e.currentTarget);
                         }}
-                        className="shrink-0 p-1 rounded hover:bg-slate-200/60 text-slate-400"
+                        className="shrink-0 p-1 rounded hover:bg-slate-200/60 text-slate-400 dark:text-slate-500"
                         aria-label="Layout options"
                         aria-haspopup="menu"
                         aria-expanded={openMenuId === l.id}

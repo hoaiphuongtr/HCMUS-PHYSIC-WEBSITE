@@ -82,7 +82,7 @@ const LocaleInputRow = ({
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         <span
           className={
             "px-1.5 py-0.5 rounded " +
@@ -93,7 +93,7 @@ const LocaleInputRow = ({
         >
           {locale}
         </span>
-        <span className="text-slate-400 normal-case">
+        <span className="text-slate-400 dark:text-slate-500 normal-case">
           {LOCALE_LABELS[locale] || locale}
         </span>
         {isDefault && (
@@ -130,8 +130,8 @@ const LocalizedTextInput = ({
 
   return (
     <div className="space-y-2 min-w-0">
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-        <DynamicIcon name="translate" className="w-3.5 h-3.5 text-slate-400" />
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+        <DynamicIcon name="translate" className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
         {label}
       </div>
       {LOCALES.map((locale) => (

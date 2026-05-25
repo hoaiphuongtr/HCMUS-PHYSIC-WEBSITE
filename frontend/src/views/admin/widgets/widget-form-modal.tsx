@@ -124,15 +124,15 @@ export function WidgetFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-bold text-slate-900">
+      <div className="bg-white dark:bg-[#1a2436] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {isEdit ? "Edit Widget Type" : "Create Widget Type"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-[#202c44] text-slate-400 dark:text-slate-500"
           >
             <XIcon className="w-5 h-5" />
           </button>
@@ -146,7 +146,7 @@ export function WidgetFormModal({
             <div>
               <label
                 htmlFor="widget-type"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
               >
                 Type Identifier
               </label>
@@ -157,13 +157,13 @@ export function WidgetFormModal({
                 placeholder="MY_CUSTOM_WIDGET"
                 required
                 disabled={isEdit}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 font-mono disabled:bg-slate-50 disabled:text-slate-400"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 font-mono disabled:bg-slate-50 disabled:text-slate-400"
               />
             </div>
             <div>
               <label
                 htmlFor="widget-name"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
               >
                 Display Name
               </label>
@@ -173,13 +173,13 @@ export function WidgetFormModal({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Custom Widget"
                 required
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
               Description
             </label>
             <textarea
@@ -187,19 +187,19 @@ export function WidgetFormModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What does this widget do?"
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -209,24 +209,24 @@ export function WidgetFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Icon
               </label>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-[#1a2436] flex items-center justify-center shrink-0">
                   <DynamicIcon
                     name={icon || "widgets"}
-                    className="w-5 h-5 text-slate-500"
+                    className="w-5 h-5 text-slate-500 dark:text-slate-400"
                   />
                 </div>
                 <input
                   value={icon}
                   onChange={(e) => setIcon(e.target.value)}
                   placeholder="material icon name"
-                  className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                 Use{" "}
                 <a
                   href="https://fonts.google.com/icons"
@@ -243,7 +243,7 @@ export function WidgetFormModal({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                 Config Schema
               </label>
               <button
@@ -266,7 +266,7 @@ export function WidgetFormModal({
                   onChange={(e) => handleRawJsonChange(e.target.value)}
                   rows={12}
                   spellCheck={false}
-                  className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-slate-50 resize-none"
+                  className="w-full px-3 py-2 text-xs font-mono border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-slate-50 dark:bg-[#121a2b] resize-none"
                 />
                 {jsonError && (
                   <p className="text-[10px] text-red-500 mt-1">{jsonError}</p>
@@ -284,7 +284,7 @@ export function WidgetFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44] transition-colors"
             >
               Cancel
             </button>

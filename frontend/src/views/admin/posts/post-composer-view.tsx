@@ -246,12 +246,12 @@ export function PostComposerView() {
 
   return (
     <div className="flex flex-col h-full overflow-auto">
-      <header className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between flex-wrap gap-3">
+      <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-content-1000">
+          <h1 className="text-lg font-semibold text-content-1000 dark:text-slate-100">
             {postId ? "Chỉnh sửa bài đăng" : "Tạo bài đăng mới"}
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Lưu draft để soạn nội dung. Tạo layout để có trang public — một bài
             có thể được gắn vào nhiều layout khác nhau.
           </p>
@@ -259,7 +259,7 @@ export function PostComposerView() {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/posts/list"
-            className="px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50"
+            className="px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44]"
           >
             Danh sách bài đăng
           </Link>
@@ -284,7 +284,7 @@ export function PostComposerView() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <label
-              className="block text-xs font-semibold text-slate-700 mb-1"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-title"
             >
               Tiêu đề
@@ -293,13 +293,13 @@ export function PostComposerView() {
               id="post-title"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Ví dụ: Thông báo đăng ký học phần HK2"
             />
           </div>
           <div>
             <label
-              className="block text-xs font-semibold text-slate-700 mb-1"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-status"
             >
               Trạng thái bài đăng
@@ -316,7 +316,7 @@ export function PostComposerView() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              className="block text-xs font-semibold text-slate-700 mb-1"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-slug"
             >
               Slug
@@ -328,13 +328,13 @@ export function PostComposerView() {
                 setSlug(e.target.value);
                 setSlugTouched(true);
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 font-mono"
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 font-mono"
               placeholder="tin-tuc-thong-bao-..."
             />
           </div>
           <div>
             <label
-              className="block text-xs font-semibold text-slate-700 mb-1"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-category"
             >
               Danh mục
@@ -350,12 +350,12 @@ export function PostComposerView() {
 
         <section>
           <label
-            className="block text-xs font-semibold text-slate-700 mb-1"
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
             htmlFor="post-tags"
           >
             Tags (Enter hoặc dấu phẩy để thêm)
           </label>
-          <div className="flex flex-wrap items-center gap-1 w-full min-h-[38px] px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-blue-200 bg-white">
+          <div className="flex flex-wrap items-center gap-1 w-full min-h-[38px] px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-200 bg-white dark:bg-[#1a2436]">
             {tagSlugs.map((tag) => (
               <span
                 key={tag}
@@ -385,7 +385,7 @@ export function PostComposerView() {
         </section>
 
         <section>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Ảnh bìa
           </label>
           <div className="flex flex-wrap items-start gap-3">
@@ -396,7 +396,7 @@ export function PostComposerView() {
                 setCoverMediaId(null);
               }}
               placeholder="URL ảnh hoặc chọn từ thư viện"
-              className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
+              className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
             />
             <button
               type="button"
@@ -410,12 +410,12 @@ export function PostComposerView() {
                 value={coverAlt}
                 onChange={(e) => setCoverAlt(e.target.value)}
                 placeholder="Alt text"
-                className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
+                className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
               />
             ) : null}
           </div>
           {previewCover ? (
-            <div className="mt-3 max-w-sm rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+            <div className="mt-3 max-w-sm rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b]">
               {/** biome-ignore lint/performance/noImgElement: preview only */}
               <img
                 src={previewCover}
@@ -428,7 +428,7 @@ export function PostComposerView() {
 
         <section>
           <label
-            className="block text-xs font-semibold text-slate-700 mb-1"
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
             htmlFor="post-excerpt"
           >
             Tóm tắt (hiển thị ở danh sách bài đăng)
@@ -438,26 +438,26 @@ export function PostComposerView() {
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
             placeholder="Tóm tắt ngắn 1-2 câu"
           />
         </section>
 
         <section>
-          <label className="block text-xs font-semibold text-slate-700 mb-2">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
             Nội dung bài đăng
           </label>
           <MarkdownEditor value={body} onChange={setBody} />
         </section>
 
-        <section className="border border-slate-200 rounded-lg p-4 bg-white">
-          <h2 className="text-sm font-semibold text-content-1000 mb-3">
+        <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
+          <h2 className="text-sm font-semibold text-content-1000 dark:text-slate-100 mb-3">
             Thông tin sự kiện (tuỳ chọn)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label
-                className="block text-xs font-semibold text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
                 htmlFor="event-start"
               >
                 Bắt đầu
@@ -467,12 +467,12 @@ export function PostComposerView() {
                 type="datetime-local"
                 value={eventStartAt}
                 onChange={(e) => setEventStartAt(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <div>
               <label
-                className="block text-xs font-semibold text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
                 htmlFor="event-end"
               >
                 Kết thúc
@@ -482,12 +482,12 @@ export function PostComposerView() {
                 type="datetime-local"
                 value={eventEndAt}
                 onChange={(e) => setEventEndAt(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <div>
               <label
-                className="block text-xs font-semibold text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
                 htmlFor="event-location"
               >
                 Địa điểm
@@ -496,18 +496,18 @@ export function PostComposerView() {
                 id="event-location"
                 value={eventLocation}
                 onChange={(e) => setEventLocation(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="Ví dụ: Cơ sở Nguyễn Văn Cừ"
               />
             </div>
           </div>
         </section>
 
-        <section className="border border-slate-200 rounded-lg p-4 bg-white">
-          <h2 className="text-sm font-semibold text-content-1000 mb-3">
+        <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
+          <h2 className="text-sm font-semibold text-content-1000 dark:text-slate-100 mb-3">
             Layout public
           </h2>
-          <p className="text-xs text-slate-500 mb-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             Bạn có thể để trống — bài đăng sẽ là draft trong hệ thống. Khi muốn
             xuất hiện ở public, chọn 1 layout mẫu và bấm "Tạo layout từ bài
             đăng". Mỗi layout độc lập: bạn có thể tạo nhiều layout khác nhau từ
@@ -516,7 +516,7 @@ export function PostComposerView() {
 
           {attachedLayouts.length ? (
             <div className="mb-4">
-              <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
                 Layouts đã gắn
               </p>
               <div className="flex flex-wrap gap-2">
@@ -530,7 +530,7 @@ export function PostComposerView() {
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[240px]">
               <label
-                className="block text-xs font-semibold text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
                 htmlFor="template-layout"
               >
                 Layout mẫu
@@ -560,9 +560,9 @@ export function PostComposerView() {
             </button>
           </div>
           {templateLayoutId && slug ? (
-            <p className="text-[11px] text-slate-500 mt-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
               URL public sẽ là:{" "}
-              <span className="font-mono text-slate-700">
+              <span className="font-mono text-slate-700 dark:text-slate-200">
                 /
                 {[
                   layoutsQuery.data?.find((l) => l.id === templateLayoutId)
@@ -601,16 +601,16 @@ export function PostComposerView() {
             if (e.target === e.currentTarget) setScheduleModalOpen(false);
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
-            <h3 className="text-base font-semibold text-slate-900 mb-1">
+          <div className="bg-white dark:bg-[#1a2436] rounded-xl shadow-xl w-full max-w-md p-5">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
               Lên lịch xuất bản
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               Cron worker chuyển trạng thái sang PUBLISHED và đồng bộ lại các
               layout đã đính kèm khi đến thời điểm.
             </p>
             <label
-              className="block text-xs font-semibold text-slate-700 mb-1"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-scheduled-at"
             >
               Thời gian xuất bản
@@ -620,7 +620,7 @@ export function PostComposerView() {
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white dark:bg-[#1a2436]"
               // biome-ignore lint/a11y/noAutofocus: modal entry point
               autoFocus
             />
@@ -628,7 +628,7 @@ export function PostComposerView() {
               <button
                 type="button"
                 onClick={() => setScheduleModalOpen(false)}
-                className="px-3 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50"
+                className="px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44]"
               >
                 Hủy
               </button>

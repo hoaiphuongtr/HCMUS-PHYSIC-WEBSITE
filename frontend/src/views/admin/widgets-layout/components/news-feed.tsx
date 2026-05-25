@@ -70,8 +70,8 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
   const href = post.layoutSlug ? `${prefix}/${post.layoutSlug}` : null;
 
   const cardInner = (
-    <article className="group relative h-full flex flex-col bg-white">
-      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
+    <article className="group relative h-full flex flex-col bg-white dark:bg-[#1a2436]">
+      <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
         {post.coverUrl ? (
           <img
             src={resolveMediaUrl(post.coverUrl)}
@@ -82,7 +82,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-            <ImageIcon className="w-9 h-9 text-slate-400" />
+            <ImageIcon className="w-9 h-9 text-slate-400 dark:text-slate-500" />
           </div>
         )}
       </div>
@@ -97,11 +97,11 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
           />
           <span>{catLabel}</span>
         </div>
-        <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 line-clamp-2">
+        <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
           {title}
         </h3>
         {dateText && (
-          <p className="text-[12px] text-slate-500 mt-2">{dateText}</p>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">{dateText}</p>
         )}
       </div>
     </article>
@@ -140,10 +140,10 @@ function EventCard({
     locale === "en" ? "Add to Google Calendar" : "Thêm vào Google Calendar";
 
   return (
-    <article className="group relative h-full flex flex-col bg-white">
+    <article className="group relative h-full flex flex-col bg-white dark:bg-[#1a2436]">
       {href ? (
         <Link href={href} className="block">
-          <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
+          <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
             {post.coverUrl ? (
               <img
                 src={resolveMediaUrl(post.coverUrl)}
@@ -154,13 +154,13 @@ function EventCard({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-                <Calendar className="w-9 h-9 text-slate-400" />
+                <Calendar className="w-9 h-9 text-slate-400 dark:text-slate-500" />
               </div>
             )}
           </div>
         </Link>
       ) : (
-        <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100">
+        <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
           {post.coverUrl ? (
             <img
               src={resolveMediaUrl(post.coverUrl)}
@@ -171,7 +171,7 @@ function EventCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-              <Calendar className="w-9 h-9 text-slate-400" />
+              <Calendar className="w-9 h-9 text-slate-400 dark:text-slate-500" />
             </div>
           )}
         </div>
@@ -189,23 +189,23 @@ function EventCard({
         </div>
         {href ? (
           <Link href={href}>
-            <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 line-clamp-2">
+            <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
               {title}
             </h3>
           </Link>
         ) : (
-          <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 line-clamp-2">
+          <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
             {title}
           </h3>
         )}
         {dateText && (
-          <p className="text-[12px] text-slate-500 mt-2">{dateText}</p>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">{dateText}</p>
         )}
         <a
           href={gcalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute right-0 bottom-0 w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          className="absolute right-0 bottom-0 w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
           title={ariaLabel}
           aria-label={ariaLabel}
         >
@@ -241,7 +241,7 @@ function NewsFeedHeader({
       {viewAllLabel && viewAllUrl && (
         <Link
           href={viewAllUrl}
-          className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+          className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors"
         >
           {viewAllLabel} →
         </Link>
@@ -326,7 +326,7 @@ function LatestNewsAutoRender({
         accentColor={accentColor || "#1e40af"}
       />
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-400 dark:text-slate-500">
           {locale === "en"
             ? "No news yet. Snapshot will populate after publishing a post."
             : "Chưa có tin tức nào. Snapshot sẽ tự cập nhật khi có bài đăng được publish."}
@@ -404,7 +404,7 @@ function UpcomingEventsAutoRender({
         accentColor={accentColor || "#059669"}
       />
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-400 dark:text-slate-500">
           {locale === "en"
             ? "No upcoming events. Snapshot will populate after publishing an event."
             : "Hiện chưa có sự kiện sắp tới. Snapshot sẽ tự cập nhật khi publish sự kiện."}
@@ -604,7 +604,7 @@ function NewsListPaginatedRender({
 
       <div className="flex flex-wrap items-end gap-3 mb-6">
         <form onSubmit={submitSearch} className="flex-1 min-w-[240px]">
-          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
             {locale === "en" ? "Search" : "Tìm kiếm"}
           </label>
           <div className="relative">
@@ -617,11 +617,11 @@ function NewsListPaginatedRender({
                   ? "Title, slug, excerpt..."
                   : "Tiêu đề, slug, tóm tắt..."
               }
-              className="w-full px-3 py-2 pr-10 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full px-3 py-2 pr-10 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
             />
             <button
               type="submit"
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900"
               aria-label="Search"
             >
               <Search className="w-[18px] h-[18px]" />
@@ -629,13 +629,13 @@ function NewsListPaginatedRender({
           </div>
         </form>
         <div className="min-w-[160px]">
-          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
             {locale === "en" ? "Category" : "Danh mục"}
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200 bg-white dark:bg-[#1a2436]"
           >
             {ALL_CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
@@ -645,31 +645,31 @@ function NewsListPaginatedRender({
           </select>
         </div>
         <div className="min-w-[140px]">
-          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
             {locale === "en" ? "From date" : "Từ ngày"}
           </label>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
         <div className="min-w-[140px]">
-          <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
             {locale === "en" ? "To date" : "Đến ngày"}
           </label>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
       </div>
 
       {items.length === 0 && !loading ? (
-        <p className="text-sm text-slate-400 text-center py-12">
+        <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-12">
           {locale === "en"
             ? "No posts match the filters."
             : "Không có bài viết nào phù hợp."}
@@ -689,7 +689,7 @@ function NewsListPaginatedRender({
 
       {isEditing ? (
         items.length > 0 && (
-          <p className="text-center text-[11px] text-slate-400 py-4 italic">
+          <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 py-4 italic">
             Preview chỉ hiển thị {Math.min(items.length, PAGE_SIZE)} bài đầu.
             Public site sẽ infinite scroll khi user kéo xuống.
           </p>
@@ -699,15 +699,15 @@ function NewsListPaginatedRender({
           {hasMore && (
             <div ref={sentinelRef} className="flex justify-center py-8">
               {loading && (
-                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                  <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-blue-600 animate-spin" />
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <span className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-blue-600 animate-spin" />
                   {locale === "en" ? "Loading..." : "Đang tải..."}
                 </span>
               )}
             </div>
           )}
           {!hasMore && items.length > 0 && (
-            <p className="text-center text-xs text-slate-400 py-6">
+            <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-6">
               {locale === "en" ? "End of list." : "Đã hết bài."}
             </p>
           )}

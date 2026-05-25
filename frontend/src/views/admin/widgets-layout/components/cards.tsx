@@ -206,7 +206,7 @@ function EventCardRender({
     <a
       href={isEditing ? "#" : linkUrl || "#"}
       tabIndex={isEditing ? -1 : undefined}
-      className="flex gap-4 p-4 rounded-xl border border-slate-200 hover:shadow-lg hover:-translate-y-0.5 transition-all group bg-white"
+      className="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:-translate-y-0.5 transition-all group bg-white dark:bg-[#1a2436]"
     >
       <div
         className="shrink-0 w-16 h-16 rounded-lg flex flex-col items-center justify-center text-white"
@@ -218,10 +218,10 @@ function EventCardRender({
         </span>
       </div>
       <div className="min-w-0">
-        <h4 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+        <h4 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-700 transition-colors line-clamp-2">
           {titleText}
         </h4>
-        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
           {time && (
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />

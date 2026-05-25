@@ -97,7 +97,7 @@ function NavbarMenuButton({
       </a>
       {hasChildren && open && (
         <div className="absolute left-0 top-full pt-2 z-50">
-          <div className="min-w-[220px] rounded-lg border border-slate-200 bg-white shadow-lg overflow-visible">
+          <div className="min-w-[220px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-visible">
             <ul role="menu" className="py-1">
               {item.children.map((child, j) => (
                 <NavbarChildItem
@@ -152,7 +152,7 @@ function NavbarChildItem({
         onClick={(e) => {
           if (isEditing) e.preventDefault();
         }}
-        className="navbar-child-link flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors hover:bg-slate-50"
+        className="navbar-child-link flex items-center justify-between gap-2 px-3 py-2 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-[#202c44]"
         style={
           {
             color: "#1e293b",
@@ -165,7 +165,7 @@ function NavbarChildItem({
       </a>
       {hasSubs && open && (
         <div className="absolute left-full top-0 pl-1 z-50">
-          <div className="min-w-[200px] rounded-lg border border-slate-200 bg-white shadow-lg">
+          <div className="min-w-[200px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg">
             <ul role="menu" className="py-1">
               {child.subChildren.map((sub, k) => (
                 <li key={k} role="none">
@@ -176,7 +176,7 @@ function NavbarChildItem({
                     onClick={(e) => {
                       if (isEditing) e.preventDefault();
                     }}
-                    className="navbar-child-link block px-3 py-2 text-sm hover:bg-slate-50 transition-colors"
+                    className="navbar-child-link block px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-[#202c44] transition-colors"
                     style={
                       {
                         color: "#1e293b",
@@ -280,7 +280,7 @@ function NavbarClient({
             <button
               type="button"
               onClick={() => !isEditing && setSearchOpen(true)}
-              className="ml-2 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors"
+              className="ml-2 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
               style={{ color: textColor || "#1e293b" }}
               aria-label="Search"
             >
@@ -292,7 +292,7 @@ function NavbarClient({
               <button
                 type="button"
                 onClick={() => !isEditing && setLangOpen((p) => !p)}
-                className="ml-1 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors"
+                className="ml-1 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
                 style={{ color: textColor || "#1e293b" }}
                 aria-haspopup="menu"
                 aria-expanded={langOpen}
@@ -308,7 +308,7 @@ function NavbarClient({
                     className="fixed inset-0 z-40 cursor-default"
                     aria-label="Close language menu"
                   />
-                  <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden">
+                  <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-hidden">
                     <ul role="menu">
                       {LOCALES.map((code) => {
                         const isActive = code === locale;
@@ -684,7 +684,7 @@ function NavLinksRender({
         >
           <span>{t(link.label, locale)}</span>
           {showArrow !== false && (
-            <span className="text-slate-400 ml-2">&raquo;</span>
+            <span className="text-slate-400 dark:text-slate-500 ml-2">&raquo;</span>
           )}
         </a>
       ))}
@@ -805,7 +805,7 @@ function QuickLinksRender({
           key={i}
           href={isEditing ? "#" : link.url || "#"}
           tabIndex={isEditing ? -1 : undefined}
-          className="flex flex-col items-center gap-2 py-4 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex flex-col items-center gap-2 py-4 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44] transition-colors"
         >
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
@@ -813,7 +813,7 @@ function QuickLinksRender({
           >
             <DynamicIcon name={link.icon || "link"} className="w-5 h-5" />
           </div>
-          <span className="text-xs font-medium text-slate-600 text-center">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 text-center">
             {t(link.label, locale)}
           </span>
         </a>
@@ -1049,7 +1049,7 @@ function LanguageSwitcherClient({
       <button
         type="button"
         onClick={() => !isEditing && setOpen((p) => !p)}
-        className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-100 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
         style={{ color: textColor || "#0c2340" }}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -1070,7 +1070,7 @@ function LanguageSwitcherClient({
             className="fixed inset-0 z-40 cursor-default"
             aria-label="Close"
           />
-          <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden">
+          <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-hidden">
             <ul role="menu">
               {LOCALE_OPTIONS.map((opt) => (
                 <li key={opt.code} role="none">

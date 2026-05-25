@@ -45,14 +45,10 @@ export function WidgetInstanceCard({
   return (
     <div
       onClick={onSelect}
-      className={`rounded-xl border-2 transition-all cursor-pointer group relative ${
-        isSelected
-          ? "border-blue-400 shadow-lg shadow-blue-100/50 ring-2 ring-blue-100"
-          : "border-transparent hover:border-slate-200 hover:shadow-md"
-      } ${!instance.isVisible ? "opacity-50" : ""}`}
+      className={`rounded-xl border-2 transition-all cursor-pointer group relative ${ isSelected ? "border-blue-400 shadow-lg shadow-blue-100/50 ring-2 ring-blue-100" : "border-transparent hover:border-slate-200 hover:shadow-md" } ${!instance.isVisible ? "opacity-50" : ""}`}
     >
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex items-center bg-white/90 shadow-sm border border-slate-200 rounded-md overflow-hidden">
+        <div className="flex items-center bg-white dark:bg-[#1a2436]/90 shadow-sm border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden">
           {COL_SPAN_OPTIONS.map((opt) => (
             <button
               type="button"
@@ -61,11 +57,7 @@ export function WidgetInstanceCard({
                 e.stopPropagation();
                 onUpdateWidget(instance.id, { colSpan: opt.value });
               }}
-              className={`px-1.5 py-0.5 text-[9px] font-medium transition-colors ${
-                (instance.colSpan || 12) === opt.value
-                  ? "bg-blue-500 text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              }`}
+              className={`px-1.5 py-0.5 text-[9px] font-medium transition-colors ${ (instance.colSpan || 12) === opt.value ? "bg-blue-500 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#202c44]" }`}
               title={`Width: ${opt.label}`}
             >
               {opt.label}
@@ -78,7 +70,7 @@ export function WidgetInstanceCard({
             e.stopPropagation();
             onUpdateWidget(instance.id, { isVisible: !instance.isVisible });
           }}
-          className="p-1 rounded-md bg-white/90 shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-500"
+          className="p-1 rounded-md bg-white dark:bg-[#1a2436]/90 shadow-sm border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#202c44] text-slate-500 dark:text-slate-400"
           title={instance.isVisible ? "Hide" : "Show"}
         >
           {instance.isVisible ? (
@@ -93,14 +85,14 @@ export function WidgetInstanceCard({
             e.stopPropagation();
             onRemoveWidget(instance.id);
           }}
-          className="p-1 rounded-md bg-white/90 shadow-sm border border-red-200 hover:bg-red-50 text-red-400 hover:text-red-600"
+          className="p-1 rounded-md bg-white dark:bg-[#1a2436]/90 shadow-sm border border-red-200 hover:bg-red-50 text-red-400 hover:text-red-600"
           title="Remove"
         >
           <XIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      <div className="bg-white rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#1a2436] rounded-xl overflow-hidden">
         <div className="p-3">
           <WidgetPreview
             type={widget?.type || ""}
@@ -110,13 +102,13 @@ export function WidgetInstanceCard({
           />
         </div>
 
-        <div className="px-3 py-2 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+        <div className="px-3 py-2 bg-slate-50 dark:bg-[#121a2b]/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <DynamicIcon
               name={widget?.icon || "widgets"}
-              className="w-3.5 h-3.5 text-slate-400"
+              className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500"
             />
-            <span className="text-[11px] font-medium text-slate-600">
+            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
               {widget?.name || "Unknown"}
             </span>
           </div>
@@ -127,7 +119,7 @@ export function WidgetInstanceCard({
                   ?.label || `${instance.colSpan}/12`}
               </span>
             )}
-            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-200/60 text-slate-500">
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-200 dark:bg-[#202c44]/60 text-slate-500 dark:text-slate-400">
               {widget?.type}
             </span>
           </div>

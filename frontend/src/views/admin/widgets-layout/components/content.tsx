@@ -244,11 +244,11 @@ function IconTextRender({
         style={{ color: iconColor || "#3b82f6" }}
       />
       <div>
-        <div className="text-base font-semibold text-slate-800">
+        <div className="text-base font-semibold text-slate-800 dark:text-slate-100">
           {titleText || "Feature"}
         </div>
         {descriptionText && (
-          <div className="text-sm text-slate-500 mt-1">{descriptionText}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{descriptionText}</div>
         )}
       </div>
     </div>
@@ -672,20 +672,20 @@ function NewsCardRender({
           decoding="async"
         />
       ) : (
-        <div className="w-full aspect-video bg-slate-100 rounded-md mb-2 flex items-center justify-center">
+        <div className="w-full aspect-video bg-slate-100 dark:bg-[#1a2436] rounded-md mb-2 flex items-center justify-center">
           <ImageIcon className="w-6 h-6 text-slate-300" />
         </div>
       )}
-      <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+      <h4 className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors line-clamp-2">
         {titleText}
       </h4>
-      <p className="text-xs text-slate-400 mt-1">{dateText}</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{dateText}</p>
     </a>
   ) : (
     <a
       href={isEditing ? "#" : linkUrl || "#"}
       tabIndex={isEditing ? -1 : undefined}
-      className="flex gap-3 group py-2 border-b border-slate-100 last:border-0"
+      className="flex gap-3 group py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
     >
       {imageUrl ? (
         <img
@@ -696,15 +696,15 @@ function NewsCardRender({
           decoding="async"
         />
       ) : (
-        <div className="w-20 h-14 bg-slate-100 rounded shrink-0 flex items-center justify-center">
+        <div className="w-20 h-14 bg-slate-100 dark:bg-[#1a2436] rounded shrink-0 flex items-center justify-center">
           <ImageIcon className="w-[18px] h-[18px] text-slate-300" />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-medium text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+        <h4 className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors line-clamp-2">
           {titleText}
         </h4>
-        <p className="text-xs text-slate-400 mt-1">{dateText}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{dateText}</p>
       </div>
     </a>
   );
@@ -774,7 +774,7 @@ function ProfileCardRender({
       tabIndex={isEditing ? -1 : undefined}
       className="block text-center group"
     >
-      <div className="relative border border-slate-200 rounded-lg overflow-hidden shadow-sm mb-3">
+      <div className="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -784,7 +784,7 @@ function ProfileCardRender({
             decoding="async"
           />
         ) : (
-          <div className="w-full aspect-[3/4] bg-slate-100 flex items-center justify-center">
+          <div className="w-full aspect-[3/4] bg-slate-100 dark:bg-[#1a2436] flex items-center justify-center">
             <User className="w-12 h-12 text-slate-300" />
           </div>
         )}
@@ -801,7 +801,7 @@ function ProfileCardRender({
       <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
         {nameText}
       </h4>
-      <p className="text-xs text-slate-500 mt-1">{roleText}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{roleText}</p>
     </a>
   );
 }
@@ -951,8 +951,8 @@ function ImageTextBlockClient({
               decoding="async"
             />
           ) : (
-            <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-slate-400" />
+            <div className="absolute inset-0 bg-slate-200 dark:bg-[#202c44] flex items-center justify-center">
+              <ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />
             </div>
           )}
         </div>
@@ -965,12 +965,12 @@ function ImageTextBlockClient({
           }}
         >
           {headlineText && (
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
               {headlineText}
             </h2>
           )}
           {bodyText && (
-            <p className="text-lg text-slate-600 leading-relaxed mb-8">
+            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
               {bodyText}
             </p>
           )}
@@ -981,7 +981,7 @@ function ImageTextBlockClient({
                   <div className="text-4xl font-bold text-blue-800">
                     {s.value}
                   </div>
-                  <div className="text-sm text-slate-500 mt-1 uppercase tracking-wider">
+                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
                     {t(s.label, locale)}
                   </div>
                 </div>
@@ -1030,8 +1030,8 @@ function ImageTextBlockClient({
               decoding="async"
             />
           ) : (
-            <div className="w-full aspect-[4/3] bg-slate-200 flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-slate-400" />
+            <div className="w-full aspect-[4/3] bg-slate-200 dark:bg-[#202c44] flex items-center justify-center">
+              <ImageIcon className="w-12 h-12 text-slate-400 dark:text-slate-500" />
             </div>
           )}
         </div>
@@ -1044,12 +1044,12 @@ function ImageTextBlockClient({
           }}
         >
           {headlineText && (
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4 leading-tight">
               {headlineText}
             </h2>
           )}
           {bodyText && (
-            <p className="text-base text-slate-600 leading-relaxed mb-6">
+            <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
               {bodyText}
             </p>
           )}
@@ -1060,7 +1060,7 @@ function ImageTextBlockClient({
                   <div className="text-3xl font-bold text-blue-800">
                     {s.value}
                   </div>
-                  <div className="text-sm text-slate-500 mt-1">
+                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     {t(s.label, locale)}
                   </div>
                 </div>
