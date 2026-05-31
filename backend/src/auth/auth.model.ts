@@ -34,6 +34,7 @@ export const CreateAdminBodySchema = z
     position: z.string().optional(),
     bio: z.string().optional(),
     departmentId: z.string().optional(),
+    newDepartmentName: z.string().min(1).max(200).optional(),
     avatarUrl: z.string().optional(),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {

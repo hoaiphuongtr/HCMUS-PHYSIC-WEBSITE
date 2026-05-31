@@ -99,6 +99,7 @@ export const authApi = {
     position?: string;
     bio?: string;
     departmentId?: string;
+    newDepartmentName?: string;
     avatarUrl?: string;
   }) {
     return authFetch<UserProfile>("/auth/create-admin", {

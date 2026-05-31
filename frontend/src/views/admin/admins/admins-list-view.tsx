@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -10,7 +11,7 @@ import {
   Users as UsersIcon,
   WifiIcon,
 } from "@/components/admin/icons";
-import { type AdminListItem, adminApi } from "@/lib/api";
+import { type AdminListItem, adminApi, authApi } from "@/lib/api";
 
 const PAGE_SIZE = 10;
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
@@ -52,11 +53,24 @@ const computeStatus = (a: AdminListItem) => {
 };
 
 export function AdminsListView() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
+
+  const { data: profile } = useQuery({
+    queryKey: ["AUTH", "PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+
+  useEffect(() => {
+    if (profile && profile.role !== "SUPER_ADMIN") {
+      router.replace("/admin");
+    }
+  }, [profile, router]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ADMINS", { page, pageSize: PAGE_SIZE }],
     queryFn: () => adminApi.list({ page, pageSize: PAGE_SIZE }),
+    enabled: profile?.role === "SUPER_ADMIN",
   });
 
   const items = data?.items ?? [];
@@ -120,11 +134,11 @@ export function AdminsListView() {
           </div>
 
           {isLoading ? (
-            <p className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-center px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
               Đang tải…
             </p>
           ) : items.length === 0 ? (
-            <p className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-center px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
               Chưa có admin nào. Bấm "Create Admin" để thêm.
             </p>
           ) : (
@@ -191,8 +205,11 @@ export function AdminsListView() {
           {total > 0 && (
             <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#101622]">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Showing <strong>{pageStart}-{pageEnd}</strong> of{" "}
-                <strong>{total}</strong> admins
+                Showing{" "}
+                <strong>
+                  {pageStart}-{pageEnd}
+                </strong>{" "}
+                of <strong>{total}</strong> admins
               </p>
               <div className="flex items-center gap-1">
                 <button
@@ -255,13 +272,7 @@ function StatCard({
   );
 }
 
-function Avatar({
-  url,
-  initials,
-}: {
-  url: string | null;
-  initials: string;
-}) {
+function Avatar({ url, initials }: { url: string | null; initials: string }) {
   if (url) {
     return (
       // biome-ignore lint/performance/noImgElement: avatar from arbitrary backend host

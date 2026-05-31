@@ -7,7 +7,7 @@ export class AdminRepository {
 
   listPaged(skip: number, take: number) {
     return this.prisma.user.findMany({
-      where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+      where: { role: 'ADMIN' },
       orderBy: [{ createdAt: 'desc' }],
       skip,
       take,
@@ -29,14 +29,14 @@ export class AdminRepository {
 
   count() {
     return this.prisma.user.count({
-      where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+      where: { role: 'ADMIN' },
     });
   }
 
   countActiveSince(since: Date) {
     return this.prisma.user.count({
       where: {
-        role: { in: ['ADMIN', 'SUPER_ADMIN'] },
+        role: 'ADMIN',
         lastLoginAt: { gte: since },
       },
     });

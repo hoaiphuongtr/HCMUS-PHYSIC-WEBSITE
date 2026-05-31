@@ -3,10 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { toast } from "react-toastify";
 import { ChevronLeftIcon } from "@/components/admin/icons";
-import { adminApi, departmentApi, authApi } from "@/lib/api";
+import { authApi, departmentApi } from "@/lib/api";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type FormState = {
@@ -39,17 +39,21 @@ export function AdminCreateView() {
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const { data: profile } = useQuery({
+    queryKey: ["AUTH", "PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+
+  useEffect(() => {
+    if (profile && profile.role !== "SUPER_ADMIN") {
+      router.replace("/admin");
+    }
+  }, [profile, router]);
+
   const { data: departments = [] } = useQuery({
     queryKey: ["DEPARTMENTS"],
     queryFn: () => departmentApi.list(),
-  });
-
-  const createDept = useMutation({
-    mutationKey: ["DEPARTMENTS", "CREATE"],
-    mutationFn: (name: string) => departmentApi.create({ name }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["DEPARTMENTS"] });
-    },
+    enabled: profile?.role === "SUPER_ADMIN",
   });
 
   const createAdminMut = useMutation({
@@ -77,13 +81,10 @@ export function AdminCreateView() {
     }
     setSubmitting(true);
     try {
-      let departmentId = form.departmentId || undefined;
-      if (createNewDept && form.newDepartmentName.trim()) {
-        const newDept = await createDept.mutateAsync(
-          form.newDepartmentName.trim(),
-        );
-        departmentId = newDept.id;
-      }
+      const newDepartmentName =
+        createNewDept && form.newDepartmentName.trim()
+          ? form.newDepartmentName.trim()
+          : undefined;
       await createAdminMut.mutateAsync({
         email: form.email.trim(),
         password: form.password,
@@ -91,11 +92,15 @@ export function AdminCreateView() {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         position: form.position.trim() || undefined,
-        departmentId,
+        departmentId: newDepartmentName
+          ? undefined
+          : form.departmentId || undefined,
+        newDepartmentName,
         avatarUrl: form.avatarUrl || undefined,
       });
       toast.success("Đã tạo admin mới");
       queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+      queryClient.invalidateQueries({ queryKey: ["DEPARTMENTS"] });
       router.push("/admin/admins");
     } catch (err) {
       const msg =
@@ -329,13 +334,18 @@ function Field({
   placeholder?: string;
   className?: string;
 }) {
+  const id = useId();
   return (
     <div className={className}>
-      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+      <label
+        htmlFor={id}
+        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
+      >
         {label}
         {required && <span className="text-rose-500 ml-0.5">*</span>}
       </label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

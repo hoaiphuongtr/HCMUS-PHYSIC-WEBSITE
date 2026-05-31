@@ -26,7 +26,7 @@ import {
 import { CreateAccessTokenPayload } from '../shared/types/jwt.type';
 import { DepartmentRepository } from '../department/department.repo';
 import { EmailService } from '../shared/email/email.service';
-import { generateOTP } from '../shared/helpers';
+import { generateOTP, toSlug } from '../shared/helpers';
 import envConfig from '../shared/config/config';
 import { VerificationCodeType } from '../generated/prisma/client';
 
@@ -43,6 +43,9 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.authRepository.findUniqueUserById(userId);
     if (!user) throw InvalidEmailException;
+    this.authRepository
+      .touchLastLogin(userId)
+      .catch(() => undefined);
     return user;
   }
 
@@ -68,12 +71,19 @@ export class AuthService {
       body.email,
     );
     if (existing) throw EmailAlreadyExistsException;
-    if (body.departmentId) {
-      const department = await this.departmentRepository.findById(
-        body.departmentId,
-      );
+
+    let departmentId = body.departmentId;
+    if (departmentId) {
+      const department =
+        await this.departmentRepository.findById(departmentId);
       if (!department) throw DepartmentNotFoundException;
+    } else if (body.newDepartmentName) {
+      const name = body.newDepartmentName.trim();
+      const slug = toSlug(name);
+      const created = await this.departmentRepository.create({ name, slug });
+      departmentId = created.id;
     }
+
     const hashedPassword = await this.hashingService.hash(body.password);
     return this.authRepository.createUser({
       email: body.email,
@@ -84,7 +94,7 @@ export class AuthService {
       phone: body.phone,
       position: body.position,
       bio: body.bio,
-      departmentId: body.departmentId,
+      departmentId,
       avatarUrl: body.avatarUrl,
     });
   }
