@@ -316,13 +316,13 @@ export class PageLayoutRepository {
         include: {
           publishedByUser: {
             select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            avatarUrl: true,
-            position: true,
-          },
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              avatarUrl: true,
+              position: true,
+            },
           },
         },
       });

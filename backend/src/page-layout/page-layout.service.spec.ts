@@ -113,10 +113,7 @@ describe('PageLayoutService versioning', () => {
       expect(repo.publish.mock.invocationCallOrder[0]).toBeLessThan(
         repo.snapshotPublishedVersion.mock.invocationCallOrder[0],
       );
-      expect(revalidate.trigger).toHaveBeenCalledWith([
-        'sitemap',
-        'page:home',
-      ]);
+      expect(revalidate.trigger).toHaveBeenCalledWith(['sitemap', 'page:home']);
     });
 
     it('rejects when another layout already publishes the slug', async () => {
@@ -208,9 +205,9 @@ describe('PageLayoutService versioning', () => {
         pageLayoutId: 'other-layout',
       });
 
-      await expect(
-        service.getVersion('layout-1', 'ver-1'),
-      ).rejects.toBe(PageLayoutVersionNotFoundException);
+      await expect(service.getVersion('layout-1', 'ver-1')).rejects.toBe(
+        PageLayoutVersionNotFoundException,
+      );
     });
 
     it('returns the version when ownership matches', async () => {
@@ -269,16 +266,13 @@ describe('PageLayoutService versioning', () => {
         'layout-1',
         'user-1',
       );
-      expect(repo.restoreVersionAsDraft.mock.invocationCallOrder[0]).toBeLessThan(
-        repo.publish.mock.invocationCallOrder[0],
-      );
+      expect(
+        repo.restoreVersionAsDraft.mock.invocationCallOrder[0],
+      ).toBeLessThan(repo.publish.mock.invocationCallOrder[0]);
       expect(repo.publish.mock.invocationCallOrder[0]).toBeLessThan(
         repo.snapshotPublishedVersion.mock.invocationCallOrder[0],
       );
-      expect(revalidate.trigger).toHaveBeenCalledWith([
-        'sitemap',
-        'page:home',
-      ]);
+      expect(revalidate.trigger).toHaveBeenCalledWith(['sitemap', 'page:home']);
     });
 
     it('throws when version not found', async () => {

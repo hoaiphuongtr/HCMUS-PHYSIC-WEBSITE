@@ -219,7 +219,9 @@ export function WidgetsLayoutView() {
               onClick={() => {
                 const targetId = openMenuLayout.id;
                 setLayoutMenuId(null);
-                router.push(`/admin/widgets-layout/${targetId}/version-history`);
+                router.push(
+                  `/admin/widgets-layout/${targetId}/version-history`,
+                );
               }}
               className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
             >

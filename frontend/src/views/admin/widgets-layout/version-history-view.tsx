@@ -4,10 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "@/components/admin/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/admin/icons";
 import { type PageLayoutVersion, pageLayoutApi } from "@/lib/api";
 import { VersionCompareModal } from "./version-compare-modal";
 
@@ -169,7 +166,9 @@ export function VersionHistoryView({ layoutId }: VersionHistoryViewProps) {
           <div className="flex gap-3 shrink-0">
             <StatCard
               label="CURRENT VERSION"
-              value={currentVersion ? `v${currentVersion.versionNumber}.0` : "—"}
+              value={
+                currentVersion ? `v${currentVersion.versionNumber}.0` : "—"
+              }
               accent="text-slate-900 dark:text-slate-100"
             />
             <StatCard
@@ -200,8 +199,7 @@ export function VersionHistoryView({ layoutId }: VersionHistoryViewProps) {
             <ul>
               {pageRows.map((v) => {
                 const isCurrent = v.status === "CURRENT";
-                const isPending =
-                  rollback.isPending && pendingId === v.id;
+                const isPending = rollback.isPending && pendingId === v.id;
                 return (
                   <li
                     key={v.id}
@@ -360,13 +358,7 @@ function StatCard({
   );
 }
 
-function Avatar({
-  url,
-  initials,
-}: {
-  url: string | null;
-  initials: string;
-}) {
+function Avatar({ url, initials }: { url: string | null; initials: string }) {
   if (url) {
     return (
       // biome-ignore lint/performance/noImgElement: avatar from arbitrary backend host, intentionally bypassing next/image
