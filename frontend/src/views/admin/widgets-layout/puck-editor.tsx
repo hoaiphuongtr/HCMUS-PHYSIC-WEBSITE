@@ -536,7 +536,9 @@ function PublishMenu({
                         />
                         <span className="flex-1 truncate">
                           <span className="font-semibold">{l.name}</span>
-                          <span className="text-slate-400 dark:text-slate-500 ml-1">/{l.slug}</span>
+                          <span className="text-slate-400 dark:text-slate-500 ml-1">
+                            /{l.slug}
+                          </span>
                         </span>
                         {l.isPublished ? (
                           <span className="text-[10px] text-green-600">
@@ -590,10 +592,10 @@ export function PuckEditor({
   onLayoutChanged: (updated: PageLayout) => void;
   isSaving: boolean;
 }) {
-  const initialData = useMemo(() => {
+  const [initialData] = useState(() => {
     if (layout.puckData) return layout.puckData;
     return { root: {}, content: [] };
-  }, [layout.puckData]);
+  });
 
   const handlePublish = useCallback(
     (data: any) => {
