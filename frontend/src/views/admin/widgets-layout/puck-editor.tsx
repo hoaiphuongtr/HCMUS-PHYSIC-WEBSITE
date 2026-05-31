@@ -678,7 +678,7 @@ function PuckLocaleTabs() {
         const isActive = code === locale;
         const className = isActive
           ? "px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-600 text-white"
-          : "px-2 py-0.5 rounded text-[11px] font-medium text-slate-600 hover:bg-white hover:text-slate-900";
+          : "px-2 py-0.5 rounded text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1a2436] hover:text-slate-900 dark:hover:text-white";
         return (
           <button
             key={code}

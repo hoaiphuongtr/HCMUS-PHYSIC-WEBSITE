@@ -188,8 +188,8 @@ export function VersionCompareModal({
     >
       <DialogContent className="!max-w-6xl w-[95vw] sm:!max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-4">
-            <DialogTitle>
+          <div className="flex items-center justify-between gap-4 pr-10">
+            <DialogTitle className="min-w-0 truncate">
               Comparison Preview ({targetLabel} vs {baselineLabel})
             </DialogTitle>
             <button

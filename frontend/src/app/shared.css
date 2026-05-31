@@ -154,6 +154,100 @@
   scroll-behavior: auto;
 }
 
+/* Dark-mode overrides for Puck editor chrome. Inherited via .dark on the
+   AdminThemeProvider wrapper. Puck reads its own CSS variables, so plain
+   Tailwind dark: variants can't reach inside — we have to swap the vars. */
+.dark .puck-editor-wrapper {
+  --puck-color-white: #101622;
+  --puck-color-black: #f1f5f9;
+  --puck-color-grey-01: #f8fafc;
+  --puck-color-grey-02: #e2e8f0;
+  --puck-color-grey-03: #cbd5e1;
+  --puck-color-grey-04: #94a3b8;
+  --puck-color-grey-05: #64748b;
+  --puck-color-grey-06: #475569;
+  --puck-color-grey-07: #334155;
+  --puck-color-grey-08: #243043;
+  --puck-color-grey-09: #1a2436;
+  --puck-color-grey-10: #141d2c;
+  --puck-color-grey-11: #101622;
+  --puck-color-grey-12: #0b1120;
+  /* Hover/selection accents — push azure-12 to a dark surface and azure-04
+     (used for hover text) to a light blue so the tile reads correctly. */
+  --puck-color-azure-12: #243043;
+  --puck-color-azure-11: #1f2c44;
+  --puck-color-azure-10: #1d3b66;
+  --puck-color-azure-09: #1e4f93;
+  --puck-color-azure-08: #2a66b8;
+  --puck-color-azure-07: #3b82e0;
+  --puck-color-azure-06: #60a5fa;
+  --puck-color-azure-05: #93c5fd;
+  --puck-color-azure-04: #bfdbfe;
+  --puck-color-azure-03: #dbeafe;
+  --puck-color-azure-02: #e6f0ff;
+  --puck-color-azure-01: #f0f6ff;
+}
+
+.dark .puck-editor-wrapper {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+/* Header + side panels surface colors. */
+.dark .puck-editor-wrapper [class*="PuckHeader"],
+.dark .puck-editor-wrapper [class*="PuckLayout-header"],
+.dark .puck-editor-wrapper [class*="Sidebar_"],
+.dark .puck-editor-wrapper [class*="Sidebar--"],
+.dark .puck-editor-wrapper [class*="SidebarSection"],
+.dark .puck-editor-wrapper [class*="PuckFields"] {
+  background-color: #101622;
+  color: #f1f5f9;
+  border-color: #1f2937;
+}
+
+/* Block tiles in left panel — give them a visible dark surface. */
+.dark .puck-editor-wrapper [class*="DrawerItem"] {
+  background-color: #1a2436;
+  color: #e2e8f0;
+  border-color: #243043;
+}
+.dark .puck-editor-wrapper [class*="DrawerItem"]:hover,
+.dark .puck-editor-wrapper [class*="DrawerItem--draggable"]:hover {
+  background-color: #243043;
+}
+
+/* Field labels + input text inside Puck right panel. */
+.dark .puck-editor-wrapper input,
+.dark .puck-editor-wrapper textarea,
+.dark .puck-editor-wrapper select {
+  background-color: #1a2436;
+  color: #e2e8f0;
+  border-color: #243043;
+}
+.dark .puck-editor-wrapper input::placeholder,
+.dark .puck-editor-wrapper textarea::placeholder {
+  color: #64748b;
+}
+.dark .puck-editor-wrapper label,
+.dark .puck-editor-wrapper legend {
+  color: #cbd5e1;
+}
+
+/* Tab pills (Blocks / Outline) and section titles. */
+.dark .puck-editor-wrapper [class*="SidebarSection-title"],
+.dark .puck-editor-wrapper [class*="Puck-header-title"] {
+  color: #f1f5f9;
+}
+
+/* Canvas background — keep light so the rendered page still previews
+   accurately, but separate it from the dark chrome via a soft border. */
+.dark .puck-editor-wrapper [class*="PuckCanvas"] {
+  background-color: #0b1120;
+}
+.dark .puck-editor-wrapper [class*="PuckCanvas"] > iframe {
+  background-color: #ffffff;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
