@@ -89,6 +89,70 @@ export const authApi = {
   googleLink() {
     return apiFetch<{ url: string }>("/auth/google-link");
   },
+  createAdmin(body: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    position?: string;
+    bio?: string;
+    departmentId?: string;
+    avatarUrl?: string;
+  }) {
+    return authFetch<UserProfile>("/auth/create-admin", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+};
+
+export type AdminListItem = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
+  position: string | null;
+  role: "SUPER_ADMIN" | "ADMIN";
+  isActive: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  department: { id: string; name: string } | null;
+};
+
+export const adminApi = {
+  list(params: { page?: number; pageSize?: number } = {}) {
+    return authFetch<{
+      items: AdminListItem[];
+      total: number;
+      activeNow: number;
+      page: number;
+      pageSize: number;
+    }>(`/admins${buildQuery(params)}`);
+  },
+};
+
+export type Department = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const departmentApi = {
+  list() {
+    return authFetch<Department[]>("/departments");
+  },
+  create(body: { name: string; description?: string }) {
+    return authFetch<Department>("/departments", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 export type WidgetType = {

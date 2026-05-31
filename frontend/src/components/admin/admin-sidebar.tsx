@@ -43,7 +43,10 @@ const NAV_ITEMS: NavItem[] = [
 
 const SYSTEM_ITEMS: NavItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "Users & Roles", href: "/admin/users", icon: Users },
+];
+
+const SUPER_ADMIN_ITEMS: NavItem[] = [
+  { name: "Admin Management", href: "/admin/admins", icon: Users },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -203,6 +206,10 @@ export function AdminSidebar() {
           (collapsed ? "px-2" : "px-3")
         }
       >
+        {profile?.role === "SUPER_ADMIN" &&
+          SUPER_ADMIN_ITEMS.map((item) =>
+            renderNavItem(item, isPathActive(pathname, item.href)),
+          )}
         {SYSTEM_ITEMS.map((item) =>
           renderNavItem(item, isPathActive(pathname, item.href)),
         )}

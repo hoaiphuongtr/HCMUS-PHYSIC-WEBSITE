@@ -56,6 +56,7 @@ export class AuthService {
       user.password,
     );
     if (!isPasswordMatch) throw InvalidPasswordException;
+    await this.authRepository.touchLastLogin(user.id);
     return this.generateTokens({
       userId: user.id,
       roleName: user.role as RoleName,
@@ -84,6 +85,7 @@ export class AuthService {
       position: body.position,
       bio: body.bio,
       departmentId: body.departmentId,
+      avatarUrl: body.avatarUrl,
     });
   }
 

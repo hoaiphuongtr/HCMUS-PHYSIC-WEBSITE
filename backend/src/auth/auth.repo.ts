@@ -29,6 +29,7 @@ export class AuthRepository {
     position?: string;
     bio?: string;
     departmentId?: string;
+    avatarUrl?: string;
   }) {
     return this.prisma.user.create({ data, omit: { password: true } });
   }
@@ -37,6 +38,13 @@ export class AuthRepository {
     return this.prisma.user.update({
       where: { email },
       data: { password },
+    });
+  }
+
+  touchLastLogin(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
     });
   }
 

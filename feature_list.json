@@ -73,6 +73,14 @@
       "evidence": ""
     },
     {
+      "id": "feat-011",
+      "name": "Admin Management (super-admin only)",
+      "description": "Super-admin-only page at /admin/admins listing all admins (name + email, department, status Active/Offline/Disabled, last login). Stat cards: Total Admins, Active Now (= lastLoginAt within 5 min). Subroute /admin/admins/new with form: avatar (Media picker), first/last name, login email, position, department (select existing or create new inline), default password. POST /auth/create-admin (already SuperAdmin-guarded) + new GET /admins endpoint. Sidebar renames 'Users & Roles' to 'Admin Management' and only renders for SUPER_ADMIN role. Login flow now stamps lastLoginAt. P0 ships without filter / bulk select / sub-role tabs (deferred).",
+      "dependencies": ["feat-002", "feat-007"],
+      "status": "done",
+      "evidence": "Backend admin module (GET /admins paged + activeNow); auth.createAdmin extended with avatarUrl; login touches lastLoginAt. Admin routes /admin/admins + /admin/admins/new with table, stat cards, create form (inline new-department, Media picker avatar). Sidebar guards 'Admin Management' link behind SUPER_ADMIN role."
+    },
+    {
       "id": "feat-010",
       "name": "Widgets-layout versioning (published + archived) with rollback",
       "description": "Add version history to PageLayout: persist a snapshot of puckData (+ metadata: title, slug, publishedAt, publishedBy) every time a layout is published or unpublished. Mark prior published version as ARCHIVED/STALE when a new one goes live. Admin UI: version list panel inside widgets-layout editor with status badges (CURRENT / ARCHIVED), preview each version, one-click rollback (clone archived snapshot back to draft or directly republish). Backend: new PageLayoutVersion model (Prisma), endpoints list/get/rollback, cron-aware (scheduled publish must also create a version row). Public site renders only the current published version; archived rows are admin-only.",

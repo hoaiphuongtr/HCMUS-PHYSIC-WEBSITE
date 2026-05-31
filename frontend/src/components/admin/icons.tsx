@@ -71,6 +71,7 @@ import {
   UploadCloud,
   User,
   Users,
+  Wifi,
   X,
 } from "lucide-react";
 
@@ -239,5 +240,8 @@ export {
   Trash2 as TrashIcon,
   Upload as UploadIcon,
   UploadCloud as UploadCloudIcon,
+  User as UserIcon,
+  Users,
+  Wifi as WifiIcon,
   X as XIcon,
 };
