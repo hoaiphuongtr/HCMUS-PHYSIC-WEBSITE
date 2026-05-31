@@ -179,7 +179,9 @@ function FieldRow({
           {isNumber && (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">Min</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Min
+                </span>
                 <input
                   type="number"
                   value={field.min ?? ""}
@@ -192,7 +194,9 @@ function FieldRow({
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">Max</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Max
+                </span>
                 <input
                   type="number"
                   value={field.max ?? ""}

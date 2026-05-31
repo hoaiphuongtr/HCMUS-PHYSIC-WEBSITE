@@ -131,7 +131,10 @@ const LocalizedTextInput = ({
   return (
     <div className="space-y-2 min-w-0">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-        <DynamicIcon name="translate" className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+        <DynamicIcon
+          name="translate"
+          className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500"
+        />
         {label}
       </div>
       {LOCALES.map((locale) => (

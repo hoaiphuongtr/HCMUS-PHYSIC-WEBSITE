@@ -187,7 +187,9 @@ export function MediaDetailModal({
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {tagSlugs.length === 0 ? (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">Chưa có tag</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                      Chưa có tag
+                    </span>
                   ) : (
                     tagSlugs.map((slug) => (
                       <span

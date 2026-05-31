@@ -248,7 +248,9 @@ function IconTextRender({
           {titleText || "Feature"}
         </div>
         {descriptionText && (
-          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{descriptionText}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {descriptionText}
+          </div>
         )}
       </div>
     </div>
@@ -679,7 +681,9 @@ function NewsCardRender({
       <h4 className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors line-clamp-2">
         {titleText}
       </h4>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{dateText}</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        {dateText}
+      </p>
     </a>
   ) : (
     <a
@@ -704,7 +708,9 @@ function NewsCardRender({
         <h4 className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 transition-colors line-clamp-2">
           {titleText}
         </h4>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{dateText}</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          {dateText}
+        </p>
       </div>
     </a>
   );
@@ -801,7 +807,9 @@ function ProfileCardRender({
       <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
         {nameText}
       </h4>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{roleText}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        {roleText}
+      </p>
     </a>
   );
 }

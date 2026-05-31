@@ -45,7 +45,7 @@ export function WidgetInstanceCard({
   return (
     <div
       onClick={onSelect}
-      className={`rounded-xl border-2 transition-all cursor-pointer group relative ${ isSelected ? "border-blue-400 shadow-lg shadow-blue-100/50 ring-2 ring-blue-100" : "border-transparent hover:border-slate-200 hover:shadow-md" } ${!instance.isVisible ? "opacity-50" : ""}`}
+      className={`rounded-xl border-2 transition-all cursor-pointer group relative ${isSelected ? "border-blue-400 shadow-lg shadow-blue-100/50 ring-2 ring-blue-100" : "border-transparent hover:border-slate-200 hover:shadow-md"} ${!instance.isVisible ? "opacity-50" : ""}`}
     >
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="flex items-center bg-white dark:bg-[#1a2436]/90 shadow-sm border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden">
@@ -57,7 +57,7 @@ export function WidgetInstanceCard({
                 e.stopPropagation();
                 onUpdateWidget(instance.id, { colSpan: opt.value });
               }}
-              className={`px-1.5 py-0.5 text-[9px] font-medium transition-colors ${ (instance.colSpan || 12) === opt.value ? "bg-blue-500 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#202c44]" }`}
+              className={`px-1.5 py-0.5 text-[9px] font-medium transition-colors ${(instance.colSpan || 12) === opt.value ? "bg-blue-500 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#202c44]"}`}
               title={`Width: ${opt.label}`}
             >
               {opt.label}

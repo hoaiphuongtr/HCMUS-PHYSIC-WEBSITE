@@ -491,7 +491,10 @@ function PostHeaderRender({
   const cat = categoryLabel || t(defaultCategoryLabel, locale);
   const dateLine = formatPublishedHeader(publishedAt, locale);
   return (
-    <header data-post-body className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
+    <header
+      data-post-body
+      className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6"
+    >
       <div className="flex items-start justify-between gap-4 mb-3">
         <span className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {cat}

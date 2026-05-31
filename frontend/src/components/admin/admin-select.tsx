@@ -47,7 +47,9 @@ export function AdminSelect({
           .join(" ")}
       >
         {value === "" ? (
-          <span className="text-slate-400 dark:text-slate-500">{placeholder}</span>
+          <span className="text-slate-400 dark:text-slate-500">
+            {placeholder}
+          </span>
         ) : (
           <span className="flex flex-1 text-left">
             {options.find((o) => o.value === value)?.label ?? value}
@@ -56,7 +58,10 @@ export function AdminSelect({
       </SelectTrigger>
       <SelectContent align="start" alignItemWithTrigger={false}>
         {clearLabel ? (
-          <SelectItem value={null} className="text-sm italic text-slate-500 dark:text-slate-400">
+          <SelectItem
+            value={null}
+            className="text-sm italic text-slate-500 dark:text-slate-400"
+          >
             {clearLabel}
           </SelectItem>
         ) : null}

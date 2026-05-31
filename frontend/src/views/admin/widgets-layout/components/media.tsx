@@ -111,7 +111,9 @@ function ImageBlockRender({
         </div>
       )}
       {captionText && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">{captionText}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mt-2">
+          {captionText}
+        </p>
       )}
     </div>
   );
@@ -227,7 +229,9 @@ export const VideoEmbed: ComponentConfig<{
     return (
       <div>
         {title && (
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">{title}</h3>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">
+            {title}
+          </h3>
         )}
         {videoUrl ? (
           <iframe

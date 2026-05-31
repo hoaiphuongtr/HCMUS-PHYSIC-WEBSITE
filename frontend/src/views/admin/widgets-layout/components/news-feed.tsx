@@ -101,7 +101,9 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
           {title}
         </h3>
         {dateText && (
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">{dateText}</p>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">
+            {dateText}
+          </p>
         )}
       </div>
     </article>
@@ -199,7 +201,9 @@ function EventCard({
           </h3>
         )}
         {dateText && (
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">{dateText}</p>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">
+            {dateText}
+          </p>
         )}
         <a
           href={gcalUrl}

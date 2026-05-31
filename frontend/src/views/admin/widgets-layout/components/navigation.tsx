@@ -684,7 +684,9 @@ function NavLinksRender({
         >
           <span>{t(link.label, locale)}</span>
           {showArrow !== false && (
-            <span className="text-slate-400 dark:text-slate-500 ml-2">&raquo;</span>
+            <span className="text-slate-400 dark:text-slate-500 ml-2">
+              &raquo;
+            </span>
           )}
         </a>
       ))}

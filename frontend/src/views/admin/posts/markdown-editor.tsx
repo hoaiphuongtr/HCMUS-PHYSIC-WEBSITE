@@ -73,7 +73,10 @@ const ToolbarButton = ({
 );
 
 const ToolbarDivider = () => (
-  <span aria-hidden="true" className="w-px h-5 bg-slate-200 dark:bg-[#202c44] mx-1" />
+  <span
+    aria-hidden="true"
+    className="w-px h-5 bg-slate-200 dark:bg-[#202c44] mx-1"
+  />
 );
 
 function setBlockType(editor: EditorInstance, value: string) {
@@ -407,7 +410,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     editorProps: {
       attributes: {
         class:
-          "prose prose-slate max-w-none min-h-[300px] focus:outline-none px-4 py-3 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1",
+          "prose prose-slate max-w-none min-h-[300px] max-h-[600px] overflow-y-auto focus:outline-none px-4 py-3 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1",
       },
     },
     onUpdate({ editor: ed }) {
@@ -806,7 +809,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           {tableOpen ? (
             <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-blue-50 text-xs">
               <label className="flex items-center gap-1">
-                <span className="text-slate-600 dark:text-slate-300">Số dòng:</span>
+                <span className="text-slate-600 dark:text-slate-300">
+                  Số dòng:
+                </span>
                 <input
                   type="number"
                   min={1}
@@ -821,7 +826,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 />
               </label>
               <label className="flex items-center gap-1">
-                <span className="text-slate-600 dark:text-slate-300">Số cột:</span>
+                <span className="text-slate-600 dark:text-slate-300">
+                  Số cột:
+                </span>
                 <input
                   type="number"
                   min={1}
@@ -863,7 +870,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           ) : null}
         </>
       ) : (
-        <div className="px-4 py-3 min-h-[300px]">
+        <div className="px-4 py-3 min-h-[300px] max-h-[600px] overflow-y-auto">
           {value.trim() ? (
             <article
               className="prose prose-slate max-w-none prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"

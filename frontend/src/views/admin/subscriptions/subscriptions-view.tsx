@@ -12,7 +12,9 @@ export function SubscriptionsView() {
   return (
     <div className="p-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Subscribers</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Subscribers
+        </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {subscriptions.length} người đã đăng ký nhận thông báo qua email.
         </p>
@@ -50,14 +52,19 @@ export function SubscriptionsView() {
               </tr>
             ) : (
               subscriptions.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-[#202c44]/50">
+                <tr
+                  key={s.id}
+                  className="hover:bg-slate-50 dark:hover:bg-[#202c44]/50"
+                >
                   <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
                     {s.email}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {s.tagSlugs.length === 0 ? (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                          —
+                        </span>
                       ) : (
                         s.tagSlugs.map((tag) => (
                           <span
@@ -79,7 +86,9 @@ export function SubscriptionsView() {
                         {new Date(s.verifiedAt).toLocaleDateString()}
                       </span>
                     ) : (
-                      <span className="text-slate-400 dark:text-slate-500">Pending</span>
+                      <span className="text-slate-400 dark:text-slate-500">
+                        Pending
+                      </span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">

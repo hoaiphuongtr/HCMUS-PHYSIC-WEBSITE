@@ -13,7 +13,10 @@ function NavBarPreview({ config }: PreviewProps) {
       </div>
       <div className="flex items-center gap-2">
         {(config.menuItems || []).slice(0, 5).map((_: unknown, i: number) => (
-          <div key={i} className="w-10 h-1.5 rounded bg-white dark:bg-[#1a2436]/20" />
+          <div
+            key={i}
+            className="w-10 h-1.5 rounded bg-white dark:bg-[#1a2436]/20"
+          />
         ))}
       </div>
       {config.showSearch && (
@@ -233,7 +236,10 @@ function EventsCalendarPreview({ config }: PreviewProps) {
         </div>
         <div className="grid grid-cols-7 gap-px text-center">
           {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
-            <div key={d} className="text-[7px] text-slate-400 dark:text-slate-500 font-medium">
+            <div
+              key={d}
+              className="text-[7px] text-slate-400 dark:text-slate-500 font-medium"
+            >
               {d}
             </div>
           ))}
@@ -322,7 +328,10 @@ function FooterPreview({ config }: PreviewProps) {
           {(config.footerLinks || [])
             .slice(0, 3)
             .map((_: unknown, i: number) => (
-              <div key={i} className="w-14 h-1 rounded bg-white dark:bg-[#1a2436]/15" />
+              <div
+                key={i}
+                className="w-14 h-1 rounded bg-white dark:bg-[#1a2436]/15"
+              />
             ))}
         </div>
         <div className="space-y-1">
@@ -635,7 +644,9 @@ function NavLinksPreview({ config }: PreviewProps) {
         >
           <span>{link.label}</span>
           {config.showArrow !== false && (
-            <span className="text-slate-400 dark:text-slate-500 ml-2">&raquo;</span>
+            <span className="text-slate-400 dark:text-slate-500 ml-2">
+              &raquo;
+            </span>
           )}
         </div>
       ))}
