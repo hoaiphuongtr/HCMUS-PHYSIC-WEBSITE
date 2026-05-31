@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  ClockIcon,
   CopyIcon,
   DynamicIcon,
   MoreVerticalIcon,
@@ -212,6 +213,18 @@ export function WidgetsLayoutView() {
             >
               <CopyIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
               Duplicate
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const targetId = openMenuLayout.id;
+                setLayoutMenuId(null);
+                router.push(`/admin/widgets-layout/${targetId}/version-history`);
+              }}
+              className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
+            >
+              <ClockIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              Version history
             </button>
             <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
             <button

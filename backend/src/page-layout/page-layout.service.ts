@@ -17,9 +17,11 @@ import {
 import {
   PageLayoutSlugExistsException,
   PageLayoutNotFoundException,
+  PageLayoutVersionNotFoundException,
   WidgetInstanceNotFoundException,
   slugExistsInStatusException,
 } from './page-layout.error';
+import type { RollbackPageLayoutVersionBodyType } from './page-layout.model';
 import { WidgetNotFoundException } from '../widget/widget.error';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 
@@ -55,6 +57,10 @@ export class PageLayoutService {
           );
         }
         await this.pageLayoutRepository.publish(layout.id);
+        await this.pageLayoutRepository.snapshotPublishedVersion(
+          layout.id,
+          layout.createdBy,
+        );
         publishedSlugs.push(layout.slug);
         this.logger.log(`Auto-published scheduled layout ${layout.id}`);
       } catch (err) {
@@ -125,7 +131,7 @@ export class PageLayoutService {
     return result;
   }
 
-  async publish(id: string) {
+  async publish(id: string, userId: string) {
     const layout = await this.findById(id);
     const conflict = await this.pageLayoutRepository.findAnyPublishedWithSlug(
       layout.slug,
@@ -133,6 +139,7 @@ export class PageLayoutService {
     );
     if (conflict) throw PageLayoutSlugExistsException;
     const result = await this.pageLayoutRepository.publish(id);
+    await this.pageLayoutRepository.snapshotPublishedVersion(id, userId);
     await this.cache.clear();
     this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     return result;
@@ -166,9 +173,62 @@ export class PageLayoutService {
       );
     if (conflict) throw slugExistsInStatusException('draft', conflict.name);
     const result = await this.pageLayoutRepository.unpublish(id);
+    await this.pageLayoutRepository.archiveCurrentVersions(id);
     await this.cache.clear();
     this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     return result;
+  }
+
+  async listVersions(id: string) {
+    const layout = await this.findById(id);
+    let versions = await this.pageLayoutRepository.listVersions(id);
+    if (
+      versions.length === 0 &&
+      layout.isPublished &&
+      layout.publishedPuckData
+    ) {
+      await this.pageLayoutRepository.snapshotPublishedVersion(
+        id,
+        layout.createdBy,
+      );
+      versions = await this.pageLayoutRepository.listVersions(id);
+    }
+    return { versions };
+  }
+
+  async getVersion(id: string, versionId: string) {
+    await this.findById(id);
+    const version = await this.pageLayoutRepository.findVersion(versionId);
+    if (!version || version.pageLayoutId !== id)
+      throw PageLayoutVersionNotFoundException;
+    return version;
+  }
+
+  async rollbackToVersion(
+    id: string,
+    versionId: string,
+    userId: string,
+    body: RollbackPageLayoutVersionBodyType,
+  ) {
+    const layout = await this.findById(id);
+    const version = await this.pageLayoutRepository.findVersion(versionId);
+    if (!version || version.pageLayoutId !== id)
+      throw PageLayoutVersionNotFoundException;
+    if (body.mode === 'republish') {
+      const conflict = await this.pageLayoutRepository.findAnyPublishedWithSlug(
+        layout.slug,
+        id,
+      );
+      if (conflict) throw PageLayoutSlugExistsException;
+    }
+    await this.pageLayoutRepository.restoreVersionAsDraft(id, version.puckData);
+    if (body.mode === 'republish') {
+      await this.pageLayoutRepository.publish(id);
+      await this.pageLayoutRepository.snapshotPublishedVersion(id, userId);
+      this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
+    }
+    await this.cache.clear();
+    return this.findById(id);
   }
 
   async addWidgetInstance(

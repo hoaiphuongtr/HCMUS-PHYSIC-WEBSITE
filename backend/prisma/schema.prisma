@@ -123,6 +123,7 @@ model User {
   chatbotTraining     ChatbotTraining[]
   auditLogs           AuditLog[]
   pageLayouts         PageLayout[]
+  pageLayoutVersions  PageLayoutVersion[]
 
   @@index([role])
   @@index([email])
@@ -408,16 +409,44 @@ model PageLayout {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  createdByUser User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  sourcePost    Post?            @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
+  createdByUser User                @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  sourcePost    Post?               @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
   widgets       WidgetInstance[]
   seoMetadata   SEOMetadata?
+  versions      PageLayoutVersion[]
 
   @@index([slug])
   @@index([isPublished])
   @@index([createdBy])
   @@index([scheduledAt])
   @@index([sourcePostId])
+}
+
+enum PageLayoutVersionStatus {
+  CURRENT
+  ARCHIVED
+}
+
+model PageLayoutVersion {
+  id           String                  @id @default(cuid())
+  pageLayoutId String
+  versionNumber Int
+  name         String
+  slug         String
+  description  String?
+  puckData     Json?
+  status       PageLayoutVersionStatus @default(ARCHIVED)
+  publishedAt  DateTime
+  publishedBy  String
+  createdAt    DateTime                @default(now())
+
+  pageLayout      PageLayout @relation(fields: [pageLayoutId], references: [id], onDelete: Cascade)
+  publishedByUser User       @relation(fields: [publishedBy], references: [id], onDelete: Cascade)
+
+  @@unique([pageLayoutId, versionNumber])
+  @@index([pageLayoutId])
+  @@index([status])
+  @@index([publishedAt])
 }
 
 model Tag {

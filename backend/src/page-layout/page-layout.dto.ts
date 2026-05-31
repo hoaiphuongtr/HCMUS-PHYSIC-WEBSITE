@@ -11,6 +11,9 @@ import {
   PageLayoutResSchema,
   WidgetInstanceResSchema,
   MessageResSchema,
+  PageLayoutVersionResSchema,
+  PageLayoutVersionListResSchema,
+  RollbackPageLayoutVersionBodySchema,
 } from './page-layout.model';
 
 export class CreatePageLayoutBodyDTO extends createZodDto(
@@ -40,3 +43,12 @@ export class DuplicatePageLayoutBodyDTO extends createZodDto(
   DuplicatePageLayoutBodySchema,
 ) {}
 export class PageLayoutMessageResDTO extends createZodDto(MessageResSchema) {}
+export class PageLayoutVersionResDTO extends createZodDto(
+  PageLayoutVersionResSchema,
+) {}
+export class PageLayoutVersionListResDTO extends createZodDto(
+  PageLayoutVersionListResSchema,
+) {}
+export class RollbackPageLayoutVersionBodyDTO extends createZodDto(
+  RollbackPageLayoutVersionBodySchema,
+) {}

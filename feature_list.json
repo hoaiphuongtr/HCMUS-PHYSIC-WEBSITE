@@ -1,0 +1,84 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Baseline & Verification",
+      "description": "Clean checkout installs and verifies: pnpm install, lint, test (backend+admin), build across backend/admin/public, plus pnpm tc type-check. Docker stack (docker compose up) and Prisma migrate/seed run from clean state.",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "Root package.json scripts: dev/build/test/lint/tc; docker-compose.yml; backend/prisma migrations + db:seed-all"
+    },
+    {
+      "id": "feat-002",
+      "name": "User / Auth (backend)",
+      "description": "User accounts, login, AuthGuard + RolesGuard role-based access. Foundation every protected module depends on.",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "backend SharedModule AuthGuard/RolesGuard; User/Auth module per docs/architecture.md section 2"
+    },
+    {
+      "id": "feat-003",
+      "name": "PageLayout module (backend)",
+      "description": "Page layout CRUD, publish, schedule, clone. Puck-based layout templates that Posts clone into.",
+      "dependencies": ["feat-002"],
+      "status": "done",
+      "evidence": "backend PageLayout module (CRUD/publish/schedule/clone) per docs/architecture.md"
+    },
+    {
+      "id": "feat-004",
+      "name": "Post module (backend)",
+      "description": "Post CRUD, clone-into-layout (POST /posts/:id/clone-into-layout injects post into puckData), cron publish (per-minute in-process cron).",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "evidence": "backend Post module; clone-into-layout endpoint + cron publish per docs/architecture.md section 3"
+    },
+    {
+      "id": "feat-005",
+      "name": "Widget / Media / Subscription / Visitor (backend)",
+      "description": "Widget registry, Media upload+tag, tag-based Subscription notify, Visitor analytics. Supporting domain modules.",
+      "dependencies": ["feat-002"],
+      "status": "done",
+      "evidence": "backend Widget/Media/Subscription/Visitor modules per docs/architecture.md section 2; db:seed-widgets script"
+    },
+    {
+      "id": "feat-006",
+      "name": "Redis cache invalidation",
+      "description": "Redis as read-cache via CacheManager + KeyvRedis. On any write, the owning NestJS service clears affected cache keys. Backend stays stateless.",
+      "dependencies": ["feat-003", "feat-004"],
+      "status": "done",
+      "evidence": "SharedModule CacheManager + KeyvRedis; write-then-clear pattern per docs/architecture.md section 1"
+    },
+    {
+      "id": "feat-007",
+      "name": "Admin Console (frontend, :3000)",
+      "description": "Next.js admin app (workspace 'admin', dir frontend/). Post/layout authoring, Puck editor, media manager. Calls NestJS API. Sentry + Playwright e2e + vitest.",
+      "dependencies": ["feat-004", "feat-005"],
+      "status": "done",
+      "evidence": "frontend/ Next.js app name=admin; playwright.config.ts; sentry.*.config.ts"
+    },
+    {
+      "id": "feat-008",
+      "name": "Public Site (frontend-public, :3002)",
+      "description": "Next.js public-facing site (workspace 'public', dir frontend-public/). Renders published page layouts and posts from NestJS API.",
+      "dependencies": ["feat-003", "feat-004"],
+      "status": "done",
+      "evidence": "frontend-public/ Next.js app name=public; public render flow per docs/architecture.md section 3"
+    },
+    {
+      "id": "feat-009",
+      "name": "Legacy migration",
+      "description": "Execute the migration plan in docs/legacy-migration-plan.md. Confirm scope, dependencies, and verification before starting.",
+      "dependencies": ["feat-007", "feat-008"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-010",
+      "name": "Widgets-layout versioning (published + archived) with rollback",
+      "description": "Add version history to PageLayout: persist a snapshot of puckData (+ metadata: title, slug, publishedAt, publishedBy) every time a layout is published or unpublished. Mark prior published version as ARCHIVED/STALE when a new one goes live. Admin UI: version list panel inside widgets-layout editor with status badges (CURRENT / ARCHIVED), preview each version, one-click rollback (clone archived snapshot back to draft or directly republish). Backend: new PageLayoutVersion model (Prisma), endpoints list/get/rollback, cron-aware (scheduled publish must also create a version row). Public site renders only the current published version; archived rows are admin-only.",
+      "dependencies": ["feat-003", "feat-007"],
+      "status": "done",
+      "evidence": "Prisma migration 20260531033039_add_page_layout_versions; backend page-layout module: listVersions (lazy-backfills v1 when published layout has 0 rows) / getVersion / rollbackVersion (modes: draft / republish); admin route /admin/widgets-layout/[id]/version-history with side-by-side JSON diff modal; 16/16 backend unit tests pass (publish snapshot ordering, rollback slug-conflict-before-mutation, lazy backfill, cron snapshot)."
+    }
+  ]
+}

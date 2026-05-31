@@ -116,3 +116,52 @@ export type DuplicatePageLayoutBodyType = z.infer<
 export const MessageResSchema = z.object({
   message: z.string(),
 });
+
+export const PageLayoutVersionStatusSchema = z.enum(['CURRENT', 'ARCHIVED']);
+export type PageLayoutVersionStatusType = z.infer<
+  typeof PageLayoutVersionStatusSchema
+>;
+
+export const PageLayoutVersionResSchema = z.object({
+  id: z.string(),
+  pageLayoutId: z.string(),
+  versionNumber: z.number().int(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  puckData: z.any().nullable(),
+  status: PageLayoutVersionStatusSchema,
+  publishedAt: z.date(),
+  publishedBy: z.string(),
+  createdAt: z.date(),
+  publishedByUser: z
+    .object({
+      id: z.string(),
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
+      email: z.string(),
+      avatarUrl: z.string().nullable(),
+      position: z.string().nullable(),
+    })
+    .optional(),
+});
+
+export type PageLayoutVersionResType = z.infer<
+  typeof PageLayoutVersionResSchema
+>;
+
+export const PageLayoutVersionListResSchema = z.object({
+  versions: z.array(PageLayoutVersionResSchema),
+});
+
+export type PageLayoutVersionListResType = z.infer<
+  typeof PageLayoutVersionListResSchema
+>;
+
+export const RollbackPageLayoutVersionBodySchema = z.object({
+  mode: z.enum(['draft', 'republish']).default('draft'),
+});
+
+export type RollbackPageLayoutVersionBodyType = z.infer<
+  typeof RollbackPageLayoutVersionBodySchema
+>;

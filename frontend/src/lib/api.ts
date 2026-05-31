@@ -260,6 +260,48 @@ export const pageLayoutApi = {
       body: JSON.stringify({ puckData }),
     });
   },
+  listVersions(layoutId: string) {
+    return authFetch<{ versions: PageLayoutVersion[] }>(
+      `/page-layouts/${layoutId}/versions`,
+    );
+  },
+  getVersion(layoutId: string, versionId: string) {
+    return authFetch<PageLayoutVersion>(
+      `/page-layouts/${layoutId}/versions/${versionId}`,
+    );
+  },
+  rollbackVersion(
+    layoutId: string,
+    versionId: string,
+    mode: "draft" | "republish",
+  ) {
+    return authFetch<PageLayout>(
+      `/page-layouts/${layoutId}/versions/${versionId}/rollback`,
+      { method: "POST", body: JSON.stringify({ mode }) },
+    );
+  },
+};
+
+export type PageLayoutVersion = {
+  id: string;
+  pageLayoutId: string;
+  versionNumber: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  puckData: any | null;
+  status: "CURRENT" | "ARCHIVED";
+  publishedAt: string;
+  publishedBy: string;
+  createdAt: string;
+  publishedByUser?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    avatarUrl: string | null;
+    position: string | null;
+  };
 };
 
 export type Subscription = {

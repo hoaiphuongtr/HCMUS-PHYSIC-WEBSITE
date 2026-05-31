@@ -22,3 +22,7 @@ export const PageLayoutNotFoundException = new NotFoundException([
 export const WidgetInstanceNotFoundException = new NotFoundException([
   { field: 'instanceId', error: 'Widget instance not found' },
 ]);
+
+export const PageLayoutVersionNotFoundException = new NotFoundException([
+  { field: 'versionId', error: 'Page layout version not found' },
+]);

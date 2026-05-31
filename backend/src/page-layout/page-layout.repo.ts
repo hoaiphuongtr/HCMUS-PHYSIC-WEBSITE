@@ -10,7 +10,8 @@ import {
   InputJsonValue,
   JsonValue,
   NullableJsonNullValueInput,
-} from 'src/generated/prisma/internal/prismaNamespace';
+} from '../generated/prisma/internal/prismaNamespace';
+import { PageLayoutVersionStatus } from '../generated/prisma/enums';
 
 const widgetInclude = {
   widget: {
@@ -237,5 +238,110 @@ export class PageLayoutRepository {
       ),
     );
     return this.findById(pageLayoutId);
+  }
+
+  listVersions(pageLayoutId: string) {
+    return this.prisma.pageLayoutVersion.findMany({
+      where: { pageLayoutId },
+      orderBy: { versionNumber: 'desc' },
+      include: {
+        publishedByUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+            position: true,
+          },
+        },
+      },
+    });
+  }
+
+  findVersion(versionId: string) {
+    return this.prisma.pageLayoutVersion.findUnique({
+      where: { id: versionId },
+      include: {
+        publishedByUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+            position: true,
+          },
+        },
+      },
+    });
+  }
+
+  snapshotPublishedVersion(pageLayoutId: string, publishedBy: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const layout = await tx.pageLayout.findUnique({
+        where: { id: pageLayoutId },
+        select: {
+          name: true,
+          slug: true,
+          description: true,
+          publishedPuckData: true,
+          publishedAt: true,
+        },
+      });
+      if (!layout) return null;
+      const next = await tx.pageLayoutVersion.aggregate({
+        where: { pageLayoutId },
+        _max: { versionNumber: true },
+      });
+      const versionNumber = (next._max.versionNumber ?? 0) + 1;
+      await tx.pageLayoutVersion.updateMany({
+        where: { pageLayoutId, status: PageLayoutVersionStatus.CURRENT },
+        data: { status: PageLayoutVersionStatus.ARCHIVED },
+      });
+      return tx.pageLayoutVersion.create({
+        data: {
+          pageLayoutId,
+          versionNumber,
+          name: layout.name,
+          slug: layout.slug,
+          description: layout.description,
+          puckData:
+            (layout.publishedPuckData as InputJsonValue | null | undefined) ??
+            undefined,
+          status: PageLayoutVersionStatus.CURRENT,
+          publishedAt: layout.publishedAt ?? new Date(),
+          publishedBy,
+        },
+        include: {
+          publishedByUser: {
+            select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+            position: true,
+          },
+          },
+        },
+      });
+    });
+  }
+
+  archiveCurrentVersions(pageLayoutId: string) {
+    return this.prisma.pageLayoutVersion.updateMany({
+      where: { pageLayoutId, status: PageLayoutVersionStatus.CURRENT },
+      data: { status: PageLayoutVersionStatus.ARCHIVED },
+    });
+  }
+
+  restoreVersionAsDraft(pageLayoutId: string, puckData: JsonValue | null) {
+    return this.prisma.pageLayout.update({
+      where: { id: pageLayoutId },
+      data: {
+        puckData: (puckData as InputJsonValue | null | undefined) ?? undefined,
+      },
+    });
   }
 }

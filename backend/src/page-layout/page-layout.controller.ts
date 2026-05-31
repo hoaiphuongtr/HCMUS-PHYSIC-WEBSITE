@@ -26,6 +26,9 @@ import {
   PageLayoutResDTO,
   WidgetInstanceResDTO,
   PageLayoutMessageResDTO,
+  PageLayoutVersionResDTO,
+  PageLayoutVersionListResDTO,
+  RollbackPageLayoutVersionBodyDTO,
 } from './page-layout.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -108,8 +111,8 @@ export class PageLayoutController {
   @Post(':id/publish')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  publish(@Param('id') id: string) {
-    return this.pageLayoutService.publish(id);
+  publish(@Param('id') id: string, @ActiveUser('userId') userId: string) {
+    return this.pageLayoutService.publish(id, userId);
   }
 
   @Post(':id/schedule-publish')
@@ -162,5 +165,36 @@ export class PageLayoutController {
   @ZodSerializerDto(PageLayoutResDTO)
   reorderWidgets(@Param('id') id: string, @Body() body: ReorderWidgetsBodyDTO) {
     return this.pageLayoutService.reorderWidgets(id, body);
+  }
+
+  @Get(':id/versions')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutVersionListResDTO)
+  listVersions(@Param('id') id: string) {
+    return this.pageLayoutService.listVersions(id);
+  }
+
+  @Get(':id/versions/:versionId')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutVersionResDTO)
+  getVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.pageLayoutService.getVersion(id, versionId);
+  }
+
+  @Post(':id/versions/:versionId/rollback')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutResDTO)
+  rollbackVersion(
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+    @Body() body: RollbackPageLayoutVersionBodyDTO,
+    @ActiveUser('userId') userId: string,
+  ) {
+    return this.pageLayoutService.rollbackToVersion(
+      id,
+      versionId,
+      userId,
+      body,
+    );
   }
 }
