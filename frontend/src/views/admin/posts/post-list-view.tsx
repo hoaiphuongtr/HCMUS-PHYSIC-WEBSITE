@@ -2,11 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminSelect } from "@/components/admin/admin-select";
 import { useConfirm } from "@/components/use-confirm";
 import {
+  authApi,
   type ContentStatusValue,
   type PostLayoutRef,
   type PostRecord,
@@ -16,6 +17,8 @@ import {
   categoryLabelVi,
   POST_CATEGORY_OPTIONS_VI,
 } from "@/lib/post-categories";
+
+type TabKey = "mine" | "published";
 
 const PAGE_SIZE = 12;
 
@@ -34,14 +37,6 @@ const STATUS_LABELS: Record<ContentStatusValue, string> = {
   PUBLISHED: "Published",
   REJECTED: "Rejected",
 };
-
-const STATUS_OPTIONS: ContentStatusValue[] = [
-  "DRAFT",
-  "PENDING",
-  "SCHEDULED",
-  "PUBLISHED",
-  "REJECTED",
-];
 
 const layoutBadgeStyle = (layout: PostLayoutRef): string => {
   if (layout.isPublished)
@@ -88,9 +83,10 @@ const formatPublicAt = (post: PostRecord): string => {
 export function PostListView() {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
+  const [tab, setTab] = useState<TabKey>("mine");
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState("");
-  const [status, setStatus] = useState("");
+  const [statusInTab, setStatusInTab] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
 
@@ -102,17 +98,36 @@ export function PostListView() {
     return () => window.clearTimeout(id);
   }, [searchInput]);
 
+  const profileQuery = useQuery({
+    queryKey: ["AUTH", "PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+  const ownerId = profileQuery.data?.id;
+  const isSuperAdmin = profileQuery.data?.role === "SUPER_ADMIN";
+
+  // Status param sent to BE differs per tab.
+  // - Published tab: always status=PUBLISHED, never let secondary picker override.
+  // - Mine tab: caller may pick DRAFT or SCHEDULED via the picker; if blank we
+  //   fetch own + published (BE default), then filter to non-published on FE.
+  const serverStatus =
+    tab === "published"
+      ? "PUBLISHED"
+      : statusInTab && statusInTab !== "PUBLISHED"
+        ? statusInTab
+        : undefined;
+
   const listQuery = useQuery({
-    queryKey: ["POSTS", "PAGED", page, category, status, search],
+    queryKey: ["POSTS", "PAGED", tab, page, category, serverStatus, search],
     queryFn: () =>
       postApi.listPaged({
         page,
         pageSize: PAGE_SIZE,
         category: category || undefined,
-        status: status || undefined,
+        status: serverStatus,
         search: search || undefined,
       }),
     placeholderData: (prev) => prev,
+    enabled: profileQuery.data !== undefined,
   });
 
   const deleteMutation = useMutation({
@@ -138,14 +153,33 @@ export function PostListView() {
   };
 
   const data = listQuery.data;
-  const items = data?.items ?? [];
-  const total = data?.total ?? 0;
-  const totalPages = data?.totalPages ?? 1;
-  const hasFilters = Boolean(category || status || search);
+  const rawItems = data?.items ?? [];
+
+  // Mine tab: only own posts + only drafts/scheduled. Server already filtered
+  // to own+published when ADMIN; SUPER_ADMIN sees all so filter by ownerId
+  // ourselves so the "Mine" tab still means "mine".
+  const items = useMemo(() => {
+    if (tab === "published") return rawItems;
+    return rawItems.filter((p) => {
+      if (p.status !== "DRAFT" && p.status !== "SCHEDULED") return false;
+      if (isSuperAdmin) return p.createdBy === ownerId;
+      return p.createdBy === ownerId;
+    });
+  }, [rawItems, tab, ownerId, isSuperAdmin]);
+
+  const total = tab === "published" ? (data?.total ?? 0) : items.length;
+  const totalPages = tab === "published" ? (data?.totalPages ?? 1) : 1;
+  const hasFilters = Boolean(category || statusInTab || search);
+
+  const switchTab = (next: TabKey) => {
+    setTab(next);
+    setPage(1);
+    setStatusInTab("");
+  };
 
   const resetFilters = () => {
     setCategory("");
-    setStatus("");
+    setStatusInTab("");
     setSearchInput("");
     setSearch("");
     setPage(1);
@@ -172,6 +206,45 @@ export function PostListView() {
       </header>
 
       <div className="flex-1 p-6 space-y-4">
+        <div className="flex border-b border-slate-200 dark:border-slate-800">
+          {(
+            [
+              { key: "mine", label: "Bài của tôi" },
+              { key: "published", label: "Đã xuất bản (toàn khoa)" },
+            ] as { key: TabKey; label: string }[]
+          ).map((t) => {
+            const active = tab === t.key;
+            const count = active ? total : null;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => switchTab(t.key)}
+                className={
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors inline-flex items-center gap-2 " +
+                  (active
+                    ? "border-blue-600 text-blue-700 dark:text-blue-300"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200")
+                }
+              >
+                {t.label}
+                {count !== null && (
+                  <span
+                    className={
+                      "px-1.5 py-0.5 rounded-full text-[10px] font-semibold " +
+                      (active
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300")
+                    }
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap items-center gap-3">
           <input
             type="text"
@@ -192,21 +265,22 @@ export function PostListView() {
               options={POST_CATEGORY_OPTIONS_VI}
             />
           </div>
-          <div className="min-w-[180px]">
-            <AdminSelect
-              value={status}
-              onChange={(next) => {
-                setStatus(next);
-                setPage(1);
-              }}
-              placeholder="Tất cả status"
-              clearLabel="Tất cả status"
-              options={STATUS_OPTIONS.map((s) => ({
-                value: s,
-                label: STATUS_LABELS[s],
-              }))}
-            />
-          </div>
+          {tab === "mine" ? (
+            <div className="min-w-[180px]">
+              <AdminSelect
+                value={statusInTab}
+                onChange={(next) => {
+                  setStatusInTab(next);
+                  setPage(1);
+                }}
+                placeholder="Draft & Scheduled"
+                clearLabel="Draft & Scheduled"
+                options={(["DRAFT", "SCHEDULED"] as ContentStatusValue[]).map(
+                  (s) => ({ value: s, label: STATUS_LABELS[s] }),
+                )}
+              />
+            </div>
+          ) : null}
           {hasFilters ? (
             <button
               type="button"
@@ -230,7 +304,9 @@ export function PostListView() {
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {hasFilters
                 ? "Không có bài đăng nào khớp với bộ lọc."
-                : 'Chưa có bài đăng nào. Bấm "Tạo bài đăng mới" để bắt đầu.'}
+                : tab === "mine"
+                  ? 'Bạn chưa có bài đăng nào ở trạng thái Draft / Scheduled. Bấm "Tạo bài đăng mới" để bắt đầu.'
+                  : "Chưa có bài đăng nào được xuất bản."}
             </p>
           </div>
         ) : (
