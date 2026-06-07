@@ -245,10 +245,10 @@ export const widgetApi = {
 
 export const pageLayoutApi = {
   list() {
-    return apiFetch<PageLayout[]>("/page-layouts");
+    return authFetch<PageLayout[]>("/page-layouts");
   },
   getById(id: string) {
-    return apiFetch<PageLayout>(`/page-layouts/${id}`);
+    return authFetch<PageLayout>(`/page-layouts/${id}`);
   },
   getBySlug(slug: string) {
     return apiFetch<PageLayout>(`/page-layouts/slug/${slug}`);
