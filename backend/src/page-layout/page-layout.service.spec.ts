@@ -177,7 +177,7 @@ describe('PageLayoutService versioning', () => {
       repo.publish.mockResolvedValue(sampleLayout);
       repo.snapshotPublishedVersion.mockResolvedValue(sampleVersion);
 
-      await service.publish('layout-1', 'user-1');
+      await service.publish('layout-1', 'user-1', 'ADMIN');
 
       expect(repo.publish).toHaveBeenCalledWith('layout-1');
       expect(repo.snapshotPublishedVersion).toHaveBeenCalledWith(
@@ -194,9 +194,9 @@ describe('PageLayoutService versioning', () => {
       repo.findById.mockResolvedValue(sampleLayout);
       repo.findAnyPublishedWithSlug.mockResolvedValue({ id: 'other' });
 
-      await expect(service.publish('layout-1', 'user-1')).rejects.toBe(
-        PageLayoutSlugExistsException,
-      );
+      await expect(
+        service.publish('layout-1', 'user-1', 'ADMIN'),
+      ).rejects.toBe(PageLayoutSlugExistsException);
       expect(repo.publish).not.toHaveBeenCalled();
       expect(repo.snapshotPublishedVersion).not.toHaveBeenCalled();
     });
@@ -279,15 +279,15 @@ describe('PageLayoutService versioning', () => {
         pageLayoutId: 'other-layout',
       });
 
-      await expect(service.getVersion('layout-1', 'ver-1')).rejects.toBe(
-        PageLayoutVersionNotFoundException,
-      );
+      await expect(
+        service.getVersion('layout-1', 'ver-1', 'user-1', 'ADMIN'),
+      ).rejects.toBe(PageLayoutVersionNotFoundException);
     });
 
     it('returns the version when ownership matches', async () => {
       repo.findById.mockResolvedValue(sampleLayout);
       repo.findVersion.mockResolvedValue(sampleVersion);
-      const v = await service.getVersion('layout-1', 'ver-1');
+      const v = await service.getVersion('layout-1', 'ver-1', 'user-1', 'ADMIN');
       expect(v).toEqual(sampleVersion);
     });
   });

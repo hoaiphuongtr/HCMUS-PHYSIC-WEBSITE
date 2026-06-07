@@ -1,15 +1,16 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
 import envConfig from '../shared/config/config';
 import { AuthRepository } from './auth.repo';
 import { AuthService } from './auth.service';
 import { GoogleAuthStateType } from './auth.model';
 import { RoleName } from '../shared/constants/role.constants';
 
+type GoogleOAuthClient = InstanceType<typeof google.auth.OAuth2>;
+
 @Injectable()
 export class GoogleService {
-  private readonly oauth2Client: OAuth2Client;
+  private readonly oauth2Client: GoogleOAuthClient;
 
   constructor(
     private readonly authRepository: AuthRepository,
