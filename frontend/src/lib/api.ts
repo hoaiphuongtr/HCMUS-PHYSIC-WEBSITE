@@ -49,6 +49,7 @@ export type UserProfile = {
   position: string | null;
   bio: string | null;
   departmentId: string | null;
+  department: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -94,7 +95,7 @@ export const authApi = {
     lastName?: string;
     avatarUrl?: string | null;
     position?: string | null;
-    departmentId?: string | null;
+    departmentName?: string | null;
     phone?: string | null;
   }) {
     return authFetch<UserProfile>("/auth/profile", {

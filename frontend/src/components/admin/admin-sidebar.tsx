@@ -23,7 +23,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAdminTheme } from "@/components/admin/admin-theme";
-import { authApi } from "@/lib/api";
+import { authApi, resolveMediaUrl } from "@/lib/api";
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
 
@@ -145,7 +145,7 @@ export function AdminSidebar() {
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
             <Image
-              src={profile.avatarUrl}
+              src={resolveMediaUrl(profile.avatarUrl)}
               alt={displayName}
               width={36}
               height={36}
@@ -173,7 +173,7 @@ export function AdminSidebar() {
         <div className="flex justify-center py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
             <Image
-              src={profile.avatarUrl}
+              src={resolveMediaUrl(profile.avatarUrl)}
               alt={displayName}
               width={32}
               height={32}

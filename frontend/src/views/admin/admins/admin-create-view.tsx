@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ChevronLeftIcon } from "@/components/admin/icons";
-import { authApi, departmentApi, mediaApi } from "@/lib/api";
+import { authApi, departmentApi, mediaApi, resolveMediaUrl } from "@/lib/api";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type FormState = {
@@ -169,7 +169,7 @@ export function AdminCreateView() {
                 {form.avatarUrl ? (
                   // biome-ignore lint/performance/noImgElement: backend host
                   <img
-                    src={form.avatarUrl}
+                    src={resolveMediaUrl(form.avatarUrl)}
                     alt=""
                     className="w-full h-full object-cover"
                   />

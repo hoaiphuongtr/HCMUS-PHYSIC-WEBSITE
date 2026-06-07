@@ -116,6 +116,10 @@ export const UserResSchema = z.object({
   position: z.string().nullable(),
   bio: z.string().nullable(),
   departmentId: z.string().nullable(),
+  department: z
+    .object({ id: z.string(), name: z.string() })
+    .nullable()
+    .optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -127,7 +131,7 @@ export const UpdateProfileBodySchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   avatarUrl: z.string().nullable().optional(),
   position: z.string().max(200).nullable().optional(),
-  departmentId: z.string().nullable().optional(),
+  departmentName: z.string().max(200).nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
 });
 

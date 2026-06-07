@@ -5,14 +5,14 @@ import { Lock as LockIcon, Save as SaveIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { UserIcon } from "@/components/admin/icons";
-import { authApi, departmentApi, mediaApi } from "@/lib/api";
+import { authApi, mediaApi, resolveMediaUrl } from "@/lib/api";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type ProfileState = {
   firstName: string;
   lastName: string;
   position: string;
-  departmentId: string;
+  departmentName: string;
   phone: string;
   avatarUrl: string | null;
 };
@@ -39,10 +39,6 @@ export function SettingsView() {
     queryKey: ["AUTH", "PROFILE"],
     queryFn: authApi.getProfile,
   });
-  const departmentsQuery = useQuery({
-    queryKey: ["DEPARTMENTS"],
-    queryFn: () => departmentApi.list(),
-  });
 
   const [profile, setProfile] = useState<ProfileState | null>(null);
   const [password, setPassword] = useState<PasswordState>(INITIAL_PASSWORD);
@@ -54,7 +50,7 @@ export function SettingsView() {
       firstName: u.firstName ?? "",
       lastName: u.lastName ?? "",
       position: u.position ?? "",
-      departmentId: u.departmentId ?? "",
+      departmentName: u.department?.name ?? "",
       phone: u.phone ?? "",
       avatarUrl: u.avatarUrl,
     });
@@ -130,7 +126,7 @@ export function SettingsView() {
       firstName: profile.firstName.trim(),
       lastName: profile.lastName.trim(),
       position: profile.position.trim() || null,
-      departmentId: profile.departmentId || null,
+      departmentName: profile.departmentName.trim() || null,
       phone: profile.phone.trim() || null,
       avatarUrl: profile.avatarUrl,
     });
@@ -148,8 +144,6 @@ export function SettingsView() {
     }
     changePassword.mutate(password);
   };
-
-  const departments = departmentsQuery.data ?? [];
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-[#0B1120]">
@@ -240,14 +234,11 @@ export function SettingsView() {
               value={profile.phone}
               onChange={(v) => setField("phone", v)}
             />
-            <SelectField
+            <Field
               label="Department"
-              value={profile.departmentId}
-              onChange={(v) => setField("departmentId", v)}
-              options={[
-                { value: "", label: "— Không chọn —" },
-                ...departments.map((d) => ({ value: d.id, label: d.name })),
-              ]}
+              placeholder="VD: Vật lý Tin học"
+              value={profile.departmentName}
+              onChange={(v) => setField("departmentName", v)}
               className="sm:col-span-2"
             />
           </div>
@@ -259,7 +250,7 @@ export function SettingsView() {
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
             >
               <SaveIcon className="w-4 h-4" />
-              {updateProfile.isPending ? "Đang lưu…" : "Save Changes"}
+              {updateProfile.isPending ? "Đang lưu…" : "Lưu thay đổi"}
             </button>
           </div>
         </form>
@@ -329,16 +320,18 @@ function Field({
   onChange,
   type = "text",
   placeholder,
+  className,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  className?: string;
 }) {
   const id = useId();
   return (
-    <div>
+    <div className={className}>
       <label
         htmlFor={id}
         className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
@@ -357,50 +350,12 @@ function Field({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  className,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  className?: string;
-}) {
-  const id = useId();
-  return (
-    <div className={className}>
-      <label
-        htmlFor={id}
-        className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
-      >
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 function Avatar({ url }: { url: string | null }) {
   if (url) {
     return (
       // biome-ignore lint/performance/noImgElement: avatar from backend host
       <img
-        src={url}
+        src={resolveMediaUrl(url)}
         alt=""
         className="w-20 h-20 rounded-full object-cover bg-slate-200 dark:bg-slate-700"
       />

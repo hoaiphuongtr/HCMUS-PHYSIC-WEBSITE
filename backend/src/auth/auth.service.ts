@@ -101,11 +101,30 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, body: UpdateProfileBodyType) {
-    if (body.departmentId) {
-      const dept = await this.departmentRepository.findById(body.departmentId);
-      if (!dept) throw DepartmentNotFoundException;
+    const { departmentName, ...rest } = body;
+    let departmentId: string | null | undefined;
+    if (departmentName !== undefined) {
+      const trimmed = departmentName?.trim() ?? '';
+      if (!trimmed) {
+        departmentId = null;
+      } else {
+        const slug = toSlug(trimmed);
+        const existing = await this.departmentRepository.findBySlug(slug);
+        if (existing) {
+          departmentId = existing.id;
+        } else {
+          const created = await this.departmentRepository.create({
+            name: trimmed,
+            slug,
+          });
+          departmentId = created.id;
+        }
+      }
     }
-    return this.authRepository.updateProfile(userId, body);
+    return this.authRepository.updateProfile(userId, {
+      ...rest,
+      ...(departmentId !== undefined ? { departmentId } : {}),
+    });
   }
 
   async changePassword(userId: string, body: ChangePasswordBodyType) {

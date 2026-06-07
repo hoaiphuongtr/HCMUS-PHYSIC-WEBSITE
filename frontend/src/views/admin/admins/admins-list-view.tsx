@@ -13,7 +13,12 @@ import {
   Users as UsersIcon,
   WifiIcon,
 } from "@/components/admin/icons";
-import { type AdminListItem, adminApi, authApi } from "@/lib/api";
+import {
+  type AdminListItem,
+  adminApi,
+  authApi,
+  resolveMediaUrl,
+} from "@/lib/api";
 import { PortalMenu } from "@/views/admin/widgets-layout/portal-menu";
 import { ResetPasswordModal } from "./reset-password-modal";
 
@@ -373,7 +378,7 @@ function Avatar({ url, initials }: { url: string | null; initials: string }) {
     return (
       // biome-ignore lint/performance/noImgElement: avatar from arbitrary backend host
       <img
-        src={url}
+        src={resolveMediaUrl(url)}
         alt=""
         className="w-9 h-9 rounded-full object-cover bg-slate-100 dark:bg-slate-800 shrink-0"
       />

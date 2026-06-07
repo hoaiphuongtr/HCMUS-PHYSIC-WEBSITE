@@ -16,7 +16,10 @@ export class AuthRepository {
     });
   }
   findUniqueUserById(id: string) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { department: { select: { id: true, name: true } } },
+    });
   }
 
   createUser(data: {
@@ -63,6 +66,7 @@ export class AuthRepository {
       where: { id: userId },
       data,
       omit: { password: true },
+      include: { department: { select: { id: true, name: true } } },
     });
   }
 
