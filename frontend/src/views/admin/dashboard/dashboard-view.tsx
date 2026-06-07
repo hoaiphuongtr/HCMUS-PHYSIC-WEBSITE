@@ -34,8 +34,25 @@ export function AdminDashboardView() {
     queryFn: pageLayoutApi.list,
   });
 
-  const posts: PostRecord[] = postsQuery.data?.items ?? [];
-  const layouts: PageLayout[] = layoutsQuery.data ?? [];
+  const allPosts: PostRecord[] = postsQuery.data?.items ?? [];
+  const allLayouts: PageLayout[] = layoutsQuery.data ?? [];
+  const ownerId = userQuery.data?.id;
+  const isSuperAdmin = userQuery.data?.role === "SUPER_ADMIN";
+
+  const posts = useMemo(
+    () =>
+      isSuperAdmin || !ownerId
+        ? allPosts
+        : allPosts.filter((p) => p.createdBy === ownerId),
+    [allPosts, ownerId, isSuperAdmin],
+  );
+  const layouts = useMemo(
+    () =>
+      isSuperAdmin || !ownerId
+        ? allLayouts
+        : allLayouts.filter((l) => l.createdBy === ownerId),
+    [allLayouts, ownerId, isSuperAdmin],
+  );
 
   const stats = useMemo(() => {
     const draftPosts = posts.filter((p) => p.status === "DRAFT").length;
