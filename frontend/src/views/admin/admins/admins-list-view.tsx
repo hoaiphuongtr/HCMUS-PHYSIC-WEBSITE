@@ -1,17 +1,21 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  MoreVerticalIcon,
   PlusIcon,
   Users as UsersIcon,
   WifiIcon,
 } from "@/components/admin/icons";
 import { type AdminListItem, adminApi, authApi } from "@/lib/api";
+import { PortalMenu } from "@/views/admin/widgets-layout/portal-menu";
+import { ResetPasswordModal } from "./reset-password-modal";
 
 const PAGE_SIZE = 10;
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
@@ -54,7 +58,11 @@ const computeStatus = (a: AdminListItem) => {
 
 export function AdminsListView() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<AdminListItem | null>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["AUTH", "PROFILE"],
@@ -73,7 +81,32 @@ export function AdminsListView() {
     enabled: profile?.role === "SUPER_ADMIN",
   });
 
+  const suspendMut = useMutation({
+    mutationKey: ["ADMINS", "SUSPEND"],
+    mutationFn: (id: string) => adminApi.suspend(id),
+    onSuccess: () => {
+      toast.success("Admin đã suspend");
+      queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Suspend thất bại");
+    },
+  });
+
+  const restoreMut = useMutation({
+    mutationKey: ["ADMINS", "RESTORE"],
+    mutationFn: (id: string) => adminApi.restore(id),
+    onSuccess: () => {
+      toast.success("Admin đã restore");
+      queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Restore thất bại");
+    },
+  });
+
   const items = data?.items ?? [];
+  const openMenuFor = items.find((a) => a.id === menuOpenId);
   const total = data?.total ?? 0;
   const activeNow = data?.activeNow ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -193,13 +226,68 @@ export function AdminsListView() {
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {formatRelative(a.lastLoginAt)}
                     </div>
-                    <div className="text-right text-slate-400 dark:text-slate-500 text-xs">
-                      —
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        aria-label="Open admin actions"
+                        aria-haspopup="menu"
+                        aria-expanded={menuOpenId === a.id}
+                        onClick={(e) => {
+                          menuTriggerRef.current = e.currentTarget;
+                          setMenuOpenId(a.id);
+                        }}
+                        className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#202c44]"
+                      >
+                        <MoreVerticalIcon className="w-4 h-4" />
+                      </button>
                     </div>
                   </li>
                 );
               })}
             </ul>
+          )}
+
+          {openMenuFor && (
+            <PortalMenu
+              anchorRef={menuTriggerRef}
+              open={true}
+              onClose={() => setMenuOpenId(null)}
+              widthPx={200}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setResetTarget(openMenuFor);
+                  setMenuOpenId(null);
+                }}
+                className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
+              >
+                Reset password
+              </button>
+              {openMenuFor.isActive ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    suspendMut.mutate(openMenuFor.id);
+                    setMenuOpenId(null);
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                >
+                  Suspend
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    restoreMut.mutate(openMenuFor.id);
+                    setMenuOpenId(null);
+                  }}
+                  className="w-full px-3 py-2 text-left text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                >
+                  Restore
+                </button>
+              )}
+            </PortalMenu>
           )}
 
           {total > 0 && (
@@ -235,6 +323,14 @@ export function AdminsListView() {
           )}
         </div>
       </div>
+
+      {resetTarget && (
+        <ResetPasswordModal
+          adminId={resetTarget.id}
+          adminName={displayName(resetTarget)}
+          onClose={() => setResetTarget(null)}
+        />
+      )}
     </div>
   );
 }

@@ -41,4 +41,28 @@ export class AdminRepository {
       },
     });
   }
+
+  findById(id: string) {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  setActive(id: string, isActive: boolean) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isActive },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+      },
+    });
+  }
+
+  setPassword(id: string, hashedPassword: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
+      select: { id: true, email: true },
+    });
+  }
 }

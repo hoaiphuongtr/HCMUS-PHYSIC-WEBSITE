@@ -3,10 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ChevronLeftIcon } from "@/components/admin/icons";
-import { authApi, departmentApi } from "@/lib/api";
+import { authApi, departmentApi, mediaApi } from "@/lib/api";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type FormState = {
@@ -38,6 +38,31 @@ export function AdminCreateView() {
   const [createNewDept, setCreateNewDept] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Chỉ chấp nhận file ảnh");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File vượt quá 10MB");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const media = await mediaApi.upload(file);
+      setField("avatarUrl", media.url);
+      toast.success("Đã tải ảnh lên");
+    } catch (err) {
+      const msg = (err as { message?: string })?.message ?? "Upload thất bại";
+      toast.error(msg);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["AUTH", "PROFILE"],
@@ -146,7 +171,7 @@ export function AdminCreateView() {
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Tạo tài khoản quản trị mới. Admin có thể đổi mật khẩu sau khi đăng
-          nhập tại /admin/settings.
+          nhập lần đầu.
         </p>
 
         <div className="mt-6 bg-white dark:bg-[#101622] border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-6">
@@ -168,24 +193,44 @@ export function AdminCreateView() {
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowMediaPicker(true)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
-                >
-                  Change Avatar
-                </button>
-                {form.avatarUrl && (
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => setField("avatarUrl", "")}
-                    className="text-xs text-rose-600 dark:text-rose-400 hover:underline self-start"
+                    disabled={uploadingAvatar}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                   >
-                    Remove
+                    {uploadingAvatar ? "Đang tải…" : "Upload from device"}
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setShowMediaPicker(true)}
+                    className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
+                  >
+                    Pick from library
+                  </button>
+                  {form.avatarUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setField("avatarUrl", "")}
+                      className="text-xs text-rose-600 dark:text-rose-400 hover:underline self-center"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAvatarFile(file);
+                  }}
+                />
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Chọn từ Media Library.
+                  JPG, PNG, WebP, GIF. Tối đa 10MB.
                 </p>
               </div>
             </div>

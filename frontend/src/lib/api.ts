@@ -133,6 +133,22 @@ export const adminApi = {
       pageSize: number;
     }>(`/admins${buildQuery(params)}`);
   },
+  suspend(id: string) {
+    return authFetch<{ message: string }>(`/admins/${id}/suspend`, {
+      method: "PATCH",
+    });
+  },
+  restore(id: string) {
+    return authFetch<{ message: string }>(`/admins/${id}/restore`, {
+      method: "PATCH",
+    });
+  },
+  resetPassword(id: string, password: string) {
+    return authFetch<{ message: string }>(`/admins/${id}/reset-password`, {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    });
+  },
 };
 
 export type Department = {

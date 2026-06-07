@@ -37,3 +37,17 @@ export const AdminListResSchema = z.object({
 });
 
 export type AdminListResType = z.infer<typeof AdminListResSchema>;
+
+export const ResetAdminPasswordBodySchema = z.object({
+  password: z.string().min(6).max(100),
+});
+
+export type ResetAdminPasswordBodyType = z.infer<
+  typeof ResetAdminPasswordBodySchema
+>;
+
+export const AdminMessageResSchema = z.object({
+  message: z.string(),
+});
+
+export type AdminMessageResType = z.infer<typeof AdminMessageResSchema>;

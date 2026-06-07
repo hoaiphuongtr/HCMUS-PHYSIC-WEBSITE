@@ -43,9 +43,7 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.authRepository.findUniqueUserById(userId);
     if (!user) throw InvalidEmailException;
-    this.authRepository
-      .touchLastLogin(userId)
-      .catch(() => undefined);
+    this.authRepository.touchLastLogin(userId).catch(() => undefined);
     return user;
   }
 
@@ -74,8 +72,7 @@ export class AuthService {
 
     let departmentId = body.departmentId;
     if (departmentId) {
-      const department =
-        await this.departmentRepository.findById(departmentId);
+      const department = await this.departmentRepository.findById(departmentId);
       if (!department) throw DepartmentNotFoundException;
     } else if (body.newDepartmentName) {
       const name = body.newDepartmentName.trim();

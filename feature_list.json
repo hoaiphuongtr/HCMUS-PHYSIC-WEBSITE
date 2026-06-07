@@ -78,7 +78,7 @@
       "description": "Super-admin-only page at /admin/admins listing all admins (name + email, department, status Active/Offline/Disabled, last login). Stat cards: Total Admins, Active Now (= lastLoginAt within 5 min). Subroute /admin/admins/new with form: avatar (Media picker), first/last name, login email, position, department (select existing or create new inline), default password. POST /auth/create-admin (already SuperAdmin-guarded) + new GET /admins endpoint. Sidebar renames 'Users & Roles' to 'Admin Management' and only renders for SUPER_ADMIN role. Login flow now stamps lastLoginAt. P0 ships without filter / bulk select / sub-role tabs (deferred).",
       "dependencies": ["feat-002", "feat-007"],
       "status": "done",
-      "evidence": "Backend admin module (GET /admins paged + activeNow); auth.createAdmin extended with avatarUrl; login touches lastLoginAt. Admin routes /admin/admins + /admin/admins/new with table, stat cards, create form (inline new-department, Media picker avatar). Sidebar guards 'Admin Management' link behind SUPER_ADMIN role."
+      "evidence": "Backend admin module (GET /admins paged + activeNow, PATCH suspend/restore, POST reset-password); class-level @Roles(SuperAdmin). CannotMutateSuperAdmin guard. 9 unit tests (25/25 total). auth.createAdmin extended with avatarUrl + atomic newDepartmentName. login + getProfile touch lastLoginAt. Admin routes /admin/admins + /admin/admins/new with table, stat cards, 3-dot row menu (Reset password modal + Suspend/Restore), avatar via local file upload (10MB client guard) OR Media picker. Sidebar guards 'Admin Management' behind SUPER_ADMIN. Route guard redirects non-super-admin away from /admin/admins."
     },
     {
       "id": "feat-010",
