@@ -112,12 +112,15 @@ export function PostListView() {
   const serverStatus =
     tab === "published" ? "PUBLISHED" : statusInTab || undefined;
 
+  // For Mine tab we must paginate client-side: BE doesn't expose a
+  // createdBy filter, so the only way to keep author-scoped totals + paging
+  // honest is to pull a wider window and slice on the client.
   const listQuery = useQuery({
     queryKey: ["POSTS", "PAGED", tab, page, category, serverStatus, search],
     queryFn: () =>
       postApi.listPaged({
-        page,
-        pageSize: PAGE_SIZE,
+        page: tab === "mine" ? 1 : page,
+        pageSize: tab === "mine" ? 100 : PAGE_SIZE,
         category: category || undefined,
         status: serverStatus,
         search: search || undefined,
@@ -127,9 +130,8 @@ export function PostListView() {
   });
 
   // Dedicated count queries — independent of the active tab + filters, so both
-  // tab labels can show a stable number even when the user is on the other tab.
-  // Page size = 1 (we only need `total`).
-  const mineCountQuery = useQuery({
+  // tab labels stay accurate regardless of which tab is open.
+  const allMineQuery = useQuery({
     queryKey: ["POSTS", "COUNT", "MINE", ownerId],
     queryFn: () => postApi.listPaged({ page: 1, pageSize: 100 }),
     enabled: !!ownerId,
@@ -142,9 +144,9 @@ export function PostListView() {
   });
 
   const mineCount = useMemo(() => {
-    const items = mineCountQuery.data?.items ?? [];
+    const items = allMineQuery.data?.items ?? [];
     return items.filter((p) => p.createdBy === ownerId).length;
-  }, [mineCountQuery.data, ownerId]);
+  }, [allMineQuery.data, ownerId]);
   const publishedCount = publishedCountQuery.data?.total ?? 0;
 
   const deleteMutation = useMutation({
@@ -172,16 +174,21 @@ export function PostListView() {
   const data = listQuery.data;
   const rawItems = data?.items ?? [];
 
-  // Mine tab: only items owned by current user (any status). Server already
-  // filtered to own+published when ADMIN, but we narrow to ownerId so even
-  // SUPER_ADMIN sees a meaningful "mine" view. Status picker further narrows.
-  const items = useMemo(() => {
-    if (tab === "published") return rawItems;
-    return rawItems.filter((p) => p.createdBy === ownerId);
-  }, [rawItems, tab, ownerId]);
+  // Mine tab: narrow to ownerId. Then slice for pagination.
+  const mineFiltered = useMemo(
+    () => (tab === "mine" ? rawItems.filter((p) => p.createdBy === ownerId) : rawItems),
+    [rawItems, tab, ownerId],
+  );
 
-  const total = tab === "published" ? (data?.total ?? 0) : items.length;
-  const totalPages = tab === "published" ? (data?.totalPages ?? 1) : 1;
+  const mineTotal = mineFiltered.length;
+  const mineTotalPages = Math.max(1, Math.ceil(mineTotal / PAGE_SIZE));
+  const mineStart = (page - 1) * PAGE_SIZE;
+  const mineSlice = mineFiltered.slice(mineStart, mineStart + PAGE_SIZE);
+
+  const items = tab === "mine" ? mineSlice : rawItems;
+  const total = tab === "published" ? (data?.total ?? 0) : mineTotal;
+  const totalPages =
+    tab === "published" ? (data?.totalPages ?? 1) : mineTotalPages;
   const hasFilters = Boolean(category || statusInTab || search);
 
   const switchTab = (next: TabKey) => {
