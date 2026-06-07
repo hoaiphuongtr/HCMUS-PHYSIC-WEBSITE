@@ -2,8 +2,39 @@
 
 ## Current State
 
-**Last Updated:** 2026-05-31
-**Active Feature:** feat-010 — Widgets-layout versioning (published + archived) with rollback
+**Last Updated:** 2026-06-01
+**Active Feature:** feat-012 — Multi-tenant data isolation (admin sees own drafts/scheduled; published shared)
+
+## Pending feature (planned, awaiting "go")
+
+**feat-012: Multi-tenant data isolation**
+- BE filter list endpoints by `userId + role`:
+  - `GET /page-layouts` (admin) — own + published; super-admin sees all
+  - `GET /posts` admin listings — own + published; super-admin sees all
+  - `GET /media` — own only; super-admin sees all
+  - `GET /:id` detail endpoints — 403 on draft-of-other-admin
+- Add `/page-layouts/published` `@IsPublic` for `frontend-public/src/app/sitemap.ts` (currently hits `/page-layouts` un-auth and gets list of EVERYTHING)
+- 3 new spec files + extend `page-layout.service.spec.ts`
+- Dashboard recent-activity inherits filtering automatically (derives from filtered queries)
+- No FE UI changes required
+- ACs: 10 (see Phase 0 plan in latest /orchestrator output)
+
+## Recent commits this session
+
+- 6aeb8da feat(admin): row actions + avatar upload from device (feat-011)
+- 09790df fix(admin): post-review fixes for admin management (feat-011)
+- 15a18e5 fix(widgets-layout): dark-mode coverage for Puck editor + diff modal width
+- 493d214 feat(admin): admin management page for super-admin (feat-011)
+- 55ef0db chore(docs): add CLAUDE.md, init.sh verification script, session-handoff template
+- 31c6ec7 style(page-layout): biome reformat after feat-010
+- 8b94d38 chore(e2e): wire Playwright for admin + public, add monorepo test scripts
+- da2b130 chore(admin): dark-mode polish across widgets, dashboard, media, posts
+- 83dcea5 fix(widgets-layout): stop canvas flash on background refetch
+- 112ab02 feat(page-layout): version history with rollback (feat-010)
+
+## Active i18n decision
+
+User flagged: toasts MUST be Vietnamese, no English mixing. Audit done this turn — translated 30+ strings across widgets-layout, widgets, login, forgot-password, oauth-callback, reset-password-modal, admin-create-view. Rule: every new toast.success/error string is Vietnamese; never use "Password" — use "Mật khẩu". Apply same rule to error fallback strings (`err.message || "..."`).
 
 ## Status
 

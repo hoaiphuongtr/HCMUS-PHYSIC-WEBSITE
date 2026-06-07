@@ -175,7 +175,7 @@ function EditJsonButton() {
         return;
       }
       dispatch({ type: "setData", data: parsed });
-      toast.success("JSON applied — remember to Save draft");
+      toast.success("Đã áp dụng JSON — nhớ bấm Save draft");
       setOpen(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid JSON";
@@ -317,9 +317,9 @@ function PublishMenu({
       await onSavePuck(appState.data);
       const updated = await pageLayoutApi.publish(layout.id);
       onLayoutChanged(updated);
-      toast.success("Layout published");
+      toast.success("Đã xuất bản layout");
     } catch (err: any) {
-      toast.error(err?.message || "Failed to publish");
+      toast.error(err?.message || "Không xuất bản được layout");
     } finally {
       setBusy(false);
       setOpen(false);
@@ -329,11 +329,11 @@ function PublishMenu({
   const scheduleSubmit = async () => {
     const scheduledAt = new Date(scheduleValue);
     if (Number.isNaN(scheduledAt.getTime())) {
-      toast.error("Invalid date");
+      toast.error("Ngày giờ không hợp lệ");
       return;
     }
     if (scheduledAt.getTime() <= Date.now()) {
-      toast.error("Scheduled time must be in the future");
+      toast.error("Thời gian lên lịch phải ở tương lai");
       return;
     }
     setBusy(true);
@@ -348,13 +348,13 @@ function PublishMenu({
       const extra = alsoScheduleIds.length;
       toast.success(
         extra > 0
-          ? `Scheduled ${extra + 1} layouts for ${scheduledAt.toLocaleString()}`
-          : `Scheduled for ${scheduledAt.toLocaleString()}`,
+          ? `Đã lên lịch ${extra + 1} layout vào ${scheduledAt.toLocaleString()}`
+          : `Đã lên lịch vào ${scheduledAt.toLocaleString()}`,
       );
       setShowScheduleModal(false);
       setAlsoScheduleIds([]);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to schedule");
+      toast.error(err?.message || "Không lên lịch được");
     } finally {
       setBusy(false);
       setOpen(false);
@@ -366,9 +366,9 @@ function PublishMenu({
     try {
       const updated = await pageLayoutApi.unpublish(layout.id);
       onLayoutChanged(updated);
-      toast.success("Layout unpublished");
+      toast.success("Đã gỡ xuất bản layout");
     } catch (err: any) {
-      toast.error(err?.message || "Failed to unpublish");
+      toast.error(err?.message || "Không gỡ xuất bản được");
     } finally {
       setBusy(false);
       setOpen(false);

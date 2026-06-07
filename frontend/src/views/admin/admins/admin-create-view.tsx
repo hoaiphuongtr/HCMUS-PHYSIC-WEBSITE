@@ -101,7 +101,7 @@ export function AdminCreateView() {
       return;
     }
     if (form.password.length < 6) {
-      toast.error("Password phải tối thiểu 6 ký tự");
+      toast.error("Mật khẩu phải tối thiểu 6 ký tự");
       return;
     }
     setSubmitting(true);

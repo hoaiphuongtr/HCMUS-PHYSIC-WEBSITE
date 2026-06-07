@@ -30,7 +30,7 @@ export function ForgotPasswordView() {
       setStep("otp");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to send OTP");
+      toast.error(err.message || "Không gửi được OTP");
     },
   });
 
@@ -39,10 +39,10 @@ export function ForgotPasswordView() {
     mutationFn: authApi.verifyOTP,
     onSuccess() {
       setStep("password");
-      toast.success("Code verified successfully");
+      toast.success("Đã xác thực mã");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Invalid or expired verification code");
+      toast.error(err.message || "Mã xác thực không hợp lệ hoặc đã hết hạn");
     },
   });
 
@@ -50,13 +50,13 @@ export function ForgotPasswordView() {
     mutationKey: ["AUTH", "FORGOT_PASSWORD"],
     mutationFn: authApi.forgotPassword,
     onSuccess() {
-      toast.success("Password reset successful! Redirecting to login...");
+      toast.success("Đặt lại mật khẩu thành công! Đang chuyển về trang đăng nhập…");
       setTimeout(() => {
         router.push("/login");
       }, 2000);
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to reset password");
+      toast.error(err.message || "Không đặt lại được mật khẩu");
     },
   });
 
@@ -99,7 +99,7 @@ export function ForgotPasswordView() {
     e.preventDefault();
     const code = otp.join("");
     if (code.length !== 6) {
-      toast.error("Please enter the 6-digit code");
+      toast.error("Vui lòng nhập đủ 6 ký tự");
       return;
     }
     verifyOTPMutation.mutate({ email, code, type: "FORGOT_PASSWORD" });
@@ -108,7 +108,7 @@ export function ForgotPasswordView() {
   const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmNewPassword) {
-      toast.error("Passwords don't match");
+      toast.error("Mật khẩu không khớp");
       return;
     }
     const code = otp.join("");

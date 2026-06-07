@@ -55,7 +55,7 @@ export function WidgetsManageView() {
       queryClient.invalidateQueries({ queryKey: ["WIDGETS"] });
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to update widget");
+      toast.error(err.message || "Không cập nhật được widget");
     },
   });
 
@@ -64,10 +64,10 @@ export function WidgetsManageView() {
     mutationFn: (id: string) => widgetApi.remove(id),
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: ["WIDGETS"] });
-      toast.success("Widget deleted");
+      toast.success("Đã xoá widget");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to delete widget");
+      toast.error(err.message || "Không xoá được widget");
     },
   });
 

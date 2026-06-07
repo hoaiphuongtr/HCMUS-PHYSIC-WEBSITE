@@ -33,11 +33,11 @@ export function CreateLayoutModal({
     mutationKey: ["PAGE_LAYOUTS", "CREATE"],
     mutationFn: pageLayoutApi.create,
     onSuccess(data) {
-      toast.success("Layout created");
+      toast.success("Đã tạo layout");
       onCreated(data);
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to create layout");
+      toast.error(err.message || "Không tạo được layout");
     },
   });
 

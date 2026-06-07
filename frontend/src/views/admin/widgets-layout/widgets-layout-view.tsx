@@ -112,10 +112,10 @@ export function WidgetsLayoutView() {
         queryKey: ["PAGE_LAYOUTS", selectedLayoutId],
       });
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
-      toast.success("Layout saved");
+      toast.success("Đã lưu layout");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to save layout");
+      toast.error(err.message || "Không lưu được layout");
     },
   });
 
@@ -127,10 +127,10 @@ export function WidgetsLayoutView() {
       if (selectedLayoutId === deleteLayoutMutation.variables) {
         selectLayout(null);
       }
-      toast.success("Layout deleted");
+      toast.success("Đã xoá layout");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to delete layout");
+      toast.error(err.message || "Không xoá được layout");
     },
   });
 
@@ -140,10 +140,10 @@ export function WidgetsLayoutView() {
     onSuccess(data) {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       selectLayout(data.id);
-      toast.success("Layout duplicated");
+      toast.success("Đã nhân bản layout");
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to duplicate layout");
+      toast.error(err.message || "Không nhân bản được layout");
     },
   });
 

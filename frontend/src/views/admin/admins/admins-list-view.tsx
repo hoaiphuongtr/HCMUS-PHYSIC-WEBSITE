@@ -85,11 +85,11 @@ export function AdminsListView() {
     mutationKey: ["ADMINS", "SUSPEND"],
     mutationFn: (id: string) => adminApi.suspend(id),
     onSuccess: () => {
-      toast.success("Admin đã suspend");
+      toast.success("Account đã bị vô hiệu hóa");
       queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
     },
     onError: (err: { message?: string }) => {
-      toast.error(err.message || "Suspend thất bại");
+      toast.error(err.message || "Vô hiệu hóa thất bại");
     },
   });
 
@@ -97,11 +97,11 @@ export function AdminsListView() {
     mutationKey: ["ADMINS", "RESTORE"],
     mutationFn: (id: string) => adminApi.restore(id),
     onSuccess: () => {
-      toast.success("Admin đã restore");
+      toast.success("Account đã được khôi phục");
       queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
     },
     onError: (err: { message?: string }) => {
-      toast.error(err.message || "Restore thất bại");
+      toast.error(err.message || "Khôi phục thất bại");
     },
   });
 

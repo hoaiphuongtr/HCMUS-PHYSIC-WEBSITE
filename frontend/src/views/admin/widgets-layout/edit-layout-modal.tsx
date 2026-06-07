@@ -40,12 +40,12 @@ export function EditLayoutModal({
       queryClient.invalidateQueries({
         queryKey: ["PAGE_LAYOUTS", layout.id],
       });
-      toast.success("Layout updated");
+      toast.success("Đã cập nhật layout");
       onUpdated(data);
       onClose();
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to update layout");
+      toast.error(err.message || "Không cập nhật được layout");
     },
   });
 

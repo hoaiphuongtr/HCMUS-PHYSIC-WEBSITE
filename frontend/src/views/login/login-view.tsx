@@ -20,11 +20,11 @@ export function LoginView() {
     onSuccess(data) {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      toast.success("Login successful");
+      toast.success("Đăng nhập thành công");
       window.location.href = "/admin";
     },
     onError(err: { message?: string; statusCode?: number }) {
-      toast.error(err.message || "Login failed");
+      toast.error(err.message || "Đăng nhập thất bại");
     },
   });
 
@@ -38,7 +38,7 @@ export function LoginView() {
       const data = await authApi.googleLink();
       window.location.href = data.url;
     } catch {
-      toast.error("Failed to initiate Google login");
+      toast.error("Không khởi tạo được đăng nhập Google");
     }
   };
 

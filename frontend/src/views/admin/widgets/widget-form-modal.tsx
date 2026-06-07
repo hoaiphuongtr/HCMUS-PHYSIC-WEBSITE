@@ -42,11 +42,11 @@ export function WidgetFormModal({
     mutationKey: ["WIDGETS", "CREATE"],
     mutationFn: widgetApi.create,
     onSuccess() {
-      toast.success("Widget created");
+      toast.success("Đã tạo widget");
       onSaved();
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to create widget");
+      toast.error(err.message || "Không tạo được widget");
     },
   });
 
@@ -55,11 +55,11 @@ export function WidgetFormModal({
     mutationFn: (body: Partial<WidgetType>) =>
       widgetApi.update(widget!.id, body),
     onSuccess() {
-      toast.success("Widget updated");
+      toast.success("Đã cập nhật widget");
       onSaved();
     },
     onError(err: { message?: string }) {
-      toast.error(err.message || "Failed to update widget");
+      toast.error(err.message || "Không cập nhật được widget");
     },
   });
 

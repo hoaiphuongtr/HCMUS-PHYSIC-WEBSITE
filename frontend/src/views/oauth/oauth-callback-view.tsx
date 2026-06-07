@@ -17,9 +17,7 @@ export function OAuthCallbackView() {
       window.location.href = "/admin";
     } else {
       const errorMessage = searchParams.get("errorMessage");
-      toast.error(
-        errorMessage ?? "Something went wrong with Google authentication",
-      );
+      toast.error(errorMessage ?? "Đăng nhập Google thất bại");
       router.push("/login");
     }
   }, [searchParams, router]);

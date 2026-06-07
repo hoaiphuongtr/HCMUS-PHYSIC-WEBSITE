@@ -32,23 +32,23 @@ export function ResetPasswordModal({
     mutationKey: ["ADMINS", "RESET_PASSWORD", adminId],
     mutationFn: (pw: string) => adminApi.resetPassword(adminId, pw),
     onSuccess: () => {
-      toast.success("Đã đặt lại password");
+      toast.success("Đã đặt lại mật khẩu");
       queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
       onClose();
     },
     onError: (err: { message?: string }) => {
-      toast.error(err.message || "Reset password thất bại");
+      toast.error(err.message || "Đặt lại mật khẩu thất bại");
     },
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error("Password tối thiểu 6 ký tự");
+      toast.error("Mật khẩu tối thiểu 6 ký tự");
       return;
     }
     if (password !== confirm) {
-      toast.error("Password không khớp");
+      toast.error("Mật khẩu không khớp");
       return;
     }
     reset.mutate(password);
