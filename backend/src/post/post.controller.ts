@@ -87,6 +87,8 @@ export class PostController {
 
   @Get()
   list(
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('category') category?: string,
@@ -94,7 +96,7 @@ export class PostController {
     @Query('search') search?: string,
   ) {
     if (page === undefined && pageSize === undefined)
-      return this.postService.list();
+      return this.postService.list(userId, roleName);
     const pageNum = Math.max(1, Number(page) || 1);
     const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 12));
     return this.postService.listAdminPaged({
@@ -103,24 +105,39 @@ export class PostController {
       category,
       status,
       search,
+      userId,
+      roleName,
     });
   }
 
   @Get(':id')
   @ZodSerializerDto(PostResDTO)
-  findById(@Param('id') id: string) {
-    return this.postService.findById(id);
+  findById(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.postService.findById(id, userId, roleName);
   }
 
   @Patch(':id')
   @ZodSerializerDto(PostResDTO)
-  update(@Param('id') id: string, @Body() body: UpsertPostBodyDTO) {
-    return this.postService.update(id, body);
+  update(
+    @Param('id') id: string,
+    @Body() body: UpsertPostBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.postService.update(id, body, userId, roleName);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.postService.delete(id);
+  delete(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.postService.delete(id, userId, roleName);
   }
 
   @Post(':id/clone-into-layout')
@@ -129,7 +146,8 @@ export class PostController {
     @Param('id') id: string,
     @Body() body: CloneIntoLayoutBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.postService.cloneIntoLayout(id, body, userId);
+    return this.postService.cloneIntoLayout(id, body, userId, roleName);
   }
 }

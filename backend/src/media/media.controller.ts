@@ -81,33 +81,53 @@ export class MediaController {
   @Get()
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(MediaListResDTO)
-  list(@Query() query: ListMediaQueryDTO) {
-    return this.service.list(query);
+  list(
+    @Query() query: ListMediaQueryDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.service.list(query, userId, roleName);
   }
 
   @Get('tags-in-use')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
-  tagsInUse() {
-    return this.service.listTagsInUse();
+  tagsInUse(
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.service.listTagsInUse(userId, roleName);
   }
 
   @Get(':id')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(MediaResDTO)
-  findById(@Param('id') id: string) {
-    return this.service.findById(id);
+  findById(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.service.findById(id, userId, roleName);
   }
 
   @Patch(':id')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(MediaResDTO)
-  update(@Param('id') id: string, @Body() body: UpdateMediaBodyDTO) {
-    return this.service.update(id, body);
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdateMediaBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.service.update(id, body, userId, roleName);
   }
 
   @Delete(':id')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
-  delete(@Param('id') id: string) {
-    return this.service.delete(id);
+  delete(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.service.delete(id, userId, roleName);
   }
 }

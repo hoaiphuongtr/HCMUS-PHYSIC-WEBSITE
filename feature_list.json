@@ -73,6 +73,14 @@
       "evidence": ""
     },
     {
+      "id": "feat-012",
+      "name": "Multi-tenant data isolation",
+      "description": "Admin sees own drafts + scheduled + all published content; super-admin sees all. List endpoints + detail GETs + ALL mutation endpoints (update, delete, publish, schedule, unpublish, save puck data, widget CRUD, reorder, duplicate, rollback) enforce ownership via assertOwnership helper. Public site uses new /page-layouts/published endpoint for sitemap (was hitting authenticated /page-layouts).",
+      "dependencies": ["feat-002", "feat-007"],
+      "status": "done",
+      "evidence": "Backend: page-layout/post/media list+detail+mutation endpoints filtered by userId+roleName from JWT. Public sitemap calls /page-layouts/published. 31/31 unit tests pass (added 6 for findAllForAdmin + findByIdForAdmin)."
+    },
+    {
       "id": "feat-011",
       "name": "Admin Management (super-admin only)",
       "description": "Super-admin-only page at /admin/admins listing all admins (name + email, department, status Active/Offline/Disabled, last login). Stat cards: Total Admins, Active Now (= lastLoginAt within 5 min). Subroute /admin/admins/new with form: avatar (Media picker), first/last name, login email, position, department (select existing or create new inline), default password. POST /auth/create-admin (already SuperAdmin-guarded) + new GET /admins endpoint. Sidebar renames 'Users & Roles' to 'Admin Management' and only renders for SUPER_ADMIN role. Login flow now stamps lastLoginAt. P0 ships without filter / bulk select / sub-role tabs (deferred).",

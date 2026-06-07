@@ -157,9 +157,17 @@ export class PostService {
     return this.serialize(created);
   }
 
-  async update(id: string, body: UpsertPostBodyType) {
+  async update(
+    id: string,
+    body: UpsertPostBodyType,
+    userId: string,
+    roleName: string,
+  ) {
     const existing = await this.prisma.post.findUnique({ where: { id } });
     if (!existing) throw PostNotFoundException;
+    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+      throw PostNotFoundException;
+    }
     const slug = toSlug(body.slug || body.title);
     if (slug !== existing.slug) {
       const other = await this.prisma.post.findUnique({ where: { slug } });
@@ -215,8 +223,14 @@ export class PostService {
     return this.serialize(updated);
   }
 
-  async list() {
+  private buildOwnershipFilter(userId: string, roleName: string) {
+    if (roleName === 'SUPER_ADMIN') return {};
+    return { OR: [{ status: 'PUBLISHED' }, { createdBy: userId }] };
+  }
+
+  async list(userId: string, roleName: string) {
     const posts = await this.prisma.post.findMany({
+      where: this.buildOwnershipFilter(userId, roleName) as any,
       orderBy: { updatedAt: 'desc' },
       include: postInclude,
     });
@@ -229,19 +243,31 @@ export class PostService {
     category?: string;
     status?: string;
     search?: string;
+    userId: string;
+    roleName: string;
   }) {
-    const { page, pageSize, category, status, search } = params;
+    const { page, pageSize, category, status, search, userId, roleName } =
+      params;
+    const andClauses: Record<string, unknown>[] = [];
+    if (roleName !== 'SUPER_ADMIN') {
+      andClauses.push({
+        OR: [{ status: 'PUBLISHED' }, { createdBy: userId }],
+      });
+    }
+    if (search && search.trim()) {
+      const q = search.trim();
+      andClauses.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { slug: { contains: q, mode: 'insensitive' } },
+          { excerpt: { contains: q, mode: 'insensitive' } },
+        ],
+      });
+    }
     const where: Record<string, unknown> = {};
     if (category) where.category = category;
     if (status) where.status = status;
-    if (search && search.trim()) {
-      const q = search.trim();
-      where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { slug: { contains: q, mode: 'insensitive' } },
-        { excerpt: { contains: q, mode: 'insensitive' } },
-      ];
-    }
+    if (andClauses.length) where.AND = andClauses;
     const [total, posts] = await Promise.all([
       this.prisma.post.count({ where: where as any }),
       this.prisma.post.findMany({
@@ -368,14 +394,22 @@ export class PostService {
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string, userId: string, roleName: string) {
     const record = await this.findByIdOrThrow(id);
+    if (roleName !== 'SUPER_ADMIN') {
+      const isPublished = record.status === 'PUBLISHED';
+      const isOwn = record.createdBy === userId;
+      if (!isPublished && !isOwn) throw PostNotFoundException;
+    }
     return this.serialize(record);
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId: string, roleName: string) {
     const existing = await this.prisma.post.findUnique({ where: { id } });
     if (!existing) throw PostNotFoundException;
+    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+      throw PostNotFoundException;
+    }
     await this.prisma.post.delete({ where: { id } });
     if (existing.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
@@ -388,8 +422,13 @@ export class PostService {
     postId: string,
     body: CloneIntoLayoutBodyType,
     userId: string,
+    roleName: string,
   ) {
     const post = await this.findByIdOrThrow(postId);
+    if (roleName !== 'SUPER_ADMIN' && post.createdBy !== userId) {
+      const isPublished = post.status === 'PUBLISHED';
+      if (!isPublished) throw PostNotFoundException;
+    }
     const template = await this.prisma.pageLayout.findUnique({
       where: { id: body.templateLayoutId },
       select: { id: true, slug: true, puckData: true },

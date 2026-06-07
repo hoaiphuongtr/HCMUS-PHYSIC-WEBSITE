@@ -92,6 +92,22 @@ export class PageLayoutRepository {
     });
   }
 
+  findOwnedOrPublished(userId: string) {
+    return this.prisma.pageLayout.findMany({
+      where: { OR: [{ isPublished: true }, { createdBy: userId }] },
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { widgets: true } } },
+    });
+  }
+
+  findAllPublished() {
+    return this.prisma.pageLayout.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { widgets: true } } },
+    });
+  }
+
   update(id: string, data: UpdatePageLayoutBodyType) {
     return this.prisma.pageLayout.update({ where: { id }, data });
   }

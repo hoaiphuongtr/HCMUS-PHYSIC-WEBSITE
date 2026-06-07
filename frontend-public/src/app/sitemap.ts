@@ -21,7 +21,7 @@ type PostListItem = {
 
 const fetchPageLayouts = async (): Promise<PageLayoutListItem[]> => {
   try {
-    const res = await fetch(`${API_URL}/page-layouts`, {
+    const res = await fetch(`${API_URL}/page-layouts/published`, {
       next: { revalidate: 300, tags: ["sitemap"] },
     });
     if (!res.ok) return [];

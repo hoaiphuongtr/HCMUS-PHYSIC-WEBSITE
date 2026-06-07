@@ -69,8 +69,9 @@ export class MediaService {
     return toMedia(withTags);
   }
 
-  async list(query: ListMediaQueryType) {
-    const { items, total } = await this.repo.findPaginated(query);
+  async list(query: ListMediaQueryType, userId: string, roleName: string) {
+    const ownerFilter = roleName === 'SUPER_ADMIN' ? undefined : userId;
+    const { items, total } = await this.repo.findPaginated(query, ownerFilter);
     return {
       items: items.map((m) => ({
         ...m,
@@ -86,15 +87,26 @@ export class MediaService {
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string, userId: string, roleName: string) {
     const record = await this.repo.findById(id);
     if (!record) throw MediaNotFoundException;
+    if (roleName !== 'SUPER_ADMIN' && record.createdBy !== userId) {
+      throw MediaNotFoundException;
+    }
     return toMedia(record);
   }
 
-  async update(id: string, body: UpdateMediaBodyType) {
+  async update(
+    id: string,
+    body: UpdateMediaBodyType,
+    userId: string,
+    roleName: string,
+  ) {
     const existing = await this.repo.findById(id);
     if (!existing) throw MediaNotFoundException;
+    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+      throw MediaNotFoundException;
+    }
     const { tagSlugs, ...rest } = body;
     if (Object.keys(rest).length) await this.repo.update(id, rest);
     if (tagSlugs) await this.repo.syncTags(id, tagSlugs);
@@ -102,9 +114,12 @@ export class MediaService {
     return toMedia(refreshed);
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId: string, roleName: string) {
     const existing = await this.repo.findById(id);
     if (!existing) throw MediaNotFoundException;
+    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+      throw MediaNotFoundException;
+    }
     if (existing.url.startsWith('/uploads/')) {
       const filePath = join(UPLOADS_DIR, basename(existing.url));
       await fs.unlink(filePath).catch(() => undefined);
@@ -113,7 +128,8 @@ export class MediaService {
     return { ok: true };
   }
 
-  listTagsInUse() {
-    return this.repo.findTagsInUse();
+  listTagsInUse(userId: string, roleName: string) {
+    const ownerFilter = roleName === 'SUPER_ADMIN' ? undefined : userId;
+    return this.repo.findTagsInUse(ownerFilter);
   }
 }

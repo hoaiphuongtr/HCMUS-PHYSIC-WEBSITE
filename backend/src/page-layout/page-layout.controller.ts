@@ -49,21 +49,21 @@ export class PageLayoutController {
     return this.pageLayoutService.create(body, userId);
   }
 
-  @Get()
+  @Get('published')
   @IsPublic()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(TEN_MINUTES_MS)
-  findAll() {
-    return this.pageLayoutService.findAll();
+  findAllPublished() {
+    return this.pageLayoutService.findAllPublished();
   }
 
-  @Get(':id')
-  @IsPublic()
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(TEN_MINUTES_MS)
-  @ZodSerializerDto(PageLayoutResDTO)
-  findById(@Param('id') id: string) {
-    return this.pageLayoutService.findById(id);
+  @Get()
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  findAll(
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.findAllForAdmin(userId, roleName);
   }
 
   @Get('slug/*slug')
@@ -76,18 +76,38 @@ export class PageLayoutController {
     return this.pageLayoutService.findBySlug(slugPath);
   }
 
+  @Get(':id')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(PageLayoutResDTO)
+  findById(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.findByIdForAdmin(id, userId, roleName);
+  }
+
   @Patch(':id')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  update(@Param('id') id: string, @Body() body: UpdatePageLayoutBodyDTO) {
-    return this.pageLayoutService.update(id, body);
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdatePageLayoutBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.update(id, body, userId, roleName);
   }
 
   @Delete(':id')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutMessageResDTO)
-  delete(@Param('id') id: string) {
-    return this.pageLayoutService.delete(id);
+  delete(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.delete(id, userId, roleName);
   }
 
   @Post(':id/duplicate')
@@ -97,22 +117,32 @@ export class PageLayoutController {
     @Param('id') id: string,
     @Body() body: DuplicatePageLayoutBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.pageLayoutService.duplicate(id, userId, body);
+    return this.pageLayoutService.duplicate(id, userId, body, roleName);
   }
 
   @Put(':id/puck-data')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  savePuckData(@Param('id') id: string, @Body() body: SavePuckDataBodyDTO) {
-    return this.pageLayoutService.savePuckData(id, body);
+  savePuckData(
+    @Param('id') id: string,
+    @Body() body: SavePuckDataBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.savePuckData(id, body, userId, roleName);
   }
 
   @Post(':id/publish')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  publish(@Param('id') id: string, @ActiveUser('userId') userId: string) {
-    return this.pageLayoutService.publish(id, userId);
+  publish(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.publish(id, userId, roleName);
   }
 
   @Post(':id/schedule-publish')
@@ -121,22 +151,33 @@ export class PageLayoutController {
   schedulePublish(
     @Param('id') id: string,
     @Body() body: SchedulePublishBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.pageLayoutService.schedulePublish(id, body);
+    return this.pageLayoutService.schedulePublish(id, body, userId, roleName);
   }
 
   @Post(':id/unpublish')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  unpublish(@Param('id') id: string) {
-    return this.pageLayoutService.unpublish(id);
+  unpublish(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.unpublish(id, userId, roleName);
   }
 
   @Post(':id/widgets')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(WidgetInstanceResDTO)
-  addWidget(@Param('id') id: string, @Body() body: AddWidgetInstanceBodyDTO) {
-    return this.pageLayoutService.addWidgetInstance(id, body);
+  addWidget(
+    @Param('id') id: string,
+    @Body() body: AddWidgetInstanceBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.addWidgetInstance(id, body, userId, roleName);
   }
 
   @Patch(':id/widgets/:instanceId')
@@ -146,8 +187,16 @@ export class PageLayoutController {
     @Param('id') id: string,
     @Param('instanceId') instanceId: string,
     @Body() body: UpdateWidgetInstanceBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.pageLayoutService.updateWidgetInstance(id, instanceId, body);
+    return this.pageLayoutService.updateWidgetInstance(
+      id,
+      instanceId,
+      body,
+      userId,
+      roleName,
+    );
   }
 
   @Delete(':id/widgets/:instanceId')
@@ -156,29 +205,50 @@ export class PageLayoutController {
   removeWidget(
     @Param('id') id: string,
     @Param('instanceId') instanceId: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.pageLayoutService.removeWidgetInstance(id, instanceId);
+    return this.pageLayoutService.removeWidgetInstance(
+      id,
+      instanceId,
+      userId,
+      roleName,
+    );
   }
 
   @Put(':id/widgets/reorder')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutResDTO)
-  reorderWidgets(@Param('id') id: string, @Body() body: ReorderWidgetsBodyDTO) {
-    return this.pageLayoutService.reorderWidgets(id, body);
+  reorderWidgets(
+    @Param('id') id: string,
+    @Body() body: ReorderWidgetsBodyDTO,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.reorderWidgets(id, body, userId, roleName);
   }
 
   @Get(':id/versions')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutVersionListResDTO)
-  listVersions(@Param('id') id: string) {
-    return this.pageLayoutService.listVersions(id);
+  listVersions(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.listVersions(id, userId, roleName);
   }
 
   @Get(':id/versions/:versionId')
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   @ZodSerializerDto(PageLayoutVersionResDTO)
-  getVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
-    return this.pageLayoutService.getVersion(id, versionId);
+  getVersion(
+    @Param('id') id: string,
+    @Param('versionId') versionId: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.getVersion(id, versionId, userId, roleName);
   }
 
   @Post(':id/versions/:versionId/rollback')
@@ -189,12 +259,14 @@ export class PageLayoutController {
     @Param('versionId') versionId: string,
     @Body() body: RollbackPageLayoutVersionBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
     return this.pageLayoutService.rollbackToVersion(
       id,
       versionId,
       userId,
       body,
+      roleName,
     );
   }
 }

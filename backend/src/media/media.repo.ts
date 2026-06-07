@@ -37,15 +37,19 @@ export class MediaRepository {
     });
   }
 
-  async findPaginated(params: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    tagSlug?: string;
-    type?: string;
-  }) {
+  async findPaginated(
+    params: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      tagSlug?: string;
+      type?: string;
+    },
+    ownerFilter?: string,
+  ) {
     const { page, pageSize, search, tagSlug, type } = params;
     const where: Record<string, unknown> = {};
+    if (ownerFilter) where.createdBy = ownerFilter;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -98,9 +102,11 @@ export class MediaRepository {
     }
   }
 
-  findTagsInUse() {
+  findTagsInUse(ownerFilter?: string) {
     return this.prisma.tag.findMany({
-      where: { mediaTags: { some: {} } },
+      where: ownerFilter
+        ? { mediaTags: { some: { media: { createdBy: ownerFilter } } } }
+        : { mediaTags: { some: {} } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, slug: true },
     });

@@ -20,6 +20,8 @@ const makeRepoMock = (): RepoMock => ({
   findConflictBySlugAndStatus: vi.fn(),
   findById: vi.fn(),
   findAll: vi.fn(),
+  findOwnedOrPublished: vi.fn(),
+  findAllPublished: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
   publish: vi.fn(),
@@ -95,6 +97,79 @@ describe('PageLayoutService versioning', () => {
     service = module.get(PageLayoutService);
   });
 
+  describe('findAllForAdmin (multi-tenant)', () => {
+    it('super-admin sees all layouts (no filter)', async () => {
+      repo.findAll.mockResolvedValue([sampleLayout]);
+      const result = await service.findAllForAdmin('user-x', 'SUPER_ADMIN');
+      expect(repo.findAll).toHaveBeenCalled();
+      expect(repo.findOwnedOrPublished).not.toHaveBeenCalled();
+      expect(result).toEqual([sampleLayout]);
+    });
+
+    it('admin sees own + published only', async () => {
+      repo.findOwnedOrPublished.mockResolvedValue([sampleLayout]);
+      const result = await service.findAllForAdmin('user-1', 'ADMIN');
+      expect(repo.findOwnedOrPublished).toHaveBeenCalledWith('user-1');
+      expect(repo.findAll).not.toHaveBeenCalled();
+      expect(result).toEqual([sampleLayout]);
+    });
+  });
+
+  describe('findByIdForAdmin (multi-tenant)', () => {
+    it('super-admin sees a draft owned by someone else', async () => {
+      repo.findById.mockResolvedValue({
+        ...sampleLayout,
+        isPublished: false,
+        createdBy: 'other-user',
+      });
+      const result = await service.findByIdForAdmin(
+        'layout-1',
+        'super-1',
+        'SUPER_ADMIN',
+      );
+      expect(result.id).toBe('layout-1');
+    });
+
+    it('admin can read published layout owned by another admin', async () => {
+      repo.findById.mockResolvedValue({
+        ...sampleLayout,
+        isPublished: true,
+        createdBy: 'other-user',
+      });
+      const result = await service.findByIdForAdmin(
+        'layout-1',
+        'user-1',
+        'ADMIN',
+      );
+      expect(result.id).toBe('layout-1');
+    });
+
+    it('admin can read own draft', async () => {
+      repo.findById.mockResolvedValue({
+        ...sampleLayout,
+        isPublished: false,
+        createdBy: 'user-1',
+      });
+      const result = await service.findByIdForAdmin(
+        'layout-1',
+        'user-1',
+        'ADMIN',
+      );
+      expect(result.id).toBe('layout-1');
+    });
+
+    it('admin CANNOT read draft owned by another admin', async () => {
+      repo.findById.mockResolvedValue({
+        ...sampleLayout,
+        isPublished: false,
+        createdBy: 'other-user',
+      });
+      await expect(
+        service.findByIdForAdmin('layout-1', 'user-1', 'ADMIN'),
+      ).rejects.toBe(PageLayoutNotFoundException);
+    });
+  });
+
   describe('publish', () => {
     it('snapshots a version after publishing', async () => {
       repo.findById.mockResolvedValue(sampleLayout);
@@ -133,7 +208,7 @@ describe('PageLayoutService versioning', () => {
       repo.findConflictBySlugAndStatus.mockResolvedValue(null);
       repo.unpublish.mockResolvedValue(sampleLayout);
 
-      await service.unpublish('layout-1');
+      await service.unpublish('layout-1', 'user-1', 'ADMIN');
 
       expect(repo.unpublish).toHaveBeenCalledWith('layout-1');
       expect(repo.archiveCurrentVersions).toHaveBeenCalledWith('layout-1');
@@ -145,15 +220,15 @@ describe('PageLayoutService versioning', () => {
       repo.findById.mockResolvedValue(sampleLayout);
       repo.listVersions.mockResolvedValue([sampleVersion]);
 
-      const result = await service.listVersions('layout-1');
+      const result = await service.listVersions('layout-1', 'user-1', 'ADMIN');
       expect(result).toEqual({ versions: [sampleVersion] });
     });
 
     it('throws when layout missing', async () => {
       repo.findById.mockResolvedValue(null);
-      await expect(service.listVersions('missing')).rejects.toBe(
-        PageLayoutNotFoundException,
-      );
+      await expect(
+        service.listVersions('missing', 'user-1', 'ADMIN'),
+      ).rejects.toBe(PageLayoutNotFoundException);
     });
 
     it('lazy-backfills v1 when layout published but no versions exist', async () => {
@@ -163,7 +238,7 @@ describe('PageLayoutService versioning', () => {
         .mockResolvedValueOnce([sampleVersion]);
       repo.snapshotPublishedVersion.mockResolvedValue(sampleVersion);
 
-      const result = await service.listVersions('layout-1');
+      const result = await service.listVersions('layout-1', 'user-1', 'ADMIN');
 
       expect(repo.snapshotPublishedVersion).toHaveBeenCalledWith(
         'layout-1',
@@ -176,7 +251,7 @@ describe('PageLayoutService versioning', () => {
       repo.findById.mockResolvedValue({ ...sampleLayout, isPublished: false });
       repo.listVersions.mockResolvedValue([]);
 
-      const result = await service.listVersions('layout-1');
+      const result = await service.listVersions('layout-1', 'user-1', 'ADMIN');
 
       expect(repo.snapshotPublishedVersion).not.toHaveBeenCalled();
       expect(result).toEqual({ versions: [] });
@@ -189,7 +264,7 @@ describe('PageLayoutService versioning', () => {
       });
       repo.listVersions.mockResolvedValue([]);
 
-      const result = await service.listVersions('layout-1');
+      const result = await service.listVersions('layout-1', 'user-1', 'ADMIN');
 
       expect(repo.snapshotPublishedVersion).not.toHaveBeenCalled();
       expect(result).toEqual({ versions: [] });
@@ -222,9 +297,13 @@ describe('PageLayoutService versioning', () => {
       repo.findById.mockResolvedValue(sampleLayout);
       repo.findVersion.mockResolvedValue(sampleVersion);
 
-      await service.rollbackToVersion('layout-1', 'ver-1', 'user-1', {
-        mode: 'draft',
-      });
+      await service.rollbackToVersion(
+        'layout-1',
+        'ver-1',
+        'user-1',
+        { mode: 'draft' },
+        'ADMIN',
+      );
 
       expect(repo.restoreVersionAsDraft).toHaveBeenCalledWith(
         'layout-1',
@@ -241,9 +320,13 @@ describe('PageLayoutService versioning', () => {
       repo.findAnyPublishedWithSlug.mockResolvedValue({ id: 'other' });
 
       await expect(
-        service.rollbackToVersion('layout-1', 'ver-1', 'user-1', {
-          mode: 'republish',
-        }),
+        service.rollbackToVersion(
+          'layout-1',
+          'ver-1',
+          'user-1',
+          { mode: 'republish' },
+          'ADMIN',
+        ),
       ).rejects.toBe(PageLayoutSlugExistsException);
 
       expect(repo.restoreVersionAsDraft).not.toHaveBeenCalled();
@@ -255,9 +338,13 @@ describe('PageLayoutService versioning', () => {
       repo.findVersion.mockResolvedValue(sampleVersion);
       repo.findAnyPublishedWithSlug.mockResolvedValue(null);
 
-      await service.rollbackToVersion('layout-1', 'ver-1', 'user-1', {
-        mode: 'republish',
-      });
+      await service.rollbackToVersion(
+        'layout-1',
+        'ver-1',
+        'user-1',
+        { mode: 'republish' },
+        'ADMIN',
+      );
 
       expect(repo.restoreVersionAsDraft).toHaveBeenCalled();
       expect(repo.publish).toHaveBeenCalledWith('layout-1');
@@ -279,9 +366,13 @@ describe('PageLayoutService versioning', () => {
       repo.findVersion.mockResolvedValue(null);
 
       await expect(
-        service.rollbackToVersion('layout-1', 'missing', 'user-1', {
-          mode: 'draft',
-        }),
+        service.rollbackToVersion(
+          'layout-1',
+          'missing',
+          'user-1',
+          { mode: 'draft' },
+          'ADMIN',
+        ),
       ).rejects.toBe(PageLayoutVersionNotFoundException);
     });
   });

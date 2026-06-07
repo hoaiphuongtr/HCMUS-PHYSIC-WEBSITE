@@ -88,13 +88,37 @@ export class PageLayoutService {
     return layout;
   }
 
-  findAll() {
-    return this.pageLayoutRepository.findAll();
+  findAllForAdmin(userId: string, roleName: string) {
+    if (roleName === 'SUPER_ADMIN') {
+      return this.pageLayoutRepository.findAll();
+    }
+    return this.pageLayoutRepository.findOwnedOrPublished(userId);
+  }
+
+  findAllPublished() {
+    return this.pageLayoutRepository.findAllPublished();
   }
 
   async findById(id: string) {
     const layout = await this.pageLayoutRepository.findById(id);
     if (!layout) throw PageLayoutNotFoundException;
+    return layout;
+  }
+
+  async findByIdForAdmin(id: string, userId: string, roleName: string) {
+    const layout = await this.pageLayoutRepository.findById(id);
+    if (!layout) throw PageLayoutNotFoundException;
+    if (roleName === 'SUPER_ADMIN') return layout;
+    if (layout.isPublished) return layout;
+    if (layout.createdBy === userId) return layout;
+    throw PageLayoutNotFoundException;
+  }
+
+  private async assertOwnership(id: string, userId: string, roleName: string) {
+    const layout = await this.pageLayoutRepository.findById(id);
+    if (!layout) throw PageLayoutNotFoundException;
+    if (roleName === 'SUPER_ADMIN') return layout;
+    if (layout.createdBy !== userId) throw PageLayoutNotFoundException;
     return layout;
   }
 
@@ -104,8 +128,13 @@ export class PageLayoutService {
     return layout;
   }
 
-  async update(id: string, body: UpdatePageLayoutBodyType) {
-    const current = await this.findById(id);
+  async update(
+    id: string,
+    body: UpdatePageLayoutBodyType,
+    userId: string,
+    roleName: string,
+  ) {
+    const current = await this.assertOwnership(id, userId, roleName);
     if (body.slug && body.slug !== current.slug) {
       const conflict =
         await this.pageLayoutRepository.findConflictBySlugAndStatus(
@@ -124,15 +153,15 @@ export class PageLayoutService {
     return updated;
   }
 
-  async delete(id: string) {
-    await this.findById(id);
+  async delete(id: string, userId: string, roleName: string) {
+    await this.assertOwnership(id, userId, roleName);
     const result = await this.pageLayoutRepository.delete(id);
     await this.cache.clear();
     return result;
   }
 
-  async publish(id: string, userId: string) {
-    const layout = await this.findById(id);
+  async publish(id: string, userId: string, roleName: string) {
+    const layout = await this.assertOwnership(id, userId, roleName);
     const conflict = await this.pageLayoutRepository.findAnyPublishedWithSlug(
       layout.slug,
       id,
@@ -145,14 +174,18 @@ export class PageLayoutService {
     return result;
   }
 
-  async schedulePublish(id: string, body: SchedulePublishBodyType) {
-    await this.findById(id);
+  async schedulePublish(
+    id: string,
+    body: SchedulePublishBodyType,
+    userId: string,
+    roleName: string,
+  ) {
+    await this.assertOwnership(id, userId, roleName);
     const ids = [id, ...(body.alsoScheduleIds ?? [])];
     const uniqueIds = Array.from(new Set(ids));
     for (const layoutId of uniqueIds) {
       if (layoutId !== id) {
-        const exists = await this.pageLayoutRepository.findById(layoutId);
-        if (!exists) throw PageLayoutNotFoundException;
+        await this.assertOwnership(layoutId, userId, roleName);
       }
     }
     await this.pageLayoutRepository.scheduleManyPublish(
@@ -163,8 +196,8 @@ export class PageLayoutService {
     return this.findById(id);
   }
 
-  async unpublish(id: string) {
-    const layout = await this.findById(id);
+  async unpublish(id: string, userId: string, roleName: string) {
+    const layout = await this.assertOwnership(id, userId, roleName);
     const conflict =
       await this.pageLayoutRepository.findConflictBySlugAndStatus(
         layout.slug,
@@ -179,8 +212,8 @@ export class PageLayoutService {
     return result;
   }
 
-  async listVersions(id: string) {
-    const layout = await this.findById(id);
+  async listVersions(id: string, userId: string, roleName: string) {
+    const layout = await this.findByIdForAdmin(id, userId, roleName);
     let versions = await this.pageLayoutRepository.listVersions(id);
     if (
       versions.length === 0 &&
@@ -196,8 +229,13 @@ export class PageLayoutService {
     return { versions };
   }
 
-  async getVersion(id: string, versionId: string) {
-    await this.findById(id);
+  async getVersion(
+    id: string,
+    versionId: string,
+    userId: string,
+    roleName: string,
+  ) {
+    await this.findByIdForAdmin(id, userId, roleName);
     const version = await this.pageLayoutRepository.findVersion(versionId);
     if (!version || version.pageLayoutId !== id)
       throw PageLayoutVersionNotFoundException;
@@ -209,8 +247,9 @@ export class PageLayoutService {
     versionId: string,
     userId: string,
     body: RollbackPageLayoutVersionBodyType,
+    roleName: string,
   ) {
-    const layout = await this.findById(id);
+    const layout = await this.assertOwnership(id, userId, roleName);
     const version = await this.pageLayoutRepository.findVersion(versionId);
     if (!version || version.pageLayoutId !== id)
       throw PageLayoutVersionNotFoundException;
@@ -234,8 +273,10 @@ export class PageLayoutService {
   async addWidgetInstance(
     pageLayoutId: string,
     body: AddWidgetInstanceBodyType,
+    userId: string,
+    roleName: string,
   ) {
-    await this.findById(pageLayoutId);
+    await this.assertOwnership(pageLayoutId, userId, roleName);
     const widget = await this.widgetRepository.findById(body.widgetId);
     if (!widget) throw WidgetNotFoundException;
     const config = { ...(widget.defaultConfig as object), ...body.config };
@@ -251,8 +292,10 @@ export class PageLayoutService {
     pageLayoutId: string,
     instanceId: string,
     body: UpdateWidgetInstanceBodyType,
+    userId: string,
+    roleName: string,
   ) {
-    await this.findById(pageLayoutId);
+    await this.assertOwnership(pageLayoutId, userId, roleName);
     const instance =
       await this.pageLayoutRepository.findWidgetInstance(instanceId);
     if (!instance || instance.pageLayoutId !== pageLayoutId)
@@ -265,8 +308,13 @@ export class PageLayoutService {
     return updated;
   }
 
-  async removeWidgetInstance(pageLayoutId: string, instanceId: string) {
-    await this.findById(pageLayoutId);
+  async removeWidgetInstance(
+    pageLayoutId: string,
+    instanceId: string,
+    userId: string,
+    roleName: string,
+  ) {
+    await this.assertOwnership(pageLayoutId, userId, roleName);
     const instance =
       await this.pageLayoutRepository.findWidgetInstance(instanceId);
     if (!instance || instance.pageLayoutId !== pageLayoutId)
@@ -280,9 +328,9 @@ export class PageLayoutService {
     id: string,
     userId: string,
     body: DuplicatePageLayoutBodyType,
+    roleName: string,
   ) {
-    const original = await this.pageLayoutRepository.findById(id);
-    if (!original) throw PageLayoutNotFoundException;
+    const original = await this.findByIdForAdmin(id, userId, roleName);
     const baseName = body.name || `Copy of ${original.name}`;
     const baseSlug =
       toSlug(baseName) || `${toSlug(original.slug) || 'layout'}-copy`;
@@ -321,8 +369,13 @@ export class PageLayoutService {
     return duplicated;
   }
 
-  async savePuckData(id: string, body: SavePuckDataBodyType) {
-    await this.findById(id);
+  async savePuckData(
+    id: string,
+    body: SavePuckDataBodyType,
+    userId: string,
+    roleName: string,
+  ) {
+    await this.assertOwnership(id, userId, roleName);
     const result = await this.pageLayoutRepository.savePuckData(
       id,
       body.puckData,
@@ -331,8 +384,13 @@ export class PageLayoutService {
     return result;
   }
 
-  async reorderWidgets(pageLayoutId: string, body: ReorderWidgetsBodyType) {
-    await this.findById(pageLayoutId);
+  async reorderWidgets(
+    pageLayoutId: string,
+    body: ReorderWidgetsBodyType,
+    userId: string,
+    roleName: string,
+  ) {
+    await this.assertOwnership(pageLayoutId, userId, roleName);
     const result = await this.pageLayoutRepository.reorderWidgets(
       pageLayoutId,
       body.orderedInstanceIds,
