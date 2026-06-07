@@ -139,28 +139,13 @@ export function AdminCreateView() {
   return (
     <div className="min-h-full bg-slate-50 dark:bg-[#0B1120]">
       <header className="sticky top-0 z-10 bg-white dark:bg-[#101622] border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-2 text-sm min-w-0"
-          >
-            <Link
-              href="/admin/admins"
-              className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 truncate"
-            >
-              Admin Management
-            </Link>
-            <span className="text-slate-300 dark:text-slate-600">/</span>
-            <span className="text-slate-900 dark:text-slate-100 font-medium truncate">
-              Create Admin
-            </span>
-          </nav>
+        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
           <Link
             href="/admin/admins"
             className="shrink-0 px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202c44] inline-flex items-center gap-1"
           >
             <ChevronLeftIcon className="w-3.5 h-3.5" />
-            Back
+            Quay lại
           </Link>
         </div>
       </header>
