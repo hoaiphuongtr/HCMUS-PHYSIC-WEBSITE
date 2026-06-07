@@ -126,6 +126,27 @@ export function PostListView() {
     enabled: profileQuery.data !== undefined,
   });
 
+  // Dedicated count queries — independent of the active tab + filters, so both
+  // tab labels can show a stable number even when the user is on the other tab.
+  // Page size = 1 (we only need `total`).
+  const mineCountQuery = useQuery({
+    queryKey: ["POSTS", "COUNT", "MINE", ownerId],
+    queryFn: () => postApi.listPaged({ page: 1, pageSize: 100 }),
+    enabled: !!ownerId,
+  });
+  const publishedCountQuery = useQuery({
+    queryKey: ["POSTS", "COUNT", "PUBLISHED"],
+    queryFn: () =>
+      postApi.listPaged({ page: 1, pageSize: 1, status: "PUBLISHED" }),
+    enabled: !!ownerId,
+  });
+
+  const mineCount = useMemo(() => {
+    const items = mineCountQuery.data?.items ?? [];
+    return items.filter((p) => p.createdBy === ownerId).length;
+  }, [mineCountQuery.data, ownerId]);
+  const publishedCount = publishedCountQuery.data?.total ?? 0;
+
   const deleteMutation = useMutation({
     mutationKey: ["POSTS", "DELETE"],
     mutationFn: (id: string) => postApi.remove(id),
@@ -201,12 +222,16 @@ export function PostListView() {
         <div className="flex border-b border-slate-200 dark:border-slate-800">
           {(
             [
-              { key: "mine", label: "Bài của tôi" },
-              { key: "published", label: "Đã xuất bản" },
-            ] as { key: TabKey; label: string }[]
+              { key: "mine", label: "Bài của tôi", count: mineCount },
+              {
+                key: "published",
+                label: "Đã xuất bản",
+                count: publishedCount,
+              },
+            ] as { key: TabKey; label: string; count: number }[]
           ).map((t) => {
             const active = tab === t.key;
-            const count = active ? total : null;
+            const count = t.count;
             return (
               <button
                 key={t.key}
@@ -220,18 +245,16 @@ export function PostListView() {
                 }
               >
                 {t.label}
-                {count !== null && (
-                  <span
-                    className={
-                      "px-1.5 py-0.5 rounded-full text-[10px] font-semibold " +
-                      (active
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300")
-                    }
-                  >
-                    {count}
-                  </span>
-                )}
+                <span
+                  className={
+                    "px-1.5 py-0.5 rounded-full text-[10px] font-semibold " +
+                    (active
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300")
+                  }
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
