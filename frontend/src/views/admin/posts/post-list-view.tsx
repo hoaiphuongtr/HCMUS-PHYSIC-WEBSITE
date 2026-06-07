@@ -106,15 +106,11 @@ export function PostListView() {
   const isSuperAdmin = profileQuery.data?.role === "SUPER_ADMIN";
 
   // Status param sent to BE differs per tab.
-  // - Published tab: always status=PUBLISHED, never let secondary picker override.
-  // - Mine tab: caller may pick DRAFT or SCHEDULED via the picker; if blank we
-  //   fetch own + published (BE default), then filter to non-published on FE.
+  // - Published tab: always status=PUBLISHED.
+  // - Mine tab: pass through whatever the picker chose; BE default returns
+  //   own + everyone-else's published, FE narrows to ownerId.
   const serverStatus =
-    tab === "published"
-      ? "PUBLISHED"
-      : statusInTab && statusInTab !== "PUBLISHED"
-        ? statusInTab
-        : undefined;
+    tab === "published" ? "PUBLISHED" : statusInTab || undefined;
 
   const listQuery = useQuery({
     queryKey: ["POSTS", "PAGED", tab, page, category, serverStatus, search],
@@ -155,17 +151,13 @@ export function PostListView() {
   const data = listQuery.data;
   const rawItems = data?.items ?? [];
 
-  // Mine tab: only own posts + only drafts/scheduled. Server already filtered
-  // to own+published when ADMIN; SUPER_ADMIN sees all so filter by ownerId
-  // ourselves so the "Mine" tab still means "mine".
+  // Mine tab: only items owned by current user (any status). Server already
+  // filtered to own+published when ADMIN, but we narrow to ownerId so even
+  // SUPER_ADMIN sees a meaningful "mine" view. Status picker further narrows.
   const items = useMemo(() => {
     if (tab === "published") return rawItems;
-    return rawItems.filter((p) => {
-      if (p.status !== "DRAFT" && p.status !== "SCHEDULED") return false;
-      if (isSuperAdmin) return p.createdBy === ownerId;
-      return p.createdBy === ownerId;
-    });
-  }, [rawItems, tab, ownerId, isSuperAdmin]);
+    return rawItems.filter((p) => p.createdBy === ownerId);
+  }, [rawItems, tab, ownerId]);
 
   const total = tab === "published" ? (data?.total ?? 0) : items.length;
   const totalPages = tab === "published" ? (data?.totalPages ?? 1) : 1;
@@ -273,11 +265,11 @@ export function PostListView() {
                   setStatusInTab(next);
                   setPage(1);
                 }}
-                placeholder="Draft & Scheduled"
-                clearLabel="Draft & Scheduled"
-                options={(["DRAFT", "SCHEDULED"] as ContentStatusValue[]).map(
-                  (s) => ({ value: s, label: STATUS_LABELS[s] }),
-                )}
+                placeholder="Tất cả"
+                clearLabel="Tất cả"
+                options={(
+                  ["DRAFT", "SCHEDULED", "PUBLISHED"] as ContentStatusValue[]
+                ).map((s) => ({ value: s, label: STATUS_LABELS[s] }))}
               />
             </div>
           ) : null}
@@ -305,7 +297,7 @@ export function PostListView() {
               {hasFilters
                 ? "Không có bài đăng nào khớp với bộ lọc."
                 : tab === "mine"
-                  ? 'Bạn chưa có bài đăng nào ở trạng thái Draft / Scheduled. Bấm "Tạo bài đăng mới" để bắt đầu.'
+                  ? 'Bạn chưa có bài đăng nào. Bấm "Tạo bài đăng mới" để bắt đầu.'
                   : "Chưa có bài đăng nào được xuất bản."}
             </p>
           </div>
