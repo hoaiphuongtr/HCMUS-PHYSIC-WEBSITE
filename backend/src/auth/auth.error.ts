@@ -31,3 +31,11 @@ export const InvalidOTPException = new UnauthorizedException([
 export const ExpiredOTPException = new UnauthorizedException([
   { field: 'code', error: 'Expired OTP code' },
 ]);
+
+export const CurrentPasswordMismatchException = new UnauthorizedException([
+  { field: 'currentPassword', error: 'Mật khẩu hiện tại không đúng' },
+]);
+
+export const SamePasswordException = new ConflictException([
+  { field: 'newPassword', error: 'Mật khẩu mới phải khác mật khẩu hiện tại' },
+]);

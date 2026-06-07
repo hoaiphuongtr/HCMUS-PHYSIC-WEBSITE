@@ -11,6 +11,8 @@ import {
   SendOTPBodyType,
   VerifyOTPBodyType,
   ForgotPasswordBodyType,
+  UpdateProfileBodyType,
+  ChangePasswordBodyType,
 } from './auth.model';
 import { RoleName } from '../shared/constants/role.constants';
 import { VerificationMethod } from '../shared/constants/auth.constants';
@@ -22,6 +24,8 @@ import {
   DepartmentNotFoundException,
   InvalidOTPException,
   ExpiredOTPException,
+  CurrentPasswordMismatchException,
+  SamePasswordException,
 } from './auth.error';
 import { CreateAccessTokenPayload } from '../shared/types/jwt.type';
 import { DepartmentRepository } from '../department/department.repo';
@@ -94,6 +98,33 @@ export class AuthService {
       departmentId,
       avatarUrl: body.avatarUrl,
     });
+  }
+
+  async updateProfile(userId: string, body: UpdateProfileBodyType) {
+    if (body.departmentId) {
+      const dept = await this.departmentRepository.findById(body.departmentId);
+      if (!dept) throw DepartmentNotFoundException;
+    }
+    return this.authRepository.updateProfile(userId, body);
+  }
+
+  async changePassword(userId: string, body: ChangePasswordBodyType) {
+    const user = await this.authRepository.findUserWithPassword(userId);
+    if (!user) throw InvalidEmailException;
+    if (!user.password) throw InvalidPasswordException;
+    const isMatch = await this.hashingService.compare(
+      body.currentPassword,
+      user.password,
+    );
+    if (!isMatch) throw CurrentPasswordMismatchException;
+    const isSame = await this.hashingService.compare(
+      body.newPassword,
+      user.password,
+    );
+    if (isSame) throw SamePasswordException;
+    const hashed = await this.hashingService.hash(body.newPassword);
+    await this.authRepository.updatePasswordById(userId, hashed);
+    return { message: 'Đã đổi mật khẩu' };
   }
 
   async sendOTP(body: SendOTPBodyType) {

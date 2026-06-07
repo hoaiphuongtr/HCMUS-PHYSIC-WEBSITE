@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -15,6 +24,8 @@ import {
   ForgotPasswordBodyDTO,
   GetAuthorizationUrlResDTO,
   MessageResDTO,
+  UpdateProfileBodyDTO,
+  ChangePasswordBodyDTO,
 } from './auth.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -33,6 +44,26 @@ export class AuthController {
   @ZodSerializerDto(UserResDTO)
   getProfile(@ActiveUser('userId') userId: string) {
     return this.authService.getProfile(userId);
+  }
+
+  @Patch('profile')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(UserResDTO)
+  updateProfile(
+    @ActiveUser('userId') userId: string,
+    @Body() body: UpdateProfileBodyDTO,
+  ) {
+    return this.authService.updateProfile(userId, body);
+  }
+
+  @Post('change-password')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  @ZodSerializerDto(MessageResDTO)
+  changePassword(
+    @ActiveUser('userId') userId: string,
+    @Body() body: ChangePasswordBodyDTO,
+  ) {
+    return this.authService.changePassword(userId, body);
   }
 
   @Post('login')

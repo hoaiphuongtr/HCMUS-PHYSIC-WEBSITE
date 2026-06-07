@@ -11,6 +11,8 @@ import {
   ForgotPasswordBodySchema,
   GetAuthorizationUrlResSchema,
   MessageResSchema,
+  UpdateProfileBodySchema,
+  ChangePasswordBodySchema,
 } from './auth.model';
 
 export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
@@ -28,3 +30,9 @@ export class GetAuthorizationUrlResDTO extends createZodDto(
   GetAuthorizationUrlResSchema,
 ) {}
 export class MessageResDTO extends createZodDto(MessageResSchema) {}
+export class UpdateProfileBodyDTO extends createZodDto(
+  UpdateProfileBodySchema,
+) {}
+export class ChangePasswordBodyDTO extends createZodDto(
+  ChangePasswordBodySchema,
+) {}

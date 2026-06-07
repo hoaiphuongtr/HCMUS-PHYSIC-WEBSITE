@@ -89,6 +89,29 @@ export const authApi = {
   googleLink() {
     return apiFetch<{ url: string }>("/auth/google-link");
   },
+  updateProfile(body: {
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string | null;
+    position?: string | null;
+    departmentId?: string | null;
+    phone?: string | null;
+  }) {
+    return authFetch<UserProfile>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+  changePassword(body: {
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+  }) {
+    return authFetch<{ message: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
   createAdmin(body: {
     email: string;
     password: string;

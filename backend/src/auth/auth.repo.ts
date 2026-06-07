@@ -48,6 +48,36 @@ export class AuthRepository {
     });
   }
 
+  updateProfile(
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string | null;
+      position?: string | null;
+      departmentId?: string | null;
+      phone?: string | null;
+    },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+      omit: { password: true },
+    });
+  }
+
+  updatePasswordById(userId: string, password: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { password },
+      select: { id: true },
+    });
+  }
+
+  findUserWithPassword(userId: string) {
+    return this.prisma.user.findUnique({ where: { id: userId } });
+  }
+
   createVerificationCode(data: {
     email: string;
     code: string;

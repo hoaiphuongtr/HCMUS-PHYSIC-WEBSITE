@@ -121,3 +121,32 @@ export const UserResSchema = z.object({
 });
 
 export type UserResType = z.infer<typeof UserResSchema>;
+
+export const UpdateProfileBodySchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  avatarUrl: z.string().nullable().optional(),
+  position: z.string().max(200).nullable().optional(),
+  departmentId: z.string().nullable().optional(),
+  phone: z.string().max(20).nullable().optional(),
+});
+
+export type UpdateProfileBodyType = z.infer<typeof UpdateProfileBodySchema>;
+
+export const ChangePasswordBodySchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(6).max(100),
+    confirmNewPassword: z.string().min(6).max(100),
+  })
+  .superRefine(({ newPassword, confirmNewPassword }, ctx) => {
+    if (newPassword !== confirmNewPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'New password and confirm password must match',
+        path: ['confirmNewPassword'],
+      });
+    }
+  });
+
+export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>;
