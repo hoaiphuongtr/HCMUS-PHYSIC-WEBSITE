@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
@@ -165,18 +166,22 @@ export function AdminCreateView() {
               Avatar
             </h2>
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex items-center justify-center text-slate-500 dark:text-slate-300 text-xs">
-                {form.avatarUrl ? (
-                  // biome-ignore lint/performance/noImgElement: backend host
-                  <img
+              {form.avatarUrl ? (
+                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+                  <Image
                     src={resolveMediaUrl(form.avatarUrl)}
                     alt=""
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="80px"
+                    unoptimized
+                    className="object-cover"
                   />
-                ) : (
-                  "No avatar"
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300 text-xs">
+                  No avatar
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <div className="flex flex-wrap gap-2">
                   <button

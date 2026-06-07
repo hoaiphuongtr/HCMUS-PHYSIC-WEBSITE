@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -376,12 +377,16 @@ function StatCard({
 function Avatar({ url, initials }: { url: string | null; initials: string }) {
   if (url) {
     return (
-      // biome-ignore lint/performance/noImgElement: avatar from arbitrary backend host
-      <img
-        src={resolveMediaUrl(url)}
-        alt=""
-        className="w-9 h-9 rounded-full object-cover bg-slate-100 dark:bg-slate-800 shrink-0"
-      />
+      <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+        <Image
+          src={resolveMediaUrl(url)}
+          alt=""
+          fill
+          sizes="36px"
+          unoptimized
+          className="object-cover"
+        />
+      </div>
     );
   }
   return (

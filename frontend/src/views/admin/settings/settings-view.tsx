@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock as LockIcon, Save as SaveIcon } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { UserIcon } from "@/components/admin/icons";
@@ -353,12 +354,16 @@ function Field({
 function Avatar({ url }: { url: string | null }) {
   if (url) {
     return (
-      // biome-ignore lint/performance/noImgElement: avatar from backend host
-      <img
-        src={resolveMediaUrl(url)}
-        alt=""
-        className="w-20 h-20 rounded-full object-cover bg-slate-200 dark:bg-slate-700"
-      />
+      <div className="relative w-20 h-20 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+        <Image
+          src={resolveMediaUrl(url)}
+          alt=""
+          fill
+          sizes="80px"
+          unoptimized
+          className="object-cover"
+        />
+      </div>
     );
   }
   return (

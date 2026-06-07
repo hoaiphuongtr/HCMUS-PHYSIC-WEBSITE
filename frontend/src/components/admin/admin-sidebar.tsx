@@ -131,6 +131,8 @@ export function AdminSidebar() {
             src="/Logo_Phys-blue.png"
             alt="Physics Faculty"
             fill
+            sizes="32px"
+            priority
             className="object-contain dark:brightness-0 dark:invert"
           />
         </div>
@@ -144,13 +146,17 @@ export function AdminSidebar() {
       {profile && !collapsed && (
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
-            <Image
-              src={resolveMediaUrl(profile.avatarUrl)}
-              alt={displayName}
-              width={36}
-              height={36}
-              className="rounded-full shrink-0"
-            />
+            <div className="relative size-9 rounded-full overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-700">
+              <Image
+                src={resolveMediaUrl(profile.avatarUrl)}
+                alt=""
+                fill
+                sizes="36px"
+                unoptimized
+                priority
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div className="size-9 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
               <span className="text-xs font-semibold text-white">
@@ -172,13 +178,17 @@ export function AdminSidebar() {
       {profile && collapsed && (
         <div className="flex justify-center py-4 border-b border-slate-200 dark:border-white/[0.06]">
           {profile.avatarUrl ? (
-            <Image
-              src={resolveMediaUrl(profile.avatarUrl)}
-              alt={displayName}
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
+            <div className="relative size-8 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+              <Image
+                src={resolveMediaUrl(profile.avatarUrl)}
+                alt=""
+                fill
+                sizes="32px"
+                unoptimized
+                priority
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div className="size-8 rounded-full bg-blue-600 flex items-center justify-center">
               <span className="text-[10px] font-semibold text-white">
