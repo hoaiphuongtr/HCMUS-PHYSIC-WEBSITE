@@ -210,7 +210,7 @@ export function PostListView() {
           {(
             [
               { key: "mine", label: "Bài của tôi" },
-              { key: "published", label: "Đã xuất bản (toàn khoa)" },
+              { key: "published", label: "Đã xuất bản" },
             ] as { key: TabKey; label: string }[]
           ).map((t) => {
             const active = tab === t.key;

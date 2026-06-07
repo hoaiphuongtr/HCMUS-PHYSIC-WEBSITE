@@ -50,7 +50,9 @@ export function ForgotPasswordView() {
     mutationKey: ["AUTH", "FORGOT_PASSWORD"],
     mutationFn: authApi.forgotPassword,
     onSuccess() {
-      toast.success("Đặt lại mật khẩu thành công! Đang chuyển về trang đăng nhập…");
+      toast.success(
+        "Đặt lại mật khẩu thành công! Đang chuyển về trang đăng nhập…",
+      );
       setTimeout(() => {
         router.push("/login");
       }, 2000);
