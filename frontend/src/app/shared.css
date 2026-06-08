@@ -154,6 +154,13 @@
   scroll-behavior: auto;
 }
 
+/* Hide Puck's undo/redo history toolbar (we don't surface those actions).
+   Puck renders the header inside `.puck-editor-wrapper` but the CSS-module
+   class lives globally, so target the class on its own with !important. */
+[class*="MenuBar-history"] {
+  display: none !important;
+}
+
 /* Dark-mode overrides for Puck editor chrome. Inherited via .dark on the
    AdminThemeProvider wrapper. Puck reads its own CSS variables, so plain
    Tailwind dark: variants can't reach inside — we have to swap the vars. */
@@ -191,6 +198,32 @@
 .dark .puck-editor-wrapper {
   background-color: #0b1120;
   color: #f1f5f9;
+}
+
+/* Dark scrollbars site-wide when admin theme is dark. Scoped to the .dark
+   class so the public site (which never carries it) stays untouched. */
+.dark,
+.dark * {
+  scrollbar-color: #334155 #0b1120;
+  scrollbar-width: thin;
+}
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border: 2px solid #0b1120;
+  border-radius: 8px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+.dark ::-webkit-scrollbar-corner {
+  background: #0b1120;
 }
 
 /* Header + side panels surface colors. */

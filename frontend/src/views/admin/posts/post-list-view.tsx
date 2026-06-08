@@ -176,7 +176,10 @@ export function PostListView() {
 
   // Mine tab: narrow to ownerId. Then slice for pagination.
   const mineFiltered = useMemo(
-    () => (tab === "mine" ? rawItems.filter((p) => p.createdBy === ownerId) : rawItems),
+    () =>
+      tab === "mine"
+        ? rawItems.filter((p) => p.createdBy === ownerId)
+        : rawItems,
     [rawItems, tab, ownerId],
   );
 

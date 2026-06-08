@@ -2,8 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   FileText,
   FolderOpen,
   LayoutDashboard,
@@ -11,7 +9,6 @@ import {
   LogOut,
   type LucideIcon,
   Mail,
-  Menu,
   Moon,
   Puzzle,
   Settings,
@@ -37,7 +34,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: LayoutPanelLeft,
   },
   { name: "Widget Types", href: "/admin/widgets", icon: Puzzle },
-  { name: "Menus", href: "/admin/menus", icon: Menu },
   { name: "Subscribers", href: "/admin/subscriptions", icon: Mail },
 ];
 
@@ -63,7 +59,8 @@ const isPathActive = (pathname: string, href: string) => {
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const collapsed = !hovered;
   const { theme, toggle: toggleTheme } = useAdminTheme();
   const isDark = theme === "dark";
 
@@ -115,9 +112,17 @@ export function AdminSidebar() {
 
   return (
     <aside
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setHovered(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setHovered(false);
+        }
+      }}
       className={
-        "flex flex-col bg-white dark:bg-[#0B1120] border-r border-slate-200 dark:border-transparent h-full shrink-0 transition-all duration-200 " +
-        (collapsed ? "w-[64px]" : "w-[240px]")
+        "flex flex-col bg-white dark:bg-[#0B1120] border-r-2 border-slate-200 dark:border-transparent h-full shrink-0 transition-all duration-200 " +
+        (collapsed ? "w-[80px]" : "w-[214px]")
       }
     >
       <div
@@ -236,34 +241,66 @@ export function AdminSidebar() {
           {!collapsed && "Log Out"}
         </button>
 
-        <button
-          type="button"
-          onClick={toggleTheme}
-          title={collapsed ? (isDark ? "Light mode" : "Dark mode") : undefined}
+        <div
           className={
-            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-amber-300 transition-colors w-full " +
-            (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
+            "flex w-full " +
+            (collapsed ? "justify-center" : "ml-2 justify-start")
           }
         >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          {!collapsed && (isDark ? "Light mode" : "Dark mode")}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCollapsed(!collapsed)}
-          className={
-            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white transition-colors w-full " +
-            (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
-          }
-        >
-          {collapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
-            <ChevronLeft className="w-5 h-5" />
-          )}
-          {!collapsed && "Collapse"}
-        </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isDark}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            onClick={toggleTheme}
+            className={
+              "relative inline-flex items-center rounded-full transition-colors duration-300 shadow-inner" +
+              (isDark
+                ? "bg-indigo-400/40 dark:bg-indigo-500/40"
+                : "bg-slate-100 dark:bg-slate-700/60") +
+              (collapsed ? " h-7 w-14" : " h-12 w-[214px]")
+            }
+          >
+            <span
+              className={
+                "pointer-events-none absolute inset-0 flex items-center justify-between " +
+                (collapsed ? "px-1.5" : "px-4")
+              }
+            >
+              <Sun
+                className={
+                  (collapsed ? "w-3.5 h-3.5" : "w-6 h-6") +
+                  " transition-opacity " +
+                  (isDark
+                    ? "text-indigo-100/80 opacity-70"
+                    : "text-amber-500 opacity-100")
+                }
+              />
+              <Moon
+                className={
+                  (collapsed ? "w-3.5 h-3.5" : "w-6 h-6") +
+                  " transition-opacity " +
+                  (isDark
+                    ? "text-indigo-600 opacity-100"
+                    : "text-slate-400 opacity-70")
+                }
+              />
+            </span>
+            <span
+              aria-hidden="true"
+              className={
+                "absolute top-1/2 -translate-y-1/2 rounded-full bg-white shadow-md transition-transform duration-300 " +
+                (collapsed ? "h-6 w-6" : "h-10 w-10") +
+                " " +
+                (isDark
+                  ? collapsed
+                    ? "translate-x-[28px]"
+                    : "translate-x-[145px]"
+                  : "translate-x-1")
+              }
+            />
+          </button>
+        </div>
       </div>
     </aside>
   );

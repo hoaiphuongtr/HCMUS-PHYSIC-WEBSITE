@@ -131,16 +131,6 @@ export function AdminDashboardView() {
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100">
-      <header className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f1422] px-6 shrink-0">
-        <div className="text-sm font-medium">
-          <span className="text-slate-400 dark:text-slate-500">
-            Physics Faculty
-          </span>
-          <span className="mx-2 text-slate-300 dark:text-slate-700">/</span>
-          <span className="text-slate-900 dark:text-slate-100">Dashboard</span>
-        </div>
-      </header>
-
       <div className="px-6 py-6 space-y-6">
         <section className="flex items-start justify-between gap-4 flex-wrap">
           <div>

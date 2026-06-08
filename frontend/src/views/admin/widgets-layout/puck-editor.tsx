@@ -406,38 +406,30 @@ function PublishMenu({
           href={publicLayoutUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-1"
+          className="h-12 p-3 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-3"
         >
-          <ExternalLinkIcon className="w-3.5 h-3.5" />
+          <ExternalLinkIcon className="size-4" />
           View live
         </a>
       )}
-      <button
-        type="button"
-        onClick={handleSaveOnly}
-        disabled={disabled}
-        className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-50"
-      >
-        Save draft
-      </button>
       <div className="inline-flex">
         <button
           type="button"
-          onClick={publishNow}
+          onClick={handleSaveOnly}
           disabled={disabled}
-          className="px-3 py-1.5 text-xs font-medium rounded-l-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="h-12 px-3 py-1.5 text-xs font-semibold rounded-l-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          Publish now
+          {busy ? "Đang lưu…" : "Save"}
         </button>
         <button
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((p) => !p)}
           disabled={disabled}
-          aria-label="More publish options"
+          aria-label="More save options"
           aria-haspopup="menu"
           aria-expanded={open}
-          className="px-2 py-1.5 rounded-r-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 border-l border-blue-500"
+          className="h-12 px-2 py-1.5 rounded-r-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 border-l border-blue-500"
         >
           <ChevronDownIcon className="w-4 h-4 align-middle" />
         </button>
@@ -450,12 +442,15 @@ function PublishMenu({
       >
         <button
           type="button"
-          onClick={publishNow}
+          onClick={() => {
+            handleSaveOnly();
+            setOpen(false);
+          }}
           disabled={disabled}
           className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
         >
-          <UploadIcon className="w-4 h-4 text-blue-600" />
-          Publish now
+          <UploadIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          Save draft
         </button>
         <button
           type="button"
@@ -467,7 +462,16 @@ function PublishMenu({
           className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
         >
           <ClockIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-          Schedule publish...
+          Save &amp; schedule…
+        </button>
+        <button
+          type="button"
+          onClick={publishNow}
+          disabled={disabled}
+          className="w-full px-3 py-2 text-left text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 inline-flex items-center gap-2"
+        >
+          <UploadIcon className="w-4 h-4 text-blue-600" />
+          Save &amp; publish now
         </button>
         {layout.isPublished || layout.scheduledAt ? (
           <>
