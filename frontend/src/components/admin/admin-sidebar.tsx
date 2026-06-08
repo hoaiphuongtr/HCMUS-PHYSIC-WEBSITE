@@ -254,51 +254,51 @@ export function AdminSidebar() {
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             onClick={toggleTheme}
             className={
-              "relative inline-flex items-center rounded-full transition-colors duration-300 shadow-inner" +
+              "relative inline-flex items-center rounded-full transition-colors duration-300 shadow-inner border " +
               (isDark
-                ? "bg-indigo-400/40 dark:bg-indigo-500/40"
-                : "bg-slate-100 dark:bg-slate-700/60") +
+                ? "bg-indigo-1000 border-indigo-600"
+                : "bg-slate-200 border-slate-300") +
               (collapsed ? " h-7 w-14" : " h-12 w-[214px]")
             }
           >
-            <span
-              className={
-                "pointer-events-none absolute inset-0 flex items-center justify-between " +
-                (collapsed ? "px-1.5" : "px-4")
-              }
-            >
-              <Sun
-                className={
-                  (collapsed ? "w-3.5 h-3.5" : "w-6 h-6") +
-                  " transition-opacity " +
-                  (isDark
-                    ? "text-indigo-100/80 opacity-70"
-                    : "text-amber-500 opacity-100")
-                }
-              />
-              <Moon
-                className={
-                  (collapsed ? "w-3.5 h-3.5" : "w-6 h-6") +
-                  " transition-opacity " +
-                  (isDark
-                    ? "text-indigo-600 opacity-100"
-                    : "text-slate-400 opacity-70")
-                }
-              />
-            </span>
+            {/* Sliding white knob — only this element moves. */}
             <span
               aria-hidden="true"
               className={
-                "absolute top-1/2 -translate-y-1/2 rounded-full bg-white shadow-md transition-transform duration-300 " +
-                (collapsed ? "h-6 w-6" : "h-10 w-10") +
+                "absolute top-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg transition-transform duration-300 ring-1 ring-black/5 " +
+                (collapsed ? "h-6 w-6" : "h-9 w-9") +
                 " " +
                 (isDark
                   ? collapsed
                     ? "translate-x-[28px]"
                     : "translate-x-[145px]"
-                  : "translate-x-1")
+                  : collapsed
+                    ? "translate-x-0.5"
+                    : "translate-x-[6px]")
               }
             />
+            {/* Fixed icons always rendered on top of the knob. */}
+            <span
+              className={
+                "pointer-events-none absolute inset-0 flex items-center justify-between " +
+                (collapsed ? "px-2" : "px-[14px]")
+              }
+            >
+              <Sun
+                className={
+                  (collapsed ? "w-3.5 h-3.5" : "w-5 h-5") +
+                  " transition-colors " +
+                  (isDark ? "text-slate-300 opacity-80" : "text-amber-500")
+                }
+              />
+              <Moon
+                className={
+                  (collapsed ? "w-3.5 h-3.5" : "w-5 h-5") +
+                  " transition-colors " +
+                  (isDark ? "text-indigo-600" : "text-slate-400 opacity-80")
+                }
+              />
+            </span>
           </button>
         </div>
       </div>
