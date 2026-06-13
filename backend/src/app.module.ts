@@ -13,6 +13,7 @@ import { VisitorModule } from './visitor/visitor.module';
 import { MediaModule } from './media/media.module';
 import { PostModule } from './post/post.module';
 import { AdminModule } from './admin/admin.module';
+import { CategoryModule } from './category/category.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -43,6 +44,7 @@ import envConfig from './shared/config/config';
     MediaModule,
     PostModule,
     AdminModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

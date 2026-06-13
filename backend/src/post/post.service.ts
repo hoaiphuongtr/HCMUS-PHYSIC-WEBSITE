@@ -9,50 +9,37 @@ import {
   PostSlugExistsException,
   TemplateLayoutNotFoundException,
 } from './post.error';
-import { CloneIntoLayoutBodyType, UpsertPostBodyType } from './post.model';
+import {
+  CloneIntoLayoutBodyType,
+  LocalizedTextType,
+  UpsertPostBodyType,
+} from './post.model';
 import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
 import { toSlug, toSlugPath } from '../shared/helpers';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
+import type { JsonValue } from '../generated/prisma/internal/prismaNamespace';
 
-const parseLocalized = (
-  value: string | null,
-): string | { vi?: string; en?: string } | null => {
+// JsonValue → { vi, en? } payload. Tolerates legacy plain-string field values
+// that may slip through during the migration window.
+const asLocalized = (
+  value: JsonValue | null | undefined,
+): LocalizedTextType | null => {
   if (value == null) return null;
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (!trimmed.startsWith('{')) return value;
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
-      return parsed;
-  } catch {
-    return value;
-  }
-  return value;
-};
-
-const extractVi = (value: string | null): string | null => {
-  const parsed = parseLocalized(value);
-  if (parsed == null) return null;
-  if (typeof parsed === 'string') return parsed;
-  if (typeof parsed === 'object') {
-    const obj = parsed as Record<string, string>;
-    return obj.vi || obj.en || Object.values(obj).find(Boolean) || null;
+  if (typeof value === 'string') return { vi: value };
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>;
+    const vi = typeof obj.vi === 'string' ? obj.vi : '';
+    const en = typeof obj.en === 'string' ? obj.en : undefined;
+    if (vi || en) return { vi: vi || en || '', en };
   }
   return null;
 };
 
-const POST_CATEGORY_LABELS_VI: Record<string, string> = {
-  EDUCATIONAL_NEWS: 'Tin học vụ',
-  SCIENTIFIC_INFORMATION: 'Thông tin khoa học',
-  RECRUITMENT: 'Tuyển dụng',
-  EVENT: 'Sự kiện',
-  SCHOLARSHIP: 'Học bổng',
+const viOf = (value: JsonValue | null | undefined): string => {
+  const l = asLocalized(value);
+  return l ? l.vi || l.en || '' : '';
 };
-
-const categoryLabel = (category: string): string =>
-  POST_CATEGORY_LABELS_VI[category] ?? category;
 
 const postInclude = {
   postTags: { include: { tag: true } },
@@ -118,7 +105,7 @@ export class PostService {
   }
 
   async create(body: UpsertPostBodyType, userId: string) {
-    const slug = toSlug(body.slug || body.title);
+    const slug = toSlug(body.slug || body.title.vi);
     const existing = await this.prisma.post.findUnique({ where: { slug } });
     if (existing) throw PostSlugExistsException;
     const tagIds = await this.upsertTagIds(body.tagSlugs ?? []);
@@ -129,11 +116,11 @@ export class PostService {
         : null;
     const created = await this.prisma.post.create({
       data: {
-        title: body.title,
+        title: body.title as unknown as InputJsonValue,
         slug,
-        body: body.body ?? null,
-        excerpt: body.excerpt ?? null,
-        category: body.category,
+        body: (body.body ?? undefined) as InputJsonValue | undefined,
+        excerpt: (body.excerpt ?? undefined) as InputJsonValue | undefined,
+        categoryId: body.categoryId,
         status,
         publishedAt: status === 'PUBLISHED' ? new Date() : null,
         scheduledAt: scheduledAtValue,
@@ -168,7 +155,7 @@ export class PostService {
     if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
       throw PostNotFoundException;
     }
-    const slug = toSlug(body.slug || body.title);
+    const slug = toSlug(body.slug || body.title.vi);
     if (slug !== existing.slug) {
       const other = await this.prisma.post.findUnique({ where: { slug } });
       if (other && other.id !== id) throw PostSlugExistsException;
@@ -193,11 +180,11 @@ export class PostService {
       return tx.post.update({
         where: { id },
         data: {
-          title: body.title,
+          title: body.title as unknown as InputJsonValue,
           slug,
-          body: body.body ?? null,
-          excerpt: body.excerpt ?? null,
-          category: body.category,
+          body: (body.body ?? undefined) as InputJsonValue | undefined,
+          excerpt: (body.excerpt ?? undefined) as InputJsonValue | undefined,
+          categoryId: body.categoryId,
           status: nextStatus,
           scheduledAt: scheduledAtValue,
           ...publishedAtPatch,
@@ -370,25 +357,17 @@ export class PostService {
     },
   ) {
     const publishedLayout = record.layouts.find((l) => l.isPublished) ?? null;
-    const coverAltParsed = parseLocalized(record.coverAlt);
     return {
       id: record.id,
-      title: parseLocalized(record.title),
+      title: asLocalized(record.title),
       slug: record.slug,
-      excerpt: parseLocalized(record.excerpt),
-      category: record.category,
+      excerpt: asLocalized(record.excerpt),
+      categoryId: record.categoryId,
       coverUrl: record.coverUrl,
-      coverAlt:
-        typeof coverAltParsed === 'string'
-          ? coverAltParsed
-          : coverAltParsed && typeof coverAltParsed === 'object'
-            ? (coverAltParsed as Record<string, string>).vi ||
-              (coverAltParsed as Record<string, string>).en ||
-              null
-            : null,
+      coverAlt: record.coverAlt,
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
-      eventLocation: parseLocalized(record.eventLocation),
+      eventLocation: record.eventLocation,
       publishedAt: record.updatedAt,
       layoutSlug: publishedLayout?.slug ?? null,
     };
@@ -444,10 +423,15 @@ export class PostService {
     );
     if (conflict) throw slugExistsInStatusException('draft', conflict.name);
 
+    const postCategory = await this.prisma.category.findUnique({
+      where: { id: post.categoryId },
+      select: { slug: true, name: true },
+    });
+    const titleVi = viOf(post.title);
     const injectPayload: PostInjectPayload = {
-      title: post.title,
-      body: post.body ?? '',
-      excerpt: post.excerpt ?? null,
+      title: titleVi,
+      body: viOf(post.body),
+      excerpt: viOf(post.excerpt) || null,
       coverUrl:
         post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
@@ -455,8 +439,8 @@ export class PostService {
         slug: pt.tag.slug,
         name: pt.tag.name,
       })),
-      category: post.category,
-      categoryLabel: categoryLabel(post.category),
+      category: postCategory?.slug ?? '',
+      categoryLabel: viOf(postCategory?.name),
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
@@ -469,9 +453,9 @@ export class PostService {
 
     const layout = await this.prisma.pageLayout.create({
       data: {
-        name: body.layoutName || post.title,
+        name: body.layoutName || titleVi,
         slug: layoutSlug,
-        description: post.excerpt ?? null,
+        description: viOf(post.excerpt) || null,
         puckData: injectedTree as unknown as InputJsonValue,
         createdBy: userId,
         sourcePostId: post.id,
@@ -576,10 +560,14 @@ export class PostService {
       select: { id: true, puckData: true, publishedPuckData: true },
     });
     if (!layouts.length) return;
+    const postCategory = await this.prisma.category.findUnique({
+      where: { id: post.categoryId },
+      select: { slug: true, name: true },
+    });
     const payload: PostInjectPayload = {
-      title: post.title,
-      body: post.body ?? '',
-      excerpt: post.excerpt ?? null,
+      title: viOf(post.title),
+      body: viOf(post.body),
+      excerpt: viOf(post.excerpt) || null,
       coverUrl:
         post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
@@ -587,8 +575,8 @@ export class PostService {
         slug: pt.tag.slug,
         name: pt.tag.name,
       })),
-      category: post.category,
-      categoryLabel: categoryLabel(post.category),
+      category: postCategory?.slug ?? '',
+      categoryLabel: viOf(postCategory?.name),
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
@@ -646,22 +634,22 @@ export class PostService {
   ) {
     return {
       id: record.id,
-      title: extractVi(record.title) ?? record.title,
+      title: asLocalized(record.title),
       slug: record.slug,
-      body: record.body,
-      excerpt: extractVi(record.excerpt),
-      category: record.category,
+      body: asLocalized(record.body),
+      excerpt: asLocalized(record.excerpt),
+      categoryId: record.categoryId,
       status: record.status,
       coverMediaId: record.coverMediaId,
       coverUrl: record.coverUrl,
-      coverAlt: extractVi(record.coverAlt),
+      coverAlt: record.coverAlt,
       tags: record.postTags.map((pt) => ({
         slug: pt.tag.slug,
         name: pt.tag.name,
       })),
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
-      eventLocation: extractVi(record.eventLocation),
+      eventLocation: record.eventLocation,
       publishedAt: record.publishedAt,
       scheduledAt: record.scheduledAt,
       createdBy: record.createdBy,

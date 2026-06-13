@@ -1,16 +1,21 @@
 import z from 'zod';
-import { PostCategory } from '../generated/prisma/enums';
 import { ContentStatus } from '../generated/prisma/enums';
 
-export const PostCategoryEnum = z.nativeEnum(PostCategory);
 export const ContentStatusEnum = z.nativeEnum(ContentStatus);
 
+// Localized text payload — vi required (primary), en optional.
+export const LocalizedTextSchema = z.object({
+  vi: z.string(),
+  en: z.string().optional(),
+});
+export type LocalizedTextType = z.infer<typeof LocalizedTextSchema>;
+
 export const UpsertPostBodySchema = z.object({
-  title: z.string().min(1).max(300),
+  title: LocalizedTextSchema,
   slug: z.string().min(1).max(300),
-  body: z.string().max(200_000).optional().nullable(),
-  excerpt: z.string().max(1000).optional().nullable(),
-  category: PostCategoryEnum,
+  body: LocalizedTextSchema.nullable().optional(),
+  excerpt: LocalizedTextSchema.nullable().optional(),
+  categoryId: z.string().min(1),
   status: ContentStatusEnum.optional(),
   scheduledAt: z.string().datetime().nullable().optional(),
   coverMediaId: z.string().nullable().optional(),
@@ -44,13 +49,20 @@ export const PostLayoutRefSchema = z.object({
   publishedAt: z.date().nullable(),
 });
 
+export const CategoryRefSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  name: LocalizedTextSchema,
+});
+
 export const PostResSchema = z.object({
   id: z.string(),
-  title: z.string(),
+  title: LocalizedTextSchema,
   slug: z.string(),
-  body: z.string().nullable(),
-  excerpt: z.string().nullable(),
-  category: PostCategoryEnum,
+  body: LocalizedTextSchema.nullable(),
+  excerpt: LocalizedTextSchema.nullable(),
+  categoryId: z.string(),
+  category: CategoryRefSchema.optional(),
   status: ContentStatusEnum,
   coverMediaId: z.string().nullable(),
   coverUrl: z.string().nullable(),
