@@ -33,8 +33,9 @@ const formatDate = (iso: string | null, locale: string): string => {
       year: "numeric",
     });
   }
-  return `Ngày ${String(d.getDate()).padStart(2, "0")} tháng ${d.getMonth() + 1
-    } năm ${d.getFullYear()}`;
+  return `Ngày ${String(d.getDate()).padStart(2, "0")} tháng ${
+    d.getMonth() + 1
+  } năm ${d.getFullYear()}`;
 };
 
 const formatGCalDate = (iso: string): string =>
@@ -464,7 +465,7 @@ function NewsListPaginatedRender({
       .then((res) => {
         if (alive) setCategories(res.filter((c) => c.status));
       })
-      .catch(() => { });
+      .catch(() => {});
     return () => {
       alive = false;
     };

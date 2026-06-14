@@ -140,6 +140,7 @@ function PostTitleRender({
 export const PostBody: ComponentConfig<{
   markdown: string;
   defaultMarkdown: LocalizedString;
+  injected?: boolean;
 }> = {
   label: "Post Body",
   defaultProps: {
@@ -153,19 +154,26 @@ export const PostBody: ComponentConfig<{
     defaultMarkdown: localizedTextareaField("Placeholder markdown (template)"),
     markdown: autoTextarea("Injected markdown"),
   },
-  render: ({ markdown, defaultMarkdown }) => (
-    <PostBodyRender markdown={markdown} defaultMarkdown={defaultMarkdown} />
+  render: ({ markdown, defaultMarkdown, injected }) => (
+    <PostBodyRender
+      markdown={markdown}
+      defaultMarkdown={defaultMarkdown}
+      injected={!!injected}
+    />
   ),
 };
 
 function PostBodyRender({
   markdown,
   defaultMarkdown,
+  injected,
 }: {
   markdown: string;
   defaultMarkdown: LocalizedString;
+  injected: boolean;
 }) {
   const { locale } = useLocale();
+  if (injected && !markdown) return null;
   const source = markdown || t(defaultMarkdown, locale) || "";
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
@@ -194,6 +202,7 @@ export const PostCoverImage: ComponentConfig<{
   defaultSrc: string;
   defaultAlt: LocalizedString;
   aspectRatio: string;
+  injected?: boolean;
 }> = {
   label: "Post Cover Image",
   defaultProps: {
@@ -219,13 +228,14 @@ export const PostCoverImage: ComponentConfig<{
       ],
     },
   },
-  render: ({ src, alt, defaultSrc, defaultAlt, aspectRatio }) => (
+  render: ({ src, alt, defaultSrc, defaultAlt, aspectRatio, injected }) => (
     <PostCoverImageRender
       src={src}
       alt={alt}
       defaultSrc={defaultSrc}
       defaultAlt={defaultAlt}
       aspectRatio={aspectRatio}
+      injected={!!injected}
     />
   ),
 };
@@ -236,14 +246,17 @@ function PostCoverImageRender({
   defaultSrc,
   defaultAlt,
   aspectRatio,
+  injected,
 }: {
   src: string;
   alt: string;
   defaultSrc: string;
   defaultAlt: LocalizedString;
   aspectRatio: string;
+  injected: boolean;
 }) {
   const { locale } = useLocale();
+  if (injected && !src) return null;
   const finalSrc = resolveMediaUrl(src || defaultSrc);
   const finalAlt = alt || t(defaultAlt, locale) || "";
   if (!finalSrc) {

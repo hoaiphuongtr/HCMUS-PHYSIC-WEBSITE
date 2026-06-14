@@ -42,23 +42,25 @@ const buildInjectedProps = (
 ): Record<string, unknown> => {
   switch (type) {
     case 'PostTitle':
-      return { ...original, text: post.title };
+      return { ...original, text: post.title, injected: true };
     case 'PostBody':
-      return { ...original, markdown: post.body };
+      return { ...original, markdown: post.body, injected: true };
     case 'PostCoverImage':
       return {
         ...original,
-        src: post.coverUrl ?? original.src ?? '',
+        src: post.coverUrl ?? '',
         alt: post.coverAlt ?? post.title,
+        injected: true,
       };
     case 'PostTagList':
-      return { ...original, tags: post.tags };
+      return { ...original, tags: post.tags, injected: true };
     case 'PostEventInfo':
       return {
         ...original,
         startAt: post.eventStartAt,
         endAt: post.eventEndAt,
         location: post.eventLocation,
+        injected: true,
       };
     case 'PostHeader':
       return {
@@ -66,6 +68,7 @@ const buildInjectedProps = (
         text: post.title,
         categoryLabel: post.categoryLabel,
         publishedAt: post.publishedAt ?? '',
+        injected: true,
       };
     default:
       return original;
