@@ -9,7 +9,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { type Category, categoryApi, type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
+import {
+  type Category,
+  categoryApi,
+  type PostPublicCard,
+  postPublicApi,
+  resolveMediaUrl,
+} from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { categoryColor } from "@/lib/post-categories";
@@ -27,9 +33,8 @@ const formatDate = (iso: string | null, locale: string): string => {
       year: "numeric",
     });
   }
-  return `Ngày ${String(d.getDate()).padStart(2, "0")} tháng ${
-    d.getMonth() + 1
-  } năm ${d.getFullYear()}`;
+  return `Ngày ${String(d.getDate()).padStart(2, "0")} tháng ${d.getMonth() + 1
+    } năm ${d.getFullYear()}`;
 };
 
 const formatGCalDate = (iso: string): string =>
@@ -58,11 +63,6 @@ type NewsCardProps = {
 };
 
 function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
-  const cat = post.category;
-  const catLabel = cat
-    ? t(cat.name as LocalizedString, locale)
-    : (post.categoryId ?? "");
-  const catColor = categoryColor(cat?.slug);
   const dateText = showEventTime
     ? formatDate(post.eventStartAt, locale)
     : formatDate(post.publishedAt, locale);
@@ -70,7 +70,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
   const href = post.layoutSlug ? `${prefix}/${post.layoutSlug}` : null;
 
   const cardInner = (
-    <article className="group relative h-full flex flex-col bg-white dark:bg-[#1a2436]">
+    <article className="group relative h-full flex flex-col bg-white dark:bg-[#1a2436] cursor-pointer">
       <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
         {post.coverUrl ? (
           <img
@@ -87,16 +87,6 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
         )}
       </div>
       <div className="pt-3 pb-1 flex flex-col flex-1">
-        <div
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-          style={{ color: catColor }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ backgroundColor: catColor }}
-          />
-          <span>{catLabel}</span>
-        </div>
         <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
           {title}
         </h3>
@@ -181,16 +171,6 @@ function EventCard({
         </div>
       )}
       <div className="pt-3 pb-1 flex flex-col flex-1 relative pr-12">
-        <div
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-          style={{ color: catColor }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ backgroundColor: catColor }}
-          />
-          <span>{catLabel}</span>
-        </div>
         {href ? (
           <Link href={href}>
             <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
@@ -484,7 +464,7 @@ function NewsListPaginatedRender({
       .then((res) => {
         if (alive) setCategories(res.filter((c) => c.status));
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       alive = false;
     };
