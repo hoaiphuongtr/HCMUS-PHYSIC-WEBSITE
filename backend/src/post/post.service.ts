@@ -245,14 +245,16 @@ export class PostService {
       const q = search.trim();
       andClauses.push({
         OR: [
-          { title: { contains: q, mode: 'insensitive' } },
+          { title: { path: ['vi'], string_contains: q } },
+          { title: { path: ['en'], string_contains: q } },
+          { excerpt: { path: ['vi'], string_contains: q } },
+          { excerpt: { path: ['en'], string_contains: q } },
           { slug: { contains: q, mode: 'insensitive' } },
-          { excerpt: { contains: q, mode: 'insensitive' } },
         ],
       });
     }
     const where: Record<string, unknown> = {};
-    if (category) where.category = category;
+    if (category) where.category = { slug: category };
     if (status) where.status = status;
     if (andClauses.length) where.AND = andClauses;
     const [total, posts] = await Promise.all([
@@ -309,7 +311,7 @@ export class PostService {
   }) {
     const { page, pageSize, category, fromDate, toDate, search } = params;
     const where: Record<string, unknown> = { status: 'PUBLISHED' };
-    if (category) where.category = category;
+    if (category) where.category = { slug: category };
     if (fromDate || toDate) {
       const range: Record<string, Date> = {};
       if (fromDate) range.gte = fromDate;
@@ -319,8 +321,10 @@ export class PostService {
     if (search && search.trim()) {
       const q = search.trim();
       where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { excerpt: { contains: q, mode: 'insensitive' } },
+        { title: { path: ['vi'], string_contains: q } },
+        { title: { path: ['en'], string_contains: q } },
+        { excerpt: { path: ['vi'], string_contains: q } },
+        { excerpt: { path: ['en'], string_contains: q } },
         { slug: { contains: q, mode: 'insensitive' } },
       ];
     }

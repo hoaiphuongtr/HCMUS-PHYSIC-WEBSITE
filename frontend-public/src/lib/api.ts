@@ -35,6 +35,7 @@ export type {
 } from "@admin/lib/api";
 
 import type {
+  Category,
   MediaItem,
   PageLayout,
   PostPagedResponse,
@@ -104,6 +105,14 @@ export const mediaApi = {
     }),
   tagsInUse: () =>
     Promise.resolve([] as { id: string; slug: string; name: string }[]),
+};
+
+export const categoryApi = {
+  list: () => apiFetch<Category[]>(`/categories`),
+  getById: (id: string) => apiFetch<Category>(`/categories/${id}`),
+  create: () => Promise.reject(new Error("not available on public")),
+  update: () => Promise.reject(new Error("not available on public")),
+  remove: () => Promise.reject(new Error("not available on public")),
 };
 
 export const postPublicApi = {

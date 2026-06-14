@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
+import { type Category, categoryApi, type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { categoryColor } from "@/lib/post-categories";
@@ -431,23 +431,6 @@ function UpcomingEventsAutoRender({
   );
 }
 
-const ALL_CATEGORIES = [
-  { value: "", labelVi: "Tất cả", labelEn: "All" },
-  {
-    value: "EDUCATIONAL_NEWS",
-    labelVi: "Tin học vụ",
-    labelEn: "Educational News",
-  },
-  {
-    value: "SCIENTIFIC_INFORMATION",
-    labelVi: "Thông tin khoa học",
-    labelEn: "Scientific Information",
-  },
-  { value: "RECRUITMENT", labelVi: "Tuyển dụng", labelEn: "Recruitment" },
-  { value: "EVENT", labelVi: "Sự kiện", labelEn: "Event" },
-  { value: "SCHOLARSHIP", labelVi: "Học bổng", labelEn: "Scholarship" },
-];
-
 const PAGE_SIZE = 12;
 
 export const NewsListPaginated: ComponentConfig<{
@@ -491,7 +474,21 @@ function NewsListPaginatedRender({
   const [searchDraft, setSearchDraft] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    categoryApi
+      .list()
+      .then((res) => {
+        if (alive) setCategories(res.filter((c) => c.status));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const reqIdRef = useRef(0);
 
@@ -643,9 +640,10 @@ function NewsListPaginatedRender({
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200 bg-white dark:bg-[#1a2436]"
           >
-            {ALL_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {locale === "en" ? c.labelEn : c.labelVi}
+            <option value="">{locale === "en" ? "All" : "Tất cả"}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>
+                {locale === "en" ? c.name.en || c.name.vi : c.name.vi}
               </option>
             ))}
           </select>
