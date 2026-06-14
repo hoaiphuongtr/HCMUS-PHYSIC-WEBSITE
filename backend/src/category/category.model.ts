@@ -27,7 +27,8 @@ export const CreateCategoryBodySchema = z.object({
 });
 export type CreateCategoryBodyType = z.infer<typeof CreateCategoryBodySchema>;
 
-export const UpdateCategoryBodySchema = CreateCategoryBodySchema.partial().extend({
-  status: z.boolean().optional(),
-});
+export const UpdateCategoryBodySchema =
+  CreateCategoryBodySchema.partial().extend({
+    status: z.boolean().optional(),
+  });
 export type UpdateCategoryBodyType = z.infer<typeof UpdateCategoryBodySchema>;

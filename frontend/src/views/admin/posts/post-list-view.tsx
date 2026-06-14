@@ -9,14 +9,13 @@ import { useConfirm } from "@/components/use-confirm";
 import {
   authApi,
   type ContentStatusValue,
+  categoryApi,
   type PostLayoutRef,
   type PostRecord,
   postApi,
 } from "@/lib/api";
-import {
-  categoryLabelVi,
-  POST_CATEGORY_OPTIONS_VI,
-} from "@/lib/post-categories";
+import { localize } from "@/lib/localized";
+import { buildCategoryOptions, categoryLabel } from "@/lib/post-categories";
 
 type TabKey = "mine" | "published";
 
@@ -104,6 +103,23 @@ export function PostListView() {
   });
   const ownerId = profileQuery.data?.id;
   const isSuperAdmin = profileQuery.data?.role === "SUPER_ADMIN";
+
+  const categoriesQuery = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: categoryApi.list,
+  });
+  const categoryOptions = useMemo(
+    () => buildCategoryOptions(categoriesQuery.data, "vi"),
+    [categoriesQuery.data],
+  );
+  const categoryMap = useMemo(() => {
+    const m = new Map<
+      string,
+      { id: string; name: { vi: string; en?: string } }
+    >();
+    for (const c of categoriesQuery.data ?? []) m.set(c.id, c);
+    return m;
+  }, [categoriesQuery.data]);
 
   // Status param sent to BE differs per tab.
   // - Published tab: always status=PUBLISHED.
@@ -287,7 +303,7 @@ export function PostListView() {
               }}
               placeholder="Tất cả danh mục"
               clearLabel="Tất cả danh mục"
-              options={POST_CATEGORY_OPTIONS_VI}
+              options={categoryOptions}
             />
           </div>
           {tab === "mine" ? (
@@ -372,7 +388,7 @@ export function PostListView() {
                             href={`/admin/posts?id=${post.id}`}
                             className="text-sm font-medium text-blue-700 dark:text-slate-100 hover:underline"
                           >
-                            {post.title}
+                            {localize(post.title, "vi")}
                           </Link>
                           <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                             /{post.slug}
@@ -380,7 +396,10 @@ export function PostListView() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                        {categoryLabelVi(post.category)}
+                        {categoryLabel(
+                          post.category ?? categoryMap.get(post.categoryId),
+                          "vi",
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -431,7 +450,9 @@ export function PostListView() {
                           </Link>
                           <button
                             type="button"
-                            onClick={() => confirmDelete(post.id, post.title)}
+                            onClick={() =>
+                              confirmDelete(post.id, localize(post.title, "vi"))
+                            }
                             className="px-2 py-1 text-xs text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50"
                           >
                             Xóa

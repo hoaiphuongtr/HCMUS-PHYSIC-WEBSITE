@@ -116,10 +116,10 @@ export class PostService {
         : null;
     const created = await this.prisma.post.create({
       data: {
-        title: body.title as unknown as InputJsonValue,
+        title: body.title,
         slug,
-        body: (body.body ?? undefined) as InputJsonValue | undefined,
-        excerpt: (body.excerpt ?? undefined) as InputJsonValue | undefined,
+        body: body.body ?? undefined,
+        excerpt: body.excerpt ?? undefined,
         categoryId: body.categoryId,
         status,
         publishedAt: status === 'PUBLISHED' ? new Date() : null,

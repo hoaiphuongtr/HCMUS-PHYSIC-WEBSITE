@@ -8,18 +8,18 @@ import { toast } from "react-toastify";
 import { AdminSelect } from "@/components/admin/admin-select";
 import {
   type ContentStatusValue,
-  type PostCategoryValue,
+  categoryApi,
+  type LocalizedText,
   pageLayoutApi,
   postApi,
   resolveMediaUrl,
   type UpsertPostBody,
 } from "@/lib/api";
-import { POST_CATEGORY_OPTIONS_VI } from "@/lib/post-categories";
+import { emptyLocalized, type Locale, toLocalized } from "@/lib/localized";
+import { buildCategoryOptions } from "@/lib/post-categories";
 import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
-
-const CATEGORY_OPTIONS = POST_CATEGORY_OPTIONS_VI;
 
 const STATUS_OPTIONS: { value: ContentStatusValue; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -54,13 +54,13 @@ export function PostComposerView() {
   const idParam = searchParams.get("id");
 
   const [postId, setPostId] = useState<string | null>(idParam);
-  const [title, setTitle] = useState("");
+  const [lang, setLang] = useState<Locale>("vi");
+  const [title, setTitle] = useState<LocalizedText>(emptyLocalized());
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [excerpt, setExcerpt] = useState("");
-  const [body, setBody] = useState("");
-  const [category, setCategory] =
-    useState<PostCategoryValue>("EDUCATIONAL_NEWS");
+  const [excerpt, setExcerpt] = useState<LocalizedText>(emptyLocalized());
+  const [body, setBody] = useState<LocalizedText>(emptyLocalized());
+  const [categoryId, setCategoryId] = useState<string>("");
   const [status, setStatus] = useState<ContentStatusValue>("DRAFT");
   const [tagSlugs, setTagSlugs] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState("");
@@ -75,6 +75,18 @@ export function PostComposerView() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
+  const categoriesQuery = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: categoryApi.list,
+  });
+  const categoryOptions = buildCategoryOptions(categoriesQuery.data, "vi");
+
+  useEffect(() => {
+    if (!categoryId && categoryOptions.length > 0) {
+      setCategoryId(categoryOptions[0].value);
+    }
+  }, [categoryId, categoryOptions]);
+
   useEffect(() => {
     setPostId(idParam);
   }, [idParam]);
@@ -88,12 +100,12 @@ export function PostComposerView() {
   useEffect(() => {
     const data = postQuery.data;
     if (!data) return;
-    setTitle(data.title);
+    setTitle(toLocalized(data.title));
     setSlug(data.slug);
     setSlugTouched(true);
-    setExcerpt(data.excerpt ?? "");
-    setBody(data.body ?? "");
-    setCategory(data.category);
+    setExcerpt(toLocalized(data.excerpt));
+    setBody(toLocalized(data.body));
+    setCategoryId(data.categoryId);
     setStatus(data.status);
     setTagSlugs(data.tags.map((t) => t.slug));
     setCoverMediaId(data.coverMediaId);
@@ -133,19 +145,25 @@ export function PostComposerView() {
     setTagSlugs((prev) => prev.filter((t) => t !== slugToRemove));
 
   const handleTitleChange = (value: string) => {
-    setTitle(value);
-    if (!slugTouched) setSlug(toSlug(value));
+    setTitle((prev) => ({ ...prev, [lang]: value }));
+    if (!slugTouched && lang === "vi") setSlug(toSlug(value));
   };
+
+  const isLocalizedEmpty = (l: LocalizedText) => !l.vi && !l.en;
 
   const buildPayload = (): UpsertPostBody => {
     const pendingDraft = parseTagInput(tagDraft);
     const finalTagSlugs = pendingDraft.reduce(addUnique, tagSlugs);
+    const trimmed: LocalizedText = {
+      vi: (title.vi ?? "").trim(),
+      en: (title.en ?? "").trim() || undefined,
+    };
     return {
-      title: title.trim(),
-      slug: toSlug(slug || title),
-      body: body || null,
-      excerpt: excerpt || null,
-      category,
+      title: trimmed,
+      slug: toSlug(slug || trimmed.vi),
+      body: isLocalizedEmpty(body) ? null : body,
+      excerpt: isLocalizedEmpty(excerpt) ? null : excerpt,
+      categoryId,
       status,
       scheduledAt:
         status === "SCHEDULED" && scheduledAt
@@ -197,8 +215,12 @@ export function PostComposerView() {
   });
 
   const saveDraft = () => {
-    if (!title.trim()) {
-      toast.warn("Nhập tiêu đề trước khi lưu");
+    if (!title.vi.trim()) {
+      toast.warn("Nhập tiêu đề tiếng Việt trước khi lưu");
+      return;
+    }
+    if (!categoryId) {
+      toast.warn("Chọn danh mục cho bài đăng");
       return;
     }
     if (canSchedule) {
@@ -281,20 +303,45 @@ export function PostComposerView() {
       </header>
 
       <div className="flex-1 px-6 py-5 space-y-6">
+        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] p-1 text-xs font-medium">
+          {(["vi", "en"] as Locale[]).map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLang(l)}
+              className={
+                "px-3 py-1.5 rounded-md transition-colors " +
+                (lang === l
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202c44]")
+              }
+            >
+              {l === "vi" ? "Tiếng Việt" : "English"}
+            </button>
+          ))}
+        </div>
+
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <label
               className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-title"
             >
-              Tiêu đề
+              Tiêu đề ({lang === "vi" ? "VI" : "EN"})
+              {lang === "vi" ? (
+                <span className="text-rose-500 ml-1">*</span>
+              ) : null}
             </label>
             <input
               id="post-title"
-              value={title}
+              value={title[lang] ?? ""}
               onChange={(e) => handleTitleChange(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
-              placeholder="Ví dụ: Thông báo đăng ký học phần HK2"
+              placeholder={
+                lang === "vi"
+                  ? "Ví dụ: Thông báo đăng ký học phần HK2"
+                  : "e.g. HK2 course registration announcement"
+              }
             />
           </div>
           <div>
@@ -341,9 +388,10 @@ export function PostComposerView() {
             </label>
             <AdminSelect
               id="post-category"
-              value={category}
-              onChange={(next) => setCategory(next as PostCategoryValue)}
-              options={CATEGORY_OPTIONS}
+              value={categoryId}
+              onChange={setCategoryId}
+              placeholder="— Chọn danh mục —"
+              options={categoryOptions}
             />
           </div>
         </section>
@@ -419,7 +467,7 @@ export function PostComposerView() {
               {/** biome-ignore lint/performance/noImgElement: preview only */}
               <img
                 src={previewCover}
-                alt={coverAlt || title}
+                alt={coverAlt || title.vi}
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -431,12 +479,14 @@ export function PostComposerView() {
             className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
             htmlFor="post-excerpt"
           >
-            Tóm tắt (hiển thị ở danh sách bài đăng)
+            Tóm tắt ({lang === "vi" ? "VI" : "EN"}) — hiển thị ở danh sách
           </label>
           <textarea
             id="post-excerpt"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
+            value={excerpt[lang] ?? ""}
+            onChange={(e) =>
+              setExcerpt((prev) => ({ ...prev, [lang]: e.target.value }))
+            }
             rows={3}
             className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
             placeholder="Tóm tắt ngắn 1-2 câu"
@@ -445,9 +495,12 @@ export function PostComposerView() {
 
         <section>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
-            Nội dung bài đăng
+            Nội dung bài đăng ({lang === "vi" ? "VI" : "EN"})
           </label>
-          <MarkdownEditor value={body} onChange={setBody} />
+          <MarkdownEditor
+            value={body[lang] ?? ""}
+            onChange={(next) => setBody((prev) => ({ ...prev, [lang]: next }))}
+          />
         </section>
 
         <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">

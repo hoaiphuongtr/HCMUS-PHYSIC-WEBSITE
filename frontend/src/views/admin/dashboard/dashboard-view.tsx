@@ -9,6 +9,7 @@ import {
   pageLayoutApi,
   postApi,
 } from "@/lib/api";
+import { localize } from "@/lib/localized";
 import { RecentActivity } from "./recent-activity";
 import { ScheduledModal } from "./scheduled-modal";
 import { StatCard } from "./stat-card";
@@ -78,7 +79,7 @@ export function AdminDashboardView() {
       .map((post) => ({
         kind: "post" as const,
         id: post.id,
-        title: post.title,
+        title: localize(post.title, "vi"),
         scheduledAt: post.scheduledAt as string,
       }));
     const l = layouts
@@ -99,7 +100,7 @@ export function AdminDashboardView() {
     const fromPosts = posts.map((post) => ({
       kind: "post" as const,
       id: post.id,
-      title: post.title,
+      title: localize(post.title, "vi"),
       status: post.status,
       updatedAt: post.updatedAt,
       href: `/admin/posts?id=${post.id}`,

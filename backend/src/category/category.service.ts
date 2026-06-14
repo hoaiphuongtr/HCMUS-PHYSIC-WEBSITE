@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateCategoryBodyType,
@@ -31,8 +35,8 @@ export class CategoryService {
     return this.prisma.category.create({
       data: {
         slug: body.slug,
-        name: body.name as unknown as InputJsonValue,
-        excerpt: (body.excerpt ?? undefined) as InputJsonValue | undefined,
+        name: body.name,
+        excerpt: body.excerpt ?? undefined,
         image: body.image ?? null,
       },
     });
@@ -51,8 +55,8 @@ export class CategoryService {
       where: { id },
       data: {
         slug: body.slug,
-        name: body.name as unknown as InputJsonValue | undefined,
-        excerpt: body.excerpt as unknown as InputJsonValue | undefined,
+        name: body.name,
+        excerpt: body.excerpt,
         image: body.image,
         status: body.status,
       },

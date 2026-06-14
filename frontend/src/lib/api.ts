@@ -572,12 +572,28 @@ export const mediaApi = {
   tagsInUse: () => authFetch<MediaTagRef[]>(`/media/tags-in-use`),
 };
 
-export type PostCategoryValue =
-  | "EDUCATIONAL_NEWS"
-  | "SCIENTIFIC_INFORMATION"
-  | "RECRUITMENT"
-  | "EVENT"
-  | "SCHOLARSHIP";
+export type LocalizedText = {
+  vi: string;
+  en?: string;
+};
+
+export type CategoryRef = {
+  id: string;
+  slug: string;
+  name: LocalizedText;
+};
+
+export type Category = {
+  id: string;
+  slug: string;
+  name: LocalizedText;
+  excerpt: LocalizedText | null;
+  image: string | null;
+  legacyId: number | null;
+  status: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type ContentStatusValue =
   | "DRAFT"
@@ -597,11 +613,12 @@ export type PostLayoutRef = {
 
 export type PostRecord = {
   id: string;
-  title: string;
+  title: LocalizedText;
   slug: string;
-  body: string | null;
-  excerpt: string | null;
-  category: PostCategoryValue;
+  body: LocalizedText | null;
+  excerpt: LocalizedText | null;
+  categoryId: string;
+  category?: CategoryRef;
   status: ContentStatusValue;
   coverMediaId: string | null;
   coverUrl: string | null;
@@ -619,11 +636,11 @@ export type PostRecord = {
 };
 
 export type UpsertPostBody = {
-  title: string;
+  title: LocalizedText;
   slug: string;
-  body?: string | null;
-  excerpt?: string | null;
-  category: PostCategoryValue;
+  body?: LocalizedText | null;
+  excerpt?: LocalizedText | null;
+  categoryId: string;
   status?: ContentStatusValue;
   scheduledAt?: string | null;
   coverMediaId?: string | null;
@@ -637,15 +654,16 @@ export type UpsertPostBody = {
 
 export type PostPublicCard = {
   id: string;
-  title: string | { vi?: string; en?: string };
+  title: LocalizedText | string;
   slug: string;
-  excerpt: string | { vi?: string; en?: string } | null;
-  category: PostCategoryValue;
+  excerpt: LocalizedText | string | null;
+  categoryId: string;
+  category?: CategoryRef;
   coverUrl: string | null;
   coverAlt: string | null;
   eventStartAt: string | null;
   eventEndAt: string | null;
-  eventLocation: string | { vi?: string; en?: string } | null;
+  eventLocation: LocalizedText | string | null;
   publishedAt: string;
   layoutSlug: string | null;
 };
@@ -721,4 +739,29 @@ export const postApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+};
+
+export type UpsertCategoryBody = {
+  slug: string;
+  name: LocalizedText;
+  excerpt?: LocalizedText | null;
+  image?: string | null;
+  status?: boolean;
+};
+
+export const categoryApi = {
+  list: () => apiFetch<Category[]>(`/categories`),
+  getById: (id: string) => apiFetch<Category>(`/categories/${id}`),
+  create: (body: UpsertCategoryBody) =>
+    authFetch<Category>(`/categories`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<UpsertCategoryBody>) =>
+    authFetch<Category>(`/categories/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    authFetch<{ ok: boolean }>(`/categories/${id}`, { method: "DELETE" }),
 };

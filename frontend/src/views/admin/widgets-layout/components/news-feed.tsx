@@ -12,11 +12,9 @@ import { useEffect, useRef, useState } from "react";
 import { type PostPublicCard, postPublicApi, resolveMediaUrl } from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
-import { POST_CATEGORY_META } from "@/lib/post-categories";
+import { categoryColor } from "@/lib/post-categories";
 import { colorField } from "../fields/color-field";
 import { localizedTextField } from "../fields/localized-text-field";
-
-const CATEGORY_LABELS = POST_CATEGORY_META;
 
 const formatDate = (iso: string | null, locale: string): string => {
   if (!iso) return "";
@@ -60,9 +58,11 @@ type NewsCardProps = {
 };
 
 function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
-  const cat = CATEGORY_LABELS[post.category];
-  const catLabel = cat ? (locale === "en" ? cat.en : cat.vi) : post.category;
-  const catColor = cat?.color ?? "#2563eb";
+  const cat = post.category;
+  const catLabel = cat
+    ? t(cat.name as LocalizedString, locale)
+    : (post.categoryId ?? "");
+  const catColor = categoryColor(cat?.slug);
   const dateText = showEventTime
     ? formatDate(post.eventStartAt, locale)
     : formatDate(post.publishedAt, locale);
@@ -131,9 +131,11 @@ function EventCard({
   locale: string;
   prefix: string;
 }) {
-  const cat = CATEGORY_LABELS[post.category];
-  const catLabel = cat ? (locale === "en" ? cat.en : cat.vi) : post.category;
-  const catColor = cat?.color ?? "#059669";
+  const cat = post.category;
+  const catLabel = cat
+    ? t(cat.name as LocalizedString, locale)
+    : (post.categoryId ?? "");
+  const catColor = categoryColor(cat?.slug);
   const dateText = formatDate(post.eventStartAt, locale);
   const title = localizeWithFallback(post.title, locale);
   const href = post.layoutSlug ? `${prefix}/${post.layoutSlug}` : null;

@@ -22,9 +22,11 @@ export const resolveMediaUrl = (url: string | null | undefined): string => {
 };
 
 export type {
+  Category,
+  CategoryRef,
+  LocalizedText,
   MediaItem,
   PageLayout,
-  PostCategoryValue,
   PostPagedResponse,
   PostPublicCard,
   Subscription,
