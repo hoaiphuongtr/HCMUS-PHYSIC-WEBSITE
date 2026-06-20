@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
+import Link from "next/link";
 import {
   Check,
   ChevronDown,
@@ -249,7 +250,11 @@ function NavbarClient({
         className="flex items-center justify-between px-6 py-3 shadow-sm sticky top-0 z-50"
         style={{ backgroundColor: bgColor || "#ffffff" }}
       >
-        <div className="flex items-center gap-3">
+        <Link
+          href={`/${locale}`}
+          aria-label="Trang chủ"
+          className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+        >
           {logoSrc ? (
             <img
               src={logoSrc}
@@ -263,7 +268,7 @@ function NavbarClient({
               <span className="text-white font-bold text-sm">P</span>
             </div>
           )}
-        </div>
+        </Link>
         <div className="flex items-center gap-1">
           {(menuItems || []).map((item: NavbarMenuItem, i: number) => (
             <NavbarMenuButton
