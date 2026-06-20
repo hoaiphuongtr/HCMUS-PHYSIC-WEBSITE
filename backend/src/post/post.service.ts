@@ -201,12 +201,16 @@ export class PostService {
         include: postInclude,
       });
     });
-    await this.syncAttachedLayouts(id);
+    const affectedSlugs = await this.syncAttachedLayouts(id);
     if (updated.status === 'PUBLISHED' || existing.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
     }
     await this.cache.clear();
-    this.publicRevalidate.trigger(['sitemap', `post:${id}`]);
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `post:${id}`,
+      ...affectedSlugs.map((s) => `page:${s}`),
+    ]);
     return this.serialize(updated);
   }
 
@@ -557,13 +561,18 @@ export class PostService {
     return { layoutsUpdated: changed };
   }
 
-  private async syncAttachedLayouts(postId: string) {
+  private async syncAttachedLayouts(postId: string): Promise<string[]> {
     const post = await this.findByIdOrThrow(postId);
     const layouts = await this.prisma.pageLayout.findMany({
       where: { sourcePostId: postId },
-      select: { id: true, puckData: true, publishedPuckData: true },
+      select: {
+        id: true,
+        slug: true,
+        puckData: true,
+        publishedPuckData: true,
+      },
     });
-    if (!layouts.length) return;
+    if (!layouts.length) return [];
     const postCategory = await this.prisma.category.findUnique({
       where: { id: post.categoryId },
       select: { slug: true, name: true },
@@ -588,23 +597,32 @@ export class PostService {
     };
     await Promise.all(
       layouts.map((layout) => {
-        const nextPuck = layout.puckData
-          ? injectPostIntoPuckData(layout.puckData, payload)
-          : null;
-        const nextPublished = layout.publishedPuckData
-          ? injectPostIntoPuckData(layout.publishedPuckData, payload)
-          : null;
+        const data: {
+          puckData?: InputJsonValue;
+          publishedPuckData?: InputJsonValue;
+        } = {};
+        if (layout.puckData) {
+          data.puckData = injectPostIntoPuckData(
+            layout.puckData,
+            payload,
+          ) as unknown as InputJsonValue;
+        }
+        if (layout.publishedPuckData) {
+          data.publishedPuckData = injectPostIntoPuckData(
+            layout.publishedPuckData,
+            payload,
+          ) as unknown as InputJsonValue;
+        }
+        if (!data.puckData && !data.publishedPuckData) {
+          return Promise.resolve();
+        }
         return this.prisma.pageLayout.update({
           where: { id: layout.id },
-          data: {
-            puckData: (nextPuck ?? undefined) as InputJsonValue | undefined,
-            publishedPuckData: (nextPublished ?? undefined) as
-              | InputJsonValue
-              | undefined,
-          },
+          data,
         });
       }),
     );
+    return layouts.map((l) => l.slug);
   }
 
   private async upsertTagIds(slugs: string[]): Promise<string[]> {
