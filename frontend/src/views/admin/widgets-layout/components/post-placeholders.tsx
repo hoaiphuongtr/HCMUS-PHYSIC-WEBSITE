@@ -182,7 +182,7 @@ function PostBodyRender({
       <>
         <style>{`
           [data-post-body],
-          [data-post-body] * {
+          [data-post-body] *:not(a):not(a *) {
             font-family: inherit !important;
             color: inherit !important;
             background: transparent !important;
@@ -568,30 +568,30 @@ function PostHeaderRender({
         >
           <NextLink
             href={`/${locale}`}
-            className="hover:text-blue-700 dark:hover:text-blue-300"
+            className="text-blue-700 dark:text-blue-300 underline underline-offset-2 decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-600 dark:hover:decoration-blue-200"
           >
             {homeLabel}
           </NextLink>
           {sep}
           <NextLink
             href={`/${locale}/tin-tuc`}
-            className="hover:text-blue-700 dark:hover:text-blue-300"
+            className="text-blue-700 dark:text-blue-300 underline underline-offset-2 decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-600 dark:hover:decoration-blue-200"
           >
             {newsLabel}
           </NextLink>
           {cat ? (
             <>
               {sep}
-              {categorySlug ? (
-                <NextLink
-                  href={`/${locale}/tin-tuc?category=${categorySlug}`}
-                  className="hover:text-blue-700 dark:hover:text-blue-300"
-                >
-                  {cat}
-                </NextLink>
-              ) : (
-                <span>{cat}</span>
-              )}
+              <NextLink
+                href={
+                  categorySlug
+                    ? `/${locale}/tin-tuc?category=${categorySlug}`
+                    : `/${locale}/tin-tuc`
+                }
+                className="text-blue-700 dark:text-blue-300 underline underline-offset-2 decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-600 dark:hover:decoration-blue-200"
+              >
+                {cat}
+              </NextLink>
             </>
           ) : null}
         </nav>
