@@ -2,6 +2,7 @@
 
 import type { ComponentConfig } from "@puckeditor/core";
 import Image from "next/image";
+import NextLink from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -489,6 +490,7 @@ export const PostHeader: ComponentConfig<{
   text: string;
   defaultText: LocalizedString;
   categoryLabel: string;
+  categorySlug: string;
   defaultCategoryLabel: LocalizedString;
   publishedAt: string;
 }> = {
@@ -497,6 +499,7 @@ export const PostHeader: ComponentConfig<{
     text: "",
     defaultText: { vi: "Tiêu đề bài đăng", en: "Post title" },
     categoryLabel: "",
+    categorySlug: "",
     defaultCategoryLabel: { vi: "Chuyên mục", en: "Category" },
     publishedAt: "",
   },
@@ -505,12 +508,14 @@ export const PostHeader: ComponentConfig<{
     defaultCategoryLabel: localizedTextField("Placeholder category (template)"),
     text: autoLabel("Injected title"),
     categoryLabel: autoLabel("Injected category label"),
+    categorySlug: autoLabel("Injected category slug"),
     publishedAt: autoLabel("Injected publishedAt (ISO)"),
   },
   render: ({
     text,
     defaultText,
     categoryLabel,
+    categorySlug,
     defaultCategoryLabel,
     publishedAt,
   }) => (
@@ -518,6 +523,7 @@ export const PostHeader: ComponentConfig<{
       text={text}
       defaultText={defaultText}
       categoryLabel={categoryLabel}
+      categorySlug={categorySlug}
       defaultCategoryLabel={defaultCategoryLabel}
       publishedAt={publishedAt}
     />
@@ -528,12 +534,14 @@ function PostHeaderRender({
   text,
   defaultText,
   categoryLabel,
+  categorySlug,
   defaultCategoryLabel,
   publishedAt,
 }: {
   text: string;
   defaultText: LocalizedString;
   categoryLabel: string;
+  categorySlug: string;
   defaultCategoryLabel: LocalizedString;
   publishedAt: string;
 }) {
@@ -541,15 +549,52 @@ function PostHeaderRender({
   const title = text || t(defaultText, locale);
   const cat = categoryLabel || t(defaultCategoryLabel, locale);
   const dateLine = formatPublishedHeader(publishedAt, locale);
+  const homeLabel = locale === "en" ? "Home" : "Trang chủ";
+  const newsLabel = locale === "en" ? "News" : "Tin tức";
+  const sep = (
+    <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
+      /
+    </span>
+  );
   return (
     <header
       data-post-body
       className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6"
     >
       <div className="flex items-start justify-between gap-4 mb-3">
-        <span className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {cat}
-        </span>
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 min-w-0"
+        >
+          <NextLink
+            href={`/${locale}`}
+            className="hover:text-blue-700 dark:hover:text-blue-300"
+          >
+            {homeLabel}
+          </NextLink>
+          {sep}
+          <NextLink
+            href={`/${locale}/tin-tuc`}
+            className="hover:text-blue-700 dark:hover:text-blue-300"
+          >
+            {newsLabel}
+          </NextLink>
+          {cat ? (
+            <>
+              {sep}
+              {categorySlug ? (
+                <NextLink
+                  href={`/${locale}/tin-tuc?category=${categorySlug}`}
+                  className="hover:text-blue-700 dark:hover:text-blue-300"
+                >
+                  {cat}
+                </NextLink>
+              ) : (
+                <span>{cat}</span>
+              )}
+            </>
+          ) : null}
+        </nav>
         {dateLine ? (
           <time className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap mt-0.5">
             {dateLine}

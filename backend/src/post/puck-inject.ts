@@ -67,6 +67,7 @@ const buildInjectedProps = (
         ...original,
         text: post.title,
         categoryLabel: post.categoryLabel,
+        categorySlug: post.category,
         publishedAt: post.publishedAt ?? '',
         injected: true,
       };
