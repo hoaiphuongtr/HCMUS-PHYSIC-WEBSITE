@@ -180,21 +180,20 @@ function PostBodyRender({
     return (
       <>
         <style>{`
-          [data-post-body] *,
-          [data-post-body] span,
-          [data-post-body] p,
-          [data-post-body] h1,
-          [data-post-body] h2,
-          [data-post-body] h3,
-          [data-post-body] h4,
-          [data-post-body] h5,
-          [data-post-body] li,
-          [data-post-body] td,
-          [data-post-body] th {
+          [data-post-body],
+          [data-post-body] * {
             font-family: inherit !important;
             color: inherit !important;
             background: transparent !important;
             line-height: inherit;
+          }
+          [data-post-body] p,
+          [data-post-body] span,
+          [data-post-body] li,
+          [data-post-body] td,
+          [data-post-body] th,
+          [data-post-body] div {
+            font-size: inherit !important;
           }
           [data-post-body] iframe,
           [data-post-body] embed,
@@ -580,7 +579,7 @@ const FONT_SIZE_LEVELS = [
   { level: 11, scale: 2 },
   { level: 12, scale: 2.2 },
 ];
-const DEFAULT_FONT_LEVEL = 6;
+const DEFAULT_FONT_LEVEL = 8;
 
 const STYLE_TAG_ID = "post-reader-tools-style";
 
