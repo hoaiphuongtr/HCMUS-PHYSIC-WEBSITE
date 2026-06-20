@@ -63,6 +63,7 @@ import {
   PostTagList,
   PostTitle,
 } from "./components/post-placeholders";
+import { SiteFooter, SiteHeader } from "./components/site-syndication";
 
 export const puckConfig: Config = {
   categories: {
@@ -81,6 +82,8 @@ export const puckConfig: Config = {
     navigation: {
       title: "Navigation",
       components: [
+        "SiteHeader",
+        "SiteFooter",
         "Navbar",
         "NavLinks",
         "QuickLinks",
@@ -205,5 +208,7 @@ export const puckConfig: Config = {
     PostEventInfo,
     PostHeader,
     PostReaderTools,
+    SiteHeader,
+    SiteFooter,
   } as any,
 };

@@ -178,12 +178,50 @@ function PostBodyRender({
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
     return (
-      <article
-        data-post-body
-        className="prose prose-slate max-w-none text-content-1000 dark:text-slate-100 leading-relaxed my-4 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored rich text
-        dangerouslySetInnerHTML={{ __html: source }}
-      />
+      <>
+        <style>{`
+          [data-post-body] *,
+          [data-post-body] span,
+          [data-post-body] p,
+          [data-post-body] h1,
+          [data-post-body] h2,
+          [data-post-body] h3,
+          [data-post-body] h4,
+          [data-post-body] h5,
+          [data-post-body] li,
+          [data-post-body] td,
+          [data-post-body] th {
+            font-family: inherit !important;
+            color: inherit !important;
+            background: transparent !important;
+            line-height: inherit;
+          }
+          [data-post-body] iframe,
+          [data-post-body] embed,
+          [data-post-body] object {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-height: 600px;
+            border: 0;
+          }
+          [data-post-body] img {
+            max-width: 100%;
+            height: auto;
+          }
+          [data-post-body] table {
+            display: block;
+            overflow-x: auto;
+            max-width: 100%;
+          }
+        `}</style>
+        <article
+          data-post-body
+          className="prose prose-slate dark:prose-invert max-w-none leading-relaxed my-4 prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored rich text
+          dangerouslySetInnerHTML={{ __html: source }}
+        />
+      </>
     );
   }
   return (
