@@ -279,6 +279,7 @@ function PostCoverImageRender({
         alt={finalAlt}
         fill
         sizes="(max-width: 768px) 100vw, 800px"
+        unoptimized
         priority
         className="object-cover"
       />
