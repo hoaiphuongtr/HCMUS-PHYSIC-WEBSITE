@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   type Category,
@@ -446,17 +447,57 @@ function NewsListPaginatedRender({
   isEditing: boolean;
 }) {
   const { locale, prefix } = useLocalePrefix();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<PostPublicCard[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState("");
-  const [search, setSearch] = useState("");
-  const [searchDraft, setSearchDraft] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [category, setCategory] = useState(
+    () => searchParams.get("category") ?? "",
+  );
+  const [search, setSearch] = useState(
+    () => searchParams.get("search") ?? "",
+  );
+  const [searchDraft, setSearchDraft] = useState(
+    () => searchParams.get("search") ?? "",
+  );
+  const [fromDate, setFromDate] = useState(
+    () => searchParams.get("from") ?? "",
+  );
+  const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
   const [categories, setCategories] = useState<Category[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setCategory(searchParams.get("category") ?? "");
+    const nextSearch = searchParams.get("search") ?? "";
+    setSearch(nextSearch);
+    setSearchDraft(nextSearch);
+    setFromDate(searchParams.get("from") ?? "");
+    setToDate(searchParams.get("to") ?? "");
+  }, [searchParams]);
+
+  const syncUrl = (next: {
+    category?: string;
+    search?: string;
+    fromDate?: string;
+    toDate?: string;
+  }) => {
+    const merged = {
+      category: next.category ?? category,
+      search: next.search ?? search,
+      from: next.fromDate ?? fromDate,
+      to: next.toDate ?? toDate,
+    };
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(merged)) {
+      if (v) sp.set(k, v);
+    }
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -567,7 +608,9 @@ function NewsListPaginatedRender({
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearch(searchDraft.trim());
+    const trimmed = searchDraft.trim();
+    setSearch(trimmed);
+    syncUrl({ search: trimmed });
   };
 
   const lineColor = accentColor || "#1e40af";
@@ -618,7 +661,10 @@ function NewsListPaginatedRender({
           </label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              syncUrl({ category: e.target.value });
+            }}
             className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200 bg-white dark:bg-[#1a2436]"
           >
             <option value="">{locale === "en" ? "All" : "Tất cả"}</option>
@@ -636,7 +682,10 @@ function NewsListPaginatedRender({
           <input
             type="date"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(e) => {
+              setFromDate(e.target.value);
+              syncUrl({ fromDate: e.target.value });
+            }}
             className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
@@ -647,7 +696,10 @@ function NewsListPaginatedRender({
           <input
             type="date"
             value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(e) => {
+              setToDate(e.target.value);
+              syncUrl({ toDate: e.target.value });
+            }}
             className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-md outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
