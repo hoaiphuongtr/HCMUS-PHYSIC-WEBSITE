@@ -78,7 +78,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
           <img
             src={resolveMediaUrl(post.coverUrl)}
             alt={post.coverAlt || title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
             decoding="async"
           />
@@ -144,7 +144,7 @@ function EventCard({
               <img
                 src={resolveMediaUrl(post.coverUrl)}
                 alt={post.coverAlt || title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
                 decoding="async"
               />
@@ -161,7 +161,7 @@ function EventCard({
             <img
               src={resolveMediaUrl(post.coverUrl)}
               alt={post.coverAlt || title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               loading="lazy"
               decoding="async"
             />

@@ -308,18 +308,14 @@ function PostCoverImageRender({
     );
   }
   return (
-    <div
-      className="relative w-full rounded-lg overflow-hidden my-4"
-      style={{ aspectRatio }}
-    >
-      <Image
+    <div className="w-full rounded-lg overflow-hidden my-4 bg-slate-50 dark:bg-[#121a2b] flex items-center justify-center">
+      {/** biome-ignore lint/performance/noImgElement: needs natural aspect, not fill */}
+      <img
         src={finalSrc}
         alt={finalAlt}
-        fill
-        sizes="(max-width: 768px) 100vw, 800px"
-        unoptimized
-        priority
-        className="object-cover"
+        loading="lazy"
+        decoding="async"
+        className="max-w-full max-h-[80vh] w-auto h-auto object-contain"
       />
     </div>
   );
