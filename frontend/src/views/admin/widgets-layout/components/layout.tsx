@@ -292,10 +292,14 @@ export const Columns: ComponentConfig<{
       stretch: "items-stretch",
     };
     const slotComps = [props.col0, props.col1, props.col2, props.col3];
+    const mdColsClass: Record<number, string> = {
+      2: "md:grid-cols-2",
+      3: "md:grid-cols-3",
+      4: "md:grid-cols-4",
+    };
     return (
       <div
-        className={`grid ${gaps[gap] || "gap-4"} ${aligns[verticalAlign] || "items-start"}`}
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        className={`grid grid-cols-1 ${mdColsClass[cols] ?? "md:grid-cols-2"} ${gaps[gap] || "gap-4"} ${aligns[verticalAlign] || "items-start"}`}
       >
         {slotComps.slice(0, cols).map((SlotComp, i) => (
           <div key={i}>

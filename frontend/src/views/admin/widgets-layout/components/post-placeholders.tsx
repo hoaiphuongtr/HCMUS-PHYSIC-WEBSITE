@@ -175,7 +175,11 @@ function PostBodyRender({
 }) {
   const { locale } = useLocale();
   if (injected && !markdown) return null;
-  const source = markdown || t(defaultMarkdown, locale) || "";
+  const rawSource = markdown || t(defaultMarkdown, locale) || "";
+  const source = rawSource.replace(
+    /<iframe[^>]*src=["']https?:\/\/phys\.hcmus\.edu\.vn[^"']*["'][^>]*><\/iframe>/gi,
+    "",
+  );
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
     return (
@@ -206,13 +210,23 @@ function PostBodyRender({
             border: 0;
           }
           [data-post-body] img {
-            max-width: 100%;
-            height: auto;
+            max-width: 100% !important;
+            width: auto !important;
+            height: auto !important;
+            display: inline-block;
           }
           [data-post-body] table {
             display: block;
             overflow-x: auto;
             max-width: 100%;
+          }
+          @media (max-width: 768px) {
+            [data-post-body] p,
+            [data-post-body] li {
+              text-align: left !important;
+              text-indent: 0 !important;
+              word-break: break-word;
+            }
           }
         `}</style>
         <article
@@ -597,7 +611,7 @@ function PostHeaderRender({
           </time>
         ) : null}
       </div>
-      <h1 className="text-3xl md:text-4xl font-bold text-content-1000 dark:text-slate-100 leading-tight">
+      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-content-1000 dark:text-slate-100 leading-snug break-words">
         {title}
       </h1>
     </header>

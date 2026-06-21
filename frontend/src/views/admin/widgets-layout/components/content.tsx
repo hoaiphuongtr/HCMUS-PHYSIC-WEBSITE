@@ -857,22 +857,22 @@ function DepartmentCardRender({
     <a
       href={isEditing ? "#" : linkUrl || "#"}
       tabIndex={isEditing ? -1 : undefined}
-      className="block relative aspect-[16/10] rounded-lg overflow-hidden group"
+      className="block relative aspect-square sm:aspect-[16/10] rounded-lg overflow-hidden group"
     >
       {imageUrl ? (
         <img
           src={imageUrl}
           alt={titleText}
-          className="w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
+          className="absolute inset-0 w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
           loading="lazy"
           decoding="async"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-3 text-center">
-        <span className="text-white text-sm font-semibold drop-shadow-lg">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+      <div className="absolute inset-x-0 bottom-0 px-2 pt-6 pb-2 text-center">
+        <span className="block text-white text-[11px] sm:text-sm font-semibold leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
           {titleText}
         </span>
       </div>

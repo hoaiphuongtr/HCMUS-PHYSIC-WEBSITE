@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ChevronUp,
   Globe,
+  Menu,
   Search,
   X,
 } from "lucide-react";
@@ -233,6 +234,7 @@ function NavbarClient({
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [langOpen, setLangOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const swapLocale = (next: string) => {
     if (typeof window === "undefined") return;
@@ -270,17 +272,28 @@ function NavbarClient({
           )}
         </Link>
         <div className="flex items-center gap-1">
-          {(menuItems || []).map((item: NavbarMenuItem, i: number) => (
-            <NavbarMenuButton
-              key={i}
-              item={item}
-              locale={locale}
-              textColor={textColor}
-              hoverLineColor={hoverLineColor}
-              hoverTextColor={hoverTextColor}
-              isEditing={isEditing}
-            />
-          ))}
+          <div className="hidden lg:flex items-center gap-1">
+            {(menuItems || []).map((item: NavbarMenuItem, i: number) => (
+              <NavbarMenuButton
+                key={i}
+                item={item}
+                locale={locale}
+                textColor={textColor}
+                hoverLineColor={hoverLineColor}
+                hoverTextColor={hoverTextColor}
+                isEditing={isEditing}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => !isEditing && setMobileMenuOpen(true)}
+            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+            style={{ color: textColor || "#1e293b" }}
+            aria-label="Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
           {showSearch && (
             <button
               type="button"
@@ -351,6 +364,44 @@ function NavbarClient({
           )}
         </div>
       </nav>
+
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-[9998]">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black/50"
+            aria-label="Close menu"
+          />
+          <div className="absolute top-0 right-0 h-full w-[80%] max-w-sm bg-white dark:bg-[#1a2436] shadow-xl flex flex-col overflow-y-auto animate-[slideInRight_0.25s_ease]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Menu
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44]"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <nav className="flex flex-col py-2">
+              {(menuItems || []).map((item: NavbarMenuItem, i: number) => (
+                <a
+                  key={i}
+                  href={item.url || "#"}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-5 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] border-b border-slate-100 dark:border-slate-800"
+                >
+                  {t(item.label as never, locale)}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
 
       {searchOpen && (
         <div
