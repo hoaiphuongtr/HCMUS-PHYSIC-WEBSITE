@@ -288,20 +288,69 @@ function NavbarClient({
               />
             ))}
           </div>
+          <div
+            className={`lg:hidden order-3 flex items-center gap-1 overflow-hidden transition-[max-width,opacity,transform,margin] duration-300 ease-out ${
+              mobileMenuOpen
+                ? "max-w-0 opacity-0 translate-x-4 ml-0 pointer-events-none"
+                : "max-w-[120px] opacity-100 translate-x-0"
+            }`}
+          >
+            {showSearch && (
+              <button
+                type="button"
+                onClick={() => !isEditing && setSearchOpen(true)}
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+                style={{ color: textColor || "#1e293b" }}
+                aria-label="Search"
+                tabIndex={mobileMenuOpen ? -1 : undefined}
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            )}
+            {showLanguageSwitcher && (
+              <button
+                type="button"
+                onClick={() => !isEditing && setLangOpen((p) => !p)}
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+                style={{ color: textColor || "#1e293b" }}
+                aria-haspopup="menu"
+                aria-expanded={langOpen}
+                aria-label="Language"
+                tabIndex={mobileMenuOpen ? -1 : undefined}
+              >
+                <Globe className="w-5 h-5" />
+              </button>
+            )}
+          </div>
           <button
             type="button"
-            onClick={() => !isEditing && setMobileMenuOpen(true)}
-            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+            onClick={() => !isEditing && setMobileMenuOpen((p) => !p)}
+            className="lg:hidden order-4 ml-1 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-all duration-300"
             style={{ color: textColor || "#1e293b" }}
-            aria-label="Menu"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            <Menu className="w-6 h-6" />
+            <span className="relative w-6 h-6 block">
+              <Menu
+                className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
+                  mobileMenuOpen
+                    ? "opacity-0 rotate-90 scale-75"
+                    : "opacity-100 rotate-0 scale-100"
+                }`}
+              />
+              <X
+                className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
+                  mobileMenuOpen
+                    ? "opacity-100 rotate-0 scale-100"
+                    : "opacity-0 -rotate-90 scale-75"
+                }`}
+              />
+            </span>
           </button>
           {showSearch && (
             <button
               type="button"
               onClick={() => !isEditing && setSearchOpen(true)}
-              className="ml-2 w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+              className="hidden lg:flex ml-2 w-9 h-9 rounded-full items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
               style={{ color: textColor || "#1e293b" }}
               aria-label="Search"
             >
@@ -309,7 +358,7 @@ function NavbarClient({
             </button>
           )}
           {showLanguageSwitcher && (
-            <div className="relative">
+            <div className="relative hidden lg:block">
               <button
                 type="button"
                 onClick={() => !isEditing && setLangOpen((p) => !p)}
@@ -369,41 +418,15 @@ function NavbarClient({
       </nav>
 
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-[9998]">
+        <div className="lg:hidden fixed inset-0 top-[60px] z-40">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/0"
             aria-label="Close menu"
+            tabIndex={-1}
           />
-          <div className="absolute top-0 left-0 h-full w-full bg-white dark:bg-[#1a2436] shadow-xl flex flex-col overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-              <Link
-                href={`/${locale}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2"
-              >
-                {logoSrc ? (
-                  <img
-                    src={logoSrc}
-                    alt={logoAlt || "Logo"}
-                    className="h-9 object-contain"
-                  />
-                ) : (
-                  <span className="text-base font-bold text-slate-900 dark:text-slate-100">
-                    Physics
-                  </span>
-                )}
-              </Link>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-10 h-10 rounded-md border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-[#202c44]"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-              </button>
-            </div>
+          <div className="absolute top-0 left-0 h-full w-full bg-white dark:bg-[#1a2436] shadow-xl flex flex-col overflow-y-auto animate-[slideDown_0.25s_ease]">
             <nav className="flex flex-col px-5 py-2">
               {(menuItems || []).map((item: NavbarMenuItem, i: number) => {
                 const hasChildren =
