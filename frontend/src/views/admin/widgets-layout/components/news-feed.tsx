@@ -590,7 +590,11 @@ function NewsListPaginatedRender({
             toDate: s.toDate || undefined,
           })
           .then((res) => {
-            setItems((prev) => [...prev, ...res.items]);
+            setItems((prev) => {
+              const seen = new Set(prev.map((p) => p.id));
+              const fresh = res.items.filter((p) => !seen.has(p.id));
+              return [...prev, ...fresh];
+            });
             setPage(nextPage);
             setHasMore(res.hasMore);
             setLoading(false);
