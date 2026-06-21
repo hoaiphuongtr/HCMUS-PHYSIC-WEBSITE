@@ -480,10 +480,17 @@ function GridClient({
     };
   }, [reorderByTags, keys, props]);
 
+  const mdColsClass: Record<number, string> = {
+    1: "md:grid-cols-1",
+    2: "md:grid-cols-2",
+    3: "md:grid-cols-3",
+    4: "md:grid-cols-4",
+    5: "md:grid-cols-5",
+    6: "md:grid-cols-6",
+  };
   return (
     <div
-      className={`grid ${gapClass}`}
-      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      className={`grid grid-cols-1 ${mdColsClass[cols] ?? "md:grid-cols-3"} ${gapClass}`}
     >
       {orderedKeys.map((key) => {
         const CellSlot = props[key];

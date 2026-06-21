@@ -727,6 +727,7 @@ export const ProfileCard: ComponentConfig<{
   role: LocalizedString;
   description: LocalizedString;
   linkUrl: string;
+  overlayName: boolean;
 }> = {
   label: "Profile Card",
   defaultProps: {
@@ -735,6 +736,7 @@ export const ProfileCard: ComponentConfig<{
     role: { vi: "Chức vụ", en: "Title" },
     description: { vi: "", en: "" },
     linkUrl: "#",
+    overlayName: false,
   },
   fields: {
     imageUrl: mediaPickerField("Photo"),
@@ -742,14 +744,31 @@ export const ProfileCard: ComponentConfig<{
     role: localizedTextField("Role/Title"),
     description: localizedTextareaField("Description"),
     linkUrl: { type: "text", label: "Link URL" },
+    overlayName: {
+      type: "radio",
+      label: "Hiển thị tên đè lên ảnh",
+      options: [
+        { label: "Bên dưới ảnh (mặc định)", value: false },
+        { label: "Đè lên ảnh", value: true },
+      ],
+    },
   },
-  render: ({ imageUrl, name, role, description, linkUrl, puck }) => (
+  render: ({
+    imageUrl,
+    name,
+    role,
+    description,
+    linkUrl,
+    overlayName,
+    puck,
+  }) => (
     <ProfileCardRender
       imageUrl={imageUrl}
       name={name}
       role={role}
       description={description}
       linkUrl={linkUrl}
+      overlayName={!!overlayName}
       isEditing={!!puck?.isEditing}
     />
   ),
@@ -761,6 +780,7 @@ function ProfileCardRender({
   role,
   description,
   linkUrl,
+  overlayName,
   isEditing,
 }: {
   imageUrl: string;
@@ -768,6 +788,7 @@ function ProfileCardRender({
   role: LocalizedString;
   description: LocalizedString;
   linkUrl: string;
+  overlayName: boolean;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
@@ -794,6 +815,18 @@ function ProfileCardRender({
             <User className="w-12 h-12 text-slate-300" />
           </div>
         )}
+        {overlayName && (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pt-12 pb-4 text-center">
+            <p className="text-white text-base sm:text-lg font-bold uppercase tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              {nameText}
+            </p>
+            {roleText && (
+              <p className="text-white/90 text-xs sm:text-sm mt-1 drop-shadow">
+                {roleText}
+              </p>
+            )}
+          </div>
+        )}
         {descriptionText && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-900/95 via-blue-900/85 to-transparent pt-16 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
             <p className="text-white font-bold text-base">{nameText}</p>
@@ -804,12 +837,16 @@ function ProfileCardRender({
           </div>
         )}
       </div>
-      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-        {nameText}
-      </h4>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        {roleText}
-      </p>
+      {!overlayName && (
+        <>
+          <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+            {nameText}
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {roleText}
+          </p>
+        </>
+      )}
     </a>
   );
 }
@@ -871,8 +908,8 @@ function DepartmentCardRender({
         <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-700 to-slate-900" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 px-2 pt-6 pb-2 text-center">
-        <span className="block text-white text-[11px] sm:text-sm font-semibold leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
+      <div className="absolute inset-x-0 bottom-0 px-3 pt-8 pb-3 text-center">
+        <span className="block text-white text-sm sm:text-base md:text-lg font-bold uppercase tracking-wide leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
           {titleText}
         </span>
       </div>
