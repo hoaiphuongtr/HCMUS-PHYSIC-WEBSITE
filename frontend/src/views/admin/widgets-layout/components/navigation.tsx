@@ -235,6 +235,9 @@ function NavbarClient({
   const [query, setQuery] = useState("");
   const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState<Record<number, boolean>>(
+    {},
+  );
 
   const swapLocale = (next: string) => {
     if (typeof window === "undefined") return;
@@ -370,34 +373,87 @@ function NavbarClient({
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/40"
             aria-label="Close menu"
           />
-          <div className="absolute top-0 right-0 h-full w-[80%] max-w-sm bg-white dark:bg-[#1a2436] shadow-xl flex flex-col overflow-y-auto animate-[slideInRight_0.25s_ease]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Menu
-              </span>
+          <div className="absolute top-0 left-0 h-full w-full bg-white dark:bg-[#1a2436] shadow-xl flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+              <Link
+                href={`/${locale}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2"
+              >
+                {logoSrc ? (
+                  <img
+                    src={logoSrc}
+                    alt={logoAlt || "Logo"}
+                    className="h-9 object-contain"
+                  />
+                ) : (
+                  <span className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Physics
+                  </span>
+                )}
+              </Link>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44]"
+                className="w-10 h-10 rounded-md border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-[#202c44]"
                 aria-label="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-slate-700 dark:text-slate-200" />
               </button>
             </div>
-            <nav className="flex flex-col py-2">
-              {(menuItems || []).map((item: NavbarMenuItem, i: number) => (
-                <a
-                  key={i}
-                  href={item.url || "#"}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-5 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] border-b border-slate-100 dark:border-slate-800"
-                >
-                  {t(item.label as never, locale)}
-                </a>
-              ))}
+            <nav className="flex flex-col px-5 py-2">
+              {(menuItems || []).map((item: NavbarMenuItem, i: number) => {
+                const hasChildren =
+                  Array.isArray(item.children) && item.children.length > 0;
+                const expanded = !!mobileExpanded[i];
+                if (hasChildren) {
+                  return (
+                    <div key={i} className="border-b border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMobileExpanded((m) => ({ ...m, [i]: !m[i] }))
+                        }
+                        className="w-full flex items-center justify-between py-5 text-left text-[17px] font-medium text-slate-800 dark:text-slate-100"
+                      >
+                        <span>{t(item.label as never, locale)}</span>
+                        <ChevronRight
+                          className={`w-5 h-5 text-slate-400 transition-transform ${expanded ? "rotate-90" : ""}`}
+                        />
+                      </button>
+                      {expanded ? (
+                        <div className="pb-3 pl-3 flex flex-col">
+                          {item.children.map(
+                            (child: NavbarMenuChild, ci: number) => (
+                              <a
+                                key={ci}
+                                href={child.url || "#"}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="py-2 text-[15px] text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300"
+                              >
+                                {t(child.label as never, locale)}
+                              </a>
+                            ),
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }
+                return (
+                  <a
+                    key={i}
+                    href={item.url || "#"}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-5 text-[17px] font-medium text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 hover:text-blue-700 dark:hover:text-blue-300"
+                  >
+                    {t(item.label as never, locale)}
+                  </a>
+                );
+              })}
             </nav>
           </div>
         </div>
