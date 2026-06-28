@@ -2,8 +2,75 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-14
-**Active Feature:** feat-013 — Legacy migration (MariaDB dump → Postgres + media)
+**Last Updated:** 2026-06-28
+**Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
+
+## Session 2026-06-28 — Legacy header dropdowns + missing section pages (feat-013, DONE)
+
+**Goal:** mimic the legacy site (phys.hcmus.edu.vn) header nav 1-to-1 on the public
+site, and build the section pages each dropdown links to (most were never migrated).
+
+### What was done
+
+1. **Recovered the real legacy header** from the SQL dump (`menus` + `menuslang`,
+   filtered `deptid=1, locationid=1, deleted=0, status=1`) — 9 top items + 36 dropdown
+   links, VI/EN labels, matches the live site exactly.
+2. **Navbar** (`build-legacy-header.ts`): wrote the tree into the homepage (`trang-chu`)
+   `Navbar.menuItems`. `SiteHeader`/`SiteFooter` are **syndicated** (fetch `trang-chu`
+   at runtime), so this one write propagates the nav to every layout. Exports
+   `MENU_ITEMS`, now reused by `seed-homepage-layout.ts` so a fresh seed reproduces it.
+3. **Section pages** (`build-legacy-pages.ts`): built **29** PageLayouts (28 missing +
+   republished the pre-existing unpublished `viec-lam-nganh-vat-ly`) from legacy
+   `pages`/`pageslang`, via the post template (`SiteHeader` + Container + `SiteFooter`)
+   using `injectPostIntoPuckData` — reproduces each legacy page (banner + title + HTML
+   body) 1-to-1. Slugs = legacy slugs (so navbar links match). Update-or-create by slug.
+4. **Media** (`download-page-media.ts`): fetched 180/187 page assets to
+   `uploads/legacy/` (2 are broken on the legacy server itself).
+5. **Helpers**: `legacy-html.ts` (entity decode + `<img>`/`<iframe>` `/uploads`→
+   `/uploads/legacy` rewrite + script/iframe sanitize), `flush-cache.ts` (deletes the
+   NestJS `CacheInterceptor` keys in Redis namespace `hcmus-physics` after direct-DB
+   writes — wired into both build scripts).
+
+### Verification (all green)
+
+- Playwright screenshot of `/vi`: all 9 legacy top items; "Đào tạo" dropdown lists its
+  7 children. EN locale switches labels. No JS console errors.
+- All **30** internal nav links resolve to a published PageLayout; 9 external/#/home
+  links as expected.
+- `gioi-thieu` etc. render header + banner (cover via `resolveMediaUrl`, loads in dev)
+  + legacy content + footer.
+- `tsc --noEmit` clean. Added `@redis/client@5.12.1` to backend deps (used by flush-cache).
+
+### How to re-run (legacy MariaDB on :3309, db `legacy`, root/root)
+
+```
+pnpm --filter backend exec tsx --env-file=.env initialScript/migrate-legacy/build-legacy-header.ts
+pnpm --filter backend exec tsx --env-file=.env initialScript/migrate-legacy/build-legacy-pages.ts
+pnpm --filter backend exec tsx --env-file=.env initialScript/migrate-legacy/download-page-media.ts
+# then revalidate the public site (token in frontend-public/.env):
+curl -XPOST localhost:3002/api/revalidate -H "x-revalidate-token: $TOKEN" \
+  -H 'content-type: application/json' -d '{"tags":["sitemap","page:trang-chu"]}'
+```
+
+### Known limitations / residual risks
+
+- **Inline body images 404 in localhost dev** — pre-existing, site-wide: body HTML is
+  rendered raw (not via `resolveMediaUrl`), so relative `/uploads/legacy/...` resolves
+  against :3002 not the backend. Identical to all ~1600 migrated post pages; serves in
+  prod behind the `/uploads` reverse proxy. (Optional future fix: a `/uploads/:path*`
+  rewrite in `frontend-public/next.config.ts` → backend.)
+- Section pages use the **post-article template**, so the breadcrumb shows
+  "Trang chủ / Tin tức / Chuyên mục" — slightly article-flavored for a static page.
+  Acceptable for v1; a dedicated page template could remove it.
+- 3 pages have thin text (images/PDF only): `tam-nhin---su-mang`, `to-chuc-nhan-su`
+  (org-chart images), `quy-che-hoc-tap` (embedded PDF — iframe src rewritten to local
+  so it isn't stripped by PostBodyRender).
+- `cat:46` "Câu lạc bộ" (tag merged away in feat-013 category-merge) → links to legacy
+  `https://phys.hcmus.edu.vn/cau-lac-bo`.
+- Direct-DB writes bypass the service's cache.clear() + public ISR — scripts now flush
+  Redis; the public site still needs a tag revalidate (or 1h ISR) to refresh page HTML.
+
+---
 
 ## feat-013 plan
 

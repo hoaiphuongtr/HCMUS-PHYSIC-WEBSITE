@@ -50,6 +50,9 @@ importers:
       '@prisma/client':
         specifier: ^7.5.0
         version: 7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3)
+      '@redis/client':
+        specifier: 5.12.1
+        version: 5.12.1(@opentelemetry/api@1.9.1)
       '@sentry/nestjs':
         specifier: ^10.43.0
         version: 10.52.0(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)

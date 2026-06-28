@@ -2,6 +2,7 @@ import envConfig from 'src/shared/config/config';
 import { PrismaClient } from 'src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { MENU_ITEMS } from './migrate-legacy/build-legacy-header';
 
 const pool = new Pool({ connectionString: envConfig.DATABASE_URL });
 const adapter = new PrismaPg(pool as any);
@@ -71,43 +72,7 @@ const HOMEPAGE_PUCK_DATA = {
         id: 'main-navbar',
         logoSrc: PHYS_IMAGES.logo,
         logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
-        menuItems: [
-          {
-            label: 'Giới thiệu',
-            url: '/gioi-thieu',
-            children: 'Lịch sử,Sứ mệnh,Tầm nhìn,Cơ cấu tổ chức',
-          },
-          {
-            label: 'Đội ngũ',
-            url: '/doi-ngu',
-            children:
-              'Ban chủ nhiệm Khoa,Giảng viên,Nghiên cứu sinh,Trợ giảng',
-          },
-          {
-            label: 'Đào tạo',
-            url: '/dao-tao',
-            children:
-              'Đại học,Sau đại học,Chương trình đào tạo,Quy chế,Biểu mẫu',
-          },
-          {
-            label: 'Nghiên cứu',
-            url: '/nghien-cuu',
-            children:
-              'Nhóm nghiên cứu,Phòng thí nghiệm,Dự án,Công bố khoa học',
-          },
-          {
-            label: 'Hội nghị',
-            url: '/hoi-nghi',
-            children: 'Sắp diễn ra,Đã diễn ra',
-          },
-          {
-            label: 'Hoạt động',
-            url: '/hoat-dong',
-            children: 'Tin tức,Sự kiện,Đoàn - Hội',
-          },
-          { label: 'Tuyển sinh', url: '/tuyen-sinh', children: '' },
-          { label: 'Cựu sinh viên', url: '/cuu-sinh-vien', children: '' },
-        ],
+        menuItems: MENU_ITEMS,
         bgColor: '#ffffff',
         textColor: '#1e293b',
       },
