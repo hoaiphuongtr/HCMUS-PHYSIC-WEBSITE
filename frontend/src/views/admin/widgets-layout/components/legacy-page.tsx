@@ -211,7 +211,7 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
               {news.map((p) => (
                 <li key={p.id}>
                   <NextLink href={postUrl(p)} className="flex gap-3 group">
-                    <span className="shrink-0 w-20 h-16 rounded overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <span className="shrink-0 w-20 h-16 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                       {p.coverUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -219,6 +219,11 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
                           alt=""
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          // Hide gracefully if the cover is missing (some legacy
+                          // post covers weren't migrated) instead of a broken icon.
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       ) : null}
                     </span>
