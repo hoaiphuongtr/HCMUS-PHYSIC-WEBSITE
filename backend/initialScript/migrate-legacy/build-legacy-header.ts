@@ -120,7 +120,7 @@ export const MENU_ITEMS: Item[] = [
     label: L('Tuyển sinh', 'Admissions'),
     url: '#',
     children: [
-      child('Đại học', 'Undergraduate', 'https://phys.hcmus.edu.vn/tuyen-sinh-dai-hoc.html'),
+      child('Đại học', 'Undergraduate', '/tuyen-sinh-dai-hoc'),
       child('Sau đại học', 'Graduate', '/dao-tao-sau-dai-hoc'),
       child('Việc làm ngành Vật lý', 'Career opportunities', '/viec-lam-nganh-vat-ly'),
     ],
@@ -132,7 +132,7 @@ export const MENU_ITEMS: Item[] = [
       child(
         'Việc làm Cựu sinh viên',
         "Alumni's Job List",
-        'https://phys.hcmus.edu.vn/thong-ke-viec-lam-cuu-sinh-vien.html',
+        '/thong-ke-viec-lam-cuu-sinh-vien',
       ),
       child('Hoạt động Cựu sinh viên', 'Alumni Activities', POST_1389_URL),
       child('Quỹ học bổng Cựu sinh viên', 'Alumni Scholarship Fund', '/quy-hoc-bong-cuu-sinh-vien'),

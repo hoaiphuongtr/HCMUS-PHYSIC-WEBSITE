@@ -46,8 +46,8 @@ const PAGE_IDS = [
   311, // Hội nghị
   201, 243, 4, 5, 3, 6, // Nghiên cứu
   10, 129, 271, 280, // Hoạt động
-  214, // Tuyển sinh — Việc làm ngành Vật lý (existed unpublished; republish from legacy)
-  171, 14, // Cựu sinh viên
+  214, 270, // Tuyển sinh — Việc làm ngành Vật lý; Đại học (legacy menu used hardcoded .html)
+  171, 14, 224, // Cựu sinh viên (224 = Việc làm CSV, legacy menu used hardcoded .html)
   292, // ASIIN 2024-2025
 ];
 

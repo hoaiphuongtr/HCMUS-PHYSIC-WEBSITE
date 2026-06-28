@@ -30,7 +30,7 @@ const LEGACY = {
 
 const PAGE_IDS = [
   1, 128, 2, 134, 195, 203, 196, 200, 236, 308, 8, 7, 125, 199, 311, 201, 243,
-  4, 5, 3, 6, 10, 129, 271, 280, 171, 14, 292,
+  4, 5, 3, 6, 10, 129, 271, 280, 214, 270, 171, 14, 224, 292,
 ];
 
 /** Normalise any legacy asset reference to a `/uploads/<path>` form (no /legacy/). */
