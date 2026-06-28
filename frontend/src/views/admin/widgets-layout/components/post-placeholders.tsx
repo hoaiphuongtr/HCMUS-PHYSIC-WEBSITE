@@ -264,7 +264,7 @@ function PostBodyRender({
 // the legacy site 1-to-1. It only: resolves /uploads/* media to the API host,
 // makes media responsive, and restores list markers + bordered-table gridlines
 // that Tailwind's preflight strips.
-function LegacyHtmlRender({
+export function LegacyHtmlRender({
   html,
   injected,
 }: {

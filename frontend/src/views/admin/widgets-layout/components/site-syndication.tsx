@@ -37,20 +37,39 @@ const findNode = (
   return walk(data.content);
 };
 
+// SiteHeader and SiteFooter both need the homepage layout (for the Navbar and
+// FooterBlock nodes). Dedup + short-TTL cache so a page render fetches it once
+// instead of twice, and rapid navigations reuse it.
+const HOME_TTL_MS = 30_000;
+let homeCache: { at: number; data: PuckTree | null } | null = null;
+let homeInflight: Promise<PuckTree | null> | null = null;
+
 const fetchHome = async (): Promise<PuckTree | null> => {
-  try {
-    const res = await fetch(`${API_URL}/page-layouts/slug/${HOME_SLUG}`, {
-      cache: "no-store",
+  if (homeCache && Date.now() - homeCache.at < HOME_TTL_MS) return homeCache.data;
+  if (homeInflight) return homeInflight;
+  homeInflight = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/page-layouts/slug/${HOME_SLUG}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return null;
+      const layout = (await res.json()) as {
+        publishedPuckData: PuckTree | null;
+        puckData: PuckTree | null;
+      };
+      return layout.publishedPuckData ?? layout.puckData ?? null;
+    } catch {
+      return null;
+    }
+  })()
+    .then((data) => {
+      homeCache = { at: Date.now(), data };
+      return data;
+    })
+    .finally(() => {
+      homeInflight = null;
     });
-    if (!res.ok) return null;
-    const layout = (await res.json()) as {
-      publishedPuckData: PuckTree | null;
-      puckData: PuckTree | null;
-    };
-    return layout.publishedPuckData ?? layout.puckData ?? null;
-  } catch {
-    return null;
-  }
+  return homeInflight;
 };
 
 type SyndicatedRenderProps = {

@@ -5,6 +5,33 @@
 **Last Updated:** 2026-06-28
 **Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
 
+## Session 2026-06-28 (cont. 2) — Full legacy page FRAME + perf review
+
+User asked for the full legacy page frame on all 29 section pages, and to avoid N+1
+queries (BE+FE) per Next.js/NestJS best practices.
+
+**Frame** (new `components/legacy-page.tsx`):
+- `PageHero`: full-width bgimage banner with dark overlay, centered uppercase title +
+  subtitle (from pageslang.excerpt), and a "Trang chủ / <title>" breadcrumb bar.
+- `LegacyPageBody`: 2-column layout — faithful content (reuses `LegacyHtmlRender`) on
+  the left, sidebar on the right with "Danh mục" links + live "Tin mới nhất" list.
+- `build-legacy-pages.ts` now assembles the tree directly: `SiteHeader` + `PageHero` +
+  `LegacyPageBody` + `SiteFooter` (no more post template). This also **fixed the
+  duplicate-image bug** (dropped `PostCoverImage`, which had duplicated the body's lead
+  image) and removed the wrong "Tin tức" breadcrumb. Hero bg = page.bgimage→image.
+
+**Perf / N+1 review (Next.js best-practices skill):**
+- BE `listLatestPublic`: single `findMany` + `include` (no N+1). ✓
+- `LegacyPageBody` sidebar news: module-level dedup + 60s TTL cache (`fetchLatestNews`)
+  so the 29 pages don't each refetch (`client-swr-dedup`).
+- `site-syndication.tsx`: `SiteHeader` + `SiteFooter` both fetched `trang-chu` per page
+  (2 identical requests/render) — added module-level dedup + 30s TTL cache to `fetchHome`.
+- `build-legacy-pages`: `pages.find` in loop → `Map` lookup (`js-index-maps`).
+
+Verified (Playwright, legacy-vs-new): dao-tao-dai-hoc / muc-tieu / nang-luc now show
+hero + breadcrumb + 2-col content + Danh mục/Tin mới nhất sidebar + footer, matching
+legacy; muc-tieu no longer duplicates the group photo. tsc clean (admin/public/backend).
+
 ## Session 2026-06-28 (cont.) — Section-page rendering FIDELITY fix
 
 User flagged that migrated pages didn't match legacy 1-to-1 (missing body images,

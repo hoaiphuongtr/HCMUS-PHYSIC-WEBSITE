@@ -21,8 +21,6 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as mysql from 'mysql2/promise';
 import { Pool } from 'pg';
 import { Prisma, PrismaClient } from '../../src/generated/prisma/client';
-import { injectPostIntoPuckData } from '../../src/post/puck-inject';
-import type { PostInjectPayload } from '../../src/post/puck-inject';
 import { decodeEntities, rewriteImagePath, transformLegacyHtml } from './legacy-html';
 import { flushCache } from './flush-cache';
 
@@ -60,42 +58,6 @@ type PageRow = {
   bgimage: string | null;
 };
 
-// Post-only chrome that legacy info pages don't have — removed from page layouts.
-const DROP_TYPES = new Set(['PostReaderTools', 'PostTagList', 'PostEventInfo']);
-
-type AnyNode = { type?: string; props?: Record<string, unknown> };
-
-/**
- * Replace the injected PostBody (normalising renderer) with a LegacyHtml node
- * (faithful renderer that preserves legacy inline styles), and drop post-only
- * chrome. Returns a new tree.
- */
-function pageBodyTransform(
-  tree: unknown,
-  html: { vi: string; en: string },
-  slug: string,
-): unknown {
-  const walk = (nodes: AnyNode[]): AnyNode[] =>
-    nodes
-      .filter((n) => !(n?.type && DROP_TYPES.has(n.type)))
-      .map((n) => {
-        if (n?.type === 'PostBody') {
-          return {
-            type: 'LegacyHtml',
-            props: { id: `legacy-body-${slug}`, html, injected: true },
-          };
-        }
-        const props = { ...(n?.props ?? {}) } as Record<string, unknown>;
-        for (const [k, v] of Object.entries(props)) {
-          if (Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'type' in x)) {
-            props[k] = walk(v as AnyNode[]);
-          }
-        }
-        return { ...n, props };
-      });
-  const t = tree as { content?: AnyNode[] };
-  return { ...t, content: walk(t.content ?? []) };
-}
 type LangRow = {
   pageid: number;
   langid: number;
@@ -137,6 +99,8 @@ async function main(): Promise<void> {
     ),
   );
 
+  const pageById = new Map<number, PageRow>(pages.map((p) => [p.id, p]));
+
   let created = 0;
   let updated = 0;
   let failed = 0;
@@ -144,7 +108,7 @@ async function main(): Promise<void> {
   const missing: number[] = [];
 
   for (const id of PAGE_IDS) {
-    const page = pages.find((p) => p.id === id);
+    const page = pageById.get(id);
     if (!page) {
       missing.push(id);
       continue;
@@ -153,31 +117,44 @@ async function main(): Promise<void> {
     const vi = langs.find((l) => l.langid === 1);
     const en = langs.find((l) => l.langid === 2);
     const titleVi = decodeEntities((vi?.title ?? en?.title ?? page.slug).trim());
+    const titleEn = decodeEntities((en?.title ?? vi?.title ?? page.slug).trim());
     const bodyVi = transformLegacyHtml(vi?.content ?? en?.content);
     const bodyEn = transformLegacyHtml(en?.content) || bodyVi;
     if (bodyVi.replace(/<[^>]+>/g, '').trim().length < 40) thin.push(page.slug);
 
-    const coverUrl = rewriteImagePath(page.image) ?? rewriteImagePath(page.bgimage);
+    const excerptVi = vi?.excerpt ? decodeEntities(vi.excerpt) : '';
+    const excerptEn = en?.excerpt ? decodeEntities(en.excerpt) : excerptVi;
+    // Legacy hero uses bgimage; fall back to image. (No separate cover image —
+    // that previously duplicated the body's lead image.)
+    const heroBg = rewriteImagePath(page.bgimage) ?? rewriteImagePath(page.image) ?? '';
 
-    const payload: PostInjectPayload = {
-      title: titleVi,
-      body: bodyVi,
-      excerpt: vi?.excerpt ? decodeEntities(vi.excerpt) : null,
-      coverUrl,
-      coverAlt: titleVi,
-      tags: [],
-      category: '',
-      categoryLabel: '',
-      publishedAt: null,
-      eventStartAt: null,
-      eventEndAt: null,
-      eventLocation: null,
+    // Assemble the legacy page frame: syndicated header, hero banner with title
+    // overlay + breadcrumb, two-column body (faithful content + Danh mục / Tin
+    // mới nhất sidebar), syndicated footer.
+    const tree = {
+      root: {},
+      content: [
+        { type: 'SiteHeader', props: { id: `hdr-${page.slug}` } },
+        {
+          type: 'PageHero',
+          props: {
+            id: `hero-${page.slug}`,
+            title: { vi: titleVi, en: titleEn },
+            subtitle: { vi: excerptVi, en: excerptEn },
+            bgImage: heroBg,
+          },
+        },
+        {
+          type: 'LegacyPageBody',
+          props: {
+            id: `body-${page.slug}`,
+            html: { vi: bodyVi, en: bodyEn },
+          },
+        },
+        { type: 'SiteFooter', props: { id: `ftr-${page.slug}` } },
+      ],
     };
-
-    // Inject title/cover via the template placeholders, then swap the normalising
-    // PostBody for a faithful LegacyHtml node (localized vi+en) and drop post chrome.
-    const injected = injectPostIntoPuckData(template.puckData, payload);
-    const tree = pageBodyTransform(injected, { vi: bodyVi, en: bodyEn }, page.slug);
+    const description = excerptVi || null;
     try {
       const now = new Date();
       const existingId = existingBySlug.get(page.slug);
@@ -186,7 +163,7 @@ async function main(): Promise<void> {
           where: { id: existingId },
           data: {
             name: titleVi || page.slug,
-            description: payload.excerpt,
+            description,
             puckData: tree as unknown as Prisma.InputJsonValue,
             publishedPuckData: tree as unknown as Prisma.InputJsonValue,
             isPublished: true,
@@ -200,7 +177,7 @@ async function main(): Promise<void> {
           data: {
             name: titleVi || page.slug,
             slug: page.slug,
-            description: payload.excerpt,
+            description,
             puckData: tree as unknown as Prisma.InputJsonValue,
             publishedPuckData: tree as unknown as Prisma.InputJsonValue,
             isPublished: true,

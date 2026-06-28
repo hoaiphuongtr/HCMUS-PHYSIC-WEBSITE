@@ -65,6 +65,7 @@ import {
   PostTitle,
 } from "./components/post-placeholders";
 import { SiteFooter, SiteHeader } from "./components/site-syndication";
+import { LegacyPageBody, PageHero } from "./components/legacy-page";
 
 export const puckConfig: Config = {
   categories: {
@@ -213,5 +214,7 @@ export const puckConfig: Config = {
     PostReaderTools,
     SiteHeader,
     SiteFooter,
+    PageHero,
+    LegacyPageBody,
   } as any,
 };
