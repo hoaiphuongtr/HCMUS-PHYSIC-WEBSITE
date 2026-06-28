@@ -176,10 +176,19 @@ function PostBodyRender({
   const { locale } = useLocale();
   if (injected && !markdown) return null;
   const rawSource = markdown || t(defaultMarkdown, locale) || "";
-  const source = rawSource.replace(
-    /<iframe[^>]*src=["']https?:\/\/phys\.hcmus\.edu\.vn[^"']*["'][^>]*><\/iframe>/gi,
-    "",
-  );
+  const source = rawSource
+    .replace(
+      /<iframe[^>]*src=["']https?:\/\/phys\.hcmus\.edu\.vn[^"']*["'][^>]*><\/iframe>/gi,
+      "",
+    )
+    // Relative /uploads/* srcs (migrated legacy media) must point at the API
+    // host, same as cover images — otherwise body <img>/<iframe> 404 against the
+    // public origin. Mirrors resolveMediaUrl used for PostCoverImage.
+    .replace(
+      /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
+      (_m, pre: string, src: string, post: string) =>
+        `${pre}${resolveMediaUrl(src)}${post}`,
+    );
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
     return (
@@ -247,6 +256,81 @@ function PostBodyRender({
     </article>
   );
 }
+
+// ── LegacyHtml ────────────────────────────────────────────────────────────────
+// Faithful renderer for migrated legacy page bodies (TinyMCE HTML). Unlike
+// PostBody it does NOT normalise away the original styling — it preserves inline
+// colors, backgrounds, fonts, table borders and layout so migrated pages mimic
+// the legacy site 1-to-1. It only: resolves /uploads/* media to the API host,
+// makes media responsive, and restores list markers + bordered-table gridlines
+// that Tailwind's preflight strips.
+function LegacyHtmlRender({
+  html,
+  injected,
+}: {
+  html: LocalizedString;
+  injected: boolean;
+}) {
+  const { locale } = useLocale();
+  const raw = t(html, locale) || "";
+  if (injected && !raw.trim()) return null;
+  const source = raw.replace(
+    /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
+    (_m, pre: string, src: string, post: string) =>
+      `${pre}${resolveMediaUrl(src)}${post}`,
+  );
+  return (
+    <div className="legacy-content my-4">
+      <style>{`
+        .legacy-content { max-width: 100%; overflow-wrap: break-word; line-height: 1.65; color: #1f2937; }
+        .legacy-content img { max-width: 100%; height: auto; }
+        .legacy-content iframe, .legacy-content embed, .legacy-content object {
+          max-width: 100%; width: 100%; min-height: 500px; border: 0;
+        }
+        .legacy-content table { max-width: 100%; border-collapse: collapse; }
+        .legacy-content table[border] td, .legacy-content table[border] th,
+        .legacy-content table.MsoTableGrid td, .legacy-content table.MsoTableGrid th {
+          border: 1px solid #111827; padding: 6px 10px;
+        }
+        .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .legacy-content li { margin: 0.25rem 0; }
+        .legacy-content p { margin: 0.6rem 0; }
+        .legacy-content a { color: #1d4ed8; text-decoration: underline; }
+        .legacy-content h1, .legacy-content h2, .legacy-content h3,
+        .legacy-content h4, .legacy-content h5 { font-weight: 700; margin: 1rem 0 0.5rem; line-height: 1.3; }
+        .legacy-content > * { max-width: 100%; }
+        @media (max-width: 768px) {
+          .legacy-content table { display: block; overflow-x: auto; white-space: nowrap; }
+        }
+      `}</style>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: migrated legacy rich text */}
+      <div dangerouslySetInnerHTML={{ __html: source }} />
+    </div>
+  );
+}
+
+export const LegacyHtml: ComponentConfig<{
+  html: LocalizedString;
+  injected?: boolean;
+}> = {
+  label: "Legacy HTML",
+  defaultProps: { html: { vi: "", en: "" }, injected: false },
+  fields: {
+    html: localizedTextareaField("Legacy HTML"),
+    injected: {
+      type: "radio",
+      label: "Injected",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
+  },
+  render: ({ html, injected }) => (
+    <LegacyHtmlRender html={html} injected={!!injected} />
+  ),
+};
 
 export const PostCoverImage: ComponentConfig<{
   src: string;

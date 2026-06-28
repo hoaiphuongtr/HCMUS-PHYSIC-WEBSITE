@@ -65,8 +65,21 @@ type Stats = { attempted: number; ok: number; skipped: number; failed: number };
 
 async function downloadOne(path: string, stats: Stats): Promise<void> {
   stats.attempted++;
-  const decoded = decodeURI(path);
-  const local = join(UPLOAD_ROOT, decoded.replace(/^\/uploads\//, ''));
+  // Decode each segment with decodeURIComponent so reserved chars (%26 -> &)
+  // land on disk exactly as express.static will decode the request URL.
+  // decodeURI() leaves & ? = + # encoded and would mis-name those files.
+  const rel = path.replace(/^\/uploads\//, '');
+  const decoded = rel
+    .split('/')
+    .map((seg) => {
+      try {
+        return decodeURIComponent(seg);
+      } catch {
+        return seg;
+      }
+    })
+    .join('/');
+  const local = join(UPLOAD_ROOT, decoded);
   if (await fileExists(local)) {
     stats.skipped++;
     return;

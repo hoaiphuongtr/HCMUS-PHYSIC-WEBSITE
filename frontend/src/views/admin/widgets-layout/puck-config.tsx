@@ -55,6 +55,7 @@ import {
   UpcomingEventsAuto,
 } from "./components/news-feed";
 import {
+  LegacyHtml,
   PostBody,
   PostCoverImage,
   PostEventInfo,
@@ -152,6 +153,7 @@ export const puckConfig: Config = {
         "PostCoverImage",
         "PostTagList",
         "PostBody",
+        "LegacyHtml",
         "PostEventInfo",
         "PostReaderTools",
       ],
@@ -203,6 +205,7 @@ export const puckConfig: Config = {
     TagNotificationBar,
     PostTitle,
     PostBody,
+    LegacyHtml,
     PostCoverImage,
     PostTagList,
     PostEventInfo,

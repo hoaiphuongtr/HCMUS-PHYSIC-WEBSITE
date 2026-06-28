@@ -59,6 +59,43 @@ type PageRow = {
   image: string | null;
   bgimage: string | null;
 };
+
+// Post-only chrome that legacy info pages don't have — removed from page layouts.
+const DROP_TYPES = new Set(['PostReaderTools', 'PostTagList', 'PostEventInfo']);
+
+type AnyNode = { type?: string; props?: Record<string, unknown> };
+
+/**
+ * Replace the injected PostBody (normalising renderer) with a LegacyHtml node
+ * (faithful renderer that preserves legacy inline styles), and drop post-only
+ * chrome. Returns a new tree.
+ */
+function pageBodyTransform(
+  tree: unknown,
+  html: { vi: string; en: string },
+  slug: string,
+): unknown {
+  const walk = (nodes: AnyNode[]): AnyNode[] =>
+    nodes
+      .filter((n) => !(n?.type && DROP_TYPES.has(n.type)))
+      .map((n) => {
+        if (n?.type === 'PostBody') {
+          return {
+            type: 'LegacyHtml',
+            props: { id: `legacy-body-${slug}`, html, injected: true },
+          };
+        }
+        const props = { ...(n?.props ?? {}) } as Record<string, unknown>;
+        for (const [k, v] of Object.entries(props)) {
+          if (Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'type' in x)) {
+            props[k] = walk(v as AnyNode[]);
+          }
+        }
+        return { ...n, props };
+      });
+  const t = tree as { content?: AnyNode[] };
+  return { ...t, content: walk(t.content ?? []) };
+}
 type LangRow = {
   pageid: number;
   langid: number;
@@ -116,14 +153,15 @@ async function main(): Promise<void> {
     const vi = langs.find((l) => l.langid === 1);
     const en = langs.find((l) => l.langid === 2);
     const titleVi = decodeEntities((vi?.title ?? en?.title ?? page.slug).trim());
-    const bodyHtml = transformLegacyHtml(vi?.content ?? en?.content);
-    if (bodyHtml.replace(/<[^>]+>/g, '').trim().length < 40) thin.push(page.slug);
+    const bodyVi = transformLegacyHtml(vi?.content ?? en?.content);
+    const bodyEn = transformLegacyHtml(en?.content) || bodyVi;
+    if (bodyVi.replace(/<[^>]+>/g, '').trim().length < 40) thin.push(page.slug);
 
     const coverUrl = rewriteImagePath(page.image) ?? rewriteImagePath(page.bgimage);
 
     const payload: PostInjectPayload = {
       title: titleVi,
-      body: bodyHtml,
+      body: bodyVi,
       excerpt: vi?.excerpt ? decodeEntities(vi.excerpt) : null,
       coverUrl,
       coverAlt: titleVi,
@@ -136,7 +174,10 @@ async function main(): Promise<void> {
       eventLocation: null,
     };
 
-    const tree = injectPostIntoPuckData(template.puckData, payload);
+    // Inject title/cover via the template placeholders, then swap the normalising
+    // PostBody for a faithful LegacyHtml node (localized vi+en) and drop post chrome.
+    const injected = injectPostIntoPuckData(template.puckData, payload);
+    const tree = pageBodyTransform(injected, { vi: bodyVi, en: bodyEn }, page.slug);
     try {
       const now = new Date();
       const existingId = existingBySlug.get(page.slug);

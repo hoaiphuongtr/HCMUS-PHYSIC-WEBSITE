@@ -5,6 +5,39 @@
 **Last Updated:** 2026-06-28
 **Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
 
+## Session 2026-06-28 (cont.) — Section-page rendering FIDELITY fix
+
+User flagged that migrated pages didn't match legacy 1-to-1 (missing body images,
+missing table gridlines, lost red headers / blue links / bullet lists). Root cause:
+the section pages reused the post template's `PostBody`, whose aggressive normalising
+reset (`color: inherit !important`, `background: transparent !important`) + Tailwind
+preflight (strips list markers + cell borders) **destroys** the legacy inline styling.
+Body `<img>` also never went through `resolveMediaUrl`, so they 404'd off the public origin.
+
+**Fixes:**
+- New Puck component **`LegacyHtml`** (`components/post-placeholders.tsx`, registered in
+  `puck-config.tsx`): faithful renderer that preserves legacy inline styles and only
+  (a) resolves `/uploads/*` media via `resolveMediaUrl`, (b) makes media responsive,
+  (c) restores `ul/ol` markers and bordered-table (`[border]`/`.MsoTableGrid`) gridlines.
+  Renders localized `{vi,en}` body.
+- `build-legacy-pages.ts`: after `injectPostIntoPuckData`, swap the `PostBody` node for
+  `LegacyHtml` (localized vi+en) and drop post-only chrome (`PostReaderTools`,
+  `PostTagList`, `PostEventInfo`).
+- `PostBody` itself also now rewrites relative `/uploads/*` img/iframe srcs via
+  `resolveMediaUrl` (fixes body images for the ~1600 migrated posts too).
+- `download-page-media.ts`: decode each path segment with `decodeURIComponent` (not
+  `decodeURI`) so filenames with `&`/`%26` etc. land on disk exactly as express.static
+  decodes the request URL (was 404ing `Tầm_nhìn_&_Sứ_mệnh.png`).
+
+**Verified** (Playwright, legacy-vs-new): `nang-luc-dao-tao` table gridlines, `dao-tao-dai-hoc`
+red headers + blue bulleted links, `giang-vien-co-huu` faculty photo grid, `tam-nhin---su-mang`
+content images — all now match legacy. tsc clean (admin/public/backend).
+
+**Still differs from legacy (site-frame chrome, not page content):** legacy pages have a
+hero banner with the title overlaid + a right sidebar ("Danh mục" + "Tin mới nhất"); the
+new pages use the post-article frame (title + cover banner, single column, no sidebar).
+The post-style breadcrumb still reads "Trang chủ / Tin tức". These can be added if wanted.
+
 ## Session 2026-06-28 — Legacy header dropdowns + missing section pages (feat-013, DONE)
 
 **Goal:** mimic the legacy site (phys.hcmus.edu.vn) header nav 1-to-1 on the public
