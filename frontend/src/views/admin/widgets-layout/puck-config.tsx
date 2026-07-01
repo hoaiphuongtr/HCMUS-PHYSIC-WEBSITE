@@ -66,6 +66,7 @@ import {
 } from "./components/post-placeholders";
 import { SiteFooter, SiteHeader } from "./components/site-syndication";
 import { LegacyPageBody, PageHero } from "./components/legacy-page";
+import { ChatBubble } from "./components/chat-bubble";
 
 export const puckConfig: Config = {
   categories: {
@@ -130,6 +131,7 @@ export const puckConfig: Config = {
         "PersonaSelector",
         "SubscribeBanner",
         "TagNotificationBar",
+        "ChatBubble",
       ],
     },
     hero: {
@@ -216,5 +218,6 @@ export const puckConfig: Config = {
     SiteFooter,
     PageHero,
     LegacyPageBody,
+    ChatBubble,
   } as any,
 };
