@@ -417,6 +417,7 @@ function PublishMenu({
           type="button"
           onClick={handleSaveOnly}
           disabled={disabled}
+          data-tour="save-primary"
           className="h-12 px-3 py-1.5 text-xs font-semibold rounded-l-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {busy ? "Đang lưu…" : "Save"}
@@ -459,6 +460,7 @@ function PublishMenu({
             setOpen(false);
           }}
           disabled={disabled}
+          data-tour="save-schedule"
           className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
         >
           <ClockIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -468,6 +470,7 @@ function PublishMenu({
           type="button"
           onClick={publishNow}
           disabled={disabled}
+          data-tour="save-publish"
           className="w-full px-3 py-2 text-left text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 inline-flex items-center gap-2"
         >
           <UploadIcon className="w-4 h-4 text-blue-600" />

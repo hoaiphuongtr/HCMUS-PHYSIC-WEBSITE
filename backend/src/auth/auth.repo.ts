@@ -60,6 +60,7 @@ export class AuthRepository {
       position?: string | null;
       departmentId?: string | null;
       phone?: string | null;
+      tourCompletedAt?: Date | null;
     },
   ) {
     return this.prisma.user.update({

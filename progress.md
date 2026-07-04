@@ -5,6 +5,34 @@
 **Last Updated:** 2026-06-28
 **Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
 
+## Session 2026-07-04 — Admin onboarding tour + Help center (feat-014, DONE)
+
+New teachers get guided onboarding; a Help center stays available afterwards.
+
+- **Library:** `driver.js@1.6` (framework-agnostic — safe on React 19.2/Next 16; API
+  validated via context7 MCP). Installed in the admin workspace.
+- **Backend:** added `User.tourCompletedAt DateTime?`. NOTE: applied via
+  `prisma db push` (the project's convention — `docker-compose` db-setup uses
+  `db push`; `prisma migrate dev` wanted to RESET due to pre-existing migration
+  drift, so push was the safe choice — data intact, 1649 layouts preserved).
+  Exposed/accepted through the existing `PATCH /auth/profile`
+  (`UserResSchema` + `UpdateProfileBodySchema` + `auth.repo` type). `authApi.completeTour()`.
+- **Frontend:** `lib/tour/driver.ts` (driver wrapper, `waitForElement`,
+  `runOverview`, `runWalkthrough` with route-nav + portal-wait), `lib/tour/content.ts`
+  (bilingual OVERVIEW_STEPS / WALKTHROUGHS / FAQ). `components/admin/onboarding-tour.tsx`
+  (auto-runs on first login when `tourCompletedAt==null`, persists on finish/cancel)
+  + `components/admin/help-center.tsx` (floating Help button → Sheet with Interact/Doc
+  tabs + VI/EN toggle), mounted in `app/admin/layout.tsx`. `data-tour` anchors added to
+  the sidebar nav, New-layout button, create-layout modal, Puck save menu
+  (`save-primary`/`save-schedule`/`save-publish`), media upload zone, post-save. Sidebar
+  force-expands during the tour via a `tour:sidebar` CustomEvent. driver.js dark theme in `globals.css`.
+- **Verified:** admin `tsc` clean + `next build` OK; Playwright (seeded admin login) →
+  auto-tour highlights Dashboard (VN popover "Bảng điều khiển", 1/7) → close → Help
+  button + completion toast → Help panel Interact (4 walkthroughs + "replay tab tour") +
+  Doc (searchable FAQ). No console errors.
+- **Note:** `db push` did NOT create a migration file (consistent with project). The
+  prod `docker-compose` db-setup (`prisma db push`) applies the column on deploy.
+
 ## Session 2026-06-28 (cont. 2) — Full legacy page FRAME + perf review
 
 User asked for the full legacy page frame on all 29 section pages, and to avoid N+1

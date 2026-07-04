@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminTheme } from "@/components/admin/admin-theme";
 import { authApi, resolveMediaUrl } from "@/lib/api";
 
@@ -60,7 +60,15 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [hovered, setHovered] = useState(false);
-  const collapsed = !hovered;
+  // The onboarding/help tour force-expands the sidebar so nav labels + anchors
+  // are visible while highlighting (see lib/tour/driver.ts → setSidebarForced).
+  const [forced, setForced] = useState(false);
+  useEffect(() => {
+    const onTour = (e: Event) => setForced(!!(e as CustomEvent).detail);
+    window.addEventListener("tour:sidebar", onTour);
+    return () => window.removeEventListener("tour:sidebar", onTour);
+  }, []);
+  const collapsed = !hovered && !forced;
   const { theme, toggle: toggleTheme } = useAdminTheme();
   const isDark = theme === "dark";
 
@@ -95,6 +103,7 @@ export function AdminSidebar() {
       <Link
         key={item.href}
         href={item.href}
+        data-tour={`nav:${item.href}`}
         title={collapsed ? item.name : undefined}
         className={
           "flex items-center gap-3 rounded-lg text-[13px] font-medium transition-colors " +

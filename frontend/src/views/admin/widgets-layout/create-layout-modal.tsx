@@ -67,6 +67,7 @@ export function CreateLayoutModal({
           <div className="space-y-1.5">
             <Label>Name</Label>
             <Input
+              data-tour="layout-name"
               placeholder="e.g. Trang chủ, Homepage"
               required
               value={name}
@@ -111,7 +112,11 @@ export function CreateLayoutModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              data-tour="layout-create"
+              disabled={createMutation.isPending}
+            >
               {createMutation.isPending ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>

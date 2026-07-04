@@ -50,6 +50,7 @@ export type UserProfile = {
   bio: string | null;
   departmentId: string | null;
   department: { id: string; name: string } | null;
+  tourCompletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -57,6 +58,12 @@ export type UserProfile = {
 export const authApi = {
   getProfile() {
     return authFetch<UserProfile>("/auth/profile");
+  },
+  completeTour() {
+    return authFetch<UserProfile>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify({ tourCompletedAt: new Date().toISOString() }),
+    });
   },
   login(body: { email: string; password: string }) {
     return apiFetch<{ accessToken: string; refreshToken: string }>(

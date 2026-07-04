@@ -120,6 +120,7 @@ export const UserResSchema = z.object({
     .object({ id: z.string(), name: z.string() })
     .nullable()
     .optional(),
+  tourCompletedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -133,6 +134,7 @@ export const UpdateProfileBodySchema = z.object({
   position: z.string().max(200).nullable().optional(),
   departmentName: z.string().max(200).nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
+  tourCompletedAt: z.coerce.date().nullable().optional(),
 });
 
 export type UpdateProfileBodyType = z.infer<typeof UpdateProfileBodySchema>;

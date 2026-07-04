@@ -135,6 +135,17 @@
       ],
       "status": "done",
       "evidence": "Scripts in backend/initialScript/migrate-legacy/: build-legacy-header.ts (navbar, idempotent, exports MENU_ITEMS reused by seed-homepage-layout.ts), build-legacy-pages.ts (29 layouts, update-or-create by slug), download-page-media.ts (180/187 assets fetched to uploads/legacy; 2 broken on legacy source), legacy-html.ts (entity decode + img/iframe /uploads->/uploads/legacy rewrite + sanitize), flush-cache.ts (clears NestJS CacheInterceptor keys in Redis namespace hcmus-physics after direct-DB writes). Verified: /vi shows all 9 legacy dropdowns (Playwright screenshot, Dao tao dropdown lists 7 children), EN locale switches labels, all 30 internal nav links resolve to published layouts, gioi-thieu/quy-che-hoc-tap/etc render header+banner+content+footer (cover via resolveMediaUrl loads in dev). tsc --noEmit clean. Note: inline body-image dev 404 is a pre-existing site-wide limitation (body HTML not run through resolveMediaUrl), identical to the 1600 migrated post pages; serves in prod behind the /uploads proxy."
+    },
+    {
+      "id": "feat-014",
+      "name": "Admin onboarding tour + Help center",
+      "description": "New teachers get an auto guided tour of the admin tabs on first login (driver.js, Next/Cancel). On finish/cancel it persists per-user (User.tourCompletedAt via PATCH /auth/profile) and collapses to a floating Help button. Help panel has two tabs: Interact (re-runnable interactive walkthroughs that highlight the real buttons — create layout, publish/schedule, create post, upload media — plus replay the tab tour) and Doc (searchable pre-written FAQ). Bilingual VI/EN, VI default.",
+      "dependencies": [
+        "feat-002",
+        "feat-007"
+      ],
+      "status": "done",
+      "evidence": "Backend: User.tourCompletedAt (db push, project convention) + exposed/accepted via UserResSchema/UpdateProfileBodySchema/auth.repo (PATCH /auth/profile). Frontend: driver.js@1.6; lib/tour/{driver.ts,content.ts}; components/admin/{onboarding-tour.tsx,help-center.tsx} mounted in app/admin/layout.tsx; data-tour anchors on sidebar nav + New-layout + create-modal + save menu (save-primary/schedule/publish) + media upload + post-save; sidebar force-expand via tour:sidebar event; driver.js dark theme in globals.css; authApi.completeTour. Verified: admin tsc clean + next build OK; Playwright login → auto-tour highlights Dashboard (VN popover, 1/7), close → Help button + completion toast, Help panel Interact(4 walkthroughs + replay) + Doc(FAQ search), no console errors. driver.js API validated via context7."
     }
   ]
 }

@@ -68,6 +68,7 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
 
   return (
     <section
+      data-tour="media-upload"
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);

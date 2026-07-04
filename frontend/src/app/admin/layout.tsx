@@ -1,5 +1,7 @@
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminThemeProvider } from "@/components/admin/admin-theme";
+import { HelpCenter } from "@/components/admin/help-center";
+import { OnboardingTour } from "@/components/admin/onboarding-tour";
 import { AuthGuard } from "@/components/auth-guard";
 
 export default function AdminLayout({
@@ -16,6 +18,8 @@ export default function AdminLayout({
             {children}
           </div>
         </div>
+        <OnboardingTour />
+        <HelpCenter />
       </AdminThemeProvider>
     </AuthGuard>
   );
