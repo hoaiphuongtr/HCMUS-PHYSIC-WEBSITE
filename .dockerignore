@@ -1,0 +1,14 @@
+# Used by the repo-root build context (frontend-public/Dockerfile).
+# Keeps the 3.9GB uploads, node_modules, build outputs and git history
+# out of the Docker build context.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+.git
+.claude
+backend/uploads
+backend/initialScript/migrate-legacy/dump
+**/*.log
+**/.env
+!**/.env.example
