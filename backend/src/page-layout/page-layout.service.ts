@@ -1,5 +1,9 @@
 import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
-import { toSlug } from '../shared/helpers';
+import {
+  canAccessDepartment,
+  departmentScopeWhere,
+  toSlug,
+} from '../shared/helpers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
@@ -88,11 +92,13 @@ export class PageLayoutService {
     return layout;
   }
 
-  findAllForAdmin(userId: string, roleName: string) {
+  async findAllForAdmin(userId: string, roleName: string) {
     if (roleName === 'SUPER_ADMIN') {
       return this.pageLayoutRepository.findAll();
     }
-    return this.pageLayoutRepository.findOwnedOrPublished(userId);
+    const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
+    const scope = departmentScopeWhere(roleName, dept) ?? {};
+    return this.pageLayoutRepository.findAllScoped(scope);
   }
 
   findAllPublished() {
@@ -109,8 +115,8 @@ export class PageLayoutService {
     const layout = await this.pageLayoutRepository.findById(id);
     if (!layout) throw PageLayoutNotFoundException;
     if (roleName === 'SUPER_ADMIN') return layout;
-    if (layout.isPublished) return layout;
-    if (layout.createdBy === userId) return layout;
+    const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
+    if (canAccessDepartment(roleName, dept, layout.departmentId)) return layout;
     throw PageLayoutNotFoundException;
   }
 
@@ -118,7 +124,10 @@ export class PageLayoutService {
     const layout = await this.pageLayoutRepository.findById(id);
     if (!layout) throw PageLayoutNotFoundException;
     if (roleName === 'SUPER_ADMIN') return layout;
-    if (layout.createdBy !== userId) throw PageLayoutNotFoundException;
+    const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
+    if (!canAccessDepartment(roleName, dept, layout.departmentId)) {
+      throw PageLayoutNotFoundException;
+    }
     return layout;
   }
 

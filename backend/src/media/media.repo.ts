@@ -10,6 +10,7 @@ type CreateInput = {
   size?: number | null;
   alt?: string | null;
   createdBy: string;
+  departmentId?: string | null;
 };
 
 @Injectable()
@@ -26,6 +27,7 @@ export class MediaRepository {
         size: input.size ?? null,
         alt: input.alt ?? null,
         createdBy: input.createdBy,
+        departmentId: input.departmentId ?? null,
       },
     });
   }
@@ -45,11 +47,10 @@ export class MediaRepository {
       tagSlug?: string;
       type?: string;
     },
-    ownerFilter?: string,
+    scopeWhere?: Record<string, unknown>,
   ) {
     const { page, pageSize, search, tagSlug, type } = params;
-    const where: Record<string, unknown> = {};
-    if (ownerFilter) where.createdBy = ownerFilter;
+    const where: Record<string, unknown> = { ...(scopeWhere ?? {}) };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -102,10 +103,10 @@ export class MediaRepository {
     }
   }
 
-  findTagsInUse(ownerFilter?: string) {
+  findTagsInUse(mediaWhere?: Record<string, unknown>) {
     return this.prisma.tag.findMany({
-      where: ownerFilter
-        ? { mediaTags: { some: { media: { createdBy: ownerFilter } } } }
+      where: mediaWhere
+        ? { mediaTags: { some: { media: mediaWhere } } }
         : { mediaTags: { some: {} } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, slug: true },

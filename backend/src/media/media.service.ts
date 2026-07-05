@@ -9,6 +9,7 @@ import type {
   UploadMediaBodyType,
 } from './media.model';
 import { MediaNotFoundException } from './media.error';
+import { canAccessDepartment, mediaScopeWhere } from '../shared/helpers';
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads');
 
@@ -36,7 +37,12 @@ function toMedia(record: Awaited<ReturnType<MediaRepository['findById']>>) {
 export class MediaService {
   constructor(private readonly repo: MediaRepository) {}
 
-  async upload(file: FileLike, body: UploadMediaBodyType, userId: string) {
+  async upload(
+    file: FileLike,
+    body: UploadMediaBodyType,
+    userId: string,
+    departmentId: string | null,
+  ) {
     const created = await this.repo.create({
       name: file.originalname,
       type: 'IMAGE',
@@ -45,6 +51,7 @@ export class MediaService {
       size: file.size,
       alt: body.alt ?? null,
       createdBy: userId,
+      departmentId: departmentId ?? null,
     });
     if (body.tagSlugs?.length)
       await this.repo.syncTags(created.id, body.tagSlugs);
@@ -52,7 +59,11 @@ export class MediaService {
     return toMedia(withTags);
   }
 
-  async createFromUrl(body: CreateFromUrlBodyType, userId: string) {
+  async createFromUrl(
+    body: CreateFromUrlBodyType,
+    userId: string,
+    departmentId: string | null,
+  ) {
     const filename = body.url.split('/').pop()?.split('?')[0] || 'remote-image';
     const created = await this.repo.create({
       name: body.name ?? filename,
@@ -62,6 +73,7 @@ export class MediaService {
       size: null,
       alt: body.alt ?? null,
       createdBy: userId,
+      departmentId: departmentId ?? null,
     });
     if (body.tagSlugs?.length)
       await this.repo.syncTags(created.id, body.tagSlugs);
@@ -69,9 +81,14 @@ export class MediaService {
     return toMedia(withTags);
   }
 
-  async list(query: ListMediaQueryType, userId: string, roleName: string) {
-    const ownerFilter = roleName === 'SUPER_ADMIN' ? undefined : userId;
-    const { items, total } = await this.repo.findPaginated(query, ownerFilter);
+  async list(
+    query: ListMediaQueryType,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
+    const scope = mediaScopeWhere(roleName, departmentId);
+    const { items, total } = await this.repo.findPaginated(query, scope);
     return {
       items: items.map((m) => ({
         ...m,
@@ -87,12 +104,21 @@ export class MediaService {
     };
   }
 
-  async findById(id: string, userId: string, roleName: string) {
+  async findById(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
     const record = await this.repo.findById(id);
     if (!record) throw MediaNotFoundException;
-    if (roleName !== 'SUPER_ADMIN' && record.createdBy !== userId) {
-      throw MediaNotFoundException;
-    }
+    // read: own dept + shared faculty/null are viewable
+    const viewable =
+      roleName === 'SUPER_ADMIN' ||
+      record.departmentId === null ||
+      record.departmentId === 'dept_legacy_1' ||
+      record.departmentId === departmentId;
+    if (!viewable) throw MediaNotFoundException;
     return toMedia(record);
   }
 
@@ -101,10 +127,11 @@ export class MediaService {
     body: UpdateMediaBodyType,
     userId: string,
     roleName: string,
+    departmentId: string | null,
   ) {
     const existing = await this.repo.findById(id);
     if (!existing) throw MediaNotFoundException;
-    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
       throw MediaNotFoundException;
     }
     const { tagSlugs, ...rest } = body;
@@ -114,10 +141,15 @@ export class MediaService {
     return toMedia(refreshed);
   }
 
-  async delete(id: string, userId: string, roleName: string) {
+  async delete(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
     const existing = await this.repo.findById(id);
     if (!existing) throw MediaNotFoundException;
-    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
       throw MediaNotFoundException;
     }
     if (existing.url.startsWith('/uploads/')) {
@@ -128,8 +160,7 @@ export class MediaService {
     return { ok: true };
   }
 
-  listTagsInUse(userId: string, roleName: string) {
-    const ownerFilter = roleName === 'SUPER_ADMIN' ? undefined : userId;
-    return this.repo.findTagsInUse(ownerFilter);
+  listTagsInUse(userId: string, roleName: string, departmentId: string | null) {
+    return this.repo.findTagsInUse(mediaScopeWhere(roleName, departmentId));
   }
 }

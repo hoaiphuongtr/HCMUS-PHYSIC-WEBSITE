@@ -70,6 +70,7 @@ export class GoogleService {
     return this.authService.generateTokens({
       userId: user.id,
       roleName: user.role as RoleName,
+      departmentId: user.departmentId,
     });
   }
 }

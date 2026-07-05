@@ -100,6 +100,22 @@ export class PageLayoutRepository {
     });
   }
 
+  async findUserDepartmentId(userId: string): Promise<string | null> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { departmentId: true },
+    });
+    return u?.departmentId ?? null;
+  }
+
+  findAllScoped(where: Record<string, unknown>) {
+    return this.prisma.pageLayout.findMany({
+      where: where as never,
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { widgets: true } } },
+    });
+  }
+
   findAllPublished() {
     return this.prisma.pageLayout.findMany({
       where: { isPublished: true },

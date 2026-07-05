@@ -65,6 +65,7 @@ export class AuthService {
     return this.generateTokens({
       userId: user.id,
       roleName: user.role as RoleName,
+      departmentId: user.departmentId,
     });
   }
 
@@ -226,6 +227,7 @@ export class AuthService {
     return this.generateTokens({
       userId: user.id,
       roleName: user.role as RoleName,
+      departmentId: user.departmentId,
     });
   }
 

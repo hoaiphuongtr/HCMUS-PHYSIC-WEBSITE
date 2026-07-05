@@ -15,7 +15,12 @@ import {
   UpsertPostBodyType,
 } from './post.model';
 import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
-import { toSlug, toSlugPath } from '../shared/helpers';
+import {
+  canAccessDepartment,
+  departmentScopeWhere,
+  toSlug,
+  toSlugPath,
+} from '../shared/helpers';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 import type { JsonValue } from '../generated/prisma/internal/prismaNamespace';
@@ -104,7 +109,11 @@ export class PostService {
     ]);
   }
 
-  async create(body: UpsertPostBodyType, userId: string) {
+  async create(
+    body: UpsertPostBodyType,
+    userId: string,
+    departmentId: string | null,
+  ) {
     const slug = toSlug(body.slug || body.title.vi);
     const existing = await this.prisma.post.findUnique({ where: { slug } });
     if (existing) throw PostSlugExistsException;
@@ -131,6 +140,7 @@ export class PostService {
         eventEndAt: body.eventEndAt ? new Date(body.eventEndAt) : null,
         eventLocation: body.eventLocation ?? null,
         createdBy: userId,
+        departmentId: departmentId ?? null,
         postTags: {
           create: tagIds.map((tagId) => ({ tagId })),
         },
@@ -149,10 +159,11 @@ export class PostService {
     body: UpsertPostBodyType,
     userId: string,
     roleName: string,
+    departmentId: string | null,
   ) {
     const existing = await this.prisma.post.findUnique({ where: { id } });
     if (!existing) throw PostNotFoundException;
-    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
       throw PostNotFoundException;
     }
     const slug = toSlug(body.slug || body.title.vi);
@@ -214,14 +225,9 @@ export class PostService {
     return this.serialize(updated);
   }
 
-  private buildOwnershipFilter(userId: string, roleName: string) {
-    if (roleName === 'SUPER_ADMIN') return {};
-    return { OR: [{ status: 'PUBLISHED' }, { createdBy: userId }] };
-  }
-
-  async list(userId: string, roleName: string) {
+  async list(userId: string, roleName: string, departmentId: string | null) {
     const posts = await this.prisma.post.findMany({
-      where: this.buildOwnershipFilter(userId, roleName) as any,
+      where: (departmentScopeWhere(roleName, departmentId) ?? {}) as any,
       orderBy: { updatedAt: 'desc' },
       include: postInclude,
     });
@@ -236,15 +242,13 @@ export class PostService {
     search?: string;
     userId: string;
     roleName: string;
+    departmentId: string | null;
   }) {
-    const { page, pageSize, category, status, search, userId, roleName } =
+    const { page, pageSize, category, status, search, roleName, departmentId } =
       params;
     const andClauses: Record<string, unknown>[] = [];
-    if (roleName !== 'SUPER_ADMIN') {
-      andClauses.push({
-        OR: [{ status: 'PUBLISHED' }, { createdBy: userId }],
-      });
-    }
+    const scope = departmentScopeWhere(roleName, departmentId);
+    if (scope) andClauses.push(scope);
     if (search && search.trim()) {
       const q = search.trim();
       andClauses.push({
@@ -381,20 +385,28 @@ export class PostService {
     };
   }
 
-  async findById(id: string, userId: string, roleName: string) {
+  async findById(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
     const record = await this.findByIdOrThrow(id);
-    if (roleName !== 'SUPER_ADMIN') {
-      const isPublished = record.status === 'PUBLISHED';
-      const isOwn = record.createdBy === userId;
-      if (!isPublished && !isOwn) throw PostNotFoundException;
+    if (!canAccessDepartment(roleName, departmentId, record.departmentId)) {
+      throw PostNotFoundException;
     }
     return this.serialize(record);
   }
 
-  async delete(id: string, userId: string, roleName: string) {
+  async delete(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
     const existing = await this.prisma.post.findUnique({ where: { id } });
     if (!existing) throw PostNotFoundException;
-    if (roleName !== 'SUPER_ADMIN' && existing.createdBy !== userId) {
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
       throw PostNotFoundException;
     }
     await this.prisma.post.delete({ where: { id } });
@@ -410,11 +422,11 @@ export class PostService {
     body: CloneIntoLayoutBodyType,
     userId: string,
     roleName: string,
+    departmentId: string | null,
   ) {
     const post = await this.findByIdOrThrow(postId);
-    if (roleName !== 'SUPER_ADMIN' && post.createdBy !== userId) {
-      const isPublished = post.status === 'PUBLISHED';
-      if (!isPublished) throw PostNotFoundException;
+    if (!canAccessDepartment(roleName, departmentId, post.departmentId)) {
+      throw PostNotFoundException;
     }
     const template = await this.prisma.pageLayout.findUnique({
       where: { id: body.templateLayoutId },

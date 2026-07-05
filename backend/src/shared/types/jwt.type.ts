@@ -3,6 +3,7 @@ import { RoleName } from '../constants/role.constants';
 export type CreateAccessTokenPayload = {
   userId: string;
   roleName: RoleName;
+  departmentId: string | null;
 };
 
 export type AccessTokenPayload = CreateAccessTokenPayload & {

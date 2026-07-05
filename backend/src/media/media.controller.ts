@@ -63,9 +63,10 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body() body: UploadMediaBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
     if (!file) throw FileRequiredException;
-    return this.service.upload(file, body, userId);
+    return this.service.upload(file, body, userId, departmentId);
   }
 
   @Post('from-url')
@@ -74,8 +75,9 @@ export class MediaController {
   createFromUrl(
     @Body() body: CreateFromUrlBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.createFromUrl(body, userId);
+    return this.service.createFromUrl(body, userId, departmentId);
   }
 
   @Get()
@@ -85,8 +87,9 @@ export class MediaController {
     @Query() query: ListMediaQueryDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.list(query, userId, roleName);
+    return this.service.list(query, userId, roleName, departmentId);
   }
 
   @Get('tags-in-use')
@@ -94,8 +97,9 @@ export class MediaController {
   tagsInUse(
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.listTagsInUse(userId, roleName);
+    return this.service.listTagsInUse(userId, roleName, departmentId);
   }
 
   @Get(':id')
@@ -105,8 +109,9 @@ export class MediaController {
     @Param('id') id: string,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.findById(id, userId, roleName);
+    return this.service.findById(id, userId, roleName, departmentId);
   }
 
   @Patch(':id')
@@ -117,8 +122,9 @@ export class MediaController {
     @Body() body: UpdateMediaBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.update(id, body, userId, roleName);
+    return this.service.update(id, body, userId, roleName, departmentId);
   }
 
   @Delete(':id')
@@ -127,7 +133,8 @@ export class MediaController {
     @Param('id') id: string,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.service.delete(id, userId, roleName);
+    return this.service.delete(id, userId, roleName, departmentId);
   }
 }

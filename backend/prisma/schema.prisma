@@ -203,7 +203,10 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users User[]
+  users       User[]
+  posts       Post[]       @relation("PostDepartment")
+  media       Media[]      @relation("MediaDepartment")
+  pageLayouts PageLayout[] @relation("PageLayoutDepartment")
 
   @@index([slug])
 }
@@ -235,6 +238,7 @@ model Post {
   body            Json?
   excerpt         Json?
   categoryId      String
+  departmentId    String?
   legacyId        Int?          @unique
   status          ContentStatus @default(DRAFT)
   coverMediaId    String?
@@ -262,6 +266,7 @@ model Post {
   template       Template?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
   coverMedia     Media?            @relation("PostCoverMedia", fields: [coverMediaId], references: [id], onDelete: SetNull)
   category       Category          @relation(fields: [categoryId], references: [id])
+  department     Department?       @relation("PostDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   contentBlocks  ContentBlock[]
   translations   PostTranslation[]
   reactions      PostReaction[]
@@ -273,6 +278,7 @@ model Post {
 
   @@index([status])
   @@index([categoryId])
+  @@index([departmentId])
   @@index([createdBy])
   @@index([publishedAt])
   @@index([scheduledAt])
@@ -420,18 +426,21 @@ model PageLayout {
   publishedAt       DateTime?
   scheduledAt       DateTime?
   sourcePostId      String?
+  departmentId      String?
   createdBy         String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   createdByUser User                @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   sourcePost    Post?               @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
+  department    Department?         @relation("PageLayoutDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   widgets       WidgetInstance[]
   seoMetadata   SEOMetadata?
   versions      PageLayoutVersion[]
 
   @@index([slug])
   @@index([isPublished])
+  @@index([departmentId])
   @@index([createdBy])
   @@index([scheduledAt])
   @@index([sourcePostId])
@@ -511,16 +520,19 @@ model Media {
   height    Int?
   alt       String?
   createdBy String
+  departmentId String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   createdByUser    User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  department       Department? @relation("MediaDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   templateSnapshot Template?
   postMedia        PostMedia[]
   mediaTags        MediaTag[]
   postCovers       Post[]      @relation("PostCoverMedia")
 
   @@index([createdBy])
+  @@index([departmentId])
   @@index([type])
 }
 

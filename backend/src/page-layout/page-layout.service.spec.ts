@@ -21,6 +21,8 @@ const makeRepoMock = (): RepoMock => ({
   findById: vi.fn(),
   findAll: vi.fn(),
   findOwnedOrPublished: vi.fn(),
+  findAllScoped: vi.fn(),
+  findUserDepartmentId: vi.fn(),
   findAllPublished: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
@@ -106,21 +108,24 @@ describe('PageLayoutService versioning', () => {
       expect(result).toEqual([sampleLayout]);
     });
 
-    it('admin sees own + published only', async () => {
-      repo.findOwnedOrPublished.mockResolvedValue([sampleLayout]);
+    it('department admin sees only their department (scoped)', async () => {
+      repo.findUserDepartmentId.mockResolvedValue('dept_legacy_6');
+      repo.findAllScoped.mockResolvedValue([sampleLayout]);
       const result = await service.findAllForAdmin('user-1', 'ADMIN');
-      expect(repo.findOwnedOrPublished).toHaveBeenCalledWith('user-1');
+      expect(repo.findUserDepartmentId).toHaveBeenCalledWith('user-1');
+      expect(repo.findAllScoped).toHaveBeenCalledWith({
+        departmentId: 'dept_legacy_6',
+      });
       expect(repo.findAll).not.toHaveBeenCalled();
       expect(result).toEqual([sampleLayout]);
     });
   });
 
-  describe('findByIdForAdmin (multi-tenant)', () => {
-    it('super-admin sees a draft owned by someone else', async () => {
+  describe('findByIdForAdmin (department scoping)', () => {
+    it('super-admin sees any layout', async () => {
       repo.findById.mockResolvedValue({
         ...sampleLayout,
-        isPublished: false,
-        createdBy: 'other-user',
+        departmentId: 'dept_legacy_3',
       });
       const result = await service.findByIdForAdmin(
         'layout-1',
@@ -130,11 +135,11 @@ describe('PageLayoutService versioning', () => {
       expect(result.id).toBe('layout-1');
     });
 
-    it('admin can read published layout owned by another admin', async () => {
+    it('bộ-môn admin can read a layout in their department', async () => {
+      repo.findUserDepartmentId.mockResolvedValue('dept_legacy_6');
       repo.findById.mockResolvedValue({
         ...sampleLayout,
-        isPublished: true,
-        createdBy: 'other-user',
+        departmentId: 'dept_legacy_6',
       });
       const result = await service.findByIdForAdmin(
         'layout-1',
@@ -144,25 +149,25 @@ describe('PageLayoutService versioning', () => {
       expect(result.id).toBe('layout-1');
     });
 
-    it('admin can read own draft', async () => {
+    it('faculty admin can read faculty-wide (null) layout', async () => {
+      repo.findUserDepartmentId.mockResolvedValue('dept_legacy_1');
       repo.findById.mockResolvedValue({
         ...sampleLayout,
-        isPublished: false,
-        createdBy: 'user-1',
+        departmentId: null,
       });
       const result = await service.findByIdForAdmin(
-        'layout-1',
+        'user-1',
         'user-1',
         'ADMIN',
       );
       expect(result.id).toBe('layout-1');
     });
 
-    it('admin CANNOT read draft owned by another admin', async () => {
+    it('bộ-môn admin CANNOT read another department’s layout', async () => {
+      repo.findUserDepartmentId.mockResolvedValue('dept_legacy_6');
       repo.findById.mockResolvedValue({
         ...sampleLayout,
-        isPublished: false,
-        createdBy: 'other-user',
+        departmentId: 'dept_legacy_3',
       });
       await expect(
         service.findByIdForAdmin('layout-1', 'user-1', 'ADMIN'),

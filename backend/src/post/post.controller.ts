@@ -81,14 +81,16 @@ export class PostController {
   create(
     @Body() body: UpsertPostBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.postService.create(body, userId);
+    return this.postService.create(body, userId, departmentId);
   }
 
   @Get()
   list(
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('category') category?: string,
@@ -96,7 +98,7 @@ export class PostController {
     @Query('search') search?: string,
   ) {
     if (page === undefined && pageSize === undefined)
-      return this.postService.list(userId, roleName);
+      return this.postService.list(userId, roleName, departmentId);
     const pageNum = Math.max(1, Number(page) || 1);
     const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 12));
     return this.postService.listAdminPaged({
@@ -107,6 +109,7 @@ export class PostController {
       search,
       userId,
       roleName,
+      departmentId,
     });
   }
 
@@ -116,8 +119,9 @@ export class PostController {
     @Param('id') id: string,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.postService.findById(id, userId, roleName);
+    return this.postService.findById(id, userId, roleName, departmentId);
   }
 
   @Patch(':id')
@@ -127,8 +131,9 @@ export class PostController {
     @Body() body: UpsertPostBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.postService.update(id, body, userId, roleName);
+    return this.postService.update(id, body, userId, roleName, departmentId);
   }
 
   @Delete(':id')
@@ -136,8 +141,9 @@ export class PostController {
     @Param('id') id: string,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.postService.delete(id, userId, roleName);
+    return this.postService.delete(id, userId, roleName, departmentId);
   }
 
   @Post(':id/clone-into-layout')
@@ -147,7 +153,8 @@ export class PostController {
     @Body() body: CloneIntoLayoutBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
   ) {
-    return this.postService.cloneIntoLayout(id, body, userId, roleName);
+    return this.postService.cloneIntoLayout(id, body, userId, roleName, departmentId);
   }
 }

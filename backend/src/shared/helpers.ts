@@ -158,3 +158,58 @@ export function toSlugPath(text: string): string {
     .filter(Boolean)
     .join('/');
 }
+
+// --- Department-scoped access ------------------------------------------------
+// The main faculty ("Khoa Vật lý") — its content is faculty-wide (no URL prefix)
+// and managed by the văn phòng khoa admin. Untagged (null) content is treated the same.
+export const FACULTY_DEPT_ID = 'dept_legacy_1';
+
+/**
+ * Prisma `where` fragment restricting content to what this user may SEE/LIST by
+ * department. Returns `undefined` for super-admin (no restriction).
+ *  - Faculty admin (dept = faculty) or dept-less admin → faculty content + untagged.
+ *  - Bộ-môn admin → only their department.
+ */
+export function departmentScopeWhere(
+  roleName: string,
+  departmentId: string | null | undefined,
+): { departmentId: string } | { OR: { departmentId: string | null }[] } | undefined {
+  if (roleName === 'SUPER_ADMIN') return undefined;
+  if (!departmentId || departmentId === FACULTY_DEPT_ID) {
+    return { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] };
+  }
+  return { departmentId };
+}
+
+/**
+ * Read scope for media: a bộ-môn admin sees their own department's media PLUS
+ * shared faculty/untagged media (so shared assets stay usable in the picker).
+ * Mutation is still gated by canAccessDepartment (own department only).
+ */
+export function mediaScopeWhere(
+  roleName: string,
+  departmentId: string | null | undefined,
+): { OR: { departmentId: string | null }[] } | undefined {
+  if (roleName === 'SUPER_ADMIN') return undefined;
+  const ors: { departmentId: string | null }[] = [
+    { departmentId: FACULTY_DEPT_ID },
+    { departmentId: null },
+  ];
+  if (departmentId && departmentId !== FACULTY_DEPT_ID) {
+    ors.unshift({ departmentId });
+  }
+  return { OR: ors };
+}
+
+/** Whether a user may MUTATE content owned by `contentDept`. */
+export function canAccessDepartment(
+  roleName: string,
+  userDept: string | null | undefined,
+  contentDept: string | null | undefined,
+): boolean {
+  if (roleName === 'SUPER_ADMIN') return true;
+  if (!userDept || userDept === FACULTY_DEPT_ID) {
+    return !contentDept || contentDept === FACULTY_DEPT_ID;
+  }
+  return contentDept === userDept;
+}
