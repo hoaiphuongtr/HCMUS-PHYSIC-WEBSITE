@@ -5,6 +5,33 @@
 **Last Updated:** 2026-06-28
 **Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
 
+## Session 2026-07-05 — Department-scoped permissions (feat-015, P0–P3 DONE; P4 pending)
+
+Per-department admins may only see/CRUD their own department's content.
+
+- **P0** `merge-departments.ts`: merged duplicate "Vật lý Tin học" depts → canonical
+  slug `vat-ly-tin-hoc`; faculty dept `dept_legacy_1` slug `/` → `khoa`.
+- **P1**: `departmentId` on Post/Media/PageLayout (via `prisma db push`) + added to the
+  **JWT payload** (login/refresh/google sign sites). `backfill-content-departments.ts`
+  stamped **1587 posts** (from legacy `posts.deptid` via `legacyId`) + **1540 layouts**
+  (from source post). Faculty-wide = `dept_legacy_1`; 1233 posts are faculty, rest per-bộ-môn.
+- **P2** backend scoping: `shared/helpers.ts` → `departmentScopeWhere` (list/read),
+  `mediaScopeWhere` (media reads allow shared faculty/null), `canAccessDepartment` (mutations),
+  `FACULTY_DEPT_ID`. Threaded `departmentId` (via `@ActiveUser('departmentId')`) through
+  post + media services/controllers; page-layout gatekeepers (`assertOwnership`,
+  `findAllForAdmin`, `findByIdForAdmin`) resolve the user's dept via a repo lookup (no
+  controller churn). **40 backend unit tests pass** (helpers.spec + updated page-layout specs).
+- **P3** frontend: `departmentId` exposed in Post/Media responses + client types;
+  `lib/department.ts canMutateDepartment`; media detail modal hides Xóa/Lưu on shared
+  faculty assets. Post/layout lists need no gating (server-scoped).
+- **Verified via API**: `vlud_admin` JWT dept=dept_legacy_6; `/posts` → 32 (all VLUD);
+  own post 200 / cross-dept VLLT post 404; `/media` shows shared assets.
+- **Rules**: SUPER_ADMIN=all; faculty admin (dept_legacy_1)=faculty+untagged; bộ-môn admin=own.
+- **⚠ Operational**: existing admins must **re-login** to get `departmentId` in their JWT.
+- **REMAINING P4** (separable): re-slug bộ-môn layouts → `<dept-slug>/tin-tuc/<x>`,
+  create `/<dept-slug>` landing pages, add redirects from old `tin-tuc/…` URLs.
+- Commits: `af54a4a` (P0–P2), `4545646` (P3). Legacy MariaDB restarted for backfill.
+
 ## Session 2026-07-04 — Admin onboarding tour + Help center (feat-014, DONE)
 
 New teachers get guided onboarding; a Help center stays available afterwards.

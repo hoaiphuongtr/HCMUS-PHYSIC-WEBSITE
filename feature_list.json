@@ -146,6 +146,17 @@
       ],
       "status": "done",
       "evidence": "Backend: User.tourCompletedAt (db push, project convention) + exposed/accepted via UserResSchema/UpdateProfileBodySchema/auth.repo (PATCH /auth/profile). Frontend: driver.js@1.6; lib/tour/{driver.ts,content.ts}; components/admin/{onboarding-tour.tsx,help-center.tsx} mounted in app/admin/layout.tsx; data-tour anchors on sidebar nav + New-layout + create-modal + save menu (save-primary/schedule/publish) + media upload + post-save; sidebar force-expand via tour:sidebar event; driver.js dark theme in globals.css; authApi.completeTour. Verified: admin tsc clean + next build OK; Playwright login → auto-tour highlights Dashboard (VN popover, 1/7), close → Help button + completion toast, Help panel Interact(4 walkthroughs + replay) + Doc(FAQ search), no console errors. driver.js API validated via context7."
+    },
+    {
+      "id": "feat-015",
+      "name": "Department-scoped permissions",
+      "description": "Per-department admins (role ADMIN + User.departmentId) may only see/CRUD their own department's posts+media+layouts; the văn phòng khoa admin (dept_legacy_1) manages faculty-wide content; SUPER_ADMIN sees all. Enforced in the service layer via department scope helpers; content carries a departmentId FK backfilled from the legacy posts.deptid. Phase 4 (department-prefixed public URLs + landing pages + redirects) is a separate follow-on.",
+      "dependencies": [
+        "feat-002",
+        "feat-009"
+      ],
+      "status": "in-progress",
+      "evidence": "P0 merge-departments.ts (canonical dept slugs incl. vat-ly-tin-hoc; faculty=dept_legacy_1). P1 departmentId on Post/Media/PageLayout (db push) + JWT payload; backfill-content-departments.ts (1587 posts + 1540 layouts stamped from legacy posts.deptid). P2 shared/helpers.ts departmentScopeWhere/mediaScopeWhere/canAccessDepartment threaded through post+media+page-layout services/controllers; 40 backend unit tests pass. P3 departmentId exposed in responses + client types + media modal gating. Verified via API: vlud_admin /posts=32 (all dept_legacy_6), own post 200 / cross-dept 404, /media shows shared assets. REMAINING: Phase 4 URL re-slug + landing pages + redirects. NOTE: department admins must re-login to get departmentId in their JWT."
     }
   ]
 }
