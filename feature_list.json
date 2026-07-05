@@ -155,8 +155,8 @@
         "feat-002",
         "feat-009"
       ],
-      "status": "in-progress",
-      "evidence": "P0 merge-departments.ts (canonical dept slugs incl. vat-ly-tin-hoc; faculty=dept_legacy_1). P1 departmentId on Post/Media/PageLayout (db push) + JWT payload; backfill-content-departments.ts (1587 posts + 1540 layouts stamped from legacy posts.deptid). P2 shared/helpers.ts departmentScopeWhere/mediaScopeWhere/canAccessDepartment threaded through post+media+page-layout services/controllers; 40 backend unit tests pass. P3 departmentId exposed in responses + client types + media modal gating. Verified via API: vlud_admin /posts=32 (all dept_legacy_6), own post 200 / cross-dept 404, /media shows shared assets. REMAINING: Phase 4 URL re-slug + landing pages + redirects. NOTE: department admins must re-login to get departmentId in their JWT."
+      "status": "done",
+      "evidence": "P0 merge-departments.ts (canonical dept slugs incl. vat-ly-tin-hoc; faculty=dept_legacy_1). P1 departmentId on Post/Media/PageLayout (db push) + JWT payload; backfill-content-departments.ts (1587 posts + 1540 layouts stamped from legacy posts.deptid). P2 shared/helpers.ts departmentScopeWhere/mediaScopeWhere/canAccessDepartment threaded through post+media+page-layout services/controllers; 40 backend unit tests pass. P3 departmentId exposed in responses + client types + media modal gating. Verified via API: vlud_admin /posts=32 (all dept_legacy_6), own post 200 / cross-dept 404, /media shows shared assets. REMAINING: Phase 4 URL re-slug + landing pages + redirects. NOTE: department admins must re-login to get departmentId in their JWT. P4 DONE: re-slug-department-layouts.ts (388 bộ-môn layouts → <dept-slug>/tin-tuc/…; faculty-wide keep tin-tuc/), seed-department-landing-pages.ts (9 /<dept-slug> landing pages cloned from homepage), proxy.ts + legacy-redirects.json (397 redirects). Verified: /vi/tin-tuc/<x> → 308 → /vi/vat-ly-ung-dung/tin-tuc/<x>; new URL 200; /vi/vat-ly-ung-dung landing 200."
     }
   ]
 }

@@ -5,7 +5,22 @@
 **Last Updated:** 2026-06-28
 **Active Feature:** feat-013 — Legacy migration (header dropdowns + section pages)
 
-## Session 2026-07-05 — Department-scoped permissions (feat-015, P0–P3 DONE; P4 pending)
+## Session 2026-07-05 — Department-scoped permissions (feat-015, DONE incl. P4)
+
+**P4 (department-prefixed URLs) — done:**
+- `re-slug-department-layouts.ts`: 388 bộ-môn post-layouts re-slugged `tin-tuc/<x>` →
+  `<dept-slug>/tin-tuc/<x>` (1152 faculty-wide kept flat); emits
+  `frontend-public/src/lib/legacy-redirects.json` (397 entries).
+- `seed-department-landing-pages.ts`: 9 landing pages at `/<dept-slug>` cloned from the
+  published homepage, stamped with departmentId (editable by that dept's admin).
+- `frontend-public/src/proxy.ts` (Next 16 uses proxy.ts as middleware): 308-redirects old
+  flat URLs → new dept-prefixed URLs from the map.
+- Verified: `/vi/tin-tuc/<x>` → 308 → `/vi/vat-ly-ung-dung/tin-tuc/<x>`; new URL 200;
+  `/vi/vat-ly-ung-dung` landing 200. Commit for P4 below.
+
+---
+
+
 
 Per-department admins may only see/CRUD their own department's content.
 
