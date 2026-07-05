@@ -245,6 +245,7 @@ export type PageLayout = {
   publishedAt: string | null;
   scheduledAt: string | null;
   createdBy: string;
+  departmentId: string | null;
   createdAt: string;
   updatedAt: string;
   widgets?: WidgetInstance[];
@@ -494,6 +495,7 @@ export type MediaItem = {
   height: number | null;
   alt: string | null;
   createdBy: string;
+  departmentId: string | null;
   createdAt: string;
   updatedAt: string;
   tags: { id: string; slug: string; name: string }[];
@@ -625,6 +627,7 @@ export type PostRecord = {
   body: LocalizedText | null;
   excerpt: LocalizedText | null;
   categoryId: string;
+  departmentId: string | null;
   category?: CategoryRef;
   status: ContentStatusValue;
   coverMediaId: string | null;

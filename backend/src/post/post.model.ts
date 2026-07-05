@@ -62,6 +62,7 @@ export const PostResSchema = z.object({
   body: LocalizedTextSchema.nullable(),
   excerpt: LocalizedTextSchema.nullable(),
   categoryId: z.string(),
+  departmentId: z.string().nullable(),
   category: CategoryRefSchema.optional(),
   status: ContentStatusEnum,
   coverMediaId: z.string().nullable(),

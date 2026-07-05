@@ -1,11 +1,12 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { XIcon } from "@/components/admin/icons";
 import { useConfirm } from "@/components/use-confirm";
-import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
+import { authApi, type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
+import { canMutateDepartment } from "@/lib/department";
 import { ModalPortal } from "@/views/admin/widgets-layout/portal-menu";
 
 type MediaDetailModalProps = {
@@ -22,6 +23,15 @@ export function MediaDetailModal({
   onChanged,
 }: MediaDetailModalProps) {
   const confirm = useConfirm();
+  const { data: profile } = useQuery({
+    queryKey: ["AUTH", "PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+  const canMutate = canMutateDepartment(
+    profile?.role,
+    profile?.departmentId,
+    item.departmentId,
+  );
   const [alt, setAlt] = useState(item.alt ?? "");
   const [name, setName] = useState(item.name);
   const [tagSlugs, setTagSlugs] = useState<string[]>(
@@ -258,14 +268,20 @@ export function MediaDetailModal({
             </div>
 
             <footer className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={deleteMutation.isPending}
-                className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
-              >
-                Xóa
-              </button>
+              {canMutate ? (
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={deleteMutation.isPending}
+                  className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                >
+                  Xóa
+                </button>
+              ) : (
+                <span className="text-[11px] text-slate-400">
+                  Ảnh dùng chung của Khoa — chỉ xem
+                </span>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -274,14 +290,16 @@ export function MediaDetailModal({
                 >
                   Đóng
                 </button>
-                <button
-                  type="button"
-                  onClick={() => updateMutation.mutate()}
-                  disabled={updateMutation.isPending}
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {updateMutation.isPending ? "Đang lưu…" : "Lưu"}
-                </button>
+                {canMutate && (
+                  <button
+                    type="button"
+                    onClick={() => updateMutation.mutate()}
+                    disabled={updateMutation.isPending}
+                    className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {updateMutation.isPending ? "Đang lưu…" : "Lưu"}
+                  </button>
+                )}
               </div>
             </footer>
           </div>

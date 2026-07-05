@@ -56,6 +56,7 @@ export const MediaResSchema = z.object({
   height: z.number().nullable(),
   alt: z.string().nullable(),
   createdBy: z.string(),
+  departmentId: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   tags: z.array(

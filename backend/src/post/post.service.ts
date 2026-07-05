@@ -673,6 +673,7 @@ export class PostService {
       body: asLocalized(record.body),
       excerpt: asLocalized(record.excerpt),
       categoryId: record.categoryId,
+      departmentId: record.departmentId,
       status: record.status,
       coverMediaId: record.coverMediaId,
       coverUrl: record.coverUrl,
