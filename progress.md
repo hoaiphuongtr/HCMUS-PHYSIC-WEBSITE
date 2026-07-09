@@ -1,5 +1,14 @@
 # Session Progress Log
 
+## Session 2026-07-09 — KLTN full draft (thesis/, theo email GVHD)
+
+Viết trọn bộ bản thảo KLTN vào `thesis/*.md` theo góp ý GVHD: Mở đầu, C1–C4, Kết luận,
+TLTK (15 nguồn IEEE). C3 đổi tên "Thiết kế và hiện thực hệ thống"; C4 thêm mục 4.2
+Kiểm thử chức năng (CRUD/phân quyền/xuất bản/di trú). Số liệu thật: 40/40 unit test
+(vitest, 09/07), pnpm audit 51 vulns (3 critical), số liệu di trú từ nhật ký script.
+CWV/Lighthouse/Observatory/SSL Labs để placeholder 【CHƯA ĐO】chờ domain. Việc còn lại
++ 11 hình cần chèn: xem `thesis/README.md`. Không đụng mã nguồn ứng dụng.
+
 ## Current State
 
 **Last Updated:** 2026-06-28

@@ -1,0 +1,19 @@
+# LỜI MỞ ĐẦU
+
+Website là kênh thông tin chính thức của một đơn vị đào tạo đại học: nơi công bố tin tức, thông báo học vụ, chương trình đào tạo, đội ngũ giảng viên và hoạt động nghiên cứu khoa học. Website hiện hành của Khoa Vật lý – Vật lý Kỹ thuật, Trường Đại học Khoa học Tự nhiên, ĐHQG-HCM (phys.hcmus.edu.vn) được xây dựng trên một hệ quản trị nội dung PHP tự phát triển từ nhiều năm trước và đã bộc lộ nhiều hạn chế: giao diện lạc hậu, tốc độ tải trang chậm, khó mở rộng tính năng, quy trình cập nhật nội dung phụ thuộc vào thao tác kỹ thuật, và chưa được tối ưu cho công cụ tìm kiếm. Trong khi đó, khối lượng nội dung tích lũy trên hệ thống cũ — hàng nghìn bài viết song ngữ cùng kho tư liệu hình ảnh — là tài sản thông tin cần được bảo toàn nguyên vẹn khi chuyển đổi.
+
+Xuất phát từ thực tế đó, khóa luận này thực hiện đề tài **"Thiết kế hệ thống quản lý web Khoa Vật lý – Vật lý Kỹ thuật bằng Next.js, NestJS và PostgreSQL"** với mục đích xây dựng một nền tảng quản trị nội dung hiện đại thay thế hệ thống cũ. Hệ thống được thiết kế theo mô hình hệ quản trị nội dung phi giao diện (Headless CMS) kết hợp trình xây dựng giao diện trực quan (Visual Builder), cho phép giảng viên và cán bộ văn phòng khoa tự soạn thảo, dàn trang và xuất bản nội dung song ngữ Việt – Anh mà không cần can thiệp vào mã nguồn. Toàn bộ dữ liệu của website cũ được di trú tự động sang hệ thống mới, kèm cơ chế chuyển hướng để không làm đứt gãy các liên kết đã tồn tại.
+
+Sản phẩm của khóa luận là một hệ thống hoàn chỉnh gồm ba thành phần: máy chủ ứng dụng NestJS quản lý dữ liệu trên PostgreSQL với bộ nhớ đệm Redis, trang quản trị Next.js tích hợp Visual Builder, và trang công khai Next.js được tối ưu cho công cụ tìm kiếm. Hệ thống đã di trú thành công hơn 1.600 bài viết và khoảng 3,9 GB tư liệu hình ảnh từ website cũ, hiện thực cơ chế phân quyền theo bộ môn cho mô hình quản trị nhiều đơn vị, và được đóng gói bằng Docker để triển khai trên hạ tầng máy chủ của Khoa.
+
+Nội dung của khóa luận được trình bày trong bốn chương như sau:
+
+**Chương 1 – Tổng quan**: trình bày động lực nghiên cứu, mục tiêu, đối tượng, phạm vi và các nội dung thực hiện của đề tài.
+
+**Chương 2 – Cơ sở lý thuyết**: hệ thống hóa cơ sở lý thuyết về website đại học, mô hình Headless CMS, tối ưu hóa công cụ tìm kiếm và hiệu năng web, cùng nền tảng công nghệ được sử dụng.
+
+**Chương 3 – Thiết kế và hiện thực hệ thống**: trình bày kiến trúc tổng thể, thiết kế cơ sở dữ liệu, xác thực và phân quyền, quy trình xuất bản nội dung, giao diện người dùng, quy trình di trú dữ liệu, thiết kế SEO – hiệu năng, và quá trình hiện thực, triển khai hệ thống.
+
+**Chương 4 – Phân tích và đánh giá kết quả**: trình bày phương pháp đánh giá, kết quả kiểm thử chức năng, các phép đo hiệu năng, bảo mật, SEO, so sánh với website cũ và mức độ hoàn thành mục tiêu.
+
+Phần **Kết luận và kiến nghị** tổng kết các kết quả đạt được, những hạn chế còn tồn tại và đề xuất hướng phát triển tiếp theo của đề tài.

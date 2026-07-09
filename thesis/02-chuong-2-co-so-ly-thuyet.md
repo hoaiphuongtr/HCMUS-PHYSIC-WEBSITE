@@ -1,0 +1,65 @@
+# CHƯƠNG 2. CƠ SỞ LÝ THUYẾT
+
+## 2.1 Website đại học trong bối cảnh hiện đại
+
+### 2.1.1 Vai trò và hạn chế của website đại học truyền thống
+
+Đối với một đơn vị đào tạo, website chính thức đồng thời đảm nhiệm nhiều vai trò: cổng thông tin học vụ cho sinh viên đang theo học, kênh quảng bá tuyển sinh cho sinh viên tương lai, nơi công bố hoạt động nghiên cứu cho cộng đồng khoa học, và bộ mặt số của đơn vị trước đối tác trong và ngoài nước. Khác với website doanh nghiệp, website đại học có vòng đời nội dung rất dài: một thông báo tuyển sinh chỉ có giá trị vài tuần, nhưng chương trình đào tạo, hồ sơ giảng viên hay kho tin tức tích lũy hàng chục năm vẫn cần được truy cập và trích dẫn ổn định. Yêu cầu này khiến việc bảo toàn dữ liệu và duy trì địa chỉ URL bền vững trở thành ràng buộc thiết kế quan trọng không kém tính năng mới.
+
+Thế hệ website đại học phổ biến ở Việt Nam giai đoạn 2010–2020 thường được xây dựng theo mô hình hệ quản trị nội dung nguyên khối (monolithic CMS): một ứng dụng máy chủ duy nhất (thường là PHP) vừa lưu trữ dữ liệu, vừa kết xuất HTML, vừa cung cấp giao diện quản trị. Mô hình này đơn giản khi khởi tạo nhưng bộc lộ các hạn chế cố hữu theo thời gian. Về mặt kiến trúc, phần hiển thị và phần dữ liệu gắn chặt với nhau, nên mọi thay đổi giao diện đều đụng vào mã nguồn lõi và nội dung không thể tái sử dụng cho kênh khác. Về mặt vận hành, người biên tập chỉ được cấp một trình soạn thảo văn bản thuần (rich-text editor) sinh HTML tự do, không kiểm soát được bố cục hiển thị cuối cùng; các nhu cầu như dàn trang chủ, thêm khối nội dung động đều phải quay lại đơn vị phát triển. Về mặt kỹ thuật, các hệ thống tự phát triển hiếm khi được cập nhật bản vá, không có kiểm thử tự động, và hiệu năng phụ thuộc hoàn toàn vào việc kết xuất động trên mỗi lượt truy cập.
+
+### 2.1.2 Mô hình Headless CMS và trình xây dựng giao diện trực quan
+
+Hệ quản trị nội dung phi giao diện (Headless CMS) là mô hình tách hoàn toàn tầng quản trị nội dung khỏi tầng hiển thị: nội dung được lưu trữ và quản lý tập trung, sau đó cung cấp ra ngoài qua giao diện lập trình ứng dụng (API), còn việc kết xuất giao diện do các ứng dụng tiêu thụ đảm nhiệm [1]. Tên gọi "phi giao diện" xuất phát từ việc CMS không còn "phần đầu" (head) — tức tầng trình bày — mà chỉ giữ "phần thân" là kho nội dung và nghiệp vụ quản trị. So với mô hình nguyên khối, cách tiếp cận này mang lại ba lợi ích chính: (i) một nguồn nội dung phục vụ được nhiều kênh hiển thị (website, ứng dụng di động, màn hình thông tin); (ii) tầng hiển thị được tự do lựa chọn công nghệ kết xuất tối ưu cho hiệu năng và SEO; (iii) hai tầng tiến hóa độc lập — thay giao diện không ảnh hưởng dữ liệu và ngược lại.
+
+Điểm yếu thường bị phê phán của Headless CMS thuần túy là người biên tập mất khả năng nhìn thấy và điều khiển bố cục trang: họ chỉ nhập dữ liệu vào biểu mẫu, còn vị trí hiển thị do lập trình viên quyết định. Nhược điểm này được khắc phục bằng lớp trình xây dựng giao diện trực quan (Visual Builder): một trình soạn thảo kéo – thả trong đó trang được mô tả như cây các khối thành phần (component) đã đăng ký trước, mỗi khối có bảng thuộc tính riêng, và toàn bộ cây được lưu dưới dạng dữ liệu JSON thay vì HTML. Trong đề tài này, chúng tôi sử dụng Puck — thư viện Visual Builder mã nguồn mở cho React — làm nền cho trình dàn trang [2]. Vì đầu ra của Puck là JSON có cấu trúc, bố cục trang trở thành *dữ liệu* thuần túy: có thể lưu phiên bản, sao chép làm mẫu, chèn nội dung động vào các vị trí giữ chỗ, và kết xuất lại ở bất kỳ đâu có bộ thành phần tương ứng. Đặc tính này là nền tảng cho quy trình xuất bản bài viết được thiết kế ở Chương 3.
+
+## 2.2 Tối ưu hóa công cụ tìm kiếm và hiệu năng website
+
+### 2.2.1 Ảnh hưởng của tốc độ tải trang đến tỷ lệ thoát
+
+Tốc độ tải trang ảnh hưởng trực tiếp đến hành vi người dùng. Nghiên cứu của Google trên tập lớn trang đích di động cho thấy khi thời gian tải tăng từ 1 giây lên 3 giây, xác suất người dùng thoát trang (bounce) tăng 32%, và 53% lượt truy cập di động bị từ bỏ nếu trang tải quá 3 giây [3]. Với website tuyển sinh đại học — nơi phần lớn khách truy cập đến từ kết quả tìm kiếm trên điện thoại — tốc độ tải vì vậy là yếu tố quyết định lượng người đọc thực tế.
+
+Để lượng hóa trải nghiệm tải trang, Google định nghĩa bộ Chỉ số Web cốt lõi (Core Web Vitals) gồm ba chỉ số, đo tại phân vị 75 của người dùng thật [4]:
+
+- **LCP** (Largest Contentful Paint) — thời điểm phần tử nội dung lớn nhất hiển thị xong, phản ánh tốc độ tải cảm nhận; ngưỡng tốt ≤ 2,5 giây.
+- **INP** (Interaction to Next Paint) — độ trễ từ thao tác của người dùng đến khung hình phản hồi kế tiếp, phản ánh độ phản hồi; ngưỡng tốt ≤ 200 mili giây.
+- **CLS** (Cumulative Layout Shift) — tổng mức dịch chuyển bố cục ngoài ý muốn, phản ánh độ ổn định thị giác; ngưỡng tốt ≤ 0,1.
+
+Từ năm 2021, Core Web Vitals được đưa vào tín hiệu xếp hạng tìm kiếm của Google, khiến hiệu năng và SEO trở thành hai mặt của cùng một bài toán. Các chỉ số này định hướng nhiều quyết định thiết kế của hệ thống: chiến lược kết xuất trước HTML, bộ nhớ đệm nhiều tầng, tối ưu ảnh và dự trữ không gian bố cục, được trình bày tại mục 3.8.
+
+### 2.2.2 Tối ưu hóa cho các công cụ tìm kiếm truyền thống
+
+Tối ưu hóa công cụ tìm kiếm (Search Engine Optimization, SEO) là tập hợp kỹ thuật giúp công cụ tìm kiếm thu thập, hiểu và xếp hạng nội dung website [5]. Ở phương diện kỹ thuật — phạm vi mà kiến trúc hệ thống có thể bảo đảm — SEO gồm các nhóm yêu cầu chính:
+
+1. **Khả năng thu thập (crawlability)**: máy thu thập phải nhận được HTML chứa đầy đủ nội dung ngay trong phản hồi đầu tiên. Ứng dụng kết xuất hoàn toàn phía trình duyệt (client-side rendering) trả về khung HTML rỗng và phụ thuộc vào khả năng thực thi JavaScript của máy thu thập; do đó kết xuất phía máy chủ (SSR) hoặc kết xuất trước (static generation) là lựa chọn an toàn cho nội dung công khai.
+2. **Siêu dữ liệu (metadata)**: mỗi trang cần thẻ tiêu đề, mô tả, thẻ canonical xác định URL chính tắc, các thẻ Open Graph cho mạng xã hội; với website đa ngôn ngữ cần thẻ `hreflang` khai báo các phiên bản ngôn ngữ tương ứng.
+3. **Dữ liệu có cấu trúc (structured data)**: các khối JSON-LD theo từ vựng Schema.org (ví dụ `NewsArticle`, `Organization`, `BreadcrumbList`) giúp máy tìm kiếm hiểu ngữ nghĩa nội dung và hiển thị kết quả mở rộng.
+4. **Sitemap và robots**: tệp `sitemap.xml` liệt kê URL cần lập chỉ mục kèm thời điểm cập nhật; `robots.txt` điều khiển phạm vi thu thập.
+5. **Độ bền URL**: URL thay đổi phải được chuyển hướng vĩnh viễn (mã 301/308) về địa chỉ mới để bảo toàn giá trị xếp hạng đã tích lũy — yêu cầu đặc biệt quan trọng khi thay thế một website đã tồn tại lâu năm như trường hợp của đề tài.
+
+### 2.2.3 Tối ưu hóa cho công cụ tìm kiếm sử dụng trí tuệ nhân tạo
+
+Sự phổ biến của các công cụ tìm kiếm – trả lời dùng mô hình ngôn ngữ lớn (Google AI Overviews, ChatGPT Search, Perplexity) làm xuất hiện hướng tối ưu mới, được gọi là tối ưu hóa cho máy sinh nội dung (Generative Engine Optimization, GEO) [6]. Khác với tìm kiếm truyền thống trả về danh sách liên kết, các hệ thống này *tổng hợp* câu trả lời từ nhiều nguồn và chỉ trích dẫn một số ít trang. Nghiên cứu của Aggarwal và cộng sự chỉ ra rằng khả năng được trích dẫn phụ thuộc vào mức độ "trích xuất được" của nội dung: đoạn văn tự chứa ngữ cảnh, câu trả lời trực tiếp cho câu hỏi, số liệu và trích dẫn rõ ràng có xác suất được chọn cao hơn đáng kể [6]. Về mặt hạ tầng, các yêu cầu của GEO phần lớn trùng với SEO kỹ thuật — HTML đầy đủ không phụ thuộc JavaScript, dữ liệu có cấu trúc, metadata nhất quán — nhưng bổ sung thêm các tín hiệu mới như việc cho phép máy thu thập của các hệ thống AI truy cập trong `robots.txt`. Website đại học có lợi thế tự nhiên trong bối cảnh này: tên miền giáo dục có độ tin cậy cao, nội dung mang tính thẩm quyền về ngành học — với điều kiện nền tảng kỹ thuật cho phép máy đọc được nội dung đó.
+
+## 2.3 Nền tảng công nghệ của hệ thống
+
+### 2.3.1 Thư viện ReactJS và framework Next.js
+
+React là thư viện JavaScript xây dựng giao diện theo mô hình thành phần khai báo: giao diện được mô tả là hàm của trạng thái dữ liệu, và thư viện tự tính toán phần cần cập nhật khi trạng thái thay đổi [7]. Mô hình thành phần của React là điều kiện tiên quyết cho Visual Builder: mỗi khối kéo – thả trong Puck ánh xạ trực tiếp tới một React component có kiểu thuộc tính rõ ràng.
+
+Next.js là framework xây dựng ứng dụng web hoàn chỉnh trên React, bổ sung định tuyến theo cấu trúc thư mục, kết xuất phía máy chủ và các chiến lược sinh trang linh hoạt [8]. Hai cơ chế của Next.js được khai thác trọng tâm trong đề tài. Thứ nhất là *React Server Components* và SSR: trang công khai được kết xuất thành HTML hoàn chỉnh trên máy chủ, đáp ứng yêu cầu crawlability nêu ở mục 2.2.2. Thứ hai là *tạo tĩnh tăng dần* (Incremental Static Regeneration, ISR): trang được kết xuất một lần rồi phục vụ như tệp tĩnh, tự làm mới theo chu kỳ hoặc theo tín hiệu chủ động (revalidate theo thẻ đệm) khi nội dung nguồn thay đổi. ISR cho phép trang tin tức vừa nhanh như trang tĩnh vừa phản ánh nội dung mới trong thời gian ngắn. Hệ thống sử dụng Next.js 16 với React 19, trong đó cả trang quản trị và trang công khai là hai ứng dụng Next.js độc lập.
+
+### 2.3.2 Framework NestJS
+
+NestJS là framework xây dựng ứng dụng máy chủ Node.js theo kiến trúc module hóa, lấy cảm hứng từ Angular: mã nguồn được tổ chức thành các module nghiệp vụ, mỗi module gồm controller (tiếp nhận HTTP), service (logic nghiệp vụ) và các provider được kết nối qua cơ chế tiêm phụ thuộc (dependency injection) [9]. So với việc dùng Express thuần, NestJS mang lại khung kỷ luật kiến trúc phù hợp với hệ thống nhiều nghiệp vụ: ranh giới module rõ ràng, guard và interceptor dùng chung cho xác thực – phân quyền – bộ nhớ đệm, decorator khai báo giúp mã dễ đọc, và khả năng kiểm thử đơn vị từng service độc lập nhờ tiêm phụ thuộc. Toàn bộ API của hệ thống (11 module nghiệp vụ, trình bày ở Chương 3) được xây dựng trên NestJS 11, chạy trên Node.js 24 và viết bằng TypeScript để chia sẻ kiểu dữ liệu với hai ứng dụng Next.js.
+
+### 2.3.3 PostgreSQL và Prisma
+
+PostgreSQL là hệ quản trị cơ sở dữ liệu quan hệ – đối tượng mã nguồn mở, tuân thủ ACID, hỗ trợ đầy đủ khóa ngoại, chỉ mục đa dạng và đặc biệt là kiểu dữ liệu JSONB — lưu tài liệu JSON ở dạng nhị phân có thể đánh chỉ mục và truy vấn [10]. Đặc tính "quan hệ lai tài liệu" này phù hợp với bài toán của đề tài: các quan hệ nghiệp vụ (bài viết – chuyên mục – đơn vị – người tạo) cần ràng buộc khóa ngoại chặt chẽ của mô hình quan hệ, trong khi hai loại dữ liệu có lược đồ mềm — văn bản song ngữ `{vi, en}` và cây bố cục JSON của Visual Builder — được lưu tự nhiên trong cột JSONB mà không phải phát sinh bảng phụ cho từng ngôn ngữ hay từng khối giao diện.
+
+Prisma là bộ công cụ ánh xạ đối tượng – quan hệ (ORM) cho TypeScript: lược đồ dữ liệu được khai báo tập trung trong một tệp `schema.prisma`, từ đó Prisma sinh ra client truy vấn có kiểu an toàn tuyệt đối tại thời điểm biên dịch và quản lý các phiên bản di trú lược đồ (migration) [11]. Việc lược đồ là "nguồn chân lý" dạng văn bản giúp thay đổi cấu trúc dữ liệu được theo dõi qua hệ quản lý phiên bản mã nguồn, còn kiểu sinh tự động loại bỏ lớp lỗi lệch kiểu giữa cơ sở dữ liệu và mã nghiệp vụ — đặc biệt giá trị trong quá trình di trú khi lược đồ thay đổi nhiều lần.
+
+### 2.3.4 Redis và mô hình bộ nhớ đệm
+
+Redis là kho dữ liệu khóa – giá trị hoạt động trong bộ nhớ (in-memory), cho độ trễ truy xuất dưới mili giây, thường dùng làm tầng bộ nhớ đệm trước cơ sở dữ liệu [12]. Hệ thống áp dụng mô hình đệm lười (cache-aside) cho các truy vấn đọc: lần đọc đầu tiên lấy từ PostgreSQL rồi ghi kết quả vào Redis; các lần đọc sau trả thẳng từ Redis. Vấn đề cốt lõi của mọi tầng đệm là *tính nhất quán khi ghi*; hệ thống giải quyết bằng nguyên tắc xóa-khi-ghi (write-invalidate): mọi thao tác ghi trong service nghiệp vụ đồng thời xóa các khóa đệm bị ảnh hưởng, buộc lần đọc kế tiếp nạp lại dữ liệu mới. Nhờ backend không giữ trạng thái nào ngoài PostgreSQL và Redis, ứng dụng có thể nhân bản theo chiều ngang khi cần mở rộng. Chi tiết các tầng đệm (Redis phía API và ISR phía trang công khai) được trình bày tại mục 3.8.5.
