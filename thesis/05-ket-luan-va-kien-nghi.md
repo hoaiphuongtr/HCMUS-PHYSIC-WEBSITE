@@ -14,21 +14,10 @@ Khóa luận đã hoàn thành mục tiêu đặt ra: xây dựng trọn vẹn h
 
 ## Hạn chế
 
-Khóa luận nhìn nhận các hạn chế sau, phần lớn gắn với điều kiện hạ tầng tại thời điểm thực hiện:
-
-1. Máy chủ thử nghiệm chưa gắn tên miền và HTTPS, nên nhóm phép đo sau triển khai (Core Web Vitals, Lighthouse, MDN Observatory, SSL Labs, kiểm định dữ liệu có cấu trúc) chưa có số liệu — các vị trí này được đánh dấu rõ trong Chương 4 kèm phương pháp đo chuẩn bị sẵn.
-2. Quét `pnpm audit` còn 51 cảnh báo lỗ hổng trong cây phụ thuộc (3 nghiêm trọng) cần chu trình nâng cấp và đánh giá khả năng khai thác thực tế.
-3. Một số dữ liệu nguồn hỏng không thể phục hồi (43 tệp phương tiện lỗi ngay trên máy chủ cũ); ba trang nội dung dạng ảnh/PDF nhúng hiển thị phụ thuộc proxy `/uploads` ở môi trường sản xuất.
-4. Các nghiệp vụ đào tạo chuyên sâu của hệ thống cũ (thời khóa biểu, môn học, hồ sơ cán bộ chi tiết) mới dừng ở mức bảo toàn dữ liệu trong kế hoạch di trú mở rộng, chưa có giao diện quản trị riêng.
+Khóa luận nhìn nhận một số hạn chế, phần lớn gắn với điều kiện hạ tầng tại thời điểm thực hiện. Trước hết, máy chủ thử nghiệm chưa được gắn tên miền và HTTPS, nên nhóm phép đo sau triển khai — Core Web Vitals, Lighthouse, MDN Observatory, SSL Labs và kiểm định dữ liệu có cấu trúc — chưa có số liệu; các vị trí này được đánh dấu rõ trong Chương 4 kèm phương pháp đo đã chuẩn bị sẵn. Về bảo trì, kết quả quét `pnpm audit` còn 51 cảnh báo lỗ hổng trong cây phụ thuộc (trong đó 3 mức nghiêm trọng), đòi hỏi một chu trình nâng cấp thư viện và đánh giá khả năng khai thác thực tế của từng cảnh báo. Về dữ liệu, một phần nhỏ tư liệu nguồn hỏng không thể phục hồi (43 tệp phương tiện lỗi ngay trên máy chủ cũ), và ba trang nội dung dạng ảnh hoặc PDF nhúng hiển thị phụ thuộc vào proxy `/uploads` ở môi trường sản xuất. Cuối cùng, các nghiệp vụ đào tạo chuyên sâu của hệ thống cũ như thời khóa biểu, môn học hay hồ sơ cán bộ chi tiết mới dừng ở mức bảo toàn dữ liệu trong kế hoạch di trú mở rộng, chưa có giao diện quản trị riêng.
 
 ## Kiến nghị và hướng phát triển
 
-Từ kết quả và hạn chế trên, chúng tôi kiến nghị lộ trình tiếp theo:
-
-1. **Gắn tên miền chính thức và HTTPS** cho bản triển khai, hoàn tất nhóm phép đo Chương 4 còn treo và thiết lập theo dõi Core Web Vitals định kỳ qua Search Console; đây là bước điều kiện cho mọi đánh giá định lượng tiếp theo.
-2. **Chu trình bảo trì phụ thuộc**: nâng các gói có bản vá, đưa `pnpm audit` vào cổng chất lượng, bổ sung Content-Security-Policy và các HTTP security header theo khuyến nghị Observatory.
-3. **Mở rộng di trú** sang các thực thể đào tạo (môn học, ngành, hồ sơ cán bộ, đối tác) theo lược đồ đã thiết kế sẵn trong kế hoạch di trú, kèm các khối Visual Builder tương ứng (danh sách giảng viên, chương trình đào tạo).
-4. **Nâng cấp trải nghiệm biên tập**: dịch máy có kiểm duyệt cho bản tiếng Anh còn khuyết, tìm kiếm toàn văn cho kho bài viết, và thống kê truy cập trực quan trên bảng điều khiển.
-5. **Vận hành lâu dài**: sao lưu tự động cơ sở dữ liệu và kho phương tiện, giám sát lỗi hợp nhất (đã có Sentry ở trang quản trị) và quy trình cập nhật ảnh Docker định kỳ.
+Từ kết quả và hạn chế trên, chúng tôi kiến nghị lộ trình phát triển tiếp theo theo thứ tự ưu tiên. Bước điều kiện cho mọi đánh giá định lượng tiếp theo là gắn tên miền chính thức và HTTPS cho bản triển khai, từ đó hoàn tất nhóm phép đo còn treo ở Chương 4 và thiết lập theo dõi Core Web Vitals định kỳ qua Search Console. Song song, cần đưa việc bảo trì phụ thuộc vào nề nếp: nâng cấp các gói đã có bản vá, đưa `pnpm audit` vào cổng chất lượng, và bổ sung Content-Security-Policy cùng các HTTP security header theo khuyến nghị của Observatory. Về chức năng, hướng mở rộng tự nhiên là di trú tiếp các thực thể đào tạo (môn học, ngành, hồ sơ cán bộ, đối tác) theo lược đồ đã thiết kế sẵn trong kế hoạch di trú, kèm các khối Visual Builder tương ứng như danh sách giảng viên hay chương trình đào tạo. Trải nghiệm biên tập có thể nâng cấp bằng dịch máy có kiểm duyệt cho các bản tiếng Anh còn khuyết, tìm kiếm toàn văn trên kho bài viết và thống kê truy cập trực quan trên bảng điều khiển. Cuối cùng, để vận hành lâu dài, hệ thống cần sao lưu tự động cơ sở dữ liệu và kho phương tiện, giám sát lỗi hợp nhất (trang quản trị đã tích hợp Sentry) và quy trình cập nhật ảnh Docker định kỳ.
 
 Hệ thống đã ở trạng thái sẵn sàng chuyển giao: mã nguồn, dữ liệu di trú, kịch bản triển khai và tài liệu vận hành đầy đủ để Khoa đưa vào sử dụng chính thức ngay khi hạ tầng tên miền hoàn tất.

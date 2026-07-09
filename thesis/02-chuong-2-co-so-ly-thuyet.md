@@ -20,23 +20,15 @@ Hệ quản trị nội dung phi giao diện (Headless CMS) là mô hình tách 
 
 Tốc độ tải trang ảnh hưởng trực tiếp đến hành vi người dùng. Nghiên cứu của Google trên tập lớn trang đích di động cho thấy khi thời gian tải tăng từ 1 giây lên 3 giây, xác suất người dùng thoát trang (bounce) tăng 32%, và 53% lượt truy cập di động bị từ bỏ nếu trang tải quá 3 giây [3]. Với website tuyển sinh đại học — nơi phần lớn khách truy cập đến từ kết quả tìm kiếm trên điện thoại — tốc độ tải vì vậy là yếu tố quyết định lượng người đọc thực tế.
 
-Để lượng hóa trải nghiệm tải trang, Google định nghĩa bộ Chỉ số Web cốt lõi (Core Web Vitals) gồm ba chỉ số, đo tại phân vị 75 của người dùng thật [4]:
-
-- **LCP** (Largest Contentful Paint) — thời điểm phần tử nội dung lớn nhất hiển thị xong, phản ánh tốc độ tải cảm nhận; ngưỡng tốt ≤ 2,5 giây.
-- **INP** (Interaction to Next Paint) — độ trễ từ thao tác của người dùng đến khung hình phản hồi kế tiếp, phản ánh độ phản hồi; ngưỡng tốt ≤ 200 mili giây.
-- **CLS** (Cumulative Layout Shift) — tổng mức dịch chuyển bố cục ngoài ý muốn, phản ánh độ ổn định thị giác; ngưỡng tốt ≤ 0,1.
+Để lượng hóa trải nghiệm tải trang, Google định nghĩa bộ Chỉ số Web cốt lõi (Core Web Vitals) gồm ba chỉ số, đo tại phân vị 75 của người dùng thật [4]. Chỉ số thứ nhất, LCP (Largest Contentful Paint), là thời điểm phần tử nội dung lớn nhất hiển thị xong, phản ánh tốc độ tải cảm nhận, với ngưỡng tốt không quá 2,5 giây. Chỉ số thứ hai, INP (Interaction to Next Paint), đo độ trễ từ thao tác của người dùng đến khung hình phản hồi kế tiếp, phản ánh độ phản hồi của trang, với ngưỡng tốt không quá 200 mili giây. Chỉ số thứ ba, CLS (Cumulative Layout Shift), là tổng mức dịch chuyển bố cục ngoài ý muốn trong suốt vòng đời trang, phản ánh độ ổn định thị giác, với ngưỡng tốt không quá 0,1.
 
 Từ năm 2021, Core Web Vitals được đưa vào tín hiệu xếp hạng tìm kiếm của Google, khiến hiệu năng và SEO trở thành hai mặt của cùng một bài toán. Các chỉ số này định hướng nhiều quyết định thiết kế của hệ thống: chiến lược kết xuất trước HTML, bộ nhớ đệm nhiều tầng, tối ưu ảnh và dự trữ không gian bố cục, được trình bày tại mục 3.8.
 
 ### 2.2.2 Tối ưu hóa cho các công cụ tìm kiếm truyền thống
 
-Tối ưu hóa công cụ tìm kiếm (Search Engine Optimization, SEO) là tập hợp kỹ thuật giúp công cụ tìm kiếm thu thập, hiểu và xếp hạng nội dung website [5]. Ở phương diện kỹ thuật — phạm vi mà kiến trúc hệ thống có thể bảo đảm — SEO gồm các nhóm yêu cầu chính:
+Tối ưu hóa công cụ tìm kiếm (Search Engine Optimization, SEO) là tập hợp kỹ thuật giúp công cụ tìm kiếm thu thập, hiểu và xếp hạng nội dung website [5]. Ở phương diện kỹ thuật — phạm vi mà kiến trúc hệ thống có thể bảo đảm — SEO đặt ra năm nhóm yêu cầu chính.
 
-1. **Khả năng thu thập (crawlability)**: máy thu thập phải nhận được HTML chứa đầy đủ nội dung ngay trong phản hồi đầu tiên. Ứng dụng kết xuất hoàn toàn phía trình duyệt (client-side rendering) trả về khung HTML rỗng và phụ thuộc vào khả năng thực thi JavaScript của máy thu thập; do đó kết xuất phía máy chủ (SSR) hoặc kết xuất trước (static generation) là lựa chọn an toàn cho nội dung công khai.
-2. **Siêu dữ liệu (metadata)**: mỗi trang cần thẻ tiêu đề, mô tả, thẻ canonical xác định URL chính tắc, các thẻ Open Graph cho mạng xã hội; với website đa ngôn ngữ cần thẻ `hreflang` khai báo các phiên bản ngôn ngữ tương ứng.
-3. **Dữ liệu có cấu trúc (structured data)**: các khối JSON-LD theo từ vựng Schema.org (ví dụ `NewsArticle`, `Organization`, `BreadcrumbList`) giúp máy tìm kiếm hiểu ngữ nghĩa nội dung và hiển thị kết quả mở rộng.
-4. **Sitemap và robots**: tệp `sitemap.xml` liệt kê URL cần lập chỉ mục kèm thời điểm cập nhật; `robots.txt` điều khiển phạm vi thu thập.
-5. **Độ bền URL**: URL thay đổi phải được chuyển hướng vĩnh viễn (mã 301/308) về địa chỉ mới để bảo toàn giá trị xếp hạng đã tích lũy — yêu cầu đặc biệt quan trọng khi thay thế một website đã tồn tại lâu năm như trường hợp của đề tài.
+Yêu cầu nền tảng nhất là khả năng thu thập (crawlability): máy thu thập phải nhận được HTML chứa đầy đủ nội dung ngay trong phản hồi đầu tiên. Ứng dụng kết xuất hoàn toàn phía trình duyệt (client-side rendering) trả về khung HTML rỗng và phụ thuộc vào khả năng thực thi JavaScript của máy thu thập, do đó kết xuất phía máy chủ (SSR) hoặc kết xuất trước (static generation) là lựa chọn an toàn cho nội dung công khai. Tiếp đến là siêu dữ liệu (metadata): mỗi trang cần thẻ tiêu đề, mô tả, thẻ canonical xác định URL chính tắc và các thẻ Open Graph cho mạng xã hội; website đa ngôn ngữ còn cần thẻ `hreflang` khai báo các phiên bản ngôn ngữ tương ứng của cùng một trang. Ở mức ngữ nghĩa sâu hơn, dữ liệu có cấu trúc (structured data) — các khối JSON-LD theo từ vựng Schema.org như `NewsArticle`, `Organization`, `BreadcrumbList` — giúp máy tìm kiếm hiểu nội dung và hiển thị kết quả mở rộng. Về khả năng khám phá, tệp `sitemap.xml` liệt kê các URL cần lập chỉ mục kèm thời điểm cập nhật, còn `robots.txt` điều khiển phạm vi thu thập. Cuối cùng là độ bền URL: khi địa chỉ trang thay đổi, hệ thống phải chuyển hướng vĩnh viễn (mã 301/308) về địa chỉ mới để bảo toàn giá trị xếp hạng đã tích lũy — yêu cầu đặc biệt quan trọng khi thay thế một website đã tồn tại lâu năm như trường hợp của đề tài.
 
 ### 2.2.3 Tối ưu hóa cho công cụ tìm kiếm sử dụng trí tuệ nhân tạo
 

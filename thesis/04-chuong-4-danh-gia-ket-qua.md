@@ -100,14 +100,9 @@ Kiểm tra hiển thị bằng Playwright trên các trang đại diện xác nh
 
 ## 4.3 Đánh giá Core Web Vitals
 
-Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 200 ms; ≤ 0,1 — mục 2.2.1) cần đo trên bản triển khai chạy ổn định. Dữ liệu trường (CrUX) đòi hỏi tên miền công khai có lưu lượng thật nên chưa khả dụng; dữ liệu phòng thí nghiệm đo bằng Lighthouse trên bản triển khai máy chủ thử nghiệm:
+Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 200 ms; ≤ 0,1 — mục 2.2.1) cần được đo trên bản triển khai chạy ổn định. Dữ liệu trường (CrUX) đòi hỏi tên miền công khai có lưu lượng thật nên chưa khả dụng ở thời điểm viết. Dữ liệu phòng thí nghiệm — gồm LCP, INP (xấp xỉ bằng TBT trong môi trường mô phỏng), CLS và các chỉ số hỗ trợ FCP, TTFB, Speed Index trên bốn trang đại diện — sẽ được đo bằng Lighthouse trên bản triển khai Docker với mạng di động mô phỏng: 【CHƯA ĐO: bảng CWV bốn trang đại diện — chạy Lighthouse (mobile, Slow 4G) khi bản triển khai truy cập được ổn định】.
 
-- **LCP**: 【CHƯA ĐO: LCP bốn trang đại diện — chạy Lighthouse trên bản triển khai Docker, mạng Fast 3G/Slow 4G mô phỏng】
-- **INP** (xấp xỉ bằng TBT trong môi trường phòng thí nghiệm): 【CHƯA ĐO】
-- **CLS**: 【CHƯA ĐO】
-- Chỉ số hỗ trợ (FCP, TTFB, Speed Index): 【CHƯA ĐO】
-
-Về mặt thiết kế, các biện pháp tại mục 3.8 (ISR phục vụ HTML tĩnh, ưu tiên nạp ảnh LCP, giữ chỗ kích thước ảnh chống CLS, đệm ba tầng giảm TTFB) nhắm trực tiếp vào từng chỉ số; số đo thực tế sẽ kiểm chứng hiệu quả của chúng.
+Về mặt thiết kế, các biện pháp tại mục 3.8 nhắm trực tiếp vào từng chỉ số: ISR phục vụ HTML tĩnh và đệm ba tầng rút ngắn TTFB — thành phần chi phối LCP; ưu tiên nạp ảnh hero nhắm vào LCP; giữ chỗ kích thước ảnh qua `next/image` nhắm vào CLS. Số đo thực tế sẽ kiểm chứng hiệu quả của các biện pháp này.
 
 ## 4.4 Đánh giá bằng Lighthouse
 

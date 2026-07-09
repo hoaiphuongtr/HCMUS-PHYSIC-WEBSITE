@@ -4,13 +4,7 @@ Chương này trình bày toàn bộ quá trình thiết kế và hiện thực 
 
 ## 3.1 Giới thiệu tổng quan
 
-Hệ thống được đặt tên nội bộ là **HCMUS Physics CMS**, tổ chức dưới dạng một monorepo pnpm gồm ba workspace tương ứng ba thành phần chạy độc lập:
-
-- **backend** — máy chủ API xây dựng trên NestJS 11, lắng nghe cổng 3001, làm việc với PostgreSQL qua Prisma và Redis làm bộ nhớ đệm đọc;
-- **admin** — trang quản trị Next.js 16 (thư mục `frontend/`), cổng 3000, dành cho văn phòng khoa và các bộ môn soạn thảo, dàn trang, xuất bản nội dung;
-- **public** — trang công khai Next.js 16 (thư mục `frontend-public/`), cổng 3002, kết xuất các trang đã xuất bản cho khách truy cập.
-
-Cả ba thành phần viết bằng TypeScript, chia sẻ định nghĩa kiểu dữ liệu, được kiểm tra bằng cùng một bộ cổng chất lượng (lint, kiểm tra kiểu, kiểm thử đơn vị, build) và đóng gói bằng Docker khi triển khai.
+Hệ thống được đặt tên nội bộ là **HCMUS Physics CMS**, tổ chức dưới dạng một monorepo pnpm gồm ba workspace tương ứng ba thành phần chạy độc lập. Thành phần thứ nhất là máy chủ API (workspace *backend*) xây dựng trên NestJS 11, lắng nghe cổng 3001, làm việc với PostgreSQL qua Prisma và dùng Redis làm bộ nhớ đệm đọc. Thành phần thứ hai là trang quản trị (workspace *admin*, thư mục `frontend/`) trên Next.js 16, cổng 3000, dành cho văn phòng khoa và các bộ môn soạn thảo, dàn trang và xuất bản nội dung. Thành phần thứ ba là trang công khai (workspace *public*, thư mục `frontend-public/`) cũng trên Next.js 16, cổng 3002, kết xuất các trang đã xuất bản cho khách truy cập. Cả ba thành phần viết bằng TypeScript, chia sẻ định nghĩa kiểu dữ liệu, được kiểm tra bằng cùng một bộ cổng chất lượng (lint, kiểm tra kiểu, kiểm thử đơn vị, build) và đóng gói bằng Docker khi triển khai.
 
 ## 3.2 Kiến trúc tổng thể
 
@@ -111,13 +105,7 @@ Phân quyền theo vai trò hiện thực bằng cặp guard của NestJS: `Auth
 
 ### 3.4.4 Phân quyền theo bộ môn (multi-tenant)
 
-Chiều phân quyền thứ hai — phạm vi bộ môn — biến hệ thống thành mô hình nhiều đơn vị thuê chung (multi-tenant) mềm: nội dung (Post, PageLayout, Media) mang nhãn `departmentId`; người dùng ADMIN thuộc một bộ môn chỉ thao tác trong phạm vi của mình. Quy tắc được cài đặt tập trung trong ba hàm thuần túy tại `backend/src/shared/helpers.ts`:
-
-- `departmentScopeWhere(role, deptId)` — sinh mảnh điều kiện Prisma cho các truy vấn *đọc/liệt kê*: SUPER_ADMIN không bị giới hạn; quản trị viên văn phòng khoa (bộ môn `dept_legacy_1`) hoặc chưa gán bộ môn thấy nội dung toàn khoa và nội dung chưa gắn nhãn; quản trị viên bộ môn chỉ thấy nội dung bộ môn mình.
-- `mediaScopeWhere(role, deptId)` — biến thể cho thư viện phương tiện: quản trị viên bộ môn đọc được thêm tư liệu dùng chung của khoa (để chèn vào bài), nhưng chỉ *sửa/xóa* được tư liệu của bộ môn mình.
-- `canAccessDepartment(role, userDept, contentDept)` — cổng kiểm tra cho mọi thao tác *ghi*; vi phạm trả về 404 (không tiết lộ sự tồn tại của tài nguyên khác bộ môn).
-
-Ma trận quyền tổng hợp trong Bảng 3.3.
+Chiều phân quyền thứ hai — phạm vi bộ môn — biến hệ thống thành mô hình nhiều đơn vị thuê chung (multi-tenant) mềm: nội dung (Post, PageLayout, Media) mang nhãn `departmentId`, và người dùng ADMIN thuộc một bộ môn chỉ thao tác trong phạm vi của mình. Toàn bộ quy tắc được cài đặt tập trung trong ba hàm thuần túy tại `backend/src/shared/helpers.ts`. Hàm thứ nhất, `departmentScopeWhere(role, deptId)`, sinh mảnh điều kiện Prisma cho các truy vấn đọc và liệt kê: SUPER_ADMIN không bị giới hạn; quản trị viên văn phòng khoa (bộ môn `dept_legacy_1`) hoặc chưa gán bộ môn thấy nội dung toàn khoa cùng nội dung chưa gắn nhãn; quản trị viên bộ môn chỉ thấy nội dung của bộ môn mình. Hàm thứ hai, `mediaScopeWhere(role, deptId)`, là biến thể dành cho thư viện phương tiện: quản trị viên bộ môn được đọc thêm tư liệu dùng chung của khoa để chèn vào bài viết, nhưng chỉ sửa hoặc xóa được tư liệu thuộc bộ môn mình. Hàm thứ ba, `canAccessDepartment(role, userDept, contentDept)`, là cổng kiểm tra cho mọi thao tác ghi; yêu cầu vi phạm nhận phản hồi 404 thay vì 403 nhằm không tiết lộ sự tồn tại của tài nguyên khác bộ môn. Ma trận quyền tổng hợp trong Bảng 3.3.
 
 *Bảng 3.3. Ma trận phân quyền theo vai trò và phạm vi bộ môn*
 
@@ -169,11 +157,9 @@ Trang đăng nhập gộp ba luồng: đăng nhập mật khẩu, đăng nhập 
 
 ### 3.6.2 Giao diện quản trị
 
-Trang quản trị tổ chức quanh thanh điều hướng dọc (tự thu gọn, mở rộng khi trỏ chuột) dẫn đến các phân hệ: bảng điều khiển, bài viết, trang bố cục, thư viện phương tiện, quản trị viên (chỉ SUPER_ADMIN) và cài đặt cá nhân. Ba màn hình đáng chú ý:
+Trang quản trị tổ chức quanh thanh điều hướng dọc (tự thu gọn, mở rộng khi trỏ chuột) dẫn đến các phân hệ: bảng điều khiển, bài viết, trang bố cục, thư viện phương tiện, quản trị viên (chỉ SUPER_ADMIN) và cài đặt cá nhân. Trong đó, ba màn hình thể hiện rõ nhất triết lý thiết kế của hệ thống.
 
-- **Trình soạn bài viết**: các trường song ngữ trình bày theo hai thẻ VI/EN; chuyên mục và thẻ chọn từ dữ liệu động; ảnh bìa chọn từ thư viện phương tiện; khối thông tin sự kiện (thời gian, địa điểm, diễn giả) cho bài loại sự kiện; nút lưu tách ba hành động lưu nháp / lên lịch / gửi xuất bản.
-- **Visual Builder**: trình dàn trang Puck toàn màn hình — danh mục khối bên trái (khối nội dung, khối tự động như tin mới nhất/sự kiện sắp tới, khối điều hướng), khung xem trước ở giữa, bảng thuộc tính bên phải; lịch sử phiên bản truy cập từ chính trình soạn thảo.
-- **Hướng dẫn tương tác**: lần đăng nhập đầu, hệ thống tự chạy tour giới thiệu từng phân hệ (thư viện driver.js); trạng thái hoàn thành lưu trên hồ sơ người dùng (`tourCompletedAt`). Sau đó, nút Trợ giúp nổi mở bảng hai thẻ: *Interact* — các hướng dẫn từng bước làm nổi bật nút thật trên giao diện (tạo bố cục, xuất bản, viết bài, tải phương tiện); *Doc* — bộ câu hỏi thường gặp tìm kiếm được. Toàn bộ song ngữ, mặc định tiếng Việt.
+Màn hình thứ nhất là trình soạn bài viết: các trường song ngữ trình bày theo hai thẻ VI/EN, chuyên mục và thẻ chọn từ dữ liệu động, ảnh bìa chọn từ thư viện phương tiện, bài loại sự kiện có thêm khối thông tin thời gian – địa điểm – diễn giả, và nút lưu tách thành ba hành động lưu nháp, lên lịch hoặc gửi xuất bản. Màn hình thứ hai là Visual Builder — trình dàn trang Puck toàn màn hình với danh mục khối bên trái (khối nội dung, khối tự động như tin mới nhất hay sự kiện sắp tới, khối điều hướng), khung xem trước ở giữa và bảng thuộc tính bên phải; lịch sử phiên bản bố cục truy cập được từ chính trình soạn thảo. Màn hình thứ ba là lớp hướng dẫn tương tác: ở lần đăng nhập đầu, hệ thống tự chạy tour giới thiệu từng phân hệ (xây dựng trên thư viện driver.js), trạng thái hoàn thành lưu trên hồ sơ người dùng qua trường `tourCompletedAt`; sau đó nút Trợ giúp nổi mở bảng hai thẻ — thẻ *Interact* chứa các hướng dẫn từng bước làm nổi bật nút thật trên giao diện (tạo bố cục, xuất bản, viết bài, tải phương tiện), thẻ *Doc* chứa bộ câu hỏi thường gặp tìm kiếm được. Toàn bộ lớp hướng dẫn là song ngữ, mặc định tiếng Việt.
 
 【HÌNH 3.8 — Ảnh chụp màn hình Visual Builder đang mở bố cục trang chủ】
 
@@ -219,12 +205,7 @@ Tư liệu phương tiện được tải tự động từ máy chủ cũ: qué
 
 ### 3.7.4 Quy trình di trú
 
-Quy trình tổng thể (Hình 3.10) gồm bốn giai đoạn, toàn bộ là script TypeScript trong `backend/initialScript/migrate-legacy/`, chạy lặp lại an toàn nhờ upsert theo `legacyId`:
-
-1. **Phục hồi nguồn**: script `run.ts` tự dựng MariaDB 10.6 tạm trong Docker, nạp bản sao lưu, đọc bảng `language` xác nhận ánh xạ `langid` → ngôn ngữ.
-2. **Di trú thực thể** theo thứ tự an toàn khóa ngoại: đơn vị → người dùng cũ (chỉ hồ sơ, không mật khẩu) → chuyên mục → bài viết. Kết quả thực đo: 10 đơn vị, 45 chuyên mục di trú (cộng 5 mặc định), **1.637 bài viết** di trú (tổng 1.704 bài cùng 67 bài có sẵn).
-3. **Tải và ánh xạ phương tiện**: `download-media.ts` (mục 3.7.3) rồi `rewrite-media-urls.ts` cập nhật 1.636 bài viết và 7 chuyên mục trỏ về kho tệp mới.
-4. **Gắn nhãn bộ môn**: `backfill-content-departments.ts` đọc `posts.deptid` gốc qua `legacyId` và gắn `departmentId` cho **1.587 bài viết** cùng **1.540 bố cục** phát sinh, làm nền cho phân quyền bộ môn (3.4.4).
+Quy trình tổng thể (Hình 3.10) gồm bốn giai đoạn, toàn bộ là script TypeScript trong `backend/initialScript/migrate-legacy/`, chạy lặp lại an toàn nhờ upsert theo `legacyId`. Giai đoạn thứ nhất phục hồi nguồn: script `run.ts` tự dựng một MariaDB 10.6 tạm thời trong Docker, nạp bản sao lưu, rồi đọc bảng `language` để xác nhận ánh xạ `langid` sang mã ngôn ngữ. Giai đoạn thứ hai di trú các thực thể theo thứ tự an toàn khóa ngoại — đơn vị, người dùng cũ (chỉ hồ sơ, không mật khẩu), chuyên mục, rồi bài viết; kết quả thực đo gồm 10 đơn vị, 45 chuyên mục di trú (cộng 5 chuyên mục mặc định của hệ mới) và **1.637 bài viết** (nâng tổng số lên 1.704 bài cùng 67 bài có sẵn). Giai đoạn thứ ba tải và ánh xạ phương tiện: sau khi `download-media.ts` tải kho tệp về (mục 3.7.3), script `rewrite-media-urls.ts` cập nhật 1.636 bài viết và 7 chuyên mục trỏ về kho tệp mới. Giai đoạn cuối gắn nhãn bộ môn: `backfill-content-departments.ts` đọc trường `posts.deptid` gốc qua `legacyId` và gắn `departmentId` cho **1.587 bài viết** cùng **1.540 bố cục** phát sinh, tạo nền dữ liệu cho cơ chế phân quyền bộ môn (mục 3.4.4).
 
 【HÌNH 3.10 — Sơ đồ khối 4 giai đoạn di trú: dump → MariaDB Docker → upsert Postgres → tải media → backfill bộ môn】
 

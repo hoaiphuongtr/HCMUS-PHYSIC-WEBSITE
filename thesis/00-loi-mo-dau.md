@@ -6,14 +6,4 @@ Xuất phát từ thực tế đó, khóa luận này thực hiện đề tài *
 
 Sản phẩm của khóa luận là một hệ thống hoàn chỉnh gồm ba thành phần: máy chủ ứng dụng NestJS quản lý dữ liệu trên PostgreSQL với bộ nhớ đệm Redis, trang quản trị Next.js tích hợp Visual Builder, và trang công khai Next.js được tối ưu cho công cụ tìm kiếm. Hệ thống đã di trú thành công hơn 1.600 bài viết và khoảng 3,9 GB tư liệu hình ảnh từ website cũ, hiện thực cơ chế phân quyền theo bộ môn cho mô hình quản trị nhiều đơn vị, và được đóng gói bằng Docker để triển khai trên hạ tầng máy chủ của Khoa.
 
-Nội dung của khóa luận được trình bày trong bốn chương như sau:
-
-**Chương 1 – Tổng quan**: trình bày động lực nghiên cứu, mục tiêu, đối tượng, phạm vi và các nội dung thực hiện của đề tài.
-
-**Chương 2 – Cơ sở lý thuyết**: hệ thống hóa cơ sở lý thuyết về website đại học, mô hình Headless CMS, tối ưu hóa công cụ tìm kiếm và hiệu năng web, cùng nền tảng công nghệ được sử dụng.
-
-**Chương 3 – Thiết kế và hiện thực hệ thống**: trình bày kiến trúc tổng thể, thiết kế cơ sở dữ liệu, xác thực và phân quyền, quy trình xuất bản nội dung, giao diện người dùng, quy trình di trú dữ liệu, thiết kế SEO – hiệu năng, và quá trình hiện thực, triển khai hệ thống.
-
-**Chương 4 – Phân tích và đánh giá kết quả**: trình bày phương pháp đánh giá, kết quả kiểm thử chức năng, các phép đo hiệu năng, bảo mật, SEO, so sánh với website cũ và mức độ hoàn thành mục tiêu.
-
-Phần **Kết luận và kiến nghị** tổng kết các kết quả đạt được, những hạn chế còn tồn tại và đề xuất hướng phát triển tiếp theo của đề tài.
+Nội dung của khóa luận được trình bày trong bốn chương. Chương 1 giới thiệu tổng quan về đề tài, bao gồm động lực nghiên cứu, mục tiêu, đối tượng, phạm vi và các nội dung thực hiện. Chương 2 hệ thống hóa cơ sở lý thuyết về website đại học, mô hình Headless CMS, tối ưu hóa công cụ tìm kiếm và hiệu năng web, cùng nền tảng công nghệ được sử dụng. Chương 3 — phần trọng tâm của khóa luận — trình bày quá trình thiết kế và hiện thực hệ thống, từ kiến trúc tổng thể, cơ sở dữ liệu, xác thực và phân quyền, quy trình xuất bản nội dung, giao diện người dùng, di trú dữ liệu, cho đến tối ưu SEO – hiệu năng và triển khai. Chương 4 phân tích và đánh giá kết quả qua kiểm thử chức năng, các phép đo hiệu năng, bảo mật, SEO, so sánh với website cũ và đối chiếu mức độ hoàn thành mục tiêu. Cuối cùng, phần Kết luận và kiến nghị tổng kết các kết quả đạt được, những hạn chế còn tồn tại và đề xuất hướng phát triển tiếp theo của đề tài.
