@@ -18,7 +18,7 @@ Từ khảo sát hiện trạng ở mục 1.1 và trao đổi với đơn vị s
 |---|---|
 | Quản trị nội dung | CRUD bài viết song ngữ (tiêu đề, thân bài, tóm tắt, ảnh bìa, chuyên mục, thẻ, thông tin sự kiện); CRUD trang bố cục bằng Visual Builder; thư viện phương tiện có gắn thẻ |
 | Quy trình xuất bản | Trạng thái nháp → chờ duyệt → xuất bản; lên lịch xuất bản tự động; lịch sử phiên bản bố cục và khôi phục |
-| Phân quyền | Hai vai trò (quản trị viên cấp cao, quản trị viên); quản trị viên bộ môn chỉ thao tác trên nội dung bộ môn mình; văn phòng khoa quản lý nội dung toàn khoa |
+| Phân quyền | Hai vai trò (quản trị viên cấp cao, quản trị viên); quản trị viên bộ môn chỉ thao tác trên nội dung bộ môn trực thuộc; văn phòng khoa quản lý nội dung toàn khoa |
 | Trang công khai | Kết xuất bố cục đã xuất bản; định tuyến song ngữ vi/en; trang riêng từng bộ môn; đăng ký nhận tin theo thẻ; thống kê truy cập |
 | Di trú | Bảo toàn toàn bộ bài viết, trang, chuyên mục, đơn vị và tư liệu phương tiện của website cũ; chuyển hướng URL cũ |
 | Phi chức năng | HTML đầy đủ cho máy thu thập (SEO); bộ nhớ đệm giảm tải cơ sở dữ liệu; backend không trạng thái; dựng lại được toàn bộ hệ thống từ mã nguồn; chạy được trên máy chủ 4 GB RAM |
@@ -105,17 +105,17 @@ Phân quyền theo vai trò hiện thực bằng cặp lớp chốt chặn (guar
 
 ### 3.4.4 Phân quyền theo bộ môn (multi-tenant)
 
-Chiều phân quyền thứ hai — phạm vi bộ môn — biến hệ thống thành mô hình nhiều đơn vị thuê chung (multi-tenant) mềm: cả ba loại nội dung (bài viết, bố cục, phương tiện) đều mang nhãn bộ môn, và quản trị viên thuộc một bộ môn chỉ thao tác trong phạm vi của mình. Toàn bộ quy tắc được cài đặt tập trung trong ba hàm thuần túy thuộc phân hệ dùng chung của máy chủ API. Hàm thứ nhất sinh điều kiện lọc cho các truy vấn đọc và liệt kê: quản trị viên cấp cao không bị giới hạn; quản trị viên văn phòng khoa hoặc chưa gán bộ môn thấy nội dung toàn khoa cùng nội dung chưa gắn nhãn; quản trị viên bộ môn chỉ thấy nội dung của bộ môn mình. Hàm thứ hai là biến thể dành cho thư viện phương tiện: quản trị viên bộ môn được đọc thêm tư liệu dùng chung của khoa để chèn vào bài viết, nhưng chỉ sửa hoặc xóa được tư liệu thuộc bộ môn mình. Hàm thứ ba là cổng kiểm tra cho mọi thao tác ghi; yêu cầu vi phạm nhận phản hồi 404 thay vì 403 nhằm không tiết lộ sự tồn tại của tài nguyên khác bộ môn. Ma trận quyền tổng hợp trong Bảng 3.3.
+Chiều phân quyền thứ hai — phạm vi bộ môn — biến hệ thống thành mô hình nhiều đơn vị thuê chung (multi-tenant) mềm: cả ba loại nội dung (bài viết, bố cục, phương tiện) đều mang nhãn bộ môn, và quản trị viên thuộc một bộ môn chỉ thao tác trong phạm vi bộ môn trực thuộc. Toàn bộ quy tắc được cài đặt tập trung trong ba hàm thuần túy thuộc phân hệ dùng chung của máy chủ API. Hàm thứ nhất sinh điều kiện lọc cho các truy vấn đọc và liệt kê: quản trị viên cấp cao không bị giới hạn; quản trị viên văn phòng khoa hoặc chưa gán bộ môn thấy nội dung toàn khoa cùng nội dung chưa gắn nhãn; quản trị viên bộ môn chỉ thấy nội dung của bộ môn trực thuộc. Hàm thứ hai là biến thể dành cho thư viện phương tiện: quản trị viên bộ môn được đọc thêm tư liệu dùng chung của khoa để chèn vào bài viết, nhưng chỉ sửa hoặc xóa được tư liệu của chính bộ môn đó. Hàm thứ ba là cổng kiểm tra cho mọi thao tác ghi; yêu cầu vi phạm nhận phản hồi 404 thay vì 403 nhằm không tiết lộ sự tồn tại của tài nguyên khác bộ môn. Ma trận quyền tổng hợp trong Bảng 3.3.
 
 *Bảng 3.3. Ma trận phân quyền theo vai trò và phạm vi bộ môn*
 
-| Người dùng | Nội dung toàn khoa / chưa gắn nhãn | Nội dung bộ môn mình | Nội dung bộ môn khác | Quản lý tài khoản |
+| Người dùng | Nội dung toàn khoa / chưa gắn nhãn | Nội dung bộ môn trực thuộc | Nội dung bộ môn khác | Quản lý tài khoản |
 |---|---|---|---|---|
 | SUPER_ADMIN | đọc + ghi | đọc + ghi | đọc + ghi | có |
 | ADMIN văn phòng khoa | đọc + ghi | — (chính là toàn khoa) | không | không |
 | ADMIN bộ môn | đọc (media dùng chung); không ghi | đọc + ghi | không (404) | không |
 
-Việc dồn quy tắc vào các hàm thuần túy (không phụ thuộc cơ sở dữ liệu) cho phép kiểm thử đơn vị trực tiếp từng nhánh logic; bộ kiểm thử phân quyền thuộc 40 ca kiểm thử backend trình bày ở Chương 4. Ở tầng URL công khai, nội dung bộ môn mang tiền tố tên bộ môn trên đường dẫn (chẳng hạn /vat-ly-ung-dung/tin-tuc/…), nội dung toàn khoa giữ đường dẫn phẳng (/tin-tuc/…); mỗi bộ môn có trang riêng tại địa chỉ mang tên mình do chính bộ môn đó biên tập.
+Việc dồn quy tắc vào các hàm thuần túy (không phụ thuộc cơ sở dữ liệu) cho phép kiểm thử đơn vị trực tiếp từng nhánh logic; bộ kiểm thử phân quyền thuộc 40 ca kiểm thử backend trình bày ở Chương 4. Ở tầng URL công khai, nội dung bộ môn mang tiền tố tên bộ môn trên đường dẫn (chẳng hạn /vat-ly-ung-dung/tin-tuc/…), nội dung toàn khoa giữ đường dẫn phẳng (/tin-tuc/…); mỗi bộ môn có trang riêng tại địa chỉ mang tên bộ môn do chính bộ môn đó biên tập.
 
 ## 3.5 Thiết kế quy trình xuất bản nội dung
 

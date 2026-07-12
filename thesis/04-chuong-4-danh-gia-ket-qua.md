@@ -60,10 +60,10 @@ Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản tr�
 
 | Mã | Kịch bản | Kết quả mong đợi | Kết quả |
 |---|---|---|---|
-| P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết bộ môn mình | Đạt — trả về 32 bài, toàn bộ thuộc đúng bộ môn |
-| P2 | Quản trị viên bộ môn đọc chi tiết bài viết của bộ môn mình | HTTP 200 | Đạt |
+| P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết của bộ môn trực thuộc | Đạt — trả về 32 bài, toàn bộ thuộc đúng bộ môn |
+| P2 | Quản trị viên bộ môn đọc chi tiết bài viết của bộ môn trực thuộc | HTTP 200 | Đạt |
 | P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404 — không tiết lộ tồn tại | Đạt |
-| P4 | Quản trị viên bộ môn mở thư viện phương tiện | Thấy tư liệu bộ môn mình + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
+| P4 | Quản trị viên bộ môn mở thư viện phương tiện | Thấy tư liệu của bộ môn trực thuộc + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
 | P5 | Quản trị viên thường truy cập trang quản lý quản trị viên | Bị chuyển hướng; API trả 403 (khai báo quyền ở mức toàn phân hệ) | Đạt |
 | P6 | 24 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
 
