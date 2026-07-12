@@ -14,7 +14,7 @@ Chương này đánh giá hệ thống trên năm phương diện: tính đúng 
 |---|---|---|
 | Kiểm thử đơn vị backend | Vitest 4.1.5 | chạy toàn bộ bộ kiểm thử trong kho mã |
 | Kiểm thử chức năng đầu-cuối | Playwright + kiểm tra API thủ công (curl) | trên môi trường phát triển |
-| Kiểm tra kiểu / lint / build | TypeScript `tsc`, Biome, `next build` / `nest build` | cổng chất lượng bắt buộc |
+| Kiểm tra kiểu / lint / đóng gói | Trình kiểm tra kiểu TypeScript, Biome, đóng gói production | cổng chất lượng bắt buộc |
 | Core Web Vitals, Lighthouse | Chrome Lighthouse, PageSpeed Insights | yêu cầu bản triển khai chạy ổn định |
 | Bảo mật HTTP / TLS | MDN HTTP Observatory, SSL Labs | yêu cầu tên miền công khai + HTTPS |
 | Lỗ hổng phụ thuộc | `pnpm audit` | chạy trên kho mã, không cần triển khai |
@@ -27,7 +27,7 @@ Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với c�
 
 ### 4.1.3 Các trang được kiểm thử
 
-Các phép đo hiệu năng và SEO nhắm vào bốn trang đại diện cho bốn dạng kết xuất của trang công khai: trang chủ (`/vi`, bố cục Visual Builder đầy đủ), một bài viết di trú với nội dung HTML và ảnh gốc từ hệ thống cũ (`/vi/tin-tuc/usactalk-06-…`), trang riêng bộ môn (`/vi/vat-ly-ung-dung`), và một trang nội dung tĩnh tái tạo từ hệ thống cũ (`/vi/gioi-thieu`). Trang chủ website cũ (`https://phys.hcmus.edu.vn/`) được đo làm mốc so sánh (mục 4.7.1).
+Các phép đo hiệu năng và SEO nhắm vào bốn trang đại diện cho bốn dạng kết xuất của trang công khai: trang chủ (bố cục Visual Builder đầy đủ), một bài viết di trú với nội dung HTML và ảnh gốc từ hệ thống cũ, trang riêng của một bộ môn (Vật lý Ứng dụng), và một trang nội dung tĩnh tái tạo từ hệ thống cũ (trang giới thiệu). Trang chủ website cũ (phys.hcmus.edu.vn) được đo làm mốc so sánh (mục 4.7.1).
 
 ## 4.2 Kiểm thử chức năng
 
@@ -35,7 +35,7 @@ Mục này chứng minh hệ thống vận hành đúng trên bốn nhóm nghi�
 
 ### 4.2.1 Kiểm thử đơn vị phía máy chủ
 
-Bộ kiểm thử đơn vị backend gồm **40 ca kiểm thử trong 4 tệp**, tập trung vào hai vùng logic rủi ro cao nhất: quy tắc phân quyền (`helpers.spec.ts` — các hàm `departmentScopeWhere`, `mediaScopeWhere`, `canAccessDepartment`) và nghiệp vụ bố cục – phiên bản (`page-layout.service.spec.ts` — thứ tự chụp ảnh phiên bản khi xuất bản, kiểm tra xung đột slug trước khi khôi phục, tự bổ sung phiên bản đầu cho bố cục cũ, chụp phiên bản khi cron xuất bản theo lịch), cùng nghiệp vụ quản lý quản trị viên (`admin.service.spec.ts`). Kết quả chạy ngày 09/07/2026: **40/40 ca đạt** (Vitest 4.1.5, tổng thời gian 1,28 giây). Song song, cả ba workspace đạt cổng chất lượng: `tsc --noEmit` không lỗi, `next build`/`nest build` thành công.
+Bộ kiểm thử đơn vị phía máy chủ gồm **40 ca kiểm thử trong 4 nhóm**, tập trung vào hai vùng logic rủi ro cao nhất. Nhóm thứ nhất bao phủ ba hàm quy tắc phân quyền theo bộ môn với mọi tổ hợp vai trò và đơn vị. Nhóm thứ hai bao phủ nghiệp vụ bố cục – phiên bản: thứ tự chụp ảnh phiên bản khi xuất bản, kiểm tra xung đột đường dẫn trước khi khôi phục, tự bổ sung phiên bản đầu cho bố cục cũ, và chụp phiên bản khi xuất bản theo lịch. Hai nhóm còn lại kiểm thử nghiệp vụ quản lý quản trị viên và điểm cuối cơ sở của ứng dụng. Kết quả chạy ngày 09/07/2026: **40/40 ca đạt** (Vitest 4.1.5, tổng thời gian 1,28 giây). Song song, cả ba thành phần đạt cổng chất lượng: kiểm tra kiểu không lỗi, đóng gói production thành công.
 
 ### 4.2.2 Kiểm thử nghiệp vụ quản lý nội dung (CRUD)
 
@@ -44,9 +44,9 @@ Bộ kiểm thử đơn vị backend gồm **40 ca kiểm thử trong 4 tệp**,
 | Mã | Kịch bản | Kết quả mong đợi | Kết quả |
 |---|---|---|---|
 | C1 | Tạo bài viết song ngữ: nhập tiêu đề/thân bài hai thẻ VI–EN, chọn chuyên mục, ảnh bìa từ thư viện | Bài lưu trạng thái DRAFT, mở lại hiển thị đúng nội dung cả hai ngôn ngữ | Đạt |
-| C2 | Mở một bài viết di trú trong trình soạn thảo | Thẻ VI và EN hiển thị đúng bản dịch tương ứng; ảnh bìa nạp từ `/uploads/legacy/` | Đạt |
-| C3 | Cập nhật bài viết đã gắn vào bố cục | `syncAttachedLayouts` cập nhật mọi bố cục có `sourcePostId` tương ứng | Đạt |
-| C4 | Tạo/sửa/xóa trang bố cục bằng Visual Builder; kéo – thả khối, đổi thuộc tính | Cây `puckData` lưu đúng; xem trước khớp kết xuất công khai | Đạt |
+| C2 | Mở một bài viết di trú trong trình soạn thảo | Thẻ VI và EN hiển thị đúng bản dịch tương ứng; ảnh bìa nạp từ kho tệp di trú | Đạt |
+| C3 | Cập nhật bài viết đã gắn vào bố cục | Mọi bố cục gắn với bài viết được đồng bộ nội dung mới | Đạt |
+| C4 | Tạo/sửa/xóa trang bố cục bằng Visual Builder; kéo – thả khối, đổi thuộc tính | Cây bố cục lưu đúng; xem trước khớp kết xuất công khai | Đạt |
 | C5 | Tải tệp lên thư viện phương tiện, gắn thẻ, chèn vào bài | Bản ghi Media đúng loại/kích thước; ảnh hiển thị trong bài | Đạt |
 | C6 | Tạo tài khoản quản trị viên mới kèm bộ môn (chỉ SUPER_ADMIN) | Tài khoản đăng nhập được; xuất hiện trong danh sách kèm trạng thái hoạt động | Đạt |
 
@@ -54,17 +54,17 @@ Các kịch bản trên được thực hiện trực tiếp trên giao diện q
 
 ### 4.2.3 Kiểm thử phân quyền
 
-Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản trị viên văn phòng khoa, và quản trị viên bộ môn Vật lý Ứng dụng (tài khoản `vlud_admin`, JWT mang `departmentId = dept_legacy_6`). Kết quả kiểm tra trực tiếp trên API ghi trong Bảng 4.3.
+Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản trị viên văn phòng khoa, và một quản trị viên thuộc bộ môn Vật lý Ứng dụng (mã thông báo đăng nhập mang đúng nhãn bộ môn này). Kết quả kiểm tra trực tiếp trên API ghi trong Bảng 4.3.
 
 *Bảng 4.3. Kịch bản kiểm thử phân quyền theo vai trò và bộ môn*
 
 | Mã | Kịch bản | Kết quả mong đợi | Kết quả |
 |---|---|---|---|
-| P1 | `vlud_admin` gọi `GET /posts` | Chỉ nhận bài viết bộ môn mình | Đạt — trả về 32 bài, toàn bộ thuộc `dept_legacy_6` |
-| P2 | `vlud_admin` đọc chi tiết bài viết của bộ môn mình | HTTP 200 | Đạt |
-| P3 | `vlud_admin` đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404 — không tiết lộ tồn tại | Đạt |
-| P4 | `vlud_admin` mở thư viện phương tiện | Thấy tư liệu bộ môn mình + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
-| P5 | Tài khoản ADMIN truy cập trang quản lý quản trị viên `/admin/admins` | Bị chuyển hướng; API trả 403 (`@Roles(SuperAdmin)` cấp lớp) | Đạt |
+| P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết bộ môn mình | Đạt — trả về 32 bài, toàn bộ thuộc đúng bộ môn |
+| P2 | Quản trị viên bộ môn đọc chi tiết bài viết của bộ môn mình | HTTP 200 | Đạt |
+| P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404 — không tiết lộ tồn tại | Đạt |
+| P4 | Quản trị viên bộ môn mở thư viện phương tiện | Thấy tư liệu bộ môn mình + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
+| P5 | Quản trị viên thường truy cập trang quản lý quản trị viên | Bị chuyển hướng; API trả 403 (khai báo quyền ở mức toàn phân hệ) | Đạt |
 | P6 | 24 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
 
 ### 4.2.4 Kiểm thử quy trình xuất bản
@@ -73,8 +73,8 @@ Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản tr�
 
 | Mã | Kịch bản | Kết quả mong đợi | Kết quả |
 |---|---|---|---|
-| X1 | Xuất bản bài viết theo mẫu (`clone-into-layout`) | Sinh bố cục nháp mới; sáu loại khối giữ chỗ nhận đúng dữ liệu bài | Đạt |
-| X2 | Xuất bản bố cục | `publishedPuckData` chụp từ `puckData`; trang công khai phản ánh sau revalidate; sinh bản ghi phiên bản CURRENT, bản trước chuyển ARCHIVED | Đạt |
+| X1 | Xuất bản bài viết theo mẫu | Sinh bố cục nháp mới; sáu loại khối giữ chỗ nhận đúng dữ liệu bài | Đạt |
+| X2 | Xuất bản bố cục | Bản công khai chụp từ bản nháp; trang công khai phản ánh sau tín hiệu làm mới; sinh bản ghi phiên bản hiện hành, bản trước chuyển lưu trữ | Đạt |
 | X3 | Sửa tiếp bản nháp sau khi xuất bản | Trang công khai giữ nguyên ảnh chụp cũ cho tới lần xuất bản sau | Đạt |
 | X4 | Lên lịch xuất bản, chờ cron mỗi phút | Đến hạn tự chuyển PUBLISHED, có chụp phiên bản như xuất bản tay | Đạt (ca kiểm thử đơn vị "cron snapshot") |
 | X5 | Khôi phục phiên bản cũ (hai chế độ: về nháp / xuất bản lại) | Nội dung khôi phục đúng ảnh chụp; xung đột slug được kiểm tra trước khi ghi | Đạt |
@@ -90,13 +90,13 @@ Tính đúng đắn của di trú được đối chiếu bằng số liệu ngu
 |---|---|---|---|
 | Đơn vị (bộ môn) | 10 | 10 | hợp nhất bản ghi trùng, slug chuẩn hóa |
 | Chuyên mục | 45 | 45 (+5 mặc định của hệ mới) | |
-| Bài viết | 1.637 | 1.637 (tổng 1.704 cùng 67 bài sẵn có) | upsert theo `legacyId`, chạy lặp không tạo bản sao |
+| Bài viết | 1.637 | 1.637 (tổng 1.704 cùng 67 bài sẵn có) | ghi đè theo khóa gốc, chạy lặp không tạo bản sao |
 | Tư liệu phương tiện bài viết | 1.909 đường dẫn | 1.870 tải thành công | 36 tệp hỏng ngay trên máy chủ nguồn; 3 đã có sẵn |
 | Tư liệu trang nội dung | 187 | 180 | 7 tệp hỏng phía nguồn |
 | Trang nội dung tái tạo | 29 trang mục tiêu | 29 | đủ khung banner + thân bài + thanh bên |
 | Menu điều hướng | 9 mục, 36 liên kết con | 9 mục, 36 liên kết con | 30/30 liên kết nội bộ phân giải về trang đã xuất bản |
-| Gắn nhãn bộ môn | — | 1.587 bài viết + 1.540 bố cục | từ `posts.deptid` gốc |
-| Chuyển hướng URL cũ | — | 397 quy tắc | kiểm tra mẫu: `/vi/tin-tuc/<x>` → 308 → `/vi/vat-ly-ung-dung/tin-tuc/<x>`, URL mới trả 200 |
+| Gắn nhãn bộ môn | — | 1.587 bài viết + 1.540 bố cục | từ mã bộ môn gốc của nguồn |
+| Chuyển hướng URL cũ | — | 397 quy tắc | kiểm tra mẫu: URL phẳng cũ trả 308 về URL mang tiền tố bộ môn, URL mới trả 200 |
 
 Kiểm tra hiển thị bằng Playwright trên các trang đại diện xác nhận nội dung di trú giữ nguyên định dạng gốc: bảng biểu giữ đường kẻ, tiêu đề màu và danh sách dấu đầu dòng hiển thị đúng, lưới ảnh giảng viên khớp trang cũ, chuyển ngôn ngữ EN đổi đúng nhãn menu và nội dung.
 
@@ -108,15 +108,15 @@ Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 2
 
 | Trang | LCP (s) | TBT (ms) | CLS | FCP (s) | Speed Index (s) |
 |---|---|---|---|---|---|
-| Trang chủ `/vi` | 5,51 | 268 | 0,000 | 1,25 | 2,29 |
+| Trang chủ | 5,51 | 268 | 0,000 | 1,25 | 2,29 |
 | Bài viết di trú | 2,58 | 1.963 | 0,179 | 1,22 | 2,87 |
 | Trang bộ môn | 4,15 | 104 | 0,000 | 1,37 | 1,65 |
 | Trang giới thiệu | 6,16 | 186 | 0,000 | 1,07 | 1,07 |
 | *Ngưỡng tốt* | *≤ 2,5* | *≤ 200* | *≤ 0,1* | *≤ 1,8* | — |
 
-Kết quả cho thấy các biện pháp thiết kế tại mục 3.8 phát huy tác dụng rõ ở hai nhóm chỉ số. Độ ổn định bố cục gần như tuyệt đối trên các trang do hệ thống kiểm soát toàn bộ (CLS = 0,000, so với 0,243 của trang chủ website cũ) — kết quả trực tiếp của việc giữ chỗ kích thước ảnh qua `next/image`. Thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây và Speed Index từ 1,1 đến 2,9 giây, phản ánh hiệu quả của kết xuất HTML sẵn phía máy chủ.
+Kết quả cho thấy các biện pháp thiết kế tại mục 3.8 phát huy tác dụng rõ ở hai nhóm chỉ số. Độ ổn định bố cục gần như tuyệt đối trên các trang do hệ thống kiểm soát toàn bộ (CLS = 0,000, so với 0,243 của trang chủ website cũ) — kết quả trực tiếp của việc giữ chỗ kích thước ảnh của thành phần ảnh tối ưu. Thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây và Speed Index từ 1,1 đến 2,9 giây, phản ánh hiệu quả của kết xuất HTML sẵn phía máy chủ.
 
-Ở chiều ngược lại, số liệu cũng chỉ ra hai điểm cần cải thiện mà chúng tôi ghi nhận trung thực. Thứ nhất, LCP của ba trang bố cục (4,2–6,2 giây) chưa đạt ngưỡng tốt: phần tử LCP là ảnh nền hero khổ lớn, hiện chưa được nén đủ mạnh cho điều kiện Slow 4G — hướng xử lý là chuyển ảnh hero sang định dạng AVIF/WebP kích thước theo khung nhìn. Thứ hai, trang bài viết di trú tuy có LCP tốt nhất (2,58 giây) nhưng TBT lên tới 1.963 ms và CLS 0,179: thân bài HTML giữ nguyên từ hệ thống cũ chứa ảnh gốc độ phân giải đầy đủ không khai báo kích thước, nằm ngoài đường tối ưu `next/image` (hạn chế đã nêu tại mục 3.7.3). Đây là cái giá của quyết định giữ nguyên vẹn nội dung di trú; biện pháp khắc phục (nén lại kho ảnh legacy, bổ sung thuộc tính kích thước khi làm sạch HTML) được đưa vào kiến nghị.
+Ở chiều ngược lại, số liệu cũng chỉ ra hai điểm cần cải thiện mà chúng tôi ghi nhận trung thực. Thứ nhất, LCP của ba trang bố cục (4,2–6,2 giây) chưa đạt ngưỡng tốt: phần tử LCP là ảnh nền hero khổ lớn, hiện chưa được nén đủ mạnh cho điều kiện Slow 4G — hướng xử lý là chuyển ảnh hero sang định dạng AVIF/WebP kích thước theo khung nhìn. Thứ hai, trang bài viết di trú tuy có LCP tốt nhất (2,58 giây) nhưng TBT lên tới 1.963 ms và CLS 0,179: thân bài HTML giữ nguyên từ hệ thống cũ chứa ảnh gốc độ phân giải đầy đủ không khai báo kích thước, nằm ngoài đường tối ưu ảnh của hệ thống (hạn chế đã nêu tại mục 3.7.3). Đây là cái giá của quyết định giữ nguyên vẹn nội dung di trú; biện pháp khắc phục (nén lại kho ảnh legacy, bổ sung thuộc tính kích thước khi làm sạch HTML) được đưa vào kiến nghị.
 
 Dữ liệu trường: 【CHƯA ĐO: CrUX yêu cầu tên miền công khai có lưu lượng thật — thiết lập theo dõi qua Search Console sau khi gắn tên miền】.
 
@@ -128,7 +128,7 @@ Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practice
 
 | Trang | Performance | Accessibility | Best Practices | SEO |
 |---|---|---|---|---|
-| Trang chủ `/vi` | 74 | 80 | 96 | 92 |
+| Trang chủ | 74 | 80 | 96 | 92 |
 | Bài viết di trú | 61 | 88 | 96 | 100 |
 | Trang bộ môn | 85 | 80 | 96 | 100 |
 | Trang giới thiệu | 75 | 91 | 88 | 100 |
@@ -149,7 +149,7 @@ Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practice
 
 ### 4.5.3 Lỗ hổng trong các thư viện phụ thuộc
 
-Quét bằng `pnpm audit` trên toàn monorepo (ngày 09/07/2026) ghi nhận **51 cảnh báo lỗ hổng** trong cây phụ thuộc: 3 mức nghiêm trọng (critical), 21 cao, 21 trung bình, 6 thấp. Chúng tôi trình bày số liệu này trung thực như một hạng mục bảo trì đang mở: phần lớn cảnh báo nằm ở phụ thuộc gián tiếp của các công cụ phát triển và một số thư viện có bản vá ở phiên bản mới hơn (ví dụ `better-auth` cần nâng lên ≥ 1.6.11 theo khuyến cáo GHSA-2vg6-77g8-24mp). Kế hoạch xử lý: nâng cấp các gói có bản vá, đánh giá khả năng khai thác thực tế của từng cảnh báo mức cao trở lên trong ngữ cảnh triển khai (nhiều lỗ hổng chỉ khai thác được ở cấu hình không sử dụng), và đưa `pnpm audit` vào cổng chất lượng định kỳ. Ở tầng ứng dụng, các biện pháp chủ động đã hiện thực gồm: băm mật khẩu bcrypt, JWT tách access/refresh, phân quyền hai lớp kiểm thử đầy đủ (4.2.3), làm sạch HTML di trú (loại `script`, thuộc tính `on*`), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
+Quét bằng `pnpm audit` trên toàn monorepo (ngày 09/07/2026) ghi nhận **51 cảnh báo lỗ hổng** trong cây phụ thuộc: 3 mức nghiêm trọng (critical), 21 cao, 21 trung bình, 6 thấp. Chúng tôi trình bày số liệu này trung thực như một hạng mục bảo trì đang mở: phần lớn cảnh báo nằm ở phụ thuộc gián tiếp của các công cụ phát triển và một số thư viện có bản vá ở phiên bản mới hơn (ví dụ `better-auth` cần nâng lên ≥ 1.6.11 theo khuyến cáo GHSA-2vg6-77g8-24mp). Kế hoạch xử lý: nâng cấp các gói có bản vá, đánh giá khả năng khai thác thực tế của từng cảnh báo mức cao trở lên trong ngữ cảnh triển khai (nhiều lỗ hổng chỉ khai thác được ở cấu hình không sử dụng), và đưa `pnpm audit` vào cổng chất lượng định kỳ. Ở tầng ứng dụng, các biện pháp chủ động đã hiện thực gồm: băm mật khẩu bcrypt, JWT tách access/refresh, phân quyền hai lớp kiểm thử đầy đủ (4.2.3), làm sạch HTML di trú (loại mã kịch bản và thuộc tính bắt sự kiện), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
 
 ## 4.6 Đánh giá SEO và GEO
 
@@ -157,11 +157,11 @@ Quét bằng `pnpm audit` trên toàn monorepo (ngày 09/07/2026) ghi nhận **5
 
 Kiểm tra trực tiếp mã HTML trả về (12/07/2026) xác nhận phần lớn hạng mục thiết kế tại mục 3.8 hoạt động đúng: mỗi trang có thẻ tiêu đề, mô tả và canonical riêng; trang chủ phát 6 khối dữ liệu có cấu trúc JSON-LD và trang bài viết phát 8 khối; bộ thẻ Open Graph đầy đủ (9 thẻ); 44/45 ảnh trên trang chủ được nạp trễ; `robots.txt` hợp lệ và `sitemap.xml` liệt kê các trang đã xuất bản kèm thời điểm cập nhật `lastmod` — trong khi địa chỉ `sitemap.xml` của website cũ trả về một trang HTML, tức không có sitemap thực. 397 URL cũ chuyển hướng 308 về địa chỉ mới (kiểm chứng tại Bảng 4.5); điểm SEO on-page định lượng đạt 92–100 (Bảng 4.7).
 
-Một hạng mục thiết kế chưa được hiện thực tại thời điểm đo và được báo cáo trung thực: các trang hiện **chưa phát cặp thẻ `hreflang`** khai báo quan hệ giữa hai phiên bản ngôn ngữ vi/en — hai phiên bản mới chỉ phân tách bằng tiền tố URL. Thiếu sót này không ngăn việc lập chỉ mục nhưng có thể khiến công cụ tìm kiếm chọn sai phiên bản ngôn ngữ cho người dùng quốc tế; việc bổ sung thuộc tính `alternates.languages` trong metadata Next.js là thay đổi nhỏ, được xếp vào danh mục việc cần làm trước vận hành chính thức.
+Một hạng mục thiết kế chưa được hiện thực tại thời điểm đo và được báo cáo trung thực: các trang hiện **chưa phát cặp thẻ `hreflang`** khai báo quan hệ giữa hai phiên bản ngôn ngữ vi/en — hai phiên bản mới chỉ phân tách bằng tiền tố URL. Thiếu sót này không ngăn việc lập chỉ mục nhưng có thể khiến công cụ tìm kiếm chọn sai phiên bản ngôn ngữ cho người dùng quốc tế; việc khai báo phiên bản ngôn ngữ thay thế trong cấu hình metadata của Next.js là thay đổi nhỏ, được xếp vào danh mục việc cần làm trước vận hành chính thức.
 
 ### 4.6.2 Kiểm định dữ liệu có cấu trúc
 
-Khối JSON-LD `NewsArticle` trên trang bài viết cần kiểm định bằng công cụ chính thức: 【CHƯA ĐO: kết quả Schema.org Validator / Google Rich Results Test trên 2–3 trang bài viết — chạy được ngay khi bản triển khai truy cập từ Internet】.
+Khối JSON-LD loại NewsArticle trên trang bài viết cần kiểm định bằng công cụ chính thức: 【CHƯA ĐO: kết quả Schema.org Validator / Google Rich Results Test trên 2–3 trang bài viết — chạy được ngay khi bản triển khai truy cập từ Internet】.
 
 ### 4.6.3 Khả năng thu thập và kết xuất
 
@@ -184,7 +184,7 @@ Việc so sánh được thực hiện trên hai bình diện: năng lực chứ
 | Kiến trúc | Nguyên khối, hiển thị gắn dữ liệu | Headless ba tầng, API duy nhất, backend không trạng thái |
 | Dàn trang | Không — bố cục cố định trong mã | Visual Builder kéo – thả, mẫu tái sử dụng |
 | Quy trình xuất bản | Đăng trực tiếp | Nháp → duyệt → xuất bản; lên lịch; lịch sử phiên bản + khôi phục |
-| Song ngữ | Bảng dịch riêng, JOIN mỗi truy vấn | JSON `{vi, en}`, giao diện hai thẻ, tự lùi về tiếng Việt |
+| Song ngữ | Bảng dịch riêng, phải kết nối bảng mỗi truy vấn | JSON song ngữ, giao diện hai thẻ, tự lùi về tiếng Việt |
 | Phân quyền | Mọi tài khoản thao tác toàn bộ nội dung | 2 vai trò × phạm vi bộ môn, kiểm thử 40 ca |
 | Bộ nhớ đệm | Không | 3 tầng (ISR, Redis, đệm module) |
 | SEO | Không sitemap/metadata tự động | SSR/ISR, metadata động, JSON-LD, sitemap, hreflang, chuyển hướng 308 |
@@ -196,7 +196,7 @@ Hai trang chủ được đo cùng ngày, cùng phiên bản công cụ và cùn
 
 *Bảng 4.9. So sánh chỉ số trang chủ website cũ và mới — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, 12/07/2026; website cũ đo qua Internet, website mới đo trên bản build production tại máy đo*
 
-| Chỉ số | Website cũ (phys.hcmus.edu.vn) | Website mới (`/vi`) | Thay đổi |
+| Chỉ số | Website cũ (phys.hcmus.edu.vn) | Website mới | Thay đổi |
 |---|---|---|---|
 | Điểm Performance | 13 | 74 | +61 điểm |
 | Điểm SEO | 85 | 92 | +7 điểm |
@@ -213,7 +213,7 @@ Hai trang chủ được đo cùng ngày, cùng phiên bản công cụ và cùn
 | Ảnh nạp trễ | 0/38 | 44/45 | bổ sung mới |
 | Sitemap | trả về trang HTML (không hợp lệ) | XML hợp lệ, kèm `lastmod` | bổ sung mới |
 
-Kết quả cho thấy khoảng cách lớn nhất nằm ở nhóm hiệu năng tải trang. Trang chủ cũ tải về 21,2 MB qua 137 yêu cầu HTTP mà không nạp trễ bất kỳ ảnh nào, khiến trong điều kiện mạng di động mô phỏng, chỉ số LCP lên tới 86,5 giây và Speed Index 30,8 giây — nói cách khác, người dùng điện thoại ở điều kiện mạng trung bình gần như không đợi được đến lúc trang hiển thị xong. Trang chủ mới, với cùng lượng nội dung hiển thị tương đương, chỉ tải 0,82 MB qua 27 yêu cầu: mức giảm 96% trọng lượng này là kết quả cộng hưởng của kết xuất HTML sẵn phía máy chủ, nạp trễ 44/45 ảnh và tối ưu kích thước ảnh qua `next/image`, đưa toàn bộ các chỉ số tốc độ về vùng chấp nhận được (FCP 1,25 giây; TBT giảm 94%) và độ ổn định bố cục về mức lý tưởng (CLS 0,243 → 0,000). Cần lưu ý một cách trung thực rằng phép đo trang mới không chứa độ trễ mạng thật ở thành phần phản hồi máy chủ; tuy nhiên các chỉ số chênh lệch nhiều lần ở trên chủ yếu phản ánh khối lượng tài nguyên và cấu trúc trang — các yếu tố không đổi khi triển khai — nên xu hướng so sánh vẫn giữ nguyên khi đo lại trên tên miền chính thức.
+Kết quả cho thấy khoảng cách lớn nhất nằm ở nhóm hiệu năng tải trang. Trang chủ cũ tải về 21,2 MB qua 137 yêu cầu HTTP mà không nạp trễ bất kỳ ảnh nào, khiến trong điều kiện mạng di động mô phỏng, chỉ số LCP lên tới 86,5 giây và Speed Index 30,8 giây — nói cách khác, người dùng điện thoại ở điều kiện mạng trung bình gần như không đợi được đến lúc trang hiển thị xong. Trang chủ mới, với cùng lượng nội dung hiển thị tương đương, chỉ tải 0,82 MB qua 27 yêu cầu: mức giảm 96% trọng lượng này là kết quả cộng hưởng của kết xuất HTML sẵn phía máy chủ, nạp trễ 44/45 ảnh và tối ưu kích thước ảnh tự động, đưa toàn bộ các chỉ số tốc độ về vùng chấp nhận được (FCP 1,25 giây; TBT giảm 94%) và độ ổn định bố cục về mức lý tưởng (CLS 0,243 → 0,000). Cần lưu ý một cách trung thực rằng phép đo trang mới không chứa độ trễ mạng thật ở thành phần phản hồi máy chủ; tuy nhiên các chỉ số chênh lệch nhiều lần ở trên chủ yếu phản ánh khối lượng tài nguyên và cấu trúc trang — các yếu tố không đổi khi triển khai — nên xu hướng so sánh vẫn giữ nguyên khi đo lại trên tên miền chính thức.
 
 Ở nhóm khả năng được tìm thấy, điểm SEO tăng từ 85 lên 92 chưa phản ánh hết khác biệt về chất: website cũ tuy có thẻ mô tả và canonical nhưng hoàn toàn không có dữ liệu có cấu trúc và không có sitemap thực (địa chỉ `sitemap.xml` trả về một trang HTML), nghĩa là hơn 1.600 bài viết không có bản đồ nội dung nào cho máy tìm kiếm; hệ thống mới bổ sung 6 khối JSON-LD trên trang chủ, sitemap XML hợp lệ kèm thời điểm cập nhật và 397 chuyển hướng vĩnh viễn bảo toàn giá trị các URL cũ. Ngược lại, điểm Accessibility của trang mới thấp hơn trang cũ 8 điểm — kết quả ngược kỳ vọng đã được phân tích tại mục 4.4 và đưa vào danh mục việc cần hoàn thiện. Tổng hợp lại, hệ thống mới vượt nền tảng cũ ở đúng những chỉ tiêu mà mục tiêu đề tài nhắm đến (hiệu năng, khả năng được tìm thấy, năng lực quản trị), đồng thời số liệu cũng chỉ ra cụ thể các điểm còn phải cải thiện trước khi vận hành chính thức.
 
