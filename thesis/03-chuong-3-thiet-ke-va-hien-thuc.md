@@ -231,7 +231,7 @@ Toàn bộ trang công khai kết xuất phía máy chủ thành HTML đầy đ�
 
 ### 3.8.2 Metadata động và dữ liệu có cấu trúc
 
-Mỗi trang sinh siêu dữ liệu từ chính nội dung: thẻ tiêu đề, mô tả (từ tóm tắt bài viết), canonical, Open Graph kèm ảnh bìa, và cặp thẻ `hreflang` vi/en cho hai phiên bản ngôn ngữ. Bài viết nhúng khối JSON-LD `NewsArticle` (tiêu đề, thời điểm đăng, tác giả tổ chức, ảnh); biên tập viên có thể ghi đè qua bảng `SEOMetadata` khi cần tinh chỉnh thủ công.
+Mỗi trang sinh siêu dữ liệu từ chính nội dung: thẻ tiêu đề, mô tả (từ tóm tắt bài viết), canonical và bộ thẻ Open Graph kèm ảnh bìa. Bài viết nhúng khối JSON-LD `NewsArticle` (tiêu đề, thời điểm đăng, tác giả tổ chức, ảnh); biên tập viên có thể ghi đè qua bảng `SEOMetadata` khi cần tinh chỉnh thủ công. Hai phiên bản ngôn ngữ được phân tách bằng tiền tố URL (`/vi`, `/en`); việc phát cặp thẻ `hreflang` khai báo tường minh quan hệ giữa hai phiên bản được ghi nhận là hạng mục bổ sung (mục 4.6.1).
 
 ### 3.8.3 Sitemap, robots và lập chỉ mục
 
@@ -267,7 +267,7 @@ Monorepo pnpm với ba workspace (mục 3.1) cho phép cài đặt phụ thuộc
 
 ### 3.9.2 Container hóa
 
-Mỗi thành phần có Dockerfile riêng; tệp `docker-compose.prod.yml` mô tả toàn bộ ngăn xếp sản xuất gồm sáu dịch vụ: `db` (PostgreSQL 16, volume bền vững), `redis`, `db-setup` (dịch vụ chạy một lần: đẩy lược đồ Prisma và nạp dữ liệu khởi tạo), `backend` (:3001), `admin` (:3000) và `public` (:3002). Ngăn xếp tự chứa — không phụ thuộc dịch vụ bên ngoài — nên dựng được nguyên trạng trên bất kỳ máy chủ nào có Docker. Một điểm phụ thuộc chéo đáng chú ý: ứng dụng public dùng chung một số thành phần nguồn với admin (bí danh `@admin`), nên ảnh Docker của public phải build từ ngữ cảnh gốc kho với đầy đủ workspace.
+Mỗi thành phần có Dockerfile riêng; tệp `docker-compose.sandbox.yml` mô tả toàn bộ ngăn xếp triển khai gồm sáu dịch vụ: `db` (PostgreSQL 16, volume bền vững), `redis`, `db-setup` (dịch vụ chạy một lần: đẩy lược đồ Prisma và nạp dữ liệu khởi tạo), `backend` (:3001), `admin` (:3000) và `public` (:3002). Ngăn xếp tự chứa — không phụ thuộc dịch vụ bên ngoài — nên dựng được nguyên trạng trên bất kỳ máy chủ nào có Docker. Một điểm phụ thuộc chéo đáng chú ý: ứng dụng public dùng chung một số thành phần nguồn với admin (bí danh `@admin`), nên ảnh Docker của public phải build từ ngữ cảnh gốc kho với đầy đủ workspace.
 
 【HÌNH 3.11 — Sơ đồ triển khai: 6 container trên máy chủ CentOS 7.9, cổng 3000–3002 công bố ra ngoài】
 

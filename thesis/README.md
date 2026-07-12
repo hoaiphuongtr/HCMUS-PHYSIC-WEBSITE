@@ -32,20 +32,24 @@ thiết kế + hiện thực, Chương 4 có mục kiểm thử chức năng, M�
 3.5 tầng đệm · 4.1 công cụ đo · 4.2–4.5 kịch bản kiểm thử (CRUD/quyền/xuất bản/di trú) ·
 4.6 so sánh cũ–mới · 4.7 đối chiếu mục tiêu.
 
-## Placeholder còn treo 【CHƯA ĐO】 — tất cả chờ MỘT điều kiện: tên miền công khai
+## Placeholder còn treo 【CHƯA ĐO】 — chỉ còn nhóm cần tên miền công khai
 
-| Vị trí | Chỉ số | Cách đo khi có domain |
+| Vị trí | Chỉ số | Điều kiện |
 |---|---|---|
-| 4.3 | LCP / INP(TBT) / CLS / FCP / TTFB | Lighthouse mobile trên 4 trang đại diện |
-| 4.4 | 4 điểm Lighthouse × 4 trang | Lighthouse / PageSpeed Insights |
-| 4.5.1 | MDN HTTP Observatory | cần HTTPS |
-| 4.5.2 | SSL Labs | cần chứng chỉ TLS |
-| 4.6.2 | Schema.org / Rich Results Test | cần URL truy cập từ Internet |
-| 4.7.1 | Lighthouse site cũ vs mới | đo cùng thời điểm, cùng cấu hình |
+| 4.3 (cuối) | CrUX field data | domain + lưu lượng thật |
+| 4.5.1 | MDN HTTP Observatory | HTTPS |
+| 4.5.2 | SSL Labs | chứng chỉ TLS |
+| 4.6.2 | Schema.org / Rich Results Test | URL truy cập từ Internet |
 
-Số liệu ĐÃ đo thật (không được sửa nếu không đo lại): 40/40 unit test (Vitest 4.1.5,
-09/07/2026); `pnpm audit` 51 lỗ hổng = 3 critical + 21 high + 21 moderate + 6 low
-(09/07/2026); toàn bộ số liệu di trú ở Bảng 4.5 (từ nhật ký script, progress.md).
+Số liệu ĐÃ đo thật (không sửa nếu không đo lại):
+- 40/40 unit test (Vitest 4.1.5, 09/07/2026); `pnpm audit` 51 vulns (09/07/2026); di trú Bảng 4.5.
+- **Lighthouse 13.4.0, 12/07/2026** (mobile, Slow 4G mô phỏng; site mới = production build
+  localhost + DB thật 1.654 bài, backend cục bộ trỏ Postgres :5432/hcmus-physic):
+  cũ 13/88/96/85, 21,2MB, 137 req, LCP 86,5s, CLS 0,243; mới /vi 74/80/96/92, 0,82MB,
+  27 req, LCP 5,51s, CLS 0; bài di trú 61/88/96/100 (TBT 1963ms, ~221MB ảnh legacy);
+  bộ môn 85/80/96/100; giới thiệu 75/91/88/100. Sitemap cũ = HTML (không hợp lệ).
+  Trang mới CHƯA phát hreflang (đã ghi trung thực ở 4.6.1).
+- Báo cáo JSON gốc: scratchpad `lh-*.json` (tạm thời — copy về nơi bền nếu cần giữ).
 
 ## Việc còn lại trước khi gửi cô
 
