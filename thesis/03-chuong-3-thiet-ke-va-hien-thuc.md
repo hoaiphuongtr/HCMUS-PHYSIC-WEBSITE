@@ -203,6 +203,8 @@ Thân bài nguồn là HTML tự do từ trình soạn thảo TinyMCE, kèm đ�
 
 Tư liệu phương tiện được tải tự động từ máy chủ cũ: hệ thống quét ảnh bìa và mọi thẻ ảnh trong thân bài hai ngôn ngữ, tải song song sáu luồng về kho tệp mới. Kết quả thực đo: 1.909 đường dẫn duy nhất — 1.870 tải thành công, 36 hỏng ngay trên máy chủ nguồn, 3 đã có sẵn; tổng dung lượng 3,9 GB. Riêng tư liệu của các trang nội dung: 180/187 tệp (7 tệp hỏng phía nguồn).
 
+Sau di trú, kho ảnh được chuẩn hóa cho môi trường web: các ảnh vượt 1.600 điểm ảnh chiều rộng được thu về đúng mức và nén lại theo định dạng gốc, đưa tổng dung lượng kho từ 4,0 GB xuống 469 MB (nén 1.273 tệp, không tệp nào lỗi) mà không đổi đường dẫn. Đồng thời, toàn bộ thẻ ảnh trong thân bài di trú được bổ sung thuộc tính kích thước đọc từ tệp thật (5.877 thẻ trong 402 bài viết và 410 bố cục), giúp trình duyệt giữ chỗ bố cục trước khi ảnh tải xong và loại trừ dịch chuyển bố cục.
+
 ### 3.7.4 Quy trình di trú
 
 Quy trình tổng thể (Hình 3.10) gồm bốn giai đoạn, toàn bộ là các script tự động chạy lặp lại an toàn nhờ ghi đè theo khóa gốc. Giai đoạn thứ nhất phục hồi nguồn: script khởi động tự dựng một MariaDB 10.6 tạm thời trong Docker, nạp bản sao lưu, rồi đọc bảng ngôn ngữ của nguồn để xác nhận ánh xạ mã ngôn ngữ. Giai đoạn thứ hai di trú các thực thể theo thứ tự an toàn khóa ngoại — đơn vị, người dùng cũ (chỉ hồ sơ, không mật khẩu), chuyên mục, rồi bài viết; kết quả thực đo gồm 10 đơn vị, 45 chuyên mục di trú (cộng 5 chuyên mục mặc định của hệ mới) và **1.637 bài viết** (nâng tổng số lên 1.704 bài cùng 67 bài có sẵn). Giai đoạn thứ ba tải và ánh xạ phương tiện: sau khi tải kho tệp về (mục 3.7.3), bước ánh xạ cập nhật 1.636 bài viết và 7 chuyên mục trỏ về kho tệp mới. Giai đoạn cuối gắn nhãn bộ môn: đọc mã bộ môn gốc của từng bài qua khóa gốc rồi gắn nhãn cho **1.587 bài viết** cùng **1.540 bố cục** phát sinh, tạo nền dữ liệu cho cơ chế phân quyền bộ môn (mục 3.4.4).
@@ -231,7 +233,7 @@ Toàn bộ trang công khai kết xuất phía máy chủ thành HTML đầy đ�
 
 ### 3.8.2 Metadata động và dữ liệu có cấu trúc
 
-Mỗi trang sinh siêu dữ liệu từ chính nội dung: thẻ tiêu đề, mô tả (từ tóm tắt bài viết), canonical và bộ thẻ Open Graph kèm ảnh bìa. Bài viết nhúng khối dữ liệu có cấu trúc JSON-LD loại NewsArticle (tiêu đề, thời điểm đăng, tác giả tổ chức, ảnh); biên tập viên có thể ghi đè qua bảng siêu dữ liệu SEO khi cần tinh chỉnh thủ công. Hai phiên bản ngôn ngữ được phân tách bằng tiền tố URL (/vi, /en); việc phát cặp thẻ hreflang khai báo tường minh quan hệ giữa hai phiên bản được ghi nhận là hạng mục bổ sung (mục 4.6.1).
+Mỗi trang sinh siêu dữ liệu từ chính nội dung: thẻ tiêu đề, mô tả (từ tóm tắt bài viết), canonical và bộ thẻ Open Graph kèm ảnh bìa. Bài viết nhúng khối dữ liệu có cấu trúc JSON-LD loại NewsArticle (tiêu đề, thời điểm đăng, tác giả tổ chức, ảnh); biên tập viên có thể ghi đè qua bảng siêu dữ liệu SEO khi cần tinh chỉnh thủ công. Hai phiên bản ngôn ngữ được phân tách bằng tiền tố URL (/vi, /en) và được khai báo tường minh bằng bộ thẻ hreflang (vi, en và x-default) trên từng trang, giúp công cụ tìm kiếm chọn đúng phiên bản ngôn ngữ cho người dùng.
 
 ### 3.8.3 Sitemap, robots và lập chỉ mục
 
