@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#000"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- trình duyệt -->
+  <rect x="35" y="230" width="185" height="90" fill="#f5f5f5" stroke="#000" stroke-width="1.5"/>
+  <text x="127" y="268" text-anchor="middle" font-size="16" font-weight="bold">Trình duyệt</text>
+  <text x="127" y="294" text-anchor="middle" font-size="14">giảng viên / khách</text>
+
+  <!-- máy chủ -->
+  <rect x="280" y="35" width="650" height="530" fill="#fafafa" stroke="#000" stroke-width="1.5"/>
+  <text x="605" y="65" text-anchor="middle" font-size="16" font-weight="bold">Máy chủ CentOS 7.9 — 4 vCPU / 4 GB RAM</text>
+  <text x="605" y="87" text-anchor="middle" font-size="13" font-style="italic">glibc 2.17 không chạy được Node 24 → toàn bộ chạy trong Docker</text>
+
+  <!-- Docker Engine -->
+  <rect x="305" y="105" width="600" height="430" fill="#f0f0f0" stroke="#000" stroke-width="1.2" stroke-dasharray="7 4"/>
+  <text x="605" y="130" text-anchor="middle" font-size="15" font-weight="bold">Docker Engine (Compose — 6 dịch vụ)</text>
+
+  <!-- hàng ứng dụng -->
+  <g font-size="15">
+    <rect x="330" y="155" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="412" y="188" text-anchor="middle" font-weight="bold">Trang quản trị</text>
+    <text x="412" y="212" text-anchor="middle">cổng 3000</text>
+
+    <rect x="522" y="155" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="604" y="188" text-anchor="middle" font-weight="bold">Trang công khai</text>
+    <text x="604" y="212" text-anchor="middle">cổng 3002</text>
+
+    <rect x="714" y="155" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="796" y="188" text-anchor="middle" font-weight="bold">Máy chủ API</text>
+    <text x="796" y="212" text-anchor="middle">cổng 3001</text>
+  </g>
+
+  <!-- hàng dữ liệu -->
+  <g font-size="15">
+    <rect x="330" y="330" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <text x="412" y="358" text-anchor="middle" font-weight="bold">db-setup</text>
+    <text x="412" y="380" text-anchor="middle" font-size="13">chạy một lần: đẩy</text>
+    <text x="412" y="398" text-anchor="middle" font-size="13">lược đồ + nạp seed</text>
+
+    <rect x="522" y="330" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="604" y="363" text-anchor="middle" font-weight="bold">PostgreSQL 16</text>
+    <text x="604" y="387" text-anchor="middle" font-size="13">dữ liệu nghiệp vụ</text>
+
+    <rect x="714" y="330" width="165" height="80" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <text x="796" y="363" text-anchor="middle" font-weight="bold">Redis</text>
+    <text x="796" y="387" text-anchor="middle" font-size="13">read cache</text>
+  </g>
+
+  <!-- volume -->
+  <rect x="522" y="465" width="165" height="50" fill="#fff" stroke="#000" stroke-width="1.5"/>
+  <text x="604" y="496" text-anchor="middle" font-size="14">volume pgdata (bền vững)</text>
+
+  <!-- kết nối -->
+  <g stroke="#000" stroke-width="1.5" fill="none">
+    <!-- trình duyệt -> máy chủ -->
+    <line x1="220" y1="275" x2="276" y2="275" marker-end="url(#arr)"/>
+    <!-- admin & public -> API : gộp làn y=275 -->
+    <polyline points="412,235 412,275 710,275"/>
+    <polyline points="604,235 604,275"/>
+    <polyline points="710,275 760,275 760,239" marker-end="url(#arr)"/>
+    <!-- API -> PostgreSQL : (796,235)?? dùng (830,235) v (830,300) h (640,300) v (640,326) -->
+    <polyline points="830,235 830,300 640,300 640,326" marker-end="url(#arr)"/>
+    <!-- API -> Redis : dọc x=796 -->
+    <line x1="796" y1="303" x2="796" y2="326" stroke="none"/>
+    <polyline points="860,235 860,315 820,315 820,326" marker-end="url(#arr)"/>
+    <!-- db-setup -> PostgreSQL : ngang nét đứt -->
+    <line x1="495" y1="370" x2="518" y2="370" stroke-dasharray="5 3" marker-end="url(#arr)"/>
+    <!-- PostgreSQL -> volume -->
+    <line x1="604" y1="410" x2="604" y2="461" marker-end="url(#arr)"/>
+  </g>
+  <text x="248" y="262" text-anchor="middle" font-size="13" font-style="italic">HTTP</text>
+  <text x="127" y="348" text-anchor="middle" font-size="13">qua các cổng 3000 / 3001 / 3002</text>
+</svg>
