@@ -189,10 +189,11 @@ function PostBodyRender({
       (_m, pre: string, src: string, post: string) =>
         `${pre}${resolveMediaUrl(src)}${post}`,
     )
-    .replace(
-      /<img(?![^>]*\bloading=)/gi,
-      '<img loading="lazy" decoding="async" ',
-    );
+    .replace(/<img(?![^>]*\bloading=)/gi, (() => {
+      let imgIdx = 0;
+      return () =>
+        ++imgIdx <= 1 ? '<img decoding="async" ' : '<img loading="lazy" decoding="async" ';
+    })());
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
     return (
@@ -283,10 +284,11 @@ export function LegacyHtmlRender({
     (_m, pre: string, src: string, post: string) =>
       `${pre}${resolveMediaUrl(src)}${post}`,
   )
-    .replace(
-    /<img(?![^>]*\bloading=)/gi,
-    '<img loading="lazy" decoding="async" ',
-  );
+    .replace(/<img(?![^>]*\bloading=)/gi, (() => {
+      let imgIdx = 0;
+      return () =>
+        ++imgIdx <= 1 ? '<img decoding="async" ' : '<img loading="lazy" decoding="async" ';
+    })());
   return (
     <div className="legacy-content my-4">
       <style>{`
@@ -414,14 +416,18 @@ function PostCoverImageRender({
     );
   }
   return (
-    <div className="w-full rounded-lg overflow-hidden my-4 bg-slate-50 dark:bg-[#121a2b] flex items-center justify-center">
+    <div
+      className="w-full rounded-lg overflow-hidden my-4 bg-slate-50 dark:bg-[#121a2b] flex items-center justify-center"
+      style={{ aspectRatio: aspectRatio || "16/9" }}
+    >
       {/** biome-ignore lint/performance/noImgElement: needs natural aspect, not fill */}
+      {/* Ảnh bìa là ứng viên LCP đầu trang: nạp sớm + giữ chỗ theo tỷ lệ để không gây CLS. */}
       <img
         src={finalSrc}
         alt={finalAlt}
-        loading="lazy"
         decoding="async"
-        className="max-w-full max-h-[80vh] w-auto h-auto object-contain"
+        fetchPriority="high"
+        className="max-w-full max-h-full w-auto h-auto object-contain"
       />
     </div>
   );

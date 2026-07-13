@@ -150,6 +150,7 @@ function HeroFullScreenClient({
                 sizes="100vw"
                 priority={isActive}
                 fetchPriority={isActive ? "high" : undefined}
+                loading={isActive ? undefined : "lazy"}
                 className="object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
               />
             ) : (
