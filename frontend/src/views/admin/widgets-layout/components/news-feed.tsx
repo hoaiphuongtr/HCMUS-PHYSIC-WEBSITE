@@ -314,7 +314,7 @@ function LatestNewsAutoRender({
         accentColor={accentColor || "#1e40af"}
       />
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400 dark:text-slate-500">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           {locale === "en"
             ? "No news yet. Snapshot will populate after publishing a post."
             : "Chưa có tin tức nào. Snapshot sẽ tự cập nhật khi có bài đăng được publish."}
@@ -392,7 +392,7 @@ function UpcomingEventsAutoRender({
         accentColor={accentColor || "#059669"}
       />
       {data.length === 0 ? (
-        <p className="text-sm text-slate-400 dark:text-slate-500">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           {locale === "en"
             ? "No upcoming events. Snapshot will populate after publishing an event."
             : "Hiện chưa có sự kiện sắp tới. Snapshot sẽ tự cập nhật khi publish sự kiện."}
@@ -727,7 +727,7 @@ function NewsListPaginatedRender({
       </div>
 
       {items.length === 0 && !loading ? (
-        <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-12">
+        <p className="text-sm text-slate-600 dark:text-slate-400 text-center py-12">
           {locale === "en"
             ? "No posts match the filters."
             : "Không có bài viết nào phù hợp."}

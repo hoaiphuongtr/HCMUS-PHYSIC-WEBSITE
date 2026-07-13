@@ -10,6 +10,19 @@ export const buildCanonical = (path: string): string => {
   return `${base}${cleaned}`;
 };
 
+/** hreflang alternates cho một path (không kèm tiền tố locale). */
+export const buildLanguageAlternates = (
+  path: string,
+): Record<string, string> => {
+  const base = getBaseUrl().replace(/\/$/, "");
+  const cleaned = path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
+  return {
+    vi: `${base}/vi${cleaned}`,
+    en: `${base}/en${cleaned}`,
+    "x-default": `${base}/vi${cleaned}`,
+  };
+};
+
 export const buildOgImage = (args?: {
   slug?: string;
   title?: string;

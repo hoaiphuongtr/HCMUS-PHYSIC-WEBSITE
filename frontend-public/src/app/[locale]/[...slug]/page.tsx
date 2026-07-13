@@ -4,7 +4,12 @@ import { notFound } from "next/navigation";
 import { breadcrumbListSchema, JsonLd } from "@/components/JsonLd";
 import { VisitorTracker } from "@/components/visitor-tracker";
 import { getLayoutBySlug } from "@/lib/api";
-import { buildCanonical, buildOgImage, getBaseUrl } from "@/lib/seo";
+import {
+  buildCanonical,
+  buildLanguageAlternates,
+  buildOgImage,
+  getBaseUrl,
+} from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -28,7 +33,10 @@ export async function generateMetadata({
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates: {
+        canonical,
+        languages: buildLanguageAlternates(`/${slugPath}`),
+      },
       openGraph: {
         title,
         description,

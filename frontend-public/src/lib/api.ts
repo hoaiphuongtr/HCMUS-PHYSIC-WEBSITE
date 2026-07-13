@@ -1,4 +1,13 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+// Server-side rendering runs inside the container; on a NAT'd host with no hairpin it
+// cannot reach its own public IP, so SSR fetches use INTERNAL_API_URL (a server-only
+// runtime var, e.g. http://backend:3001) when set. The browser always uses the public
+// URL — INTERNAL_API_URL is undefined client-side, so this collapses to PUBLIC_API_URL.
+const API_URL =
+  typeof window === "undefined"
+    ? process.env.INTERNAL_API_URL || PUBLIC_API_URL
+    : PUBLIC_API_URL;
 
 export async function apiFetch<T>(
   path: string,
@@ -17,7 +26,8 @@ export async function apiFetch<T>(
 
 export const resolveMediaUrl = (url: string | null | undefined): string => {
   if (!url) return "";
-  if (url.startsWith("/uploads/")) return `${API_URL}${url}`;
+  // Always the public URL: this string is emitted into HTML for the browser to load.
+  if (url.startsWith("/uploads/")) return `${PUBLIC_API_URL}${url}`;
   return url;
 };
 

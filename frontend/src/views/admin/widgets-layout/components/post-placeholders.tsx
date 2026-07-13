@@ -188,6 +188,10 @@ function PostBodyRender({
       /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
       (_m, pre: string, src: string, post: string) =>
         `${pre}${resolveMediaUrl(src)}${post}`,
+    )
+    .replace(
+      /<img(?![^>]*\bloading=)/gi,
+      '<img loading="lazy" decoding="async" ',
     );
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
@@ -278,6 +282,10 @@ export function LegacyHtmlRender({
     /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
     (_m, pre: string, src: string, post: string) =>
       `${pre}${resolveMediaUrl(src)}${post}`,
+  )
+    .replace(
+    /<img(?![^>]*\bloading=)/gi,
+    '<img loading="lazy" decoding="async" ',
   );
   return (
     <div className="legacy-content my-4">

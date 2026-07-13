@@ -37,7 +37,7 @@ const findNode = (
   return walk(data.content);
 };
 
-// SiteHeader and SiteFooter both need the homepage layout (for the Navbar and
+// Header and Footer both need the homepage layout (for the Navbar and
 // FooterBlock nodes). Dedup + short-TTL cache so a page render fetches it once
 // instead of twice, and rapid navigations reuse it.
 const HOME_TTL_MS = 30_000;
@@ -111,8 +111,8 @@ function SyndicatedRender({ nodeType, fallback }: SyndicatedRenderProps) {
   return <Render config={config} data={tree as never} />;
 }
 
-export const SiteHeader: ComponentConfig<Record<string, never>> = {
-  label: "Site Header (syncs with home)",
+export const Header: ComponentConfig<Record<string, never>> = {
+  label: "Header",
   defaultProps: {},
   fields: {},
   render: () => (
@@ -120,15 +120,15 @@ export const SiteHeader: ComponentConfig<Record<string, never>> = {
       nodeType="Navbar"
       fallback={
         <div className="px-6 py-3 text-xs text-slate-500">
-          Site header chưa cấu hình. Cập nhật Navbar ở layout "trang-chu".
+          Header chưa cấu hình. Cập nhật Navbar ở layout "trang-chu".
         </div>
       }
     />
   ),
 };
 
-export const SiteFooter: ComponentConfig<Record<string, never>> = {
-  label: "Site Footer (syncs with home)",
+export const Footer: ComponentConfig<Record<string, never>> = {
+  label: "Footer",
   defaultProps: {},
   fields: {},
   render: () => (
@@ -136,7 +136,7 @@ export const SiteFooter: ComponentConfig<Record<string, never>> = {
       nodeType="FooterBlock"
       fallback={
         <div className="px-6 py-6 text-xs text-slate-500">
-          Site footer chưa cấu hình. Cập nhật FooterBlock ở layout "trang-chu".
+          Footer chưa cấu hình. Cập nhật FooterBlock ở layout "trang-chu".
         </div>
       }
     />

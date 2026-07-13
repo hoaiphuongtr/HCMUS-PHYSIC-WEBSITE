@@ -64,7 +64,7 @@ import {
   PostTagList,
   PostTitle,
 } from "./components/post-placeholders";
-import { SiteFooter, SiteHeader } from "./components/site-syndication";
+import { Footer, Header } from "./components/site-syndication";
 import { LegacyPageBody, PageHero } from "./components/legacy-page";
 import { ChatBubble } from "./components/chat-bubble";
 
@@ -85,8 +85,8 @@ export const puckConfig: Config = {
     navigation: {
       title: "Navigation",
       components: [
-        "SiteHeader",
-        "SiteFooter",
+        "Header",
+        "Footer",
         "Navbar",
         "NavLinks",
         "QuickLinks",
@@ -214,8 +214,8 @@ export const puckConfig: Config = {
     PostEventInfo,
     PostHeader,
     PostReaderTools,
-    SiteHeader,
-    SiteFooter,
+    Header,
+    Footer,
     PageHero,
     LegacyPageBody,
     ChatBubble,

@@ -1,7 +1,11 @@
 import type { MetadataRoute } from "next";
 import { getBaseUrl } from "@/lib/seo";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Runs server-side only — prefer the internal API base when set (NAT'd host, no hairpin).
+const API_URL =
+  process.env.INTERNAL_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3001";
 
 type PageLayoutListItem = {
   id: string;

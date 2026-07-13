@@ -2,7 +2,11 @@ import { PuckRenderer } from "@admin/views/admin/widgets-layout/puck-renderer";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLayoutBySlug } from "@/lib/api";
-import { buildCanonical, buildOgImage } from "@/lib/seo";
+import {
+  buildCanonical,
+  buildLanguageAlternates,
+  buildOgImage,
+} from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -20,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates: { canonical, languages: buildLanguageAlternates("/") },
       openGraph: {
         title,
         description,

@@ -1104,6 +1104,7 @@ export const SocialIcons: ComponentConfig<{
                 key={i}
                 href={puck?.isEditing ? "#" : item.url || "#"}
                 tabIndex={puck?.isEditing ? -1 : undefined}
+                aria-label={`Liên kết ${item.icon || "mạng xã hội"}`}
                 className="hover:opacity-70 transition-opacity"
               >
                 {renderIcon(item.icon, item.color || "#ffffff")}
@@ -1113,6 +1114,7 @@ export const SocialIcons: ComponentConfig<{
                 key={i}
                 href={puck?.isEditing ? "#" : item.url || "#"}
                 tabIndex={puck?.isEditing ? -1 : undefined}
+                aria-label={`Liên kết ${item.icon || "mạng xã hội"}`}
                 className={`${s.btn} rounded-full flex items-center justify-center text-white hover:opacity-80 transition-opacity`}
                 style={{ backgroundColor: item.color || "#3b82f6" }}
               >

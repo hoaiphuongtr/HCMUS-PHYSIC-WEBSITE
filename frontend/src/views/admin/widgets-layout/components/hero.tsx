@@ -149,6 +149,7 @@ function HeroFullScreenClient({
                 fill
                 sizes="100vw"
                 priority={isActive}
+                fetchPriority={isActive ? "high" : undefined}
                 className="object-cover animate-[slowZoom_20s_ease_infinite_alternate]"
               />
             ) : (
@@ -176,14 +177,21 @@ function HeroFullScreenClient({
         />
       </div>
       {count > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {slides.map((_: any, i: number) => (
             <button
               type="button"
               key={i}
               onClick={() => goTo(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === current ? "bg-white dark:bg-[#1a2436] w-8" : "bg-white dark:bg-[#1a2436]/40 hover:bg-white/70"}`}
-            />
+              aria-label={`Chuyển đến ảnh ${i + 1}`}
+              aria-current={i === current}
+              className="h-6 min-w-6 flex items-center justify-center"
+            >
+              <span
+                aria-hidden="true"
+                className={`h-2.5 rounded-full transition-all duration-300 ${i === current ? "bg-white dark:bg-[#1a2436] w-8" : "w-2.5 bg-white dark:bg-[#1a2436]/40 hover:bg-white/70"}`}
+              />
+            </button>
           ))}
         </div>
       )}
