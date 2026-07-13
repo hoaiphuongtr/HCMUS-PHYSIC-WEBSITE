@@ -30,4 +30,3 @@
 
 [14] Google, "Lighthouse," Chrome for Developers. [Trực tuyến]. Địa chỉ: https://developer.chrome.com/docs/lighthouse. [Truy cập: 09/07/2026]. *(mục 4.4)*
 
-[15] Mozilla, "MDN HTTP Observatory." [Trực tuyến]. Địa chỉ: https://developer.mozilla.org/en-US/observatory. [Truy cập: 09/07/2026]. *(mục 4.5.1)*

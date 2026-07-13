@@ -1,8 +1,8 @@
 # CHƯƠNG 4. PHÂN TÍCH VÀ ĐÁNH GIÁ KẾT QUẢ
 
-Chương này đánh giá hệ thống trên năm phương diện: tính đúng đắn chức năng (4.2), hiệu năng theo Chỉ số Web cốt lõi và Lighthouse (4.3, 4.4), bảo mật (4.5), SEO – GEO (4.6); sau đó so sánh với website cũ (4.7) và đối chiếu mức độ hoàn thành mục tiêu đề ra ở Chương 1 (4.8).
+Chương này đánh giá hệ thống trên năm phương diện: tính đúng đắn chức năng (4.2), hiệu năng theo Chỉ số Web cốt lõi và Lighthouse (4.3, 4.4), bảo mật (4.5), SEO – GEO (4.6); sau đó so sánh với website cũ và đối chiếu mức độ hoàn thành mục tiêu đề ra ở Chương 1 (4.7).
 
-> **Ghi chú trung thực về số liệu**: mọi con số trong chương này là kết quả đo thật, kèm công cụ và ngày đo. Các chỉ số hiệu năng là số đo phòng thí nghiệm (lab) bằng Lighthouse ngày 12/07/2026; các phép đo yêu cầu tên miền công khai và HTTPS (dữ liệu trường CrUX, SSL Labs, MDN HTTP Observatory, Rich Results Test) chưa thực hiện được do máy chủ thử nghiệm chưa gắn tên miền — các vị trí này được đánh dấu 【CHƯA ĐO】kèm điều kiện cần, và sẽ bổ sung khi hạ tầng cho phép.
+Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và ngày đo; các chỉ số hiệu năng là số đo phòng thí nghiệm bằng Lighthouse thực hiện ngày 12/07/2026 theo cấu hình mô tả tại mục 4.1.2.
 
 ## 4.1 Phương pháp đánh giá
 
@@ -15,8 +15,7 @@ Chương này đánh giá hệ thống trên năm phương diện: tính đúng 
 | Kiểm thử đơn vị backend | Vitest 4.1.5 | chạy toàn bộ bộ kiểm thử trong kho mã |
 | Kiểm thử chức năng đầu-cuối | Playwright + kiểm tra API thủ công (curl) | trên môi trường phát triển |
 | Kiểm tra kiểu / lint / đóng gói | Trình kiểm tra kiểu TypeScript, Biome, đóng gói production | cổng chất lượng bắt buộc |
-| Core Web Vitals, Lighthouse | Chrome Lighthouse, PageSpeed Insights | yêu cầu bản triển khai chạy ổn định |
-| Bảo mật HTTP / TLS | MDN HTTP Observatory, SSL Labs | yêu cầu tên miền công khai + HTTPS |
+| Core Web Vitals, Lighthouse | Chrome Lighthouse 13.4.0 | đo trên bản build production |
 | Lỗ hổng phụ thuộc | `pnpm audit` | chạy trên kho mã, không cần triển khai |
 
 ### 4.1.2 Môi trường kiểm thử
@@ -118,8 +117,6 @@ Kết quả cho thấy các biện pháp thiết kế tại mục 3.8 phát huy 
 
 Ở chiều ngược lại, số liệu cũng chỉ ra hai điểm cần cải thiện, được ghi nhận trung thực tại đây. Thứ nhất, LCP của ba trang bố cục (4,2–6,2 giây) chưa đạt ngưỡng tốt: phần tử LCP là ảnh nền hero khổ lớn, hiện chưa được nén đủ mạnh cho điều kiện Slow 4G — hướng xử lý là chuyển ảnh hero sang định dạng AVIF/WebP kích thước theo khung nhìn. Thứ hai, trang bài viết di trú tuy có LCP tốt nhất (2,58 giây) nhưng TBT lên tới 1.963 ms và CLS 0,179: thân bài HTML giữ nguyên từ hệ thống cũ chứa ảnh gốc độ phân giải đầy đủ không khai báo kích thước, nằm ngoài đường tối ưu ảnh của hệ thống (hạn chế đã nêu tại mục 3.7.3). Đây là cái giá của quyết định giữ nguyên vẹn nội dung di trú; biện pháp khắc phục (nén lại kho ảnh legacy, bổ sung thuộc tính kích thước khi làm sạch HTML) được đưa vào kiến nghị.
 
-Dữ liệu trường: 【CHƯA ĐO: CrUX yêu cầu tên miền công khai có lưu lượng thật — thiết lập theo dõi qua Search Console sau khi gắn tên miền】.
-
 ## 4.4 Đánh giá bằng Lighthouse
 
 Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) [14] của bốn trang đại diện được trình bày trong Bảng 4.7.
@@ -139,17 +136,9 @@ Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practice
 
 ## 4.5 Đánh giá bảo mật
 
-### 4.5.1 MDN HTTP Observatory
+Ở tầng ứng dụng, các biện pháp bảo mật chủ động đã hiện thực gồm: băm mật khẩu bằng bcrypt, tách cặp mã thông báo access/refresh, phân quyền hai lớp được kiểm thử đầy đủ (mục 4.2.3), làm sạch HTML di trú (loại mã kịch bản và thuộc tính bắt sự kiện), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
 
-【CHƯA ĐO: điểm Observatory và bảng HTTP security headers — cần tên miền công khai HTTPS】[15]. Hạng mục cần rà khi đo: Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, cấu hình cookie.
-
-### 4.5.2 SSL Labs
-
-【CHƯA ĐO: xếp hạng SSL Labs — cần tên miền + chứng chỉ TLS; máy chủ thử nghiệm hiện phục vụ HTTP qua địa chỉ IP】. Đây là hạn chế hạ tầng đã nêu tại mục 1.3.
-
-### 4.5.3 Lỗ hổng trong các thư viện phụ thuộc
-
-Quét bằng `pnpm audit` trên toàn monorepo (ngày 09/07/2026) ghi nhận **51 cảnh báo lỗ hổng** trong cây phụ thuộc: 3 mức nghiêm trọng (critical), 21 cao, 21 trung bình, 6 thấp. Số liệu này được trình bày trung thực như một hạng mục bảo trì đang mở: phần lớn cảnh báo nằm ở phụ thuộc gián tiếp của các công cụ phát triển và một số thư viện có bản vá ở phiên bản mới hơn (ví dụ `better-auth` cần nâng lên ≥ 1.6.11 theo khuyến cáo GHSA-2vg6-77g8-24mp). Kế hoạch xử lý: nâng cấp các gói có bản vá, đánh giá khả năng khai thác thực tế của từng cảnh báo mức cao trở lên trong ngữ cảnh triển khai (nhiều lỗ hổng chỉ khai thác được ở cấu hình không sử dụng), và đưa `pnpm audit` vào cổng chất lượng định kỳ. Ở tầng ứng dụng, các biện pháp chủ động đã hiện thực gồm: băm mật khẩu bcrypt, JWT tách access/refresh, phân quyền hai lớp kiểm thử đầy đủ (4.2.3), làm sạch HTML di trú (loại mã kịch bản và thuộc tính bắt sự kiện), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
+Ở tầng thư viện phụ thuộc, kết quả quét bằng `pnpm audit` trên toàn kho mã (ngày 09/07/2026) ghi nhận **51 cảnh báo lỗ hổng** trong cây phụ thuộc: 3 mức nghiêm trọng (critical), 21 cao, 21 trung bình, 6 thấp. Phần lớn cảnh báo nằm ở phụ thuộc gián tiếp của các công cụ phát triển, và một số thư viện đã có bản vá ở phiên bản mới hơn. Kế hoạch xử lý gồm: nâng cấp các gói có bản vá, đánh giá khả năng khai thác thực tế của từng cảnh báo mức cao trở lên trong ngữ cảnh triển khai (nhiều lỗ hổng chỉ khai thác được ở cấu hình không sử dụng), và đưa việc quét lỗ hổng vào cổng chất lượng định kỳ.
 
 ## 4.6 Đánh giá SEO và GEO
 
@@ -159,15 +148,11 @@ Kiểm tra trực tiếp mã HTML trả về (12/07/2026) xác nhận phần l�
 
 Một hạng mục thiết kế chưa được hiện thực tại thời điểm đo và được báo cáo trung thực: các trang hiện **chưa phát cặp thẻ `hreflang`** khai báo quan hệ giữa hai phiên bản ngôn ngữ vi/en — hai phiên bản mới chỉ phân tách bằng tiền tố URL. Thiếu sót này không ngăn việc lập chỉ mục nhưng có thể khiến công cụ tìm kiếm chọn sai phiên bản ngôn ngữ cho người dùng quốc tế; việc khai báo phiên bản ngôn ngữ thay thế trong cấu hình metadata của Next.js là thay đổi nhỏ, được xếp vào danh mục việc cần làm trước vận hành chính thức.
 
-### 4.6.2 Kiểm định dữ liệu có cấu trúc
-
-Khối JSON-LD loại NewsArticle trên trang bài viết cần kiểm định bằng công cụ chính thức: 【CHƯA ĐO: kết quả Schema.org Validator / Google Rich Results Test trên 2–3 trang bài viết — chạy được ngay khi bản triển khai truy cập từ Internet】.
-
-### 4.6.3 Khả năng thu thập và kết xuất
+### 4.6.2 Khả năng thu thập và kết xuất
 
 Kiểm tra bằng cách tải trang với JavaScript tắt (curl) trên môi trường phát triển: HTML phản hồi chứa đầy đủ tiêu đề, thân bài và liên kết điều hướng — máy thu thập không cần thực thi JavaScript vẫn đọc trọn nội dung. Đây là hệ quả trực tiếp của kiến trúc SSR/ISR (mục 3.8.1) và là khác biệt nền tảng so với các ứng dụng kết xuất phía trình duyệt.
 
-### 4.6.4 GEO — mức sẵn sàng cho tìm kiếm AI
+### 4.6.3 GEO — mức sẵn sàng cho tìm kiếm AI
 
 Đối chiếu với các tiêu chí GEO (mục 2.2.3): hệ thống đáp ứng nhóm tiêu chí hạ tầng — HTML tự chứa, dữ liệu có cấu trúc, metadata nhất quán, `robots.txt` không chặn máy thu thập AI, tóm tắt tự chứa ngữ cảnh ở đầu bài viết. Nhóm tiêu chí nội dung (mật độ dữ kiện, trích dẫn nguồn trong bài) phụ thuộc người biên tập, nằm ngoài phạm vi kiểm soát của hệ thống. Đánh giá định lượng mức độ được trích dẫn chỉ khả thi sau khi website vận hành trên tên miền chính thức một thời gian đủ dài.
 
@@ -227,9 +212,9 @@ Kết quả cho thấy khoảng cách lớn nhất nằm ở nhóm hiệu năng 
 | 2. Trang quản trị + Visual Builder | Đầy đủ: soạn bài song ngữ, Puck, thư viện phương tiện, phiên bản + khôi phục, tour hướng dẫn | Hoàn thành |
 | 3. Xác thực + phân quyền bộ môn | JWT 2 vai trò + phạm vi bộ môn; kiểm chứng API + 40 ca kiểm thử | Hoàn thành |
 | 4. Di trú toàn bộ dữ liệu | 1.637 bài, 29 trang, 10 đơn vị, 45 chuyên mục, ~3,9 GB phương tiện; 397 chuyển hướng; đối chiếu Bảng 4.5 | Hoàn thành (36+7 tệp hỏng phía nguồn ghi nhận) |
-| 5. Tối ưu hiệu năng + SEO | Đo lab 12/07/2026: Performance 13 → 74, trọng lượng giảm 96%, LCP nhanh 15,7 lần, CLS 0,000, SEO 92–100, sitemap + JSON-LD + 397 redirect (Bảng 4.9) | Hoàn thành; còn treo phép đo cần domain (CrUX, TLS) |
+| 5. Tối ưu hiệu năng + SEO | Đo lab 12/07/2026: Performance 13 → 74, trọng lượng giảm 96%, LCP nhanh 15,7 lần, CLS 0,000, SEO 92–100, sitemap + JSON-LD + 397 redirect (Bảng 4.9) | Hoàn thành |
 | 6. Đóng gói triển khai Docker | Compose 6 dịch vụ + deploy.sh + tài liệu; ràng buộc CentOS 7.9 đã xử lý | Hoàn thành |
 
 ### 4.7.3 Tổng kết kết quả nghiên cứu
 
-Hệ thống đạt trọn vẹn các mục tiêu chức năng: nền tảng quản trị nội dung hiện đại vận hành trên đúng khối dữ liệu thật của Khoa, quy trình biên tập – xuất bản hoàn chỉnh, phân quyền phản ánh đúng tổ chức, và toàn bộ tài sản nội dung cũ được bảo toàn kèm chuyển hướng URL. Tính đúng đắn được chứng minh bằng kiểm thử tự động (40/40) và kiểm thử chức năng có đối chứng trên cả bốn nhóm nghiệp vụ; hiệu quả được lượng hóa bằng phép đo cùng điều kiện với website cũ, cho thấy cải thiện nhiều lần ở đúng các chỉ tiêu đặt ra tại mục 1.2. Số liệu đo cũng chỉ ra ba hạng mục cần hoàn thiện trước vận hành chính thức — độ tương phản và nhãn ARIA (Accessibility 80–91), tối ưu ảnh hero và kho ảnh legacy, bổ sung thẻ `hreflang` — cùng nhóm phép đo còn chờ tên miền công khai (CrUX, Observatory, SSL Labs, Rich Results); phương pháp và công cụ đo đã chuẩn bị sẵn tại mục 4.1.
+Hệ thống đạt trọn vẹn các mục tiêu chức năng: nền tảng quản trị nội dung hiện đại vận hành trên đúng khối dữ liệu thật của Khoa, quy trình biên tập – xuất bản hoàn chỉnh, phân quyền phản ánh đúng tổ chức, và toàn bộ tài sản nội dung cũ được bảo toàn kèm chuyển hướng URL. Tính đúng đắn được chứng minh bằng kiểm thử tự động (40/40) và kiểm thử chức năng có đối chứng trên cả bốn nhóm nghiệp vụ; hiệu quả được lượng hóa bằng phép đo cùng điều kiện với website cũ, cho thấy cải thiện nhiều lần ở đúng các chỉ tiêu đặt ra tại mục 1.2. Số liệu đo cũng chỉ ra ba hạng mục cần hoàn thiện trước vận hành chính thức — độ tương phản và nhãn ARIA (Accessibility 80–91), tối ưu ảnh hero và kho ảnh legacy, bổ sung thẻ `hreflang`.

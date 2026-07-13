@@ -257,7 +257,7 @@ Ba tầng cộng hưởng: phần lớn lượt truy cập dừng ở HTML tĩnh
 
 ### 3.8.6 Tối ưu cho công cụ tìm kiếm dùng AI (GEO)
 
-Trên nền hạ tầng SEO kỹ thuật (HTML đầy đủ không phụ thuộc JavaScript, JSON-LD, metadata nhất quán), hệ thống bổ sung các tín hiệu hướng GEO: `robots.txt` không chặn máy thu thập của các hệ thống AI phổ biến; nội dung bài viết giữ cấu trúc tiêu đề phân cấp rõ ràng giúp trích xuất theo đoạn; tóm tắt bài viết (excerpt) cung cấp câu trả lời tự chứa ngữ cảnh ngay đầu trang. Mức sẵn sàng GEO được đánh giá tại mục 4.6.4.
+Trên nền hạ tầng SEO kỹ thuật (HTML đầy đủ không phụ thuộc JavaScript, JSON-LD, metadata nhất quán), hệ thống bổ sung các tín hiệu hướng GEO: `robots.txt` không chặn máy thu thập của các hệ thống AI phổ biến; nội dung bài viết giữ cấu trúc tiêu đề phân cấp rõ ràng giúp trích xuất theo đoạn; tóm tắt bài viết (excerpt) cung cấp câu trả lời tự chứa ngữ cảnh ngay đầu trang. Mức sẵn sàng GEO được đánh giá tại mục 4.6.3.
 
 ## 3.9 Hiện thực và triển khai
 
