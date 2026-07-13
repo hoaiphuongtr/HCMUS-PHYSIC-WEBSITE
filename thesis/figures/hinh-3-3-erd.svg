@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" font-family="Times New Roman, serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#000"/>
+    </marker>
+  </defs>
+  <rect width="1000" height="700" fill="#ffffff"/>
+
+  <!-- ============ HÀNG 1 ============ -->
+  <!-- User (45..295 ; 40..170) -->
+  <g>
+    <rect x="45" y="40" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="45" y="40" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="170" y="64" text-anchor="middle" font-size="17" font-weight="bold">User (tài khoản)</text>
+    <text x="60" y="98"  font-size="15">• email, mật khẩu (băm)</text>
+    <text x="60" y="122" font-size="15">• vai trò (cấp cao / thường)</text>
+    <text x="60" y="146" font-size="15">• bộ môn trực thuộc</text>
+  </g>
+  <!-- Department (365..615) -->
+  <g>
+    <rect x="365" y="40" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="365" y="40" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="490" y="64" text-anchor="middle" font-size="17" font-weight="bold">Department (bộ môn)</text>
+    <text x="380" y="98"  font-size="15">• tên đơn vị</text>
+    <text x="380" y="122" font-size="15">• slug (tiền tố URL)</text>
+    <text x="380" y="146" font-size="15">• thông tin liên hệ</text>
+  </g>
+  <!-- Media (685..935) -->
+  <g>
+    <rect x="685" y="40" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="685" y="40" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="810" y="64" text-anchor="middle" font-size="17" font-weight="bold">Media (phương tiện)</text>
+    <text x="700" y="98"  font-size="15">• loại (ảnh, tài liệu…)</text>
+    <text x="700" y="122" font-size="15">• đường dẫn tệp</text>
+    <text x="700" y="146" font-size="15">• kích thước, mô tả alt</text>
+  </g>
+
+  <!-- ============ HÀNG 2 ============ -->
+  <!-- PageLayout (45..295 ; 290..420) -->
+  <g>
+    <rect x="45" y="290" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="45" y="290" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="170" y="314" text-anchor="middle" font-size="17" font-weight="bold">PageLayout (bố cục)</text>
+    <text x="60" y="348" font-size="15">• slug (đường dẫn trang)</text>
+    <text x="60" y="372" font-size="15">• cây bố cục nháp</text>
+    <text x="60" y="396" font-size="15">• bản công khai, lịch hẹn</text>
+  </g>
+  <!-- Post (365..615) -->
+  <g>
+    <rect x="365" y="290" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="365" y="290" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="490" y="314" text-anchor="middle" font-size="17" font-weight="bold">Post (bài viết)</text>
+    <text x="380" y="348" font-size="15">• tiêu đề, thân bài (vi/en)</text>
+    <text x="380" y="372" font-size="15">• trạng thái xuất bản</text>
+    <text x="380" y="396" font-size="15">• khóa gốc di trú</text>
+  </g>
+  <!-- Category (685..935) -->
+  <g>
+    <rect x="685" y="290" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="685" y="290" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="810" y="314" text-anchor="middle" font-size="17" font-weight="bold">Category (chuyên mục)</text>
+    <text x="700" y="348" font-size="15">• tên (vi/en)</text>
+    <text x="700" y="372" font-size="15">• slug</text>
+    <text x="700" y="396" font-size="15">• khóa gốc di trú</text>
+  </g>
+
+  <!-- ============ HÀNG 3 ============ -->
+  <!-- PageLayoutVersion (45..295 ; 540..670) -->
+  <g>
+    <rect x="45" y="540" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="45" y="540" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="170" y="564" text-anchor="middle" font-size="17" font-weight="bold">PageLayoutVersion</text>
+    <text x="60" y="598" font-size="15">• số phiên bản</text>
+    <text x="60" y="622" font-size="15">• trạng thái (hiện hành/lưu trữ)</text>
+    <text x="60" y="646" font-size="15">• ảnh chụp cây bố cục</text>
+  </g>
+  <!-- Tag (365..615 ; 540..670) -->
+  <g>
+    <rect x="365" y="540" width="250" height="130" fill="#fff" stroke="#000" stroke-width="1.5"/>
+    <rect x="365" y="540" width="250" height="34" fill="#e8e8e8" stroke="#000" stroke-width="1.5"/>
+    <text x="490" y="564" text-anchor="middle" font-size="17" font-weight="bold">Tag (thẻ)</text>
+    <text x="380" y="598" font-size="15">• tên thẻ</text>
+    <text x="380" y="622" font-size="15">• slug</text>
+    <text x="380" y="646" font-size="15">• gắn cho bài viết, phương tiện</text>
+  </g>
+
+  <!-- ============ QUAN HỆ (đường vuông góc) ============ -->
+  <g stroke="#000" stroke-width="1.5" fill="none">
+    <!-- 1. User -> PageLayout (dọc x=170) -->
+    <line x1="170" y1="170" x2="170" y2="286" marker-end="url(#arr)"/>
+    <!-- 2. User -> Post : (295,105) -> (330,105) -> (330,330) -> (365,330), có "cầu nhảy" tại y=230 -->
+    <polyline points="295,105 330,105 330,222"/>
+    <path d="M330,222 A8,8 0 0 1 330,238"/>
+    <polyline points="330,238 330,330 361,330" marker-end="url(#arr)"/>
+    <!-- 3. Department -> Post (dọc x=490) -->
+    <line x1="490" y1="170" x2="490" y2="286" marker-end="url(#arr)"/>
+    <!-- 4. Department -> Media (ngang y=105) -->
+    <line x1="615" y1="105" x2="681" y2="105" marker-end="url(#arr)"/>
+    <!-- 5. Department -> PageLayout : (425,170) v (425,230) h (230,230) v (230,290) -->
+    <polyline points="425,170 425,230 230,230 230,286" marker-end="url(#arr)"/>
+    <!-- 6. Post -> PageLayout (ngang y=376) -->
+    <line x1="365" y1="376" x2="299" y2="376" marker-end="url(#arr)"/>
+    <!-- 7. Category -> Post (ngang y=330) -->
+    <line x1="685" y1="330" x2="619" y2="330" marker-end="url(#arr)"/>
+    <!-- 8. Post -> Tag (dọc x=490) -->
+    <line x1="490" y1="420" x2="490" y2="536" marker-end="url(#arr)"/>
+    <!-- 9. Media -> Tag : vòng lề phải (935,140) h (965,140) v (965,605) h (619,605) -->
+    <polyline points="935,140 965,140 965,605 619,605" marker-end="url(#arr)"/>
+  </g>
+
+  <!-- Nhãn quan hệ + bản số -->
+  <g font-size="14" font-style="italic">
+    <text x="162" y="215" text-anchor="end">tạo  1 – n</text>
+    <text x="338" y="274">tạo  1 – n</text>
+    <text x="498" y="215">thuộc  1 – n</text>
+    <text x="648" y="92" text-anchor="middle">sở hữu</text>
+    <text x="648" y="128" text-anchor="middle">1 – n</text>
+    <text x="284" y="222" text-anchor="middle">thuộc  1 – n</text>
+    <text x="330" y="392" text-anchor="middle">rót vào</text>
+    <text x="330" y="410" text-anchor="middle">1 – n</text>
+    <text x="652" y="318" text-anchor="middle">phân loại</text>
+    <text x="652" y="352" text-anchor="middle">1 – n</text>
+    <text x="498" y="482">gắn thẻ  n – n</text>
+    <text x="792" y="626" text-anchor="middle">gắn thẻ  n – n</text>
+  </g>
+</svg>
