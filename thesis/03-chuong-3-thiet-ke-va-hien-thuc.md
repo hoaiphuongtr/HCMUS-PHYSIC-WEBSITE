@@ -241,7 +241,7 @@ Tệp `sitemap.xml` sinh động từ danh sách bố cục đã xuất bản qu
 
 ### 3.8.4 Tối ưu tài nguyên — ảnh
 
-Ảnh giao diện dùng thành phần ảnh tối ưu của Next.js: tự sinh nhiều kích cỡ, nạp trễ khi nằm ngoài khung nhìn, và giữ chỗ kích thước để tránh dịch chuyển bố cục (CLS). Ảnh có nhiều khả năng là phần tử LCP (ảnh hero, ảnh bìa đầu trang) được ưu tiên nạp trước. Ảnh trong thân bài di trú — vốn là HTML thô — được phân giải về đúng máy chủ phương tiện và ép co giãn theo khung hiển thị.
+Ảnh giao diện dùng thành phần ảnh tối ưu của Next.js: tự sinh nhiều kích cỡ, nạp trễ khi nằm ngoài khung nhìn, và giữ chỗ kích thước để tránh dịch chuyển bố cục (CLS). Ảnh có nhiều khả năng là phần tử LCP (ảnh hero, ảnh bìa đầu trang) được ưu tiên nạp trước. Ảnh trong thân bài di trú — vốn là HTML thô — được phân giải về đúng máy chủ phương tiện, định tuyến qua bộ tối ưu ảnh của Next.js để phục vụ ở kích thước hiển thị và định dạng WebP thay vì tệp gốc, và ép co giãn theo khung hiển thị.
 
 ### 3.8.5 Bộ nhớ đệm nhiều tầng
 
