@@ -89,7 +89,7 @@ Dữ liệu song ngữ được lưu theo quy ước JSON `{ "vi": "…", "en": 
 
 ### 3.4.1 Mô hình hai vai trò
 
-Hệ thống định nghĩa hai vai trò: **quản trị viên cấp cao** (SUPER_ADMIN — quản lý tài khoản, thấy và thao tác mọi nội dung) và **quản trị viên nội dung** (ADMIN). Khảo sát hệ thống cũ cho thấy bộ bốn bảng phân quyền chi tiết (role/permission/permissiongroup/permissionrole) trên thực tế không được sử dụng đúng thiết kế; mô hình hai vai trò phẳng, bổ sung chiều phạm vi bộ môn (3.4.4), phản ánh đúng cách tổ chức thực của Khoa mà vẫn đơn giản để vận hành.
+Hệ thống định nghĩa hai vai trò: **quản trị viên cấp cao** (SUPER_ADMIN — quản lý tài khoản, thấy và thao tác mọi nội dung) và **quản trị viên nội dung** (ADMIN). Khảo sát hệ thống cũ cho thấy bộ bốn bảng phân quyền chi tiết của nguồn (role, permission, permissiongroup, permissionrole) trên thực tế không được sử dụng đúng thiết kế; mô hình hai vai trò phẳng, bổ sung chiều phạm vi bộ môn (3.4.4), phản ánh đúng cách tổ chức thực của Khoa mà vẫn đơn giản để vận hành.
 
 ### 3.4.2 Quy trình đăng nhập
 
