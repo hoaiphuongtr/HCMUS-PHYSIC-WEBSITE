@@ -1,7 +1,6 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import Image from "next/image";
 import NextLink from "next/link";
 import { useEffect, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api";
@@ -35,22 +34,18 @@ function PageHeroRender({
   const home = locale === "en" ? "Home" : "Trang chủ";
   return (
     <>
-      <section className="relative w-full overflow-hidden bg-[#0c2340] text-white">
-        {bg ? (
-          // Ảnh nền hero là ứng viên LCP: dùng next/image priority để được
-          // preload + tối ưu kích thước, thay vì background-image CSS (phát hiện muộn).
-          <Image
-            src={bg}
-            alt=""
-            fill
-            sizes="100vw"
-            priority
-            fetchPriority="high"
-            quality={60}
-            className="object-cover"
-            aria-hidden="true"
-          />
-        ) : null}
+      <section
+        className="relative w-full bg-[#0c2340] text-white"
+        style={
+          bg
+            ? {
+                backgroundImage: `url(${bg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
         <div className="absolute inset-0 bg-[#0c2340]/80" aria-hidden="true" />
         <div className="relative max-w-[1200px] mx-auto px-6 py-14 md:py-20 text-center">
           <h1 className="text-2xl md:text-4xl font-bold uppercase tracking-wide">
