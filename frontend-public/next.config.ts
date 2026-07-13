@@ -9,7 +9,14 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    formats: ["image/webp"],
     remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "103.88.121.212",
+        port: "3001",
+        pathname: "/uploads/**",
+      },
       {
         protocol: "http",
         hostname: "localhost",

@@ -7,6 +7,15 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { resolveMediaUrl } from "@/lib/api";
+
+// Ảnh thân bài di trú đi qua bộ tối ưu ảnh của Next: gốc PNG/JPEG hàng trăm KB
+// được thu về kích thước hiển thị + WebP/AVIF, giảm hàng chục lần dung lượng tải.
+const optimizedBodyImageUrl = (src: string): string => {
+  const abs = resolveMediaUrl(src);
+  if (!/\.(?:jpe?g|png|webp)(?:$|\?)/i.test(src)) return abs;
+  return `/_next/image?url=${encodeURIComponent(abs)}&w=1080&q=70`;
+};
+
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import {
@@ -187,7 +196,7 @@ function PostBodyRender({
     .replace(
       /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
       (_m, pre: string, src: string, post: string) =>
-        `${pre}${resolveMediaUrl(src)}${post}`,
+        `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
     )
     .replace(/<img(?![^>]*\bloading=)/gi, (() => {
       let imgIdx = 0;
@@ -282,7 +291,7 @@ export function LegacyHtmlRender({
   const source = raw.replace(
     /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
     (_m, pre: string, src: string, post: string) =>
-      `${pre}${resolveMediaUrl(src)}${post}`,
+      `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
   )
     .replace(/<img(?![^>]*\bloading=)/gi, (() => {
       let imgIdx = 0;
