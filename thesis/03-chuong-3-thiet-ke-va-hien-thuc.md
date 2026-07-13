@@ -115,7 +115,7 @@ Chiều phân quyền thứ hai — phạm vi bộ môn — biến hệ thống 
 | ADMIN văn phòng khoa | đọc + ghi | — (chính là toàn khoa) | không | không |
 | ADMIN bộ môn | đọc (media dùng chung); không ghi | đọc + ghi | không (404) | không |
 
-Việc dồn quy tắc vào các hàm thuần túy (không phụ thuộc cơ sở dữ liệu) cho phép kiểm thử đơn vị trực tiếp từng nhánh logic; bộ kiểm thử phân quyền thuộc 40 ca kiểm thử backend trình bày ở Chương 4. Ở tầng URL công khai, nội dung bộ môn mang tiền tố tên bộ môn trên đường dẫn (chẳng hạn /vat-ly-ung-dung/tin-tuc/…), nội dung toàn khoa giữ đường dẫn phẳng (/tin-tuc/…); mỗi bộ môn có trang riêng tại địa chỉ mang tên bộ môn do chính bộ môn đó biên tập.
+Việc dồn quy tắc vào các hàm thuần túy (không phụ thuộc cơ sở dữ liệu) cho phép kiểm thử đơn vị trực tiếp từng nhánh logic; bộ kiểm thử phân quyền là một phần trong 40 ca kiểm thử phía máy chủ được trình bày ở Chương 4. Ở tầng URL công khai, nội dung bộ môn mang tiền tố tên bộ môn trên đường dẫn (chẳng hạn /vat-ly-ung-dung/tin-tuc/…), nội dung toàn khoa giữ đường dẫn phẳng (/tin-tuc/…); mỗi bộ môn có trang riêng tại địa chỉ mang tên bộ môn do chính bộ môn đó biên tập.
 
 ## 3.5 Thiết kế quy trình xuất bản nội dung
 
@@ -239,7 +239,7 @@ Tệp `sitemap.xml` sinh động từ danh sách bố cục đã xuất bản qu
 
 ### 3.8.4 Tối ưu tài nguyên — ảnh
 
-Ảnh giao diện dùng thành phần ảnh tối ưu của Next.js: tự sinh nhiều kích cỡ, nạp trễ khi nằm ngoài khung nhìn, và giữ chỗ kích thước để tránh dịch chuyển bố cục (CLS). Ảnh nhiều khả năng là phần tử LCP (ảnh hero, ảnh bìa đầu trang) được ưu tiên nạp trước. Ảnh trong thân bài di trú — vốn là HTML thô — được phân giải về đúng máy chủ phương tiện và ép co giãn theo khung hiển thị.
+Ảnh giao diện dùng thành phần ảnh tối ưu của Next.js: tự sinh nhiều kích cỡ, nạp trễ khi nằm ngoài khung nhìn, và giữ chỗ kích thước để tránh dịch chuyển bố cục (CLS). Ảnh có nhiều khả năng là phần tử LCP (ảnh hero, ảnh bìa đầu trang) được ưu tiên nạp trước. Ảnh trong thân bài di trú — vốn là HTML thô — được phân giải về đúng máy chủ phương tiện và ép co giãn theo khung hiển thị.
 
 ### 3.8.5 Bộ nhớ đệm nhiều tầng
 
