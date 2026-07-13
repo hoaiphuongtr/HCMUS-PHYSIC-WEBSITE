@@ -279,6 +279,9 @@ for st in ('ChuthichHinh', 'ChuthichBang'):
             f'<w:style w:type="paragraph" w:customStyle="1" w:styleId="{st}">'
             f'<w:name w:val="{st}"/><w:basedOn w:val="Chuthich"/><w:qFormat/></w:style></w:styles>')
 
+settings = zin.read('word/settings.xml').decode('utf-8')
+if '<w:updateFields' not in settings:
+    settings = re.sub(r'(<w:settings\b[^>]*>)', r'\1<w:updateFields w:val="true"/>', settings, count=1)
 rels = zin.read('word/_rels/document.xml.rels').decode('utf-8')
 rels = rels.replace('</Relationships>', ''.join(rels_entries) + '</Relationships>')
 ct = zin.read('[Content_Types].xml').decode('utf-8')
@@ -290,6 +293,7 @@ with zipfile.ZipFile(OUT, 'w', zipfile.ZIP_DEFLATED) as zout:
         data = zin.read(item.filename)
         if item.filename == 'word/document.xml': data = new_doc.encode('utf-8')
         elif item.filename == 'word/styles.xml': data = styles.encode('utf-8')
+        elif item.filename == 'word/settings.xml': data = settings.encode('utf-8')
         elif item.filename == 'word/_rels/document.xml.rels': data = rels.encode('utf-8')
         elif item.filename == '[Content_Types].xml': data = ct.encode('utf-8')
         zout.writestr(item, data)
