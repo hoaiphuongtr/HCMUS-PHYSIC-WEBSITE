@@ -76,18 +76,25 @@ def para(text, style=None, jc='both', spacing=True, pbb=False, numcancel=False, 
     sz = HEAD_SZ.get(style, 26)
     return f'<w:p>{ppr}{runs(text, sz=sz, italic_all=(style == "u3"))}</w:p>'
 
-def table(rows, header_bold=True):
-    borders = ('<w:tblBorders>' + ''.join(
-        f'<w:{s} w:val="single" w:sz="4" w:space="0" w:color="000000"/>'
-        for s in ['top','left','bottom','right','insideH','insideV']) + '</w:tblBorders>')
+def table(rows, header_bold=True, borderless=False, header_italic=False, cell_sz=24):
+    if borderless:
+        borders = '<w:tblBorders>' + ''.join(
+            f'<w:{s} w:val="none" w:sz="0" w:space="0"/>'
+            for s in ['top','left','bottom','right','insideH','insideV']) + '</w:tblBorders>'
+    else:
+        borders = '<w:tblBorders>' + ''.join(
+            f'<w:{s} w:val="single" w:sz="4" w:space="0" w:color="000000"/>'
+            for s in ['top','left','bottom','right','insideH','insideV']) + '</w:tblBorders>'
     xml = ('<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/>' + borders +
            '<w:tblLayout w:type="autofit"/></w:tblPr>')
     for ri, cells in enumerate(rows):
         xml += '<w:tr>'
         for c in cells:
-            inner = runs(c, sz=24)
-            if ri == 0 and header_bold: inner = inner.replace('<w:rPr>', '<w:rPr><w:b/><w:bCs/>')
-            pcell = ('<w:p><w:pPr><w:spacing w:after="40" w:line="276" w:lineRule="auto"/>'
+            inner = runs(c, sz=cell_sz)
+            if ri == 0 and header_italic: inner = inner.replace('<w:rPr>', '<w:rPr><w:i/><w:iCs/>')
+            elif ri == 0 and header_bold: inner = inner.replace('<w:rPr>', '<w:rPr><w:b/><w:bCs/>')
+            sp = '120' if borderless else '40'
+            pcell = (f'<w:p><w:pPr><w:spacing w:after="{sp}" w:line="300" w:lineRule="auto"/>'
                      f'<w:jc w:val="left"/></w:pPr>{inner}</w:p>')
             xml += f'<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/></w:tcPr>{pcell}</w:tc>'
         xml += '</w:tr>'
@@ -158,31 +165,31 @@ for line in open(base + '06-tai-lieu-tham-khao.md').read().split('\n'):
     tltk.append(para(line, jc='left', hanging=True))
 
 # ---------- bảng viết tắt + chú thích thuật ngữ ----------
-ABBR = [['Viết tắt', 'Diễn giải'],
- ['API', 'Application Programming Interface — giao diện lập trình ứng dụng'],
- ['CLS', 'Cumulative Layout Shift — độ dịch chuyển bố cục tích lũy'],
- ['CMS', 'Content Management System — hệ quản trị nội dung'],
- ['CRUD', 'Create – Read – Update – Delete — tạo, đọc, cập nhật, xóa'],
- ['CSDL', 'Cơ sở dữ liệu'],
- ['ERD', 'Entity–Relationship Diagram — sơ đồ thực thể – liên kết'],
- ['FCP', 'First Contentful Paint — thời điểm hiển thị nội dung đầu tiên'],
- ['GEO', 'Generative Engine Optimization — tối ưu cho công cụ tìm kiếm dùng trí tuệ nhân tạo'],
- ['HTML', 'HyperText Markup Language — ngôn ngữ đánh dấu siêu văn bản'],
- ['HTTP', 'HyperText Transfer Protocol — giao thức truyền siêu văn bản'],
- ['INP', 'Interaction to Next Paint — độ trễ từ tương tác đến khung hình kế tiếp'],
- ['ISR', 'Incremental Static Regeneration — tạo tĩnh tăng dần'],
- ['JSON', 'JavaScript Object Notation — định dạng dữ liệu dạng đối tượng'],
- ['JSON-LD', 'JSON for Linked Data — dữ liệu có cấu trúc dạng JSON'],
- ['JWT', 'JSON Web Token — mã thông báo web dạng JSON'],
- ['LCP', 'Largest Contentful Paint — thời điểm hiển thị nội dung lớn nhất'],
- ['OTP', 'One-Time Password — mật khẩu dùng một lần'],
- ['RBAC', 'Role-Based Access Control — điều khiển truy cập theo vai trò'],
- ['SEO', 'Search Engine Optimization — tối ưu hóa công cụ tìm kiếm'],
- ['SSR', 'Server-Side Rendering — kết xuất phía máy chủ'],
- ['TBT', 'Total Blocking Time — tổng thời gian luồng chính bị chặn'],
- ['TTFB', 'Time To First Byte — thời gian nhận byte phản hồi đầu tiên'],
- ['URL', 'Uniform Resource Locator — địa chỉ tài nguyên trên web'],
- ['XML', 'eXtensible Markup Language — ngôn ngữ đánh dấu mở rộng']]
+ABBR = [['Từ viết tắt', 'Tiếng Anh', 'Tiếng Việt'],
+ ['API', 'Application Programming Interface', 'Giao diện lập trình ứng dụng'],
+ ['CLS', 'Cumulative Layout Shift', 'Độ dịch chuyển bố cục tích lũy'],
+ ['CMS', 'Content Management System', 'Hệ quản trị nội dung'],
+ ['CRUD', 'Create – Read – Update – Delete', 'Tạo, đọc, cập nhật, xóa'],
+ ['CSDL', 'Database', 'Cơ sở dữ liệu'],
+ ['ERD', 'Entity–Relationship Diagram', 'Sơ đồ thực thể – liên kết'],
+ ['FCP', 'First Contentful Paint', 'Thời điểm hiển thị nội dung đầu tiên'],
+ ['GEO', 'Generative Engine Optimization', 'Tối ưu cho công cụ tìm kiếm dùng trí tuệ nhân tạo'],
+ ['HTML', 'HyperText Markup Language', 'Ngôn ngữ đánh dấu siêu văn bản'],
+ ['HTTP', 'HyperText Transfer Protocol', 'Giao thức truyền siêu văn bản'],
+ ['INP', 'Interaction to Next Paint', 'Độ trễ từ tương tác đến khung hình kế tiếp'],
+ ['ISR', 'Incremental Static Regeneration', 'Tạo tĩnh tăng dần'],
+ ['JSON', 'JavaScript Object Notation', 'Định dạng dữ liệu dạng đối tượng'],
+ ['JSON-LD', 'JSON for Linked Data', 'Dữ liệu có cấu trúc dạng JSON'],
+ ['JWT', 'JSON Web Token', 'Mã thông báo web dạng JSON'],
+ ['LCP', 'Largest Contentful Paint', 'Thời điểm hiển thị nội dung lớn nhất'],
+ ['OTP', 'One-Time Password', 'Mật khẩu dùng một lần'],
+ ['RBAC', 'Role-Based Access Control', 'Điều khiển truy cập theo vai trò'],
+ ['SEO', 'Search Engine Optimization', 'Tối ưu hóa công cụ tìm kiếm'],
+ ['SSR', 'Server-Side Rendering', 'Kết xuất phía máy chủ'],
+ ['TBT', 'Total Blocking Time', 'Tổng thời gian luồng chính bị chặn'],
+ ['TTFB', 'Time To First Byte', 'Thời gian nhận byte phản hồi đầu tiên'],
+ ['URL', 'Uniform Resource Locator', 'Địa chỉ tài nguyên trên web'],
+ ['XML', 'eXtensible Markup Language', 'Ngôn ngữ đánh dấu mở rộng']]
 
 GLOSS = [['Thuật ngữ', 'Chú thích'],
  ['Headless CMS', 'Hệ quản trị nội dung phi giao diện: tách kho nội dung khỏi tầng hiển thị, cung cấp dữ liệu qua API'],
@@ -221,23 +228,23 @@ def find_u1(doc, snip, from_pos=0):
 # 1. BẢNG CHÚ THÍCH THUẬT NGỮ: thay nội dung tới trước đoạn sectPr
 s, e = find_u1(doc, 'BẢNG CHÚ THÍCH THUẬT NGỮ')
 s_sect, _ = find_para(doc, lambda c: '<w:sectPr' in c, e)
-doc = doc[:e] + table(GLOSS) + '<w:p/>' + doc[s_sect:]
+doc = doc[:e] + table(GLOSS, borderless=True, header_italic=True, header_bold=False, cell_sz=26) + '<w:p/>' + doc[s_sect:]
 
 # 2. DANH MỤC KÝ HIỆU, CHỮ VIẾT TẮT
 s, e = find_u1(doc, 'DANH MỤC CÁC KÝ HIỆU')
 s2, _ = find_u1(doc, 'BẢNG CHÚ THÍCH THUẬT NGỮ')
-doc = doc[:e] + table(ABBR) + '<w:p/>' + doc[s2:]
+doc = doc[:e] + table(ABBR, borderless=True, header_italic=True, header_bold=False, cell_sz=26) + '<w:p/>' + doc[s2:]
 
 # 3. DANH MỤC BẢNG SỐ LIỆU -> field TOC theo style ChuthichBang
 s, e = find_u1(doc, 'DANH MỤC CÁC BẢNG SỐ LIỆU')
 s2, _ = find_u1(doc, 'DANH MỤC CÁC KÝ HIỆU')
-doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichBang;1"',
+doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichBang,1"',
         'Danh mục bảng sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + '<w:p/>' + doc[s2:]
 
 # 4. DANH MỤC HÌNH VẼ -> field TOC theo style ChuthichHinh
 s, e = find_u1(doc, 'DANH MỤC CÁC HÌNH VẼ')
 s2, _ = find_u1(doc, 'DANH MỤC CÁC BẢNG SỐ LIỆU')
-doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichHinh;1"',
+doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichHinh,1"',
         'Danh mục hình sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + '<w:p/>' + doc[s2:]
 
 # 5. MỤC LỤC -> field TOC heading 1-3
@@ -261,6 +268,8 @@ sect_para = msec.group(0)
 # bỏ hẳn mục DANH MỤC CÁC BÀI BÁO (không có công trình công bố)
 new_doc = (doc[:s_lmd] + ''.join(content)
            + doc[s_tltk:e_tltk] + ''.join(tltk) + sect_para + doc[s_pl:])
+# gỡ toàn bộ tham chiếu footnote hướng dẫn của file mẫu
+new_doc = re.sub(r'<w:r\b[^>]*>(?:(?!</w:r>).)*?<w:footnoteReference[^>]*/>(?:(?!</w:r>).)*?</w:r>', '', new_doc, flags=re.S)
 
 # ---------- styles: thêm 2 style caption con ----------
 styles = zin.read('word/styles.xml').decode('utf-8')
