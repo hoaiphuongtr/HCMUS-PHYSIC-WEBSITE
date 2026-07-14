@@ -36,6 +36,11 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 # uses the INTERNAL_API_URL from the container environment instead (compose sets it).
 ARG INTERNAL_API_URL
 ENV INTERNAL_API_URL=$INTERNAL_API_URL
+# Origin the image optimizer fetches media from at runtime (baked into the bundle,
+# never requested by browsers). On the sandbox set http://backend:3001 — the public
+# container cannot hairpin to the host's public IP.
+ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
+ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 # 4GB box: cap the Node heap so the build doesn't OOM (needs swap too — see deploy.sh).
 ENV NODE_OPTIONS=--max-old-space-size=3072

@@ -10,10 +10,20 @@ import { resolveMediaUrl } from "@/lib/api";
 
 // Ảnh thân bài di trú đi qua bộ tối ưu ảnh của Next: gốc PNG/JPEG hàng trăm KB
 // được thu về kích thước hiển thị + WebP/AVIF, giảm hàng chục lần dung lượng tải.
+// Tham số url do CHÍNH máy chủ Next fetch (không phải trình duyệt); trên host NAT
+// không hairpin, container không tự với tới IP công khai của nó nên cho phép bake
+// một origin nội bộ (vd http://backend:3001) riêng cho lượt fetch của bộ tối ưu.
+const OPTIMIZER_FETCH_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_FETCH_ORIGIN;
+const PUBLIC_MEDIA_ORIGIN =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const optimizedBodyImageUrl = (src: string): string => {
   const abs = resolveMediaUrl(src);
   if (!/\.(?:jpe?g|png|webp)(?:$|\?)/i.test(src)) return abs;
-  return `/_next/image?url=${encodeURIComponent(abs)}&w=1080&q=70`;
+  const fetchUrl =
+    OPTIMIZER_FETCH_ORIGIN && abs.startsWith(PUBLIC_MEDIA_ORIGIN)
+      ? OPTIMIZER_FETCH_ORIGIN + abs.slice(PUBLIC_MEDIA_ORIGIN.length)
+      : abs;
+  return `/_next/image?url=${encodeURIComponent(fetchUrl)}&w=1080&q=70`;
 };
 
 import { type LocalizedString, t } from "@/lib/i18n";

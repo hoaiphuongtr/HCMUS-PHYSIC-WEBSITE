@@ -16,7 +16,7 @@ Node won't run natively → the whole stack runs in **Docker**. CentOS 7 is EOL,
 
 ## What gets deployed
 
-`docker-compose.prod.yml` (repo root) brings up a **self-contained** stack:
+`docker-compose.sandbox.yml` (repo root) brings up a **self-contained** stack:
 
 | Service | Port | Notes |
 |---|---|---|
@@ -88,10 +88,10 @@ pnpm workspace install. I could **not** test this build (no server access). If i
 - **Missing module** from a `frontend/src` component → add it to `frontend-public/package.json` and rebuild.
 - **Standalone entry path** — for a monorepo, Next may emit the server at a different
   relative path. Check with:
-  `docker compose -f docker-compose.prod.yml run --rm public sh -c "ls -R /app | grep server.js"`
+  `docker compose -f docker-compose.sandbox.yml run --rm public sh -c "ls -R /app | grep server.js"`
   and adjust the `CMD` in `frontend-public/Dockerfile`.
 - **Fallback**: deploy `backend` + `admin` first (proven Dockerfiles) —
-  `docker compose -f docker-compose.prod.yml up -d db redis backend admin` — then iterate on `public`.
+  `docker compose -f docker-compose.sandbox.yml up -d db redis backend admin` — then iterate on `public`.
 - Consider **building the `public` image on your local machine** (more RAM), then
   `docker save | ssh … docker load` to avoid slow/OOM builds on the box.
 
@@ -105,7 +105,7 @@ pnpm workspace install. I could **not** test this build (no server access). If i
   `sudo setenforce 0` (temporary) or add `:Z` to bind mounts. The prod compose uses
   named volumes + build-time copies, so this mainly affects any `.env` bind mounts you add.
 - **Build OOM (Killed)**: confirm swap is on (`swapon --show`); build one image at a time:
-  `docker compose -f docker-compose.prod.yml build backend && … admin && … public`.
+  `docker compose -f docker-compose.sandbox.yml build backend && … admin && … public`.
 - **Ports blocked**: open in firewalld (deploy.sh does) **and** in the cloud/provider
   security group. Ask cô if inbound 3000–3002 are allowed.
 - **CORS errors in the browser**: `FRONTEND_URLS` in `backend/.env` must list the

@@ -361,9 +361,13 @@ disk currently 79% (11G free).
 
 **Recommended resume (avoids building on the cramped box):** build the public image off-box and ship it —
 ```
-# on a dev machine with the repo + Docker:
-docker build -f frontend-public/Dockerfile \
+# on a dev machine with the repo + Docker (needs local backend :3001 for the
+# sitemap prerender; --network=host so the build can reach Google Fonts + localhost):
+docker build --network=host -f frontend-public/Dockerfile \
   --build-arg NEXT_PUBLIC_API_URL=http://103.88.121.212:3001 \
+  --build-arg NEXT_PUBLIC_SITE_URL=http://103.88.121.212:3002 \
+  --build-arg INTERNAL_API_URL=http://localhost:3001 \
+  --build-arg NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001 \
   -t hcmus-cms-public:latest .
 docker save hcmus-cms-public:latest | gzip > public.tar.gz     # ~200MB
 # transfer to box (scp -P 63379 / paramiko), then on box:

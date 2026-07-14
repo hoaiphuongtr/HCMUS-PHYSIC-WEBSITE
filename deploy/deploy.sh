@@ -18,7 +18,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMPOSE_FILE="$REPO_ROOT/docker-compose.prod.yml"
+COMPOSE_FILE="$REPO_ROOT/docker-compose.sandbox.yml"
 SWAP_FILE="/swapfile"
 SWAP_SIZE_GB=4
 PORTS=(3000 3001 3002)
@@ -110,6 +110,6 @@ Done. Open:
   Admin CMS   : http://${IP}:3000
   API health  : http://${IP}:3001/health   (or /page-layouts/slug/trang-chu)
 
-Logs:    docker compose -f docker-compose.prod.yml logs -f <backend|public|admin>
-Restart: docker compose -f docker-compose.prod.yml restart <service>
+Logs:    docker compose -f docker-compose.sandbox.yml logs -f <backend|public|admin>
+Restart: docker compose -f docker-compose.sandbox.yml restart <service>
 EOF
