@@ -422,3 +422,13 @@ building on-box works normally. Deferred.
 - Nếu B-3 chưa chụp lại: bài usactalk trên sandbox sau khi public mới lên.
 - Commit cuối gồm: thesis md + 07-phu-luc + figures + merge_kltn + next.config×2 + post-placeholders
   + docker-compose.sandbox + .dockerignore + benchmark/v7 + progress.md.
+
+### Bổ sung 15/07 (đêm): lỗi font toàn site + giữ docx của Phương
+- Phương phát hiện ảnh B-3 "lỗi font" → truy ra lỗi THẬT của site: shared.css khai
+  `--font-sans: var(--font-sans)` (tự tham chiếu → rỗng) và áp font-sans ở <html> trong khi
+  biến --font-geist-* nằm trên <body> → cả admin + public hiển thị Times New Roman với mọi
+  người dùng từ trước đến nay. Fix: map --font-geist-sans + chuyển font-sans xuống body.
+  Ship lại CẢ HAI image (admin build off-box giống public). Chụp lại 7 ảnh (3.7–3.9, B-1..B-4).
+- Quy trình docx: Phương yêu cầu giữ nguyên bản họ đang có → lấy Downloads hiện tại làm TPL
+  (diff body chỉ là Word evaluate mục lục, không có sửa tay); regen + copy lại. Lighthouse
+  không đo lại: font woff2 vốn đã được tải trong các lần đo (chỉ không được áp), LCP là ảnh.
