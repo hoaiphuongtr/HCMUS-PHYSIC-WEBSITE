@@ -20,9 +20,9 @@ Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và
 
 ### 4.1.2 Môi trường kiểm thử
 
-Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa **toàn bộ dữ liệu di trú thật** (hơn 1.650 bài viết và 1.650 bố cục, 3,9 GB phương tiện) — nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
+Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (hơn 1.650 bài viết và 1.650 bố cục, 3,9 GB phương tiện) — nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
 
-Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên **bản build production** phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật — hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
+Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên bản build production phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật — hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
 
 ### 4.1.3 Các trang được kiểm thử
 
@@ -34,7 +34,7 @@ Mục này chứng minh hệ thống vận hành đúng trên bốn nhóm nghi�
 
 ### 4.2.1 Kiểm thử đơn vị phía máy chủ
 
-Bộ kiểm thử đơn vị phía máy chủ gồm **40 ca kiểm thử trong 4 nhóm**, tập trung vào hai vùng logic rủi ro cao nhất. Nhóm thứ nhất bao phủ ba hàm quy tắc phân quyền theo bộ môn với mọi tổ hợp vai trò và đơn vị. Nhóm thứ hai bao phủ nghiệp vụ bố cục – phiên bản: thứ tự chụp ảnh phiên bản khi xuất bản, kiểm tra xung đột đường dẫn trước khi khôi phục, tự bổ sung phiên bản đầu cho bố cục cũ, và chụp phiên bản khi xuất bản theo lịch. Hai nhóm còn lại kiểm thử nghiệp vụ quản lý quản trị viên và điểm cuối cơ sở của ứng dụng. Kết quả chạy ngày 09/07/2026: **40/40 ca đạt** (Vitest 4.1.5, tổng thời gian 1,28 giây). Song song, cả ba thành phần đạt cổng chất lượng: kiểm tra kiểu không lỗi, đóng gói production thành công.
+Bộ kiểm thử đơn vị phía máy chủ gồm 40 ca kiểm thử trong 4 nhóm, tập trung vào hai vùng logic rủi ro cao nhất. Nhóm thứ nhất bao phủ ba hàm quy tắc phân quyền theo bộ môn với mọi tổ hợp vai trò và đơn vị. Nhóm thứ hai bao phủ nghiệp vụ bố cục – phiên bản: thứ tự chụp ảnh phiên bản khi xuất bản, kiểm tra xung đột đường dẫn trước khi khôi phục, tự bổ sung phiên bản đầu cho bố cục cũ, và chụp phiên bản khi xuất bản theo lịch. Hai nhóm còn lại kiểm thử nghiệp vụ quản lý quản trị viên và điểm cuối cơ sở của ứng dụng. Kết quả chạy ngày 09/07/2026: 40/40 ca đạt (Vitest 4.1.5, tổng thời gian 1,28 giây). Song song, cả ba thành phần đạt cổng chất lượng: kiểm tra kiểu không lỗi, đóng gói production thành công.
 
 ### 4.2.2 Kiểm thử nghiệp vụ quản lý nội dung (CRUD)
 
@@ -119,7 +119,7 @@ Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP c�
 
 ## 4.4 Đánh giá bằng Lighthouse
 
-Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) [14] của bốn trang đại diện được trình bày trong Bảng 4.7.
+Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) (Google, n.d.-a) của bốn trang đại diện được trình bày trong Bảng 4.7.
 
 *Bảng 4.7. Điểm Lighthouse của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026*
 
@@ -138,7 +138,7 @@ Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practice
 
 Ở tầng ứng dụng, các biện pháp bảo mật chủ động đã hiện thực gồm: băm mật khẩu bằng bcrypt, tách cặp mã thông báo access/refresh, phân quyền hai lớp được kiểm thử đầy đủ (mục 4.2.3), làm sạch HTML di trú (loại mã kịch bản và thuộc tính bắt sự kiện), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
 
-Ở tầng thư viện phụ thuộc, kết quả quét bằng `pnpm audit` lần đầu (09/07/2026) ghi nhận **51 cảnh báo lỗ hổng** trong cây phụ thuộc, trong đó 3 mức nghiêm trọng và 21 mức cao. Toàn bộ các gói có bản vá sau đó được nâng cấp đồng loạt bằng cơ chế ghim phiên bản của trình quản lý gói; kết quả quét lại (14/07/2026) chỉ còn **4 cảnh báo** (2 cao, 2 trung bình), tất cả đều thuộc một công cụ trong bộ kiểm thử phát triển — thành phần không được đóng gói vào bản vận hành. Sau nâng cấp, toàn bộ 40/40 ca kiểm thử đơn vị và các bước đóng gói production đều đạt, xác nhận việc vá không phá vỡ chức năng. Việc quét lỗ hổng được đưa vào cổng chất lượng định kỳ.
+Ở tầng thư viện phụ thuộc, kết quả quét bằng `pnpm audit` lần đầu (09/07/2026) ghi nhận 51 cảnh báo lỗ hổng trong cây phụ thuộc, trong đó 3 mức nghiêm trọng và 21 mức cao. Toàn bộ các gói có bản vá sau đó được nâng cấp đồng loạt bằng cơ chế ghim phiên bản của trình quản lý gói; kết quả quét lại (14/07/2026) chỉ còn 4 cảnh báo (2 cao, 2 trung bình), tất cả đều thuộc một công cụ trong bộ kiểm thử phát triển — thành phần không được đóng gói vào bản vận hành. Sau nâng cấp, toàn bộ 40/40 ca kiểm thử đơn vị và các bước đóng gói production đều đạt, xác nhận việc vá không phá vỡ chức năng. Việc quét lỗ hổng được đưa vào cổng chất lượng định kỳ.
 
 ## 4.6 Đánh giá SEO và GEO
 

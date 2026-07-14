@@ -162,7 +162,7 @@ tltk = []
 for line in open(base + '06-tai-lieu-tham-khao.md').read().split('\n'):
     line = line.rstrip()
     if not line.strip() or line.startswith('#') or line.startswith('*('): continue
-    tltk.append(para(line, jc='left', hanging=True))
+    tltk.append(para(line, jc='both', hanging=line.startswith('[')))
 
 # ---------- bảng viết tắt + chú thích thuật ngữ ----------
 ABBR = [['Từ viết tắt', 'Tiếng Anh', 'Tiếng Việt'],

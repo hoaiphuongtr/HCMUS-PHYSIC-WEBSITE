@@ -4,7 +4,7 @@ Chương này trình bày toàn bộ quá trình thiết kế và hiện thực 
 
 ## 3.1 Giới thiệu tổng quan
 
-Hệ thống được đặt tên nội bộ là **HCMUS Physics CMS**, tổ chức dưới dạng một kho mã nguồn hợp nhất (monorepo) gồm ba thành phần chạy độc lập. Thành phần thứ nhất là máy chủ API xây dựng trên NestJS 11, lắng nghe cổng 3001, làm việc với PostgreSQL qua Prisma và dùng Redis làm bộ nhớ đệm đọc. Thành phần thứ hai là trang quản trị trên Next.js 16, cổng 3000, dành cho văn phòng khoa và các bộ môn soạn thảo, dàn trang và xuất bản nội dung. Thành phần thứ ba là trang công khai, cũng trên Next.js 16, cổng 3002, kết xuất các trang đã xuất bản cho khách truy cập. Cả ba thành phần viết bằng TypeScript, chia sẻ định nghĩa kiểu dữ liệu, được kiểm tra bằng cùng một bộ cổng chất lượng (lint, kiểm tra kiểu, kiểm thử đơn vị, build) và đóng gói bằng Docker khi triển khai.
+Hệ thống được đặt tên nội bộ là HCMUS Physics CMS, tổ chức dưới dạng một kho mã nguồn hợp nhất (monorepo) gồm ba thành phần chạy độc lập. Thành phần thứ nhất là máy chủ API xây dựng trên NestJS 11, lắng nghe cổng 3001, làm việc với PostgreSQL qua Prisma và dùng Redis làm bộ nhớ đệm đọc. Thành phần thứ hai là trang quản trị trên Next.js 16, cổng 3000, dành cho văn phòng khoa và các bộ môn soạn thảo, dàn trang và xuất bản nội dung. Thành phần thứ ba là trang công khai, cũng trên Next.js 16, cổng 3002, kết xuất các trang đã xuất bản cho khách truy cập. Cả ba thành phần viết bằng TypeScript, chia sẻ định nghĩa kiểu dữ liệu, được kiểm tra bằng cùng một bộ cổng chất lượng (lint, kiểm tra kiểu, kiểm thử đơn vị, build) và đóng gói bằng Docker khi triển khai.
 
 ## 3.2 Kiến trúc tổng thể
 
@@ -31,7 +31,7 @@ Hệ thống tổ chức theo kiến trúc ba tầng: tầng trình bày (hai �
 
 *Hình 3.1. Kiến trúc tổng thể của hệ thống*
 
-Ba nguyên tắc chi phối kiến trúc này. **Một API duy nhất**: cả trang quản trị lẫn trang công khai đều gọi chung máy chủ NestJS; không thành phần nào truy cập trực tiếp cơ sở dữ liệu. **Backend không trạng thái**: mọi trạng thái nằm ở PostgreSQL hoặc Redis; bản thân tiến trình NestJS không giữ phiên làm việc, nhờ đó có thể khởi động lại hoặc nhân bản mà không mất dữ liệu. **Đệm đọc, xóa khi ghi**: Redis chỉ đệm kết quả đọc; mỗi thao tác ghi trong service chủ động xóa các khóa đệm liên quan (mục 2.3.4). Tác vụ định kỳ (xuất bản theo lịch) chạy bằng cron mỗi phút ngay trong tiến trình NestJS, không cần dịch vụ hàng đợi riêng — phù hợp quy mô một khoa.
+Ba nguyên tắc chi phối kiến trúc này. Một API duy nhất: cả trang quản trị lẫn trang công khai đều gọi chung máy chủ NestJS; không thành phần nào truy cập trực tiếp cơ sở dữ liệu. Backend không trạng thái: mọi trạng thái nằm ở PostgreSQL hoặc Redis; bản thân tiến trình NestJS không giữ phiên làm việc, nhờ đó có thể khởi động lại hoặc nhân bản mà không mất dữ liệu. Đệm đọc, xóa khi ghi: Redis chỉ đệm kết quả đọc; mỗi thao tác ghi trong service chủ động xóa các khóa đệm liên quan (mục 2.3.4). Tác vụ định kỳ (xuất bản theo lịch) chạy bằng cron mỗi phút ngay trong tiến trình NestJS, không cần dịch vụ hàng đợi riêng — phù hợp quy mô một khoa.
 
 Bên trong NestJS, mã nguồn chia thành một phân hệ dùng chung — gồm lớp truy cập cơ sở dữ liệu, trình quản lý bộ nhớ đệm kết nối Redis, các chốt xác thực và phân quyền, bộ lọc ngoại lệ HTTP cùng các hàm tiện ích — và mười phân hệ nghiệp vụ: người dùng – xác thực, bố cục trang, bài viết, widget, phương tiện, đăng ký nhận tin, thống kê truy cập, đơn vị, chuyên mục và quản trị viên. Các phân hệ nghiệp vụ không gọi nhau qua HTTP mà tiêm dịch vụ trực tiếp qua cơ chế tiêm phụ thuộc. Quan hệ giữa các module được minh họa trong Hình 3.2.
 
@@ -41,7 +41,7 @@ Bên trong NestJS, mã nguồn chia thành một phân hệ dùng chung — gồ
 
 ### 3.2.3 Mẫu thiết kế Single Source of Truth
 
-Một vấn đề kinh điển của website nhiều trang là đồng bộ các thành phần dùng chung: thanh điều hướng và chân trang xuất hiện trên mọi trang, nhưng nếu mỗi bố cục lưu một bản sao riêng thì việc thêm một mục menu buộc phải sửa hàng nghìn bản ghi. Hệ thống giải quyết bằng mẫu **nguồn chân lý duy nhất** (Single Source of Truth): chỉ bố cục trang chủ lưu cấu hình thanh điều hướng và chân trang thật; mọi trang khác dùng hai khối bao dùng chung cho đầu trang và chân trang, khi kết xuất sẽ tự nạp cấu hình từ bố cục trang chủ. Nhờ đó, một lần cập nhật menu trên trang chủ lập tức lan tỏa đến toàn bộ hơn 1.600 trang của hệ thống. Để tránh mỗi lượt kết xuất phát sinh hai truy vấn trùng lặp, kết quả nạp cấu hình được đệm dùng chung với thời gian sống 30 giây.
+Một vấn đề kinh điển của website nhiều trang là đồng bộ các thành phần dùng chung: thanh điều hướng và chân trang xuất hiện trên mọi trang, nhưng nếu mỗi bố cục lưu một bản sao riêng thì việc thêm một mục menu buộc phải sửa hàng nghìn bản ghi. Hệ thống giải quyết bằng mẫu nguồn chân lý duy nhất (Single Source of Truth): chỉ bố cục trang chủ lưu cấu hình thanh điều hướng và chân trang thật; mọi trang khác dùng hai khối bao dùng chung cho đầu trang và chân trang, khi kết xuất sẽ tự nạp cấu hình từ bố cục trang chủ. Nhờ đó, một lần cập nhật menu trên trang chủ lập tức lan tỏa đến toàn bộ hơn 1.600 trang của hệ thống. Để tránh mỗi lượt kết xuất phát sinh hai truy vấn trùng lặp, kết quả nạp cấu hình được đệm dùng chung với thời gian sống 30 giây.
 
 ## 3.3 Thiết kế cơ sở dữ liệu
 
@@ -89,11 +89,11 @@ Dữ liệu song ngữ được lưu theo quy ước JSON `{ "vi": "…", "en": 
 
 ### 3.4.1 Mô hình hai vai trò
 
-Hệ thống định nghĩa hai vai trò: **quản trị viên cấp cao** (SUPER_ADMIN — quản lý tài khoản, thấy và thao tác mọi nội dung) và **quản trị viên nội dung** (ADMIN). Khảo sát hệ thống cũ cho thấy bộ bốn bảng phân quyền chi tiết của nguồn (role, permission, permissiongroup, permissionrole) trên thực tế không được sử dụng đúng thiết kế; mô hình hai vai trò phẳng, bổ sung chiều phạm vi bộ môn (3.4.4), phản ánh đúng cách tổ chức thực của Khoa mà vẫn đơn giản để vận hành.
+Hệ thống định nghĩa hai vai trò: quản trị viên cấp cao (SUPER_ADMIN — quản lý tài khoản, thấy và thao tác mọi nội dung) và quản trị viên nội dung (ADMIN). Khảo sát hệ thống cũ cho thấy bộ bốn bảng phân quyền chi tiết của nguồn (role, permission, permissiongroup, permissionrole) trên thực tế không được sử dụng đúng thiết kế; mô hình hai vai trò phẳng, bổ sung chiều phạm vi bộ môn (3.4.4), phản ánh đúng cách tổ chức thực của Khoa mà vẫn đơn giản để vận hành.
 
 ### 3.4.2 Quy trình đăng nhập
 
-Hệ thống xác thực bằng cặp mã thông báo JSON Web Token (JWT) [13]: **access token** thời gian sống ngắn gửi kèm mỗi yêu cầu API, và **refresh token** thời gian sống dài dùng để cấp lại access token khi hết hạn. Phần tải của mã thông báo gồm ba thông tin — định danh người dùng, vai trò và bộ môn trực thuộc — đủ để mọi quyết định phân quyền diễn ra ngay tại tầng API mà không cần truy vấn thêm hồ sơ người dùng. Quy trình đăng nhập được minh họa trong Hình 3.4. Ngoài đăng nhập bằng mật khẩu (băm bcrypt), hệ thống hỗ trợ đăng nhập Google OAuth cho tài khoản đã liên kết và luồng quên mật khẩu bằng mã OTP gửi qua email. Mỗi lần đăng nhập, hệ thống ghi nhận thời điểm truy cập gần nhất phục vụ thống kê "đang hoạt động" trên trang quản lý quản trị viên.
+Hệ thống xác thực bằng cặp mã thông báo JSON Web Token (JWT) (Jones và cộng sự, 2015): access token thời gian sống ngắn gửi kèm mỗi yêu cầu API, và refresh token thời gian sống dài dùng để cấp lại access token khi hết hạn. Phần tải của mã thông báo gồm ba thông tin — định danh người dùng, vai trò và bộ môn trực thuộc — đủ để mọi quyết định phân quyền diễn ra ngay tại tầng API mà không cần truy vấn thêm hồ sơ người dùng. Quy trình đăng nhập được minh họa trong Hình 3.4. Ngoài đăng nhập bằng mật khẩu (băm bcrypt), hệ thống hỗ trợ đăng nhập Google OAuth cho tài khoản đã liên kết và luồng quên mật khẩu bằng mã OTP gửi qua email. Mỗi lần đăng nhập, hệ thống ghi nhận thời điểm truy cập gần nhất phục vụ thống kê "đang hoạt động" trên trang quản lý quản trị viên.
 
 【HÌNH 3.4 — Sơ đồ tuần tự đăng nhập: đăng nhập → cấp access/refresh token → gọi API kèm Bearer → AuthGuard giải mã → refresh khi 401】
 
@@ -121,7 +121,7 @@ Việc dồn quy tắc vào các hàm thuần túy (không phụ thuộc cơ s�
 
 ### 3.5.1 Trạng thái bài viết
 
-Bài viết tuân theo máy trạng thái gồm năm trạng thái: **nháp** (DRAFT) → **chờ duyệt** (PENDING) → **đã xuất bản** (PUBLISHED), với hai nhánh **đã lên lịch** (SCHEDULED — tự chuyển sang đã xuất bản khi đến hạn) và **bị từ chối** (REJECTED — kèm lý do). Sơ đồ chuyển trạng thái được minh họa trong Hình 3.5.
+Bài viết tuân theo máy trạng thái gồm năm trạng thái: nháp (DRAFT) → chờ duyệt (PENDING) → đã xuất bản (PUBLISHED), với hai nhánh đã lên lịch (SCHEDULED — tự chuyển sang đã xuất bản khi đến hạn) và bị từ chối (REJECTED — kèm lý do). Sơ đồ chuyển trạng thái được minh họa trong Hình 3.5.
 
 【HÌNH 3.5 — Sơ đồ trạng thái bài viết: DRAFT → PENDING → PUBLISHED/REJECTED; DRAFT → SCHEDULED → PUBLISHED (cron)】
 
@@ -195,11 +195,11 @@ Bảng 3.4 tóm tắt quyết định ánh xạ cho từng nhóm bảng nguồn.
 | `users` | *không di trú* | băm mật khẩu PHP `$2y$` không tương thích; tạo lại tài khoản trên hệ mới |
 | bảng phân quyền (4 bảng), `slogs`, `online`, `homes`… | *loại bỏ* | thay bằng cơ chế mới hoặc không còn giá trị |
 
-Hai nguyên tắc xuyên suốt: **bảo toàn khóa gốc** — mọi bản ghi di trú giữ `legacyId` duy nhất, giúp script chạy lặp lại theo kiểu upsert (chạy lại không tạo bản sao) và truy vết đối chiếu về nguồn; **gộp bản dịch** — mỗi cặp bản ghi vi/en gộp thành một JSON `{vi, en}`, bản dịch tiếng Anh khuyết được để trống và giao diện tự lùi về tiếng Việt.
+Hai nguyên tắc xuyên suốt: bảo toàn khóa gốc — mọi bản ghi di trú giữ `legacyId` duy nhất, giúp script chạy lặp lại theo kiểu upsert (chạy lại không tạo bản sao) và truy vết đối chiếu về nguồn; gộp bản dịch — mỗi cặp bản ghi vi/en gộp thành một JSON `{vi, en}`, bản dịch tiếng Anh khuyết được để trống và giao diện tự lùi về tiếng Việt.
 
 ### 3.7.3 Xử lý nội dung HTML và phương tiện
 
-Thân bài nguồn là HTML tự do từ trình soạn thảo TinyMCE, kèm định dạng nội tuyến dày đặc. Chuyển đổi sang khối Visual Builder có cấu trúc là bất khả thi ở quy mô 1.600 bài mà không mất mát; hệ thống chọn chiến lược **giữ nguyên HTML có kiểm soát**: giải mã các thực thể HTML, loại bỏ mã kịch bản và các thuộc tính bắt sự kiện tiềm ẩn rủi ro, viết lại đường dẫn phương tiện về kho tệp dành riêng cho dữ liệu cũ. Phía hiển thị, một khối kết xuất chuyên dụng trình bày trung thực phần HTML này — giữ màu chữ, bảng biểu, danh sách của bản gốc — chỉ can thiệp ba việc: phân giải địa chỉ phương tiện về đúng máy chủ tệp, ép ảnh co giãn theo khung, và khôi phục đường kẻ bảng cùng dấu đầu dòng vốn bị bộ khung giao diện đặt lại.
+Thân bài nguồn là HTML tự do từ trình soạn thảo TinyMCE, kèm định dạng nội tuyến dày đặc. Chuyển đổi sang khối Visual Builder có cấu trúc là bất khả thi ở quy mô 1.600 bài mà không mất mát; hệ thống chọn chiến lược giữ nguyên HTML có kiểm soát: giải mã các thực thể HTML, loại bỏ mã kịch bản và các thuộc tính bắt sự kiện tiềm ẩn rủi ro, viết lại đường dẫn phương tiện về kho tệp dành riêng cho dữ liệu cũ. Phía hiển thị, một khối kết xuất chuyên dụng trình bày trung thực phần HTML này — giữ màu chữ, bảng biểu, danh sách của bản gốc — chỉ can thiệp ba việc: phân giải địa chỉ phương tiện về đúng máy chủ tệp, ép ảnh co giãn theo khung, và khôi phục đường kẻ bảng cùng dấu đầu dòng vốn bị bộ khung giao diện đặt lại.
 
 Tư liệu phương tiện được tải tự động từ máy chủ cũ: hệ thống quét ảnh bìa và mọi thẻ ảnh trong thân bài hai ngôn ngữ, tải song song sáu luồng về kho tệp mới. Kết quả thực đo: 1.909 đường dẫn duy nhất — 1.870 tải thành công, 36 hỏng ngay trên máy chủ nguồn, 3 đã có sẵn; tổng dung lượng 3,9 GB. Riêng tư liệu của các trang nội dung: 180/187 tệp (7 tệp hỏng phía nguồn).
 
@@ -207,7 +207,7 @@ Sau di trú, kho ảnh được chuẩn hóa cho môi trường web: các ảnh 
 
 ### 3.7.4 Quy trình di trú
 
-Quy trình tổng thể (Hình 3.10) gồm bốn giai đoạn, toàn bộ là các script tự động chạy lặp lại an toàn nhờ ghi đè theo khóa gốc. Giai đoạn thứ nhất phục hồi nguồn: script khởi động tự dựng một MariaDB 10.6 tạm thời trong Docker, nạp bản sao lưu, rồi đọc bảng ngôn ngữ của nguồn để xác nhận ánh xạ mã ngôn ngữ. Giai đoạn thứ hai di trú các thực thể theo thứ tự an toàn khóa ngoại — đơn vị, người dùng cũ (chỉ hồ sơ, không mật khẩu), chuyên mục, rồi bài viết; kết quả thực đo gồm 10 đơn vị, 45 chuyên mục di trú (cộng 5 chuyên mục mặc định của hệ mới) và **1.637 bài viết** (nâng tổng số lên 1.704 bài cùng 67 bài có sẵn). Giai đoạn thứ ba tải và ánh xạ phương tiện: sau khi tải kho tệp về (mục 3.7.3), bước ánh xạ cập nhật 1.636 bài viết và 7 chuyên mục trỏ về kho tệp mới. Giai đoạn cuối gắn nhãn bộ môn: đọc mã bộ môn gốc của từng bài qua khóa gốc rồi gắn nhãn cho **1.587 bài viết** cùng **1.540 bố cục** phát sinh, tạo nền dữ liệu cho cơ chế phân quyền bộ môn (mục 3.4.4).
+Quy trình tổng thể (Hình 3.10) gồm bốn giai đoạn, toàn bộ là các script tự động chạy lặp lại an toàn nhờ ghi đè theo khóa gốc. Giai đoạn thứ nhất phục hồi nguồn: script khởi động tự dựng một MariaDB 10.6 tạm thời trong Docker, nạp bản sao lưu, rồi đọc bảng ngôn ngữ của nguồn để xác nhận ánh xạ mã ngôn ngữ. Giai đoạn thứ hai di trú các thực thể theo thứ tự an toàn khóa ngoại — đơn vị, người dùng cũ (chỉ hồ sơ, không mật khẩu), chuyên mục, rồi bài viết; kết quả thực đo gồm 10 đơn vị, 45 chuyên mục di trú (cộng 5 chuyên mục mặc định của hệ mới) và 1.637 bài viết (nâng tổng số lên 1.704 bài cùng 67 bài có sẵn). Giai đoạn thứ ba tải và ánh xạ phương tiện: sau khi tải kho tệp về (mục 3.7.3), bước ánh xạ cập nhật 1.636 bài viết và 7 chuyên mục trỏ về kho tệp mới. Giai đoạn cuối gắn nhãn bộ môn: đọc mã bộ môn gốc của từng bài qua khóa gốc rồi gắn nhãn cho 1.587 bài viết cùng 1.540 bố cục phát sinh, tạo nền dữ liệu cho cơ chế phân quyền bộ môn (mục 3.4.4).
 
 【HÌNH 3.10 — Sơ đồ khối 4 giai đoạn di trú: dump → MariaDB Docker → upsert Postgres → tải media → backfill bộ môn】
 
@@ -217,13 +217,13 @@ Vì các script ghi thẳng vào cơ sở dữ liệu (không qua tầng dịch 
 
 ### 3.7.5 Tái tạo trang và chuyển hướng URL
 
-Ngoài bài viết, hệ thống tái tạo *cấu trúc điều hướng* và *trang nội dung* của website cũ. Menu chín mục với 36 liên kết con (song ngữ) được phục dựng từ hai bảng menu của nguồn và ghi vào thanh điều hướng của bố cục trang chủ — nhờ cơ chế nguồn chân lý duy nhất, toàn bộ website lập tức có thanh điều hướng giống hệ thống cũ. **29 trang nội dung** (giới thiệu, quy chế học tập, đào tạo…) được dựng lại thành trang bố cục hoàn chỉnh: khung trang gồm banner tiêu đề, thân bài hai cột kèm thanh bên "Danh mục" và "Tin mới nhất", đúng khung hình của website cũ.
+Ngoài bài viết, hệ thống tái tạo *cấu trúc điều hướng* và *trang nội dung* của website cũ. Menu chín mục với 36 liên kết con (song ngữ) được phục dựng từ hai bảng menu của nguồn và ghi vào thanh điều hướng của bố cục trang chủ — nhờ cơ chế nguồn chân lý duy nhất, toàn bộ website lập tức có thanh điều hướng giống hệ thống cũ. 29 trang nội dung (giới thiệu, quy chế học tập, đào tạo…) được dựng lại thành trang bố cục hoàn chỉnh: khung trang gồm banner tiêu đề, thân bài hai cột kèm thanh bên "Danh mục" và "Tin mới nhất", đúng khung hình của website cũ.
 
-Về URL, bài viết bộ môn được chuyển sang đường dẫn mang tiền tố tên bộ môn: hệ thống đổi đường dẫn của **388 bố cục** từ dạng phẳng sang dạng có tiền tố (1.152 bài toàn khoa giữ đường dẫn phẳng) và sinh bảng ánh xạ **397 chuyển hướng**; tầng trung gian của trang công khai trả về chuyển hướng vĩnh viễn 308 từ URL cũ sang URL mới, bảo toàn liên kết đã lan truyền và giá trị SEO tích lũy. Chín trang bộ môn được khởi tạo từ bố cục trang chủ và gắn nhãn bộ môn để chính bộ môn đó tự biên tập.
+Về URL, bài viết bộ môn được chuyển sang đường dẫn mang tiền tố tên bộ môn: hệ thống đổi đường dẫn của 388 bố cục từ dạng phẳng sang dạng có tiền tố (1.152 bài toàn khoa giữ đường dẫn phẳng) và sinh bảng ánh xạ 397 chuyển hướng; tầng trung gian của trang công khai trả về chuyển hướng vĩnh viễn 308 từ URL cũ sang URL mới, bảo toàn liên kết đã lan truyền và giá trị SEO tích lũy. Chín trang bộ môn được khởi tạo từ bố cục trang chủ và gắn nhãn bộ môn để chính bộ môn đó tự biên tập.
 
 ### 3.7.6 Đối chiếu và kiểm tra
 
-Kết quả di trú được đối chiếu ở ba mức: (i) **số lượng** — so khớp số bản ghi nguồn (sau lọc xóa mềm) với số bản ghi đích qua `legacyId`; (ii) **hiển thị** — kiểm tra tự động bằng Playwright: chụp và so màn hình trang mới với trang cũ trên các trang đại diện (bảng biểu giữ đường kẻ, tiêu đề màu, danh sách có dấu đầu dòng, lưới ảnh giảng viên), xác nhận cả 30 liên kết nội bộ trên thanh điều hướng phân giải về trang đã xuất bản, chuyển ngôn ngữ EN đổi đúng nhãn; (iii) **chức năng** — mở bài viết di trú trong trình soạn thảo quản trị, xác nhận hai thẻ VI/EN hiển thị đúng nội dung, ảnh bìa nạp từ kho tệp mới. Các trường hợp lỗi phía nguồn (36 + 7 tệp phương tiện hỏng) được ghi nhận trong nhật ký chạy script thay vì làm dừng quy trình. Bảng số liệu di trú tổng hợp được trình bày tại mục 4.2 (kiểm thử di trú).
+Kết quả di trú được đối chiếu ở ba mức: (i) số lượng — so khớp số bản ghi nguồn (sau lọc xóa mềm) với số bản ghi đích qua `legacyId`; (ii) hiển thị — kiểm tra tự động bằng Playwright: chụp và so màn hình trang mới với trang cũ trên các trang đại diện (bảng biểu giữ đường kẻ, tiêu đề màu, danh sách có dấu đầu dòng, lưới ảnh giảng viên), xác nhận cả 30 liên kết nội bộ trên thanh điều hướng phân giải về trang đã xuất bản, chuyển ngôn ngữ EN đổi đúng nhãn; (iii) chức năng — mở bài viết di trú trong trình soạn thảo quản trị, xác nhận hai thẻ VI/EN hiển thị đúng nội dung, ảnh bìa nạp từ kho tệp mới. Các trường hợp lỗi phía nguồn (36 + 7 tệp phương tiện hỏng) được ghi nhận trong nhật ký chạy script thay vì làm dừng quy trình. Bảng số liệu di trú tổng hợp được trình bày tại mục 4.2 (kiểm thử di trú).
 
 ## 3.8 Thiết kế tối ưu hóa công cụ tìm kiếm (SEO) và hiệu năng
 

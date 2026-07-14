@@ -1,29 +1,33 @@
 # DANH MỤC TÀI LIỆU THAM KHẢO
 
-[1] Contentful, "What is a headless CMS?" *Contentful*. [Trực tuyến]. Địa chỉ: https://www.contentful.com/headless-cms/ [Truy cập: 09/07/2026].
+**Bài báo nghiên cứu**
 
-[2] Puck, "Puck Documentation — The visual editor for React," *puckeditor.com*. [Trực tuyến]. Địa chỉ: https://puckeditor.com/docs [Truy cập: 09/07/2026].
+[1] Aggarwal, P., Murahari, V., Rajpurohit, T., Kalyan, A., Narasimhan, K., & Deshpande, A. (2024). GEO: Generative engine optimization. *Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD '24)*, 5–16. https://doi.org/10.1145/3637528.3671900
 
-[3] D. An, "Find out how you stack up to new industry benchmarks for mobile page speed," *Think with Google*, 2017. [Trực tuyến]. Địa chỉ: https://www.thinkwithgoogle.com/marketing-strategies/app-and-mobile/mobile-page-speed-new-industry-benchmarks/ [Truy cập: 09/07/2026].
+[2] Jones, M., Bradley, J., & Sakimura, N. (2015). *JSON Web Token (JWT)* (RFC 7519). Internet Engineering Task Force. https://doi.org/10.17487/RFC7519
 
-[4] Google, "Web Vitals," *web.dev*. [Trực tuyến]. Địa chỉ: https://web.dev/articles/vitals [Truy cập: 09/07/2026].
+**Tài liệu điện tử**
 
-[5] Google, "Search Engine Optimization (SEO) Starter Guide," *Google Search Central*. [Trực tuyến]. Địa chỉ: https://developers.google.com/search/docs/fundamentals/seo-starter-guide [Truy cập: 09/07/2026].
+[1] An, D. (2017). Find out how you stack up to new industry benchmarks for mobile page speed. *Think with Google*. Truy cập ngày 09 tháng 7 năm 2026, từ https://www.thinkwithgoogle.com/marketing-strategies/app-and-mobile/mobile-page-speed-new-industry-benchmarks/
 
-[6] P. Aggarwal, V. Murahari, T. Rajpurohit, A. Kalyan, K. Narasimhan và A. Deshpande, "GEO: Generative Engine Optimization," trong *Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD '24)*, Barcelona, Tây Ban Nha, 2024, tr. 5–16, doi: 10.1145/3637528.3671900.
+[2] Contentful. (n.d.). What is a headless CMS? *Contentful*. Truy cập ngày 09 tháng 7 năm 2026, từ https://www.contentful.com/headless-cms/
 
-[7] Meta Platforms, "React Documentation," *react.dev*. [Trực tuyến]. Địa chỉ: https://react.dev/ [Truy cập: 09/07/2026].
+[3] Google. (n.d.-a). Lighthouse. *Chrome for Developers*. Truy cập ngày 09 tháng 7 năm 2026, từ https://developer.chrome.com/docs/lighthouse
 
-[8] Vercel, "Next.js Documentation," *nextjs.org*. [Trực tuyến]. Địa chỉ: https://nextjs.org/docs [Truy cập: 09/07/2026].
+[4] Google. (n.d.-b). Search engine optimization (SEO) starter guide. *Google Search Central*. Truy cập ngày 09 tháng 7 năm 2026, từ https://developers.google.com/search/docs/fundamentals/seo-starter-guide
 
-[9] K. Myśliwiec, "NestJS Documentation — A progressive Node.js framework," *docs.nestjs.com*. [Trực tuyến]. Địa chỉ: https://docs.nestjs.com/ [Truy cập: 09/07/2026].
+[5] Google. (n.d.-c). Web vitals. *web.dev*. Truy cập ngày 09 tháng 7 năm 2026, từ https://web.dev/articles/vitals
 
-[10] The PostgreSQL Global Development Group, "PostgreSQL 16 Documentation," *postgresql.org*. [Trực tuyến]. Địa chỉ: https://www.postgresql.org/docs/16/ [Truy cập: 09/07/2026].
+[6] Meta Platforms. (n.d.). React documentation. *react.dev*. Truy cập ngày 09 tháng 7 năm 2026, từ https://react.dev/
 
-[11] Prisma Data, "Prisma Documentation," *prisma.io*. [Trực tuyến]. Địa chỉ: https://www.prisma.io/docs [Truy cập: 09/07/2026].
+[7] Myśliwiec, K. (n.d.). NestJS documentation. *docs.nestjs.com*. Truy cập ngày 09 tháng 7 năm 2026, từ https://docs.nestjs.com/
 
-[12] Redis, "Redis Documentation," *redis.io*. [Trực tuyến]. Địa chỉ: https://redis.io/docs/ [Truy cập: 09/07/2026].
+[8] Prisma Data. (n.d.). Prisma documentation. *prisma.io*. Truy cập ngày 09 tháng 7 năm 2026, từ https://www.prisma.io/docs
 
-[13] M. Jones, J. Bradley và N. Sakimura, "JSON Web Token (JWT)," RFC 7519, IETF, tháng 5/2015, doi: 10.17487/RFC7519.
+[9] Puck. (n.d.). Puck documentation — The visual editor for React. *puckeditor.com*. Truy cập ngày 09 tháng 7 năm 2026, từ https://puckeditor.com/docs
 
-[14] Google, "Lighthouse," *Chrome for Developers*. [Trực tuyến]. Địa chỉ: https://developer.chrome.com/docs/lighthouse [Truy cập: 09/07/2026].
+[10] Redis. (n.d.). Redis documentation. *redis.io*. Truy cập ngày 09 tháng 7 năm 2026, từ https://redis.io/docs/
+
+[11] The PostgreSQL Global Development Group. (n.d.). PostgreSQL 16 documentation. *postgresql.org*. Truy cập ngày 09 tháng 7 năm 2026, từ https://www.postgresql.org/docs/16/
+
+[12] Vercel. (n.d.). Next.js documentation. *nextjs.org*. Truy cập ngày 09 tháng 7 năm 2026, từ https://nextjs.org/docs
