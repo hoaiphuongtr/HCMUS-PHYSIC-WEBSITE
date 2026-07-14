@@ -6,7 +6,7 @@
   --color-hcmus-blue: #1d4ed8;
   --color-hcmus-dark: #1e293b;
   --color-hcmus-gray: #64748b;
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-playfair);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -120,11 +120,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* font-sans phải nằm ở body: các biến --font-* do next/font gắn class trên <body>,
+     đặt rule ở <html> (cha) sẽ không nhìn thấy biến và rơi về font mặc định. */
   body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
