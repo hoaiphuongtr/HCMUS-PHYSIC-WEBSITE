@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/webp"],
+    // Next 16 defaults to qualities:[75] and returns 400 for any other q —
+    // legacy body images request q=70 and hero slides q=65.
+    qualities: [65, 70, 75],
+    // Next 16 also refuses to optimize images fetched from loopback/private IPs;
+    // only lift that guard for local builds where the API itself is on localhost.
+    dangerouslyAllowLocalIP: (process.env.NEXT_PUBLIC_API_URL ?? "").includes(
+      "localhost",
+    ),
     remotePatterns: [
       {
         protocol: "http",

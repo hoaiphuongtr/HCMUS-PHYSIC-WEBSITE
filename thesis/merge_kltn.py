@@ -14,6 +14,8 @@ FIG_MAP = {
     'HÌNH 3.7': 'hinh-3-7-login.png', 'HÌNH 3.8': 'hinh-3-8-builder.png',
     'HÌNH 3.9': 'hinh-3-9-public.png', 'HÌNH 3.10': 'hinh-3-10-di-tru.png',
     'HÌNH 3.11': 'hinh-3-11-trien-khai.png',
+    'HÌNH B.1': 'phuluc-b1-posts.png', 'HÌNH B.2': 'phuluc-b2-users.png',
+    'HÌNH B.3': 'phuluc-b3-article.png', 'HÌNH B.4': 'phuluc-b4-en.png',
 }
 media_files, rels_entries, _img_seq = [], [], [0]
 
@@ -140,7 +142,7 @@ def md_to_blocks(path, first_heading_pbb):
             st = 'ChuthichBang' if line.startswith('*Bảng') else 'ChuthichHinh'
             blocks.append(para(line.strip('*'), style=st, jc='center'))
         elif line.startswith('【'):
-            mfig = re.match(r'【(HÌNH \d+\.\d+)', line)
+            mfig = re.match(r'【(HÌNH [A-Z\d]+\.\d+)', line)
             key = mfig.group(1) if mfig and mfig.group(1) in FIG_MAP else None
             blocks.append(image_para(FIGDIR + FIG_MAP[key]) if key else para(line, jc='center'))
         elif line.startswith('> '):
@@ -158,6 +160,7 @@ files = ['00-loi-mo-dau.md','01-chuong-1-tong-quan.md','02-chuong-2-co-so-ly-thu
          '05-ket-luan-va-kien-nghi.md']
 for idx, f in enumerate(files):
     content += md_to_blocks(base + f, first_heading_pbb=(idx > 0))
+phu_luc = md_to_blocks(base + '07-phu-luc.md', first_heading_pbb=False)
 tltk = []
 for line in open(base + '06-tai-lieu-tham-khao.md').read().split('\n'):
     line = line.rstrip()
@@ -255,19 +258,23 @@ doc = doc[:e] + toc_field('TOC \\o "1-3" \\h \\z \\u',
 
 # ---------- ghép thân bài ----------
 s_lmd, _   = find_u1(doc, 'LỜI MỞ ĐẦU')
-s_bb, _    = find_u1(doc, 'DANH MỤC CÁC BÀI BÁO')
 s_tltk, e_tltk = find_u1(doc, 'DANH MỤC TÀI LIỆU THAM KHẢO')
-s_pl, _    = find_u1(doc, 'PHỤ LỤC')
+s_pl, e_pl = find_u1(doc, 'PHỤ LỤC')
 tail_zone = doc[e_tltk:s_pl]
 msec = None
 for m in re.finditer(r'<w:p\b.*?</w:p>', tail_zone, re.S):
     if '<w:sectPr' in m.group(0): msec = m
 assert msec is not None
 sect_para = msec.group(0)
+# sectPr cuối cùng nằm ở mức body — giữ nguyên từ đó tới hết tài liệu
+tail_sect = doc.rfind('<w:sectPr')
+assert tail_sect > e_pl and doc.count('<w:sectPr', e_pl, tail_sect) == 0
 
-# bỏ hẳn mục DANH MỤC CÁC BÀI BÁO (không có công trình công bố)
+# bỏ hẳn mục DANH MỤC CÁC BÀI BÁO (không có công trình công bố);
+# thay phần hướng dẫn mẫu sau tiêu đề PHỤ LỤC bằng nội dung phụ lục thật
 new_doc = (doc[:s_lmd] + ''.join(content)
-           + doc[s_tltk:e_tltk] + ''.join(tltk) + sect_para + doc[s_pl:])
+           + doc[s_tltk:e_tltk] + ''.join(tltk) + sect_para
+           + doc[s_pl:e_pl] + ''.join(phu_luc) + doc[tail_sect:])
 # gỡ toàn bộ tham chiếu footnote hướng dẫn của file mẫu
 new_doc = re.sub(r'<w:r\b[^>]*>(?:(?!</w:r>).)*?<w:footnoteReference[^>]*/>(?:(?!</w:r>).)*?</w:r>', '', new_doc, flags=re.S)
 

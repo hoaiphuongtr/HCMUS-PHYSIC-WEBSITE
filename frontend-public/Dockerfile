@@ -6,7 +6,7 @@
 #   docker build -f frontend-public/Dockerfile \
 #     --build-arg NEXT_PUBLIC_API_URL=http://<SERVER_IP>:3001 -t hcmus-public .
 #
-# (docker-compose.prod.yml already sets context: . and this dockerfile.)
+# (docker-compose.sandbox.yml already sets context: . and this dockerfile.)
 FROM node:20-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
@@ -26,6 +26,16 @@ COPY frontend ./frontend
 COPY frontend-public ./frontend-public
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Public site base URL — baked into canonical/OG/JSON-LD/sitemap. Set to the deployed
+# origin (IP:port now, the domain later); defaults to localhost for dev builds.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3002
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+# Build-time-only API base for SSG fetches (sitemap, prerendered pages). For off-box
+# builds point this at a local backend with the same dataset — prerendering the
+# sitemap against the remote box over a slow link times the build out. Runtime SSR
+# uses the INTERNAL_API_URL from the container environment instead (compose sets it).
+ARG INTERNAL_API_URL
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 # 4GB box: cap the Node heap so the build doesn't OOM (needs swap too — see deploy.sh).
 ENV NODE_OPTIONS=--max-old-space-size=3072

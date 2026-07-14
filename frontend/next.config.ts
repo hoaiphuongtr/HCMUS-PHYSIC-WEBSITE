@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   images: {
     formats: ["image/webp"],
+    // Next 16 defaults to qualities:[75] and returns 400 for any other q —
+    // legacy body images request q=70 and hero slides q=65.
+    qualities: [65, 70, 75],
     remotePatterns: [
       {
         protocol: "http",

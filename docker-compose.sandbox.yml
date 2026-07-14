@@ -5,12 +5,21 @@
 # Backend app secrets live in ./backend/.env.
 #
 # Usage (see deploy/DEPLOY.md):
-#   docker compose -f docker-compose.prod.yml build
-#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.sandbox.yml build
+#   docker compose -f docker-compose.sandbox.yml up -d
+#
+# NOTE (CentOS 7.9 sandbox): the host ships libseccomp 2.3.1 (2015), which does not
+# recognise several syscalls that postgres 16 / Node 24 (alpine/musl) issue. Under
+# Docker's default seccomp profile those unknown syscalls return EPERM, so postgres
+# initdb fails with "could not write to file ...: Operation not permitted". Running
+# each service with `seccomp:unconfined` avoids the stale profile. Safe here: this is
+# an isolated single-tenant sandbox. Drop it once the host's libseccomp is modern.
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -26,6 +35,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redisdata:/data
@@ -40,6 +51,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: sh -c "npx prisma db push && npm run db:seed-all"
+    security_opt:
+      - seccomp:unconfined
     env_file:
       - ./backend/.env
     environment:
@@ -55,10 +68,19 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
     ports:
       - "3001:3001"
     env_file:
       - ./backend/.env
+    # backend/src/shared/config/config.ts hard-requires a physical ./.env file at the
+    # WORKDIR (else process.exit(1)); env_file only injects vars, so mount the file too.
+    volumes:
+      - ./backend/.env:/app/.env:ro
+      # media store must live OUTSIDE the container: containers are recreated on every
+      # redeploy and anything copied in with `docker cp` is silently lost with them.
+      - ./backend/uploads:/app/uploads
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
@@ -77,6 +99,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
     ports:
       - "3000:3000"
     environment:
@@ -90,11 +114,18 @@ services:
       dockerfile: frontend-public/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3002}
     restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
     ports:
       - "3002:3002"
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      # NEXT_PUBLIC_API_URL (the public IP) is baked in for the browser, but a container
+      # on a NAT'd host cannot reach that IP. SSR fetches use this internal base instead;
+      # see frontend-public/src/lib/api.ts (server picks INTERNAL_API_URL, browser doesn't).
+      INTERNAL_API_URL: http://backend:3001
     depends_on:
       - backend
 

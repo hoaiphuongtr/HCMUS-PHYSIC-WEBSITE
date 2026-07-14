@@ -103,34 +103,36 @@ Kiểm tra hiển thị bằng Playwright trên các trang đại diện xác nh
 
 Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 200 ms; ≤ 0,1 — mục 2.2.1) được đo ở chế độ phòng thí nghiệm theo cấu hình mô tả tại mục 4.1.2; trong môi trường mô phỏng không có thao tác người dùng thật, INP được thay bằng chỉ số gần đúng TBT (Total Blocking Time, ngưỡng tốt ≤ 200 ms). Kết quả trên bốn trang đại diện trình bày trong Bảng 4.6.
 
-*Bảng 4.6. Chỉ số Web cốt lõi (lab) của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026*
+*Bảng 4.6. Chỉ số Web cốt lõi (lab) của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
 
 | Trang | LCP (s) | TBT (ms) | CLS | FCP (s) | Speed Index (s) |
 |---|---|---|---|---|---|
 | Trang chủ | 3,74 | 174 | 0,000 | 1,38 | 1,84 |
-| Bài viết di trú | 6,05 | 301 | 0,270 | 1,23 | 1,86 |
+| Bài viết di trú | 4,21 | 215 | 0,270 | 1,24 | 1,81 |
 | Trang bộ môn | 3,86 | 164 | 0,000 | 1,37 | 1,78 |
 | Trang giới thiệu | 3,39 | 182 | 0,000 | 1,08 | 1,08 |
 | *Ngưỡng tốt* | *≤ 2,5* | *≤ 200* | *≤ 0,1* | *≤ 1,8* | — |
 
-Kết quả phản ánh hiệu quả của vòng tối ưu giữa hai lần đo. Ở lần đo đầu (12/07), trang bài viết di trú là điểm yếu nặng nhất: thân bài chứa ảnh gốc độ phân giải đầy đủ khiến tổng trọng lượng trang lên tới 221 MB, thời gian chặn luồng chính (TBT) 1.963 ms — gấp gần mười lần ngưỡng tốt. Sau khi nén lại toàn bộ kho ảnh di trú, bổ sung thuộc tính kích thước cho 5.877 thẻ ảnh (mục 3.7.3), định tuyến ảnh thân bài qua bộ tối ưu ảnh của Next.js (thu về kích thước hiển thị, định dạng WebP), ưu tiên nạp ảnh bìa và nạp trễ các ảnh phía sau, trọng lượng trang giảm 99% (còn 1,8 MB) và TBT giảm 85% (còn 301 mili giây); TBT của ba trang còn lại đều dưới ngưỡng 200 mili giây. Độ ổn định bố cục đạt mức tuyệt đối (CLS = 0,000) trên ba trang do hệ thống kiểm soát toàn bộ — so với 0,243 của trang chủ website cũ — và thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây.
+Kết quả phản ánh hiệu quả của vòng tối ưu giữa hai lần đo. Ở lần đo đầu (12/07), trang bài viết di trú là điểm yếu nặng nhất: thân bài chứa ảnh gốc độ phân giải đầy đủ khiến tổng trọng lượng trang lên tới 221 MB, thời gian chặn luồng chính (TBT) 1.963 ms — gấp gần mười lần ngưỡng tốt. Sau khi nén lại toàn bộ kho ảnh di trú, bổ sung thuộc tính kích thước cho 5.877 thẻ ảnh (mục 3.7.3), định tuyến ảnh bìa lẫn ảnh thân bài qua bộ tối ưu ảnh của Next.js (thu về kích thước hiển thị, định dạng WebP), ưu tiên nạp ảnh bìa và nạp trễ các ảnh phía sau, trọng lượng trang giảm còn 0,9 MB (99,6%) và TBT giảm còn 215 mili giây (89%); TBT của ba trang còn lại đều dưới ngưỡng 200 mili giây. Độ ổn định bố cục đạt mức tuyệt đối (CLS = 0,000) trên ba trang do hệ thống kiểm soát toàn bộ — so với 0,243 của trang chủ website cũ — và thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây.
 
-Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP của các trang vẫn trên ngưỡng tốt 2,5 giây trong điều kiện Slow 4G mô phỏng: 3,4–3,9 giây (đã cải thiện từ 4,2–6,2 giây của vòng đo đầu nhờ ưu tiên tải ảnh hero, hoãn các ảnh ẩn và nạp ảnh qua bộ tối ưu); phần chi phí còn lại nằm ở chính kích thước hiển thị toàn màn hình của ảnh hero trên đường truyền 1,6 Mbps. Thứ hai, trang bài viết di trú dạng thư viện ảnh còn LCP 6,05 giây và CLS 0,270: đáng chú ý, chỉ số LCP vòng đo đầu (2,58 giây; CLS 0,179) thấp hơn không phải vì trang tốt hơn, mà vì khối ảnh 221 MB khi đó không kịp tải trong khung đo nên không được tính — sau khi tối ưu, toàn bộ ảnh tải được và phép đo phản ánh đúng chi phí thật của một bài nhiều ảnh trên mạng di động chậm. Việc tinh chỉnh tiếp cho nhóm trang này được ghi nhận tại mục 5.3.
+Số liệu của trang bài viết di trú là kết quả đo lại ngày 15/07/2026. Việc rà soát nhật ký đo của vòng hai phát hiện bộ tối ưu ảnh từ chối yêu cầu với mã trạng thái 400: phiên bản Next.js 16 mặc định chỉ chấp nhận mức chất lượng ảnh 75, trong khi ảnh thân bài dùng mức 70 và ảnh hero dùng mức 65, khiến một phần ảnh của trang không được tải — và không được tính — trong phép đo ngày 14/07. Sau khi khai báo danh sách mức chất lượng hợp lệ trong cấu hình và đưa cả ảnh bìa qua bộ tối ưu, trang được đo lại với toàn bộ ảnh tải thành công; kết quả trong Bảng 4.6 vì vậy phản ánh đúng chi phí thật của trang.
+
+Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP của các trang vẫn trên ngưỡng tốt 2,5 giây trong điều kiện Slow 4G mô phỏng: 3,4–4,2 giây (đã cải thiện từ 4,2–6,2 giây của vòng đo đầu nhờ ưu tiên tải ảnh hero, hoãn các ảnh ẩn và nạp ảnh qua bộ tối ưu); phần chi phí còn lại nằm ở chính kích thước hiển thị toàn màn hình của ảnh hero trên đường truyền 1,6 Mbps. Thứ hai, trang bài viết di trú dạng thư viện ảnh còn CLS 0,270 do khối thư viện ảnh chèn theo nội dung: đáng chú ý, chỉ số LCP vòng đo đầu (2,58 giây; CLS 0,179) thấp hơn không phải vì trang tốt hơn, mà vì khối ảnh 221 MB khi đó không kịp tải trong khung đo nên không được tính — sau khi tối ưu, toàn bộ ảnh tải được và phép đo phản ánh đúng chi phí thật của một bài nhiều ảnh trên mạng di động chậm. Việc tinh chỉnh tiếp cho nhóm trang này được ghi nhận tại mục 5.3.
 
 ## 4.4 Đánh giá bằng Lighthouse
 
 Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) (Google, n.d.-a) của bốn trang đại diện được trình bày trong Bảng 4.7.
 
-*Bảng 4.7. Điểm Lighthouse của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026*
+*Bảng 4.7. Điểm Lighthouse của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
 
 | Trang | Performance | Accessibility | Best Practices | SEO |
 |---|---|---|---|---|
 | Trang chủ | 87 | 100 | 96 | 92 |
-| Bài viết di trú | 58 | 96 | 96 | 100 |
+| Bài viết di trú | 68 | 96 | 96 | 100 |
 | Trang bộ môn | 87 | 94 | 96 | 100 |
 | Trang giới thiệu | 89 | 96 | 96 | 100 |
 
-Điểm SEO đạt 92–100 trên cả bốn trang, phản ánh các hạng mục kỹ thuật đã hiện thực ở mục 3.8 (HTML đầy đủ, metadata, canonical, hreflang, robots hợp lệ); điểm Tuân thủ thông lệ tốt ổn định ở mức 96. Điểm Performance đạt 87–89 ở ba trang bố cục; riêng trang bài viết di trú dạng thư viện ảnh đạt 58 do đặc thù khối lượng ảnh đã phân tích tại mục 4.3.
+Điểm SEO đạt 92–100 trên cả bốn trang, phản ánh các hạng mục kỹ thuật đã hiện thực ở mục 3.8 (HTML đầy đủ, metadata, canonical, hreflang, robots hợp lệ); điểm Tuân thủ thông lệ tốt ổn định ở mức 96. Điểm Performance đạt 87–89 ở ba trang bố cục; riêng trang bài viết di trú dạng thư viện ảnh đạt 68 do đặc thù khối lượng ảnh đã phân tích tại mục 4.3.
 
 Điểm Accessibility là hạng mục thay đổi rõ nhất giữa hai vòng đo. Ở vòng đầu, trang chủ chỉ đạt 80 — thấp hơn cả website cũ (88), một kết quả ngược kỳ vọng: giao diện mới nhiều thành phần tương tác hơn thì mỗi thành phần là một điểm có thể vi phạm. Các vi phạm cụ thể do Lighthouse chỉ ra (nút chuyển ảnh của khối hero thiếu nhãn truy cập và có vùng chạm 10 điểm ảnh, chữ phụ xám nhạt thiếu tương phản, liên kết mạng xã hội không có tên truy cập, cấp tiêu đề nhảy bậc) đã được xử lý trực tiếp trong các khối giao diện; kết quả vòng hai đạt 94–100, trong đó trang chủ đạt điểm tuyệt đối 100 — vượt website cũ trên cả bốn trang đại diện.
 

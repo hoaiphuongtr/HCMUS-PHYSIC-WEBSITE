@@ -51,7 +51,7 @@ Lược đồ dữ liệu phải đồng thời thỏa mãn: (i) quan hệ nghi�
 
 ### 3.3.2 Sơ đồ thực thể – liên kết (ERD)
 
-Lược đồ đầy đủ được khai báo tập trung trong tệp lược đồ Prisma, gồm hơn 30 thực thể; Hình 3.3 trình bày rút gọn các thực thể trung tâm và quan hệ giữa chúng. ERD đầy đủ được đưa vào Phụ lục.
+Lược đồ đầy đủ được khai báo tập trung trong tệp lược đồ Prisma, gồm hơn 30 thực thể; Hình 3.3 trình bày rút gọn các thực thể trung tâm và quan hệ giữa chúng. Lược đồ dữ liệu đầy đủ với 33 thực thể và 43 quan hệ khóa ngoại được trình bày tại Phụ lục A.
 
 【HÌNH 3.3 — ERD rút gọn: xuất từ sơ đồ Mermaid erDiagram trong `docs/architecture.md`, bổ sung Department, Category, PageLayoutVersion】
 

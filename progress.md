@@ -300,3 +300,121 @@ Schema change is BREAKING for any code that reads `post.title` as string. All ca
 - All toasts Vietnamese only (no Anh-Việt mix). Replace "Password" → "Mật khẩu".
 - Verification gate: `pnpm build` (not just vitest) before push — vitest swc skips TS strict.
 - One feature at a time per CLAUDE.md harness rule.
+
+## Session 2026-07-10 — Sandbox deployment (Docker, IP-only, no domain)
+
+Deployed the full stack to the teacher-provided sandbox **103.88.121.212** (CentOS 7.9),
+Docker via `docker-compose.prod.yml`. SSH: port 63379, user vlkt (scripted with paramiko —
+`sshpass` unavailable). Migrated DB transferred dev→box (pg_dump `hcmus-physic` → restore into
+box `hcmus_physics`); **1654 posts / 1658 layouts / 10 depts / 15 users / 70 media** verified on box.
+
+### LIVE now (externally reachable over the public IP)
+- **Admin  → http://103.88.121.212:3000** ✅ (307→/admin, 200, login works; API on :3001).
+- **API    → http://103.88.121.212:3001** ✅ (`/page-layouts/slug/trang-chu` = 200).
+- **DB + Redis** ✅ healthy, data in named volumes (survives `down`, NOT `down -v`).
+- **Public → http://103.88.121.212:3002/vi** ✅ 200, renders full content + synced Header/Footer.
+
+> **UPDATE 2026-07-10 (later):** deployment is now COMPLETE — all 4 tiers live externally.
+> Public was fixed by building the image off-box (dev machine, 820G) and shipping it via
+> `docker save | gzip | scp | docker load` (the box's `vfs` driver can't build public without
+> exhausting disk). Also fixed the SEO base URL: `NEXT_PUBLIC_SITE_URL` is now a build arg
+> (`frontend-public/Dockerfile` + compose), set to `http://103.88.121.212:3002` on the sandbox
+> so canonical/OG/JSON-LD use the IP not localhost. Compose file renamed
+> `docker-compose.prod.yml → docker-compose.sandbox.yml` (repo + box + thesis ref) since it
+> carries a sandbox-specific `seccomp:unconfined` workaround; the eventual prod file is a sibling
+> with the domain in `.env` and no seccomp line. **No CI/CD deploy exists** (`.github/workflows/ci.yml`
+> is CI-only: lint/build/test + image smoke-build, no SSH/registry/deploy) — the sandbox is deployed
+> manually via the image-ship above.
+>
+> **Puck component rename SiteHeader→Header, SiteFooter→Footer** (user request): renamed the Puck
+> registry keys + exports/labels in `puck-config.tsx` + `components/site-syndication.tsx`, migrated
+> the stored `puckData`/`publishedPuckData` type strings in **both** dev DB and box DB via
+> `backend/initialScript/migrate-legacy/rename-header-footer-puck-types.sql` (1639/1638 rows;
+> idempotent + reversible), then rebuilt+shipped admin & public images. Verified live: `/vi` renders
+> nav + footer, no "chưa cấu hình" fallback. `multer` add now synced into `pnpm-lock.yaml`
+> (CI `--frozen-lockfile` safe).
+
+### 4 real fixes made this session (all in git working tree, UNCOMMITTED on wip/feat-013-legacy-migration)
+1. `docker-compose.prod.yml` — `security_opt: seccomp:unconfined` on every service.
+   CentOS 7 ships **libseccomp 2.3.1 (2015)**; Docker's default profile returns EPERM for
+   syscalls it doesn't know → postgres initdb failed "could not write ...: Operation not permitted".
+2. `docker-compose.prod.yml` — mount `./backend/.env:/app/.env:ro` on backend.
+   `backend/src/shared/config/config.ts:8` hard-requires a physical `.env` file (else `process.exit(1)`);
+   compose `env_file` only injects vars, not a file.
+3. `backend/package.json` — added `"multer": "^2.1.1"` to **dependencies**.
+   `media.controller.ts:14` imports `diskStorage` from multer; it was only hoisted transitively in
+   the monorepo, so the isolated backend Docker build was missing it (`MODULE_NOT_FOUND`).
+   ⚠️ pnpm-lock.yaml NOT regenerated locally (backend Dockerfile uses `--no-frozen-lockfile`, so box
+   build was fine). Run `pnpm install` at repo root before committing to sync the lockfile.
+4. `frontend-public/src/lib/api.ts` + `src/app/sitemap.ts` — SSR now uses `INTERNAL_API_URL`
+   (server-only runtime var, set to `http://backend:3001` in compose `public` service); browser keeps
+   `NEXT_PUBLIC_API_URL` (public IP); `resolveMediaUrl` ALWAYS uses the public URL.
+   Reason: box is behind provider NAT with **no hairpin** — a container cannot reach its own public IP,
+   so SSR fetch to `103.88.121.212:3001` timed out → every SSR page 404'd. (extra_hosts can't fix it:
+   the value is an IP literal, which the resolver never looks up in /etc/hosts.)
+
+### ✅ RESOLVED (see UPDATE note above) — rebuild + redeploy `public` with fix #4
+The public image rebuild on the box **fails on disk**: the `vfs` storage driver (forced because XFS
+has `ftype=0` → overlay2 unsupported) balloons disk; the public build (frontend + frontend-public
+workspaces) exhausts the 47G disk mid-build ("no space left on device"). Build cache was pruned;
+disk currently 79% (11G free).
+
+**Recommended resume (avoids building on the cramped box):** build the public image off-box and ship it —
+```
+# on a dev machine with the repo + Docker:
+docker build -f frontend-public/Dockerfile \
+  --build-arg NEXT_PUBLIC_API_URL=http://103.88.121.212:3001 \
+  -t hcmus-cms-public:latest .
+docker save hcmus-cms-public:latest | gzip > public.tar.gz     # ~200MB
+# transfer to box (scp -P 63379 / paramiko), then on box:
+docker load < public.tar.gz
+cd ~/hcmus-cms && docker compose -f docker-compose.prod.yml up -d --no-deps public
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3002/vi   # expect 200
+```
+Alternative (bigger job): move /var/lib/docker onto an ext4 loopback so Docker can use overlay2, then
+building on-box works normally. Deferred.
+
+### Deferred / notes
+- **Media not synced**: 3.9 GB `backend/uploads/legacy` not transferred → body `<img>`/PDFs will 404
+  until synced (rsync over the SSH port). Text/layout/data all present.
+- **Dept admins must re-login** so their JWT carries `departmentId` (feat-015).
+- Box `.env` has a now-unused `API_HAIRPIN_HOST=103.88.121.212` line (leftover from an abandoned
+  extra_hosts attempt) — harmless, can delete.
+- Scratchpad SSH helpers: `ssh.py "<cmd>" <timeout>`, `upload.py <local> <remote>` (creds hardcoded).
+
+## Session 2026-07-15 — Phụ lục KLTN + phát hiện & sửa lỗi optimizer 400 + khôi phục media sandbox
+
+### Phụ lục (yêu cầu hiện hành của Phương)
+- `thesis/07-phu-luc.md` MỚI, theo văn phong quyển mẫu 2213595 ("PHỤ LỤC A: TÊN HOA", tiểu mục "Phụ lục A – 1: …"):
+  A = lược đồ CSDL đầy đủ (33 thực thể + 43 quan hệ FK, sinh từ schema.prisma);
+  B = 4 màn hình (B-1 danh sách bài đã xuất bản 1607, B-2 quản lý 12 tài khoản bộ môn /admin/admins,
+  B-3 bài viết công khai, B-4 trang chủ EN) — `thesis/figures/phuluc-b*.png`;
+  C = 5 bước triển khai + bảng nhóm biến cấu hình (không lộ giá trị).
+- `merge_kltn.py`: FIG_MAP nhận HÌNH B.n, regex placeholder mở rộng chữ cái, splice phụ lục sau heading
+  PHỤ LỤC của template (giữ sectPr cuối mức body). Kết quả: 1142 đoạn, 22 bảng, 5 sectPr, 15 ảnh nhúng.
+- 3.3.2 giờ trỏ "Phụ lục A". Login screenshot: dùng Enter thay click (nút bị animation che).
+
+### PHÁT HIỆN QUAN TRỌNG: số V6 của trang bài viết là artifact lần hai
+- Nhật ký V6 cho thấy 4/8 ảnh trang bài viết bị **400** từ `/_next/image`: Next 16 mặc định
+  `images.qualities=[75]`, mọi q=70 (thân bài)/q=65 (hero) bị từ chối; NGOÀI RA Next 16 chặn optimizer
+  fetch từ IP loopback (cần `dangerouslyAllowLocalIP` khi đo local với API localhost).
+- Fix code: `qualities:[65,70,75]` (cả 2 next.config), `dangerouslyAllowLocalIP` chỉ khi
+  NEXT_PUBLIC_API_URL chứa localhost (public), ảnh bìa PostCoverImage cũng qua optimizer (nó là LCP).
+- Đo lại 15/07 (bài viết, trung vị 6 lượt, load-gated): **Perf 68 | LCP 4,21 | TBT 215 | CLS 0,270 | 0,9MB**
+  (V6 công bố: 58/6,05/301/1,8MB). 3 trang kia giữ số V6 (phép đo đó không có ảnh lỗi).
+  Thesis C4 (Bảng 4.6/4.7 + prose giải trình trung thực), C5 đã cập nhật; benchmark ở `benchmark/v7/`
+  (v7b-article + v8-* + v8-final-median.json). Máy đo WSL2 nhiễu tải → script gate loadavg <2.5.
+
+### Sandbox: kho media từng bị MẤT SẠCH (container không mount volume)
+- `/app/uploads` trống trên box → mọi ảnh media/legacy 404 (ảnh screenshot B-3 vỡ là do vậy).
+- Đã SFTP 517MB uploads.tar (paramiko), giải nén vào ~/hcmus-cms/backend/uploads, thêm bind mount
+  `./backend/uploads:/app/uploads` (compose sandbox cả 2 phía), thêm `uploads` vào backend/.dockerignore
+  (thiếu nó, context build phồng 542MB làm vfs cạn đĩa — một lần build fail "no space").
+  Recreate backend KHÔNG --build → media 200 ✓. KHÔNG chạy `docker compose down -v` trên box.
+- Đang ship image public mới (đã build off-box, docker save|gzip|scp|load) để sandbox có fix qualities;
+  sau đó chụp lại phuluc-b3.
+
+### Còn lại phiên sau nếu dở dang
+- Nếu B-3 chưa chụp lại: bài usactalk trên sandbox sau khi public mới lên.
+- Commit cuối gồm: thesis md + 07-phu-luc + figures + merge_kltn + next.config×2 + post-placeholders
+  + docker-compose.sandbox + .dockerignore + benchmark/v7 + progress.md.

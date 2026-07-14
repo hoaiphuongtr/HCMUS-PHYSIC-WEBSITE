@@ -2,3 +2,6 @@ node_modules
 dist
 .env
 *.log
+# media store is bind-mounted at runtime; keep it out of the image build context
+uploads
+initialScript/migrate-legacy/dump

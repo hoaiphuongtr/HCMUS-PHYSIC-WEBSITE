@@ -412,7 +412,9 @@ function PostCoverImageRender({
 }) {
   const { locale } = useLocale();
   if (injected && !src) return null;
-  const finalSrc = resolveMediaUrl(src || defaultSrc);
+  // Ảnh bìa cũng qua bộ tối ưu: gốc legacy có thể là PNG hàng trăm KB và
+  // chính nó là ứng viên LCP nên hưởng lợi nhiều nhất từ WebP thu gọn.
+  const finalSrc = optimizedBodyImageUrl(src || defaultSrc);
   const finalAlt = alt || t(defaultAlt, locale) || "";
   if (!finalSrc) {
     return (
