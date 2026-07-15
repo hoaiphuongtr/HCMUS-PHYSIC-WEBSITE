@@ -66,12 +66,17 @@ def runs(text, sz=26, italic_all=False):
 # u1 = 16pt đậm; u2 = 14pt đậm; u3 = 13pt đậm nghiêng (yêu cầu 13/07)
 HEAD_SZ = {'u1': 32, 'u2': 28, 'u3': 26}
 
-def para(text, style=None, jc='both', spacing=True, pbb=False, numcancel=False, hanging=False):
+def para(text, style=None, jc='both', spacing=True, pbb=False, numcancel=False, hanging=False, before=None):
     ppr = '<w:pPr>'
     if style: ppr += f'<w:pStyle w:val="{style}"/>'
     if numcancel: ppr += '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'
     if pbb: ppr += '<w:pageBreakBefore/>'
-    if spacing: ppr += '<w:spacing w:after="120" w:line="360" w:lineRule="auto"/>'
+    # spacing heading (yêu cầu 16/07): u1/u2 12pt trên-dưới, u3 6pt trên-dưới
+    if style in ('u1', 'u2'): ppr += '<w:spacing w:before="240" w:after="240"/>'
+    elif style == 'u3': ppr += '<w:spacing w:before="120" w:after="120"/>'
+    elif spacing:
+        b = f' w:before="{before}"' if before else ''
+        ppr += f'<w:spacing{b} w:after="120" w:line="360" w:lineRule="auto"/>'
     if hanging: ppr += '<w:ind w:left="567" w:hanging="567"/>'
     if jc: ppr += f'<w:jc w:val="{jc}"/>'
     ppr += '</w:pPr>'
@@ -112,7 +117,7 @@ def toc_field(instr, placeholder):
 
 def md_to_blocks(path, first_heading_pbb):
     src = open(path).read().split('\n')
-    blocks, i, first_h1 = [], 0, True
+    blocks, i, first_h1, after_table = [], 0, True, False
     while i < len(src):
         line = src[i].rstrip()
         if not line.strip(): i += 1; continue
@@ -137,7 +142,7 @@ def md_to_blocks(path, first_heading_pbb):
                 if not all(re.fullmatch(r':?-+:?', c) for c in cells):
                     rows.append(cells)
                 i += 1
-            blocks.append(table(rows)); continue
+            blocks.append(table(rows)); after_table = True; continue
         elif re.match(r'^\*(Bảng|Hình) ', line):
             st = 'ChuthichBang' if line.startswith('*Bảng') else 'ChuthichHinh'
             blocks.append(para(line.strip('*'), style=st, jc='center'))
@@ -148,7 +153,8 @@ def md_to_blocks(path, first_heading_pbb):
         elif line.startswith('> '):
             blocks.append(para(line[2:], jc='both'))
         else:
-            blocks.append(para(line))
+            blocks.append(para(line, before=120 if after_table else None))
+        after_table = False
         i += 1
     return blocks
 
