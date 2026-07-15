@@ -165,7 +165,15 @@ tltk = []
 for line in open(base + '06-tai-lieu-tham-khao.md').read().split('\n'):
     line = line.rstrip()
     if not line.strip() or line.startswith('#') or line.startswith('*('): continue
-    tltk.append(para(line, jc='both', hanging=line.startswith('[')))
+    m = __import__('re').match(r'(\[\d+\])\s+(.*)', line)
+    if m:
+        tltk.append('<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="567"/></w:tabs>'
+            '<w:spacing w:after="120" w:line="360" w:lineRule="auto"/>'
+            '<w:ind w:left="567" w:hanging="567"/><w:jc w:val="left"/></w:pPr>'
+            f'<w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr><w:t xml:space="preserve">{escape(m.group(1))}</w:t></w:r>'
+            f'<w:r><w:rPr><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr><w:tab/><w:t xml:space="preserve">{escape(m.group(2))}</w:t></w:r></w:p>')
+    else:
+        tltk.append(para(line, jc='left'))
 
 # ---------- bảng viết tắt + chú thích thuật ngữ ----------
 ABBR = [['Từ viết tắt', 'Tiếng Anh', 'Tiếng Việt'],
