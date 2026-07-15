@@ -20,7 +20,7 @@ Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và
 
 ### 4.1.2 Môi trường kiểm thử
 
-Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (hơn 1.650 bài viết và 1.650 bố cục, 3,9 GB phương tiện) — nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
+Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (1.637 bài viết di trú cùng các bố cục tương ứng, 3,9 GB phương tiện) — nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
 
 Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên bản build production phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật — hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
 
@@ -209,7 +209,7 @@ Kết quả cho thấy khoảng cách lớn nhất nằm ở khối lượng tà
 | 2. Trang quản trị + Visual Builder | Đầy đủ: soạn bài song ngữ, Puck, thư viện phương tiện, phiên bản + khôi phục, tour hướng dẫn | Hoàn thành |
 | 3. Xác thực + phân quyền bộ môn | JWT 2 vai trò + phạm vi bộ môn; kiểm chứng API + 40 ca kiểm thử | Hoàn thành |
 | 4. Di trú toàn bộ dữ liệu | 1.637 bài, 29 trang, 10 đơn vị, 45 chuyên mục, ~3,9 GB phương tiện; 397 chuyển hướng; đối chiếu Bảng 4.5 | Hoàn thành (36+7 tệp hỏng phía nguồn ghi nhận) |
-| 5. Tối ưu hiệu năng + SEO | Trọng lượng giảm 96%, yêu cầu HTTP giảm 80%, CLS 0,000, TBT < 200 ms cả 4 trang, A11y 94–100, SEO 92–100, hreflang + sitemap + JSON-LD + 397 chuyển hướng; LCP còn trên ngưỡng khuyến nghị (Bảng 4.6) | Hoàn thành phần lớn; LCP tiếp tục tối ưu |
+| 5. Tối ưu hiệu năng + SEO | Trọng lượng giảm 96%, yêu cầu HTTP giảm 80%, CLS 0,000, TBT dưới 200 ms ở ba trang bố cục (trang bài viết di trú còn 215 ms), A11y 94–100, SEO 92–100, hreflang + sitemap + JSON-LD + 397 chuyển hướng; LCP còn trên ngưỡng khuyến nghị (Bảng 4.6) | Hoàn thành phần lớn; LCP tiếp tục tối ưu |
 | 6. Đóng gói triển khai Docker | Compose 6 dịch vụ + deploy.sh + tài liệu; ràng buộc CentOS 7.9 đã xử lý | Hoàn thành |
 
 ### 4.7.3 Tổng kết kết quả nghiên cứu
