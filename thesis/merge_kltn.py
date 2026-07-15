@@ -250,25 +250,25 @@ doc = doc[:e] + table(GLOSS, borderless=True, header_italic=True, header_bold=Fa
 # 2. DANH MỤC KÝ HIỆU, CHỮ VIẾT TẮT
 s, e = find_u1(doc, 'DANH MỤC CÁC KÝ HIỆU')
 s2, _ = find_u1(doc, 'BẢNG CHÚ THÍCH THUẬT NGỮ')
-doc = doc[:e] + table(ABBR, borderless=True, header_italic=True, header_bold=False, cell_sz=26) + '<w:p/>' + doc[s2:]
+doc = doc[:e] + table(ABBR, borderless=True, header_italic=True, header_bold=False, cell_sz=26) + doc[s2:]
 
 # 3. DANH MỤC BẢNG SỐ LIỆU -> field TOC theo style ChuthichBang
 s, e = find_u1(doc, 'DANH MỤC CÁC BẢNG SỐ LIỆU')
 s2, _ = find_u1(doc, 'DANH MỤC CÁC KÝ HIỆU')
 doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichBang,1"',
-        'Danh mục bảng sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + '<w:p/>' + doc[s2:]
+        'Danh mục bảng sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + doc[s2:]
 
 # 4. DANH MỤC HÌNH VẼ -> field TOC theo style ChuthichHinh
 s, e = find_u1(doc, 'DANH MỤC CÁC HÌNH VẼ')
 s2, _ = find_u1(doc, 'DANH MỤC CÁC BẢNG SỐ LIỆU')
 doc = doc[:e] + toc_field('TOC \\h \\z \\t "ChuthichHinh,1"',
-        'Danh mục hình sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + '<w:p/>' + doc[s2:]
+        'Danh mục hình sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + doc[s2:]
 
 # 5. MỤC LỤC -> field TOC heading 1-3
 s, e = find_para(doc, lambda c: ptext(c).strip() == 'MỤC LỤC')
 s2, _ = find_u1(doc, 'DANH MỤC CÁC HÌNH VẼ')
 doc = doc[:e] + toc_field('TOC \\o "1-3" \\h \\z \\u',
-        'Mục lục sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + '<w:p/>' + doc[s2:]
+        'Mục lục sẽ tự cập nhật khi mở tệp (hoặc chọn toàn bộ rồi nhấn F9).') + doc[s2:]
 
 # ---------- ghép thân bài ----------
 s_lmd, _   = find_u1(doc, 'LỜI MỞ ĐẦU')
