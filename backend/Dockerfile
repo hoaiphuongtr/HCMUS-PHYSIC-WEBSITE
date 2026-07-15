@@ -9,6 +9,8 @@ RUN pnpm install --prod=false --no-frozen-lockfile
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# nest build (swc + type-check) cần hơn heap 2GB mặc định của Node
+ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN pnpm exec prisma generate
 RUN pnpm exec nest build
 
