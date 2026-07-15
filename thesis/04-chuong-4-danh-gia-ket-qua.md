@@ -62,7 +62,7 @@ Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản tr�
 | P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết của bộ môn trực thuộc | Đạt — trả về 32 bài, toàn bộ thuộc đúng bộ môn |
 | P2 | Quản trị viên bộ môn đọc chi tiết bài viết của bộ môn trực thuộc | HTTP 200 | Đạt |
 | P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404 — không tiết lộ tồn tại | Đạt |
-| P4 | Quản trị viên bộ môn mở thư viện phương tiện | Thấy tư liệu của bộ môn trực thuộc + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
+| P4 | Quản trị viên bộ môn mở thư viện phương tiện | Xem được tư liệu của bộ môn trực thuộc + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
 | P5 | Quản trị viên thường truy cập trang quản lý quản trị viên | Bị chuyển hướng; API trả 403 (khai báo quyền ở mức toàn phân hệ) | Đạt |
 | P6 | 24 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
 
@@ -121,7 +121,7 @@ Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP c�
 
 ## 4.4 Đánh giá bằng Lighthouse
 
-Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) (Google, n.d.-a) của bốn trang đại diện được trình bày trong Bảng 4.7.
+Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) [17] của bốn trang đại diện được trình bày trong Bảng 4.7.
 
 *Bảng 4.7. Điểm Lighthouse của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
 
