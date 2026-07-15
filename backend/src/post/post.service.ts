@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
@@ -289,6 +290,8 @@ export class PostService {
     const posts = await this.prisma.post.findMany({
       where: {
         status: 'PUBLISHED',
+        // bài di trú rỗng nội dung (nguồn cũ không có bài) không đưa ra trang công khai
+        body: { not: Prisma.DbNull },
         OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }],
       },
       orderBy: { updatedAt: 'desc' },
@@ -301,7 +304,11 @@ export class PostService {
   async listUpcomingEventsPublic(limit: number) {
     const now = new Date();
     const posts = await this.prisma.post.findMany({
-      where: { status: 'PUBLISHED', eventStartAt: { gte: now } },
+      where: {
+        status: 'PUBLISHED',
+        body: { not: Prisma.DbNull },
+        eventStartAt: { gte: now },
+      },
       orderBy: { eventStartAt: 'asc' },
       include: postInclude,
       take: limit,
@@ -318,7 +325,10 @@ export class PostService {
     search?: string;
   }) {
     const { page, pageSize, category, fromDate, toDate, search } = params;
-    const where: Record<string, unknown> = { status: 'PUBLISHED' };
+    const where: Record<string, unknown> = {
+      status: 'PUBLISHED',
+      body: { not: Prisma.DbNull },
+    };
     if (category) where.category = { slug: category };
     if (fromDate || toDate) {
       const range: Record<string, Date> = {};

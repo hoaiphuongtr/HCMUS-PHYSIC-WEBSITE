@@ -12,7 +12,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DynamicIcon } from "@/components/admin/icons";
 import { LOCALE_LABELS, LOCALES, type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
@@ -23,6 +23,19 @@ import {
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
 import { resolveMediaSrc } from "./media-src";
+
+// Giữ nguyên locale đang xem khi điều hướng: URL menu lưu dạng /duong-dan không tiền tố,
+// proxy của trang public sẽ ép về locale mặc định (vi) nếu thiếu — nên gắn tiền tố tại đây.
+const MEDIA_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+const withLocale = (url: string | null | undefined, locale: string): string => {
+  if (!url) return "#";
+  if (/^(?:https?:|mailto:|tel:|#)/.test(url)) return url;
+  if (/^\/(?:vi|en)(?:\/|$)/.test(url)) return url;
+  if (url === "/") return `/${locale}`;
+  return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
+};
 
 type NavbarSubItem = {
   label: LocalizedString;
@@ -70,7 +83,7 @@ function NavbarMenuButton({
       onMouseLeave={() => setOpen(false)}
     >
       <a
-        href={isEditing ? "#" : item.url || "#"}
+        href={isEditing ? "#" : withLocale(item.url, locale)}
         tabIndex={isEditing ? -1 : undefined}
         onClick={(e) => {
           if (isEditing) e.preventDefault();
@@ -150,7 +163,7 @@ function NavbarChildItem({
     >
       <a
         role="menuitem"
-        href={isEditing ? "#" : child.url || "#"}
+        href={isEditing ? "#" : withLocale(child.url, locale)}
         tabIndex={isEditing ? -1 : undefined}
         onClick={(e) => {
           if (isEditing) e.preventDefault();
@@ -174,7 +187,7 @@ function NavbarChildItem({
                 <li key={k} role="none">
                   <a
                     role="menuitem"
-                    href={isEditing ? "#" : sub.url || "#"}
+                    href={isEditing ? "#" : withLocale(sub.url, locale)}
                     tabIndex={isEditing ? -1 : undefined}
                     onClick={(e) => {
                       if (isEditing) e.preventDefault();
@@ -234,6 +247,39 @@ function NavbarClient({
   const { locale } = useLocale();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Tìm kiếm thật: gõ >=2 ký tự -> gọi API bài viết công khai (debounce 300ms).
+  type LiveResult = { slug: string; title: LocalizedString; layoutSlug: string | null };
+  const [results, setResults] = useState<LiveResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    const id = window.setTimeout(() => {
+      fetch(
+        `${MEDIA_API_URL}/posts/public/list?page=1&pageSize=6&search=${encodeURIComponent(q)}`,
+      )
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((d) =>
+          setResults(
+            (d.items || []).map(
+              (p: { slug: string; title: LocalizedString; layouts?: { slug: string; isPublished: boolean }[] }) => ({
+                slug: p.slug,
+                title: p.title,
+                layoutSlug:
+                  p.layouts?.find((l) => l.isPublished)?.slug ?? null,
+              }),
+            ),
+          ),
+        )
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [query]);
   const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<Record<number, boolean>>(
@@ -454,7 +500,7 @@ function NavbarClient({
                             (child: NavbarMenuChild, ci: number) => (
                               <a
                                 key={ci}
-                                href={child.url || "#"}
+                                href={withLocale(child.url, locale)}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="py-2 text-[15px] text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300"
                               >
@@ -470,7 +516,7 @@ function NavbarClient({
                 return (
                   <a
                     key={i}
-                    href={item.url || "#"}
+                    href={withLocale(item.url, locale)}
                     onClick={() => setMobileMenuOpen(false)}
                     className="py-5 text-[17px] font-medium text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 hover:text-blue-700 dark:hover:text-blue-300"
                   >
@@ -512,7 +558,39 @@ function NavbarClient({
               />
               <Search className="absolute right-0 top-1 w-8 h-8 text-white/50" />
             </div>
-            {searchSuggestions?.length > 0 && (
+            {query.trim().length >= 2 && (
+              <div className="mt-8 w-full max-w-2xl">
+                <p className="text-white/40 text-xs uppercase tracking-[0.2em] mb-4">
+                  {searching
+                    ? locale === "en"
+                      ? "Searching…"
+                      : "Đang tìm…"
+                    : locale === "en"
+                      ? `Results (${results.length})`
+                      : `Kết quả (${results.length})`}
+                </p>
+                <ul className="divide-y divide-white/10">
+                  {results.map((r) => (
+                    <li key={r.slug}>
+                      <a
+                        href={`/${locale}/${r.layoutSlug ?? `tin-tuc/${r.slug}`}`}
+                        className="block py-3 text-white/80 hover:text-white transition-colors"
+                      >
+                        {t(r.title, locale)}
+                      </a>
+                    </li>
+                  ))}
+                  {!searching && results.length === 0 && (
+                    <li className="py-3 text-white/40 text-sm">
+                      {locale === "en"
+                        ? "No matching articles."
+                        : "Không tìm thấy bài viết phù hợp."}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+            {query.trim().length < 2 && searchSuggestions?.length > 0 && (
               <div className="mt-10 w-full max-w-2xl">
                 <p className="text-white/40 text-xs uppercase tracking-[0.2em] mb-4">
                   Gợi ý
@@ -521,7 +599,7 @@ function NavbarClient({
                   {searchSuggestions.map((s: NavbarSuggestion, i: number) => (
                     <a
                       key={i}
-                      href={s.url}
+                      href={withLocale(s.url, locale)}
                       className="px-5 py-2.5 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all text-sm"
                     >
                       {t(s.label, locale)}
@@ -808,7 +886,7 @@ function NavLinksRender({
       {links.map((link, i) => (
         <a
           key={i}
-          href={isEditing ? "#" : link.url}
+          href={isEditing ? "#" : withLocale(link.url, locale)}
           tabIndex={isEditing ? -1 : undefined}
           className={`navlink-row flex items-center justify-between py-2 ${sizes[fontSize] || "text-base"} font-medium transition-colors`}
           style={
@@ -941,7 +1019,7 @@ function QuickLinksRender({
       {links.map((link, i) => (
         <a
           key={i}
-          href={isEditing ? "#" : link.url || "#"}
+          href={isEditing ? "#" : withLocale(link.url, locale)}
           tabIndex={isEditing ? -1 : undefined}
           className="flex flex-col items-center gap-2 py-4 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44] transition-colors"
         >

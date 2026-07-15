@@ -12,14 +12,24 @@ export const revalidate = 3600;
 
 const HOMEPAGE_SLUG = process.env.NEXT_PUBLIC_HOMEPAGE_SLUG || "trang-chu";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale?: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isEn = locale === "en";
   try {
     const layout = await getLayoutBySlug(HOMEPAGE_SLUG);
     if (!layout.isPublished) return {};
-    const title = layout.name || "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS";
+    const title = isEn
+      ? "Faculty of Physics & Engineering Physics | HCMUS"
+      : layout.name || "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS";
     const description =
       layout.description ??
-      "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.";
+      (isEn
+        ? "Faculty of Physics & Engineering Physics, VNUHCM-University of Science. News, events, scholarships and admissions."
+        : "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.");
     const canonical = buildCanonical("/");
     return {
       title,
@@ -30,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
         description,
         type: "website",
         url: canonical,
-        locale: "vi_VN",
+        locale: isEn ? "en_US" : "vi_VN",
         images: [
           {
             url: buildOgImage({ title, subtitle: description }),

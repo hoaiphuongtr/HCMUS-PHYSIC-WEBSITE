@@ -15,6 +15,9 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 # browsers). On the sandbox set http://backend:3001 — no hairpin to the public IP.
 ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
+# Public-site origin for the builder's "View live" button.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3002
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm exec next build
 

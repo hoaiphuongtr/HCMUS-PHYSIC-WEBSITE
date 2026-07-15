@@ -23,6 +23,7 @@ import {
   SubscribeBanner,
   TagNotificationBar,
 } from "./components/interactive";
+import { ScholarshipList } from "./components/scholarship";
 import {
   Card,
   Columns,
@@ -131,6 +132,7 @@ export const puckConfig: Config = {
         "PersonaSelector",
         "SubscribeBanner",
         "TagNotificationBar",
+        "ScholarshipList",
         "ChatBubble",
       ],
     },
@@ -206,6 +208,7 @@ export const puckConfig: Config = {
     PartnerShowcase,
     SubscribeBanner,
     TagNotificationBar,
+    ScholarshipList,
     PostTitle,
     PostBody,
     LegacyHtml,

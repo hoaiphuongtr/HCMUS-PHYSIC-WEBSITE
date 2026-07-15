@@ -392,8 +392,10 @@ function PublishMenu({
     : layout.isPublished
       ? "Published"
       : "Draft";
+  // Cùng tên biến với app public (NEXT_PUBLIC_SITE_URL) — bake lúc build; đổi env
+  // này khi lên môi trường khác (sandbox IP, domain PROD) là View live trỏ đúng.
   const publicSiteUrl =
-    process.env.NEXT_PUBLIC_PUBLIC_SITE_URL || "http://localhost:3002";
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3002";
   const publicLayoutUrl = `${publicSiteUrl}/${layout.slug}`;
 
   return (

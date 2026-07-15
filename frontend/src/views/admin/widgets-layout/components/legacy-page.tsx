@@ -110,13 +110,32 @@ type LatestPost = {
   layoutSlug: string | null;
 };
 
-const SIDEBAR_LINKS: { label: LocalizedString; url: string }[] = [
-  { label: { vi: "Tin giáo vụ", en: "Academic news" }, url: "/tin-tuc" },
-  { label: { vi: "Thông tin khoa học", en: "Science news" }, url: "/thong-tin-khoa-hoc" },
-  { label: { vi: "Tuyển dụng - Việc làm", en: "Recruitment - Jobs" }, url: "/viec-lam-nganh-vat-ly" },
-  { label: { vi: "Câu lạc bộ", en: "Clubs" }, url: "https://phys.hcmus.edu.vn/cau-lac-bo" },
-  { label: { vi: "Hoạt động Công đoàn Khoa", en: "Faculty Union" }, url: "/hoat-dong-cong-doan-khoa" },
-];
+// Danh mục sidebar lấy từ chính bảng Category (đồng nhất với bộ lọc trang tin
+// tức) thay vì danh sách legacy cứng — link trỏ về trang tin đã lọc theo mục.
+type SidebarCategory = { slug: string; name: LocalizedString; status?: boolean };
+let catCache: { at: number; data: SidebarCategory[] } | null = null;
+let catInflight: Promise<SidebarCategory[]> | null = null;
+const CAT_TTL_MS = 60_000;
+function fetchSidebarCategories(): Promise<SidebarCategory[]> {
+  if (catCache && Date.now() - catCache.at < CAT_TTL_MS) {
+    return Promise.resolve(catCache.data);
+  }
+  if (catInflight) return catInflight;
+  catInflight = fetch(`${API_URL}/categories`)
+    .then((r) => (r.ok ? r.json() : []))
+    .then((d) => {
+      const arr = (Array.isArray(d) ? d : []).filter(
+        (c: SidebarCategory & { status?: boolean }) => c.status !== false,
+      );
+      catCache = { at: Date.now(), data: arr };
+      return arr;
+    })
+    .catch(() => [] as SidebarCategory[])
+    .finally(() => {
+      catInflight = null;
+    });
+  return catInflight;
+}
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -155,11 +174,15 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
   const { locale } = useLocale();
   const prefix = `/${locale}`;
   const [news, setNews] = useState<LatestPost[]>([]);
+  const [cats, setCats] = useState<SidebarCategory[]>([]);
 
   useEffect(() => {
     let alive = true;
     fetchLatestNews().then((d) => {
       if (alive) setNews(d);
+    });
+    fetchSidebarCategories().then((d) => {
+      if (alive) setCats(d);
     });
     return () => {
       alive = false;
@@ -181,17 +204,16 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
               {locale === "en" ? "Categories" : "Danh mục"}
             </h2>
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {SIDEBAR_LINKS.map((l, i) => {
-                const external = /^https?:/.test(l.url);
-                const href = external ? l.url : `${prefix}${l.url}`;
+              {cats.map((c) => {
+                const href = `${prefix}/tin-tuc?category=${c.slug}`;
                 return (
-                  <li key={i}>
+                  <li key={c.slug}>
                     <a
                       href={href}
                       className="flex items-center justify-between gap-2 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                     >
                       <span className="uppercase tracking-wide">
-                        {t(l.label, locale)}
+                        {t(c.name, locale)}
                       </span>
                       <span aria-hidden="true" className="text-slate-300">
                         ›

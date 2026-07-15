@@ -29,6 +29,16 @@ type MarkdownEditorProps = {
   onChange: (value: string) => void;
 };
 
+// Body bài viết lưu src ảnh TƯƠNG ĐỐI (/uploads/...) — trình duyệt trong admin (:3000)
+// không tự phân giải được về máy chủ media (:3001). Nội dung TRONG editor luôn ở dạng
+// tuyệt đối để hiển thị; hai hàm này chuyển đổi ở biên nạp/lưu để DB giữ nguyên dạng
+// tương đối (độc lập môi trường triển khai).
+const MEDIA_ORIGIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const absolutizeUploads = (html: string): string =>
+  html.replace(/src="\/uploads\//g, `src="${MEDIA_ORIGIN}/uploads/`);
+const relativizeUploads = (html: string): string =>
+  html.split(`src="${MEDIA_ORIGIN}/uploads/`).join('src="/uploads/');
+
 const BLOCK_OPTIONS = [
   { label: "Paragraph", value: "paragraph" },
   { label: "Heading 1", value: "h1" },
@@ -406,7 +416,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       TableHeader,
       TableCell,
     ],
-    content: value || "",
+    content: absolutizeUploads(value || ""),
     editorProps: {
       attributes: {
         class:
@@ -419,14 +429,14 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         return;
       }
       const html = ed.getHTML();
-      onChange(html === "<p></p>" ? "" : html);
+      onChange(html === "<p></p>" ? "" : relativizeUploads(html));
     },
   });
 
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
-    const next = value || "";
+    const next = absolutizeUploads(value || "");
     if (current === next) return;
     if (current === "<p></p>" && next === "") return;
     skipNextUpdate.current = true;
@@ -511,7 +521,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       .insertContent({
         type: "imageResize",
         attrs: {
-          src: url,
+          src: url.startsWith("/uploads/") ? `${MEDIA_ORIGIN}${url}` : url,
           alt: "",
           containerStyle:
             "width: 480px; max-width: 100%; height: auto; display: inline-block; cursor: pointer;",

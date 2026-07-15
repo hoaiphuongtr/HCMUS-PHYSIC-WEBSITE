@@ -193,7 +193,16 @@ function PostBodyRender({
   injected: boolean;
 }) {
   const { locale } = useLocale();
-  if (injected && !markdown) return null;
+  if (injected && !markdown) {
+    // Bài di trú không có nội dung nguồn: không để trang trống trơn.
+    return (
+      <p className="text-slate-500 dark:text-slate-400 italic py-8 text-center">
+        {locale === "en"
+          ? "This article's content is being updated."
+          : "Nội dung bài viết đang được cập nhật."}
+      </p>
+    );
+  }
   const rawSource = markdown || t(defaultMarkdown, locale) || "";
   const source = rawSource
     .replace(
@@ -903,21 +912,48 @@ function PostReaderToolsRender({
   };
 
   const onCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
+    const url = window.location.href;
+    let ok = false;
+    // navigator.clipboard chỉ tồn tại trong secure context (HTTPS/localhost) —
+    // bản triển khai HTTP theo IP phải rơi về execCommand qua textarea ẩn.
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        ok = true;
+      } catch {
+        /* thử fallback bên dưới */
+      }
+    }
+    if (!ok) {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(ta);
+    }
+    if (ok) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // ignore – clipboard may be blocked
     }
   };
 
   const onShareFacebook = () => {
+    // Trang chia sẻ chính thức của Meta (không cần app-id): mở TAB mới — Facebook
+    // tự yêu cầu đăng nhập theo phiên hiện có của người dùng rồi hiện hộp soạn bài
+    // kèm liên kết; nội dung xem trước lấy từ thẻ Open Graph của trang.
     const url = encodeURIComponent(window.location.href);
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${url}`,
       "_blank",
-      "noopener,noreferrer,width=600,height=600",
+      "noopener,noreferrer",
     );
   };
 

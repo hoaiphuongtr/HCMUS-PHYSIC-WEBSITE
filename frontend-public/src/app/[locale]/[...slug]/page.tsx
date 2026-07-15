@@ -14,50 +14,64 @@ import {
 export const revalidate = 3600;
 
 type PageProps = {
-  params: Promise<{ slug: string[] }>;
+  params: Promise<{ slug: string[]; locale?: string }>;
 };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const slugPath = slug.join("/");
+  const isEn = locale === "en";
   try {
     const layout = await getLayoutBySlug(slugPath);
     if (!layout.isPublished) return {};
-    const title = layout.name;
+    // Tên trang lưu một chuỗi (tiếng Việt); phần đuôi/mô tả đổi theo ngôn ngữ đang xem.
+    const titleText = isEn
+      ? `${layout.name} | Faculty of Physics - HCMUS`
+      : `${layout.name} | Khoa Vật lý - HCMUS`;
     const description =
       layout.description ??
-      `${layout.name} - Khoa Vật lý, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM`;
+      (isEn
+        ? `${layout.name} - Faculty of Physics & Engineering Physics, VNUHCM-University of Science`
+        : `${layout.name} - Khoa Vật lý, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM`);
     const canonical = buildCanonical(`/${slugPath}`);
     return {
-      title,
+      title: { absolute: titleText },
       description,
       alternates: {
         canonical,
         languages: buildLanguageAlternates(`/${slugPath}`),
       },
       openGraph: {
-        title,
+        title: titleText,
         description,
         type: "article",
         url: canonical,
-        locale: "vi_VN",
+        locale: isEn ? "en_US" : "vi_VN",
         images: [
           {
-            url: buildOgImage({ slug: slugPath, title, subtitle: description }),
+            url: buildOgImage({
+              slug: slugPath,
+              title: layout.name,
+              subtitle: description,
+            }),
             width: 1200,
             height: 630,
-            alt: title,
+            alt: titleText,
           },
         ],
       },
       twitter: {
         card: "summary_large_image",
-        title,
+        title: titleText,
         description,
         images: [
-          buildOgImage({ slug: slugPath, title, subtitle: description }),
+          buildOgImage({
+            slug: slugPath,
+            title: layout.name,
+            subtitle: description,
+          }),
         ],
       },
       robots: { index: true, follow: true },
