@@ -14,6 +14,16 @@ import {
 import { mediaPickerField } from "../fields/media-picker-field";
 import { resolveMediaSrc } from "./media-src";
 
+const withLocalePrefix = (
+  url: string | null | undefined,
+  locale: string,
+): string => {
+  if (!url) return "#";
+  if (/^(?:https?:|mailto:|tel:|#)/.test(url)) return url;
+  if (/^\/(?:vi|en)(?:\/|$)/.test(url)) return url;
+  return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
+};
+
 export const Heading: ComponentConfig<{
   text: LocalizedString;
   level: string;
@@ -1036,7 +1046,7 @@ function ImageTextBlockClient({
           )}
           {ctaText && (
             <a
-              href={isEditing ? "#" : ctaUrl || "#"}
+              href={isEditing ? "#" : withLocalePrefix(ctaUrl, locale)}
               tabIndex={isEditing ? -1 : undefined}
               className="inline-block px-8 py-4 bg-blue-800 text-white text-base font-semibold rounded hover:bg-blue-900 transition-colors self-start"
             >
@@ -1115,7 +1125,7 @@ function ImageTextBlockClient({
           )}
           {ctaText && (
             <a
-              href={isEditing ? "#" : ctaUrl || "#"}
+              href={isEditing ? "#" : withLocalePrefix(ctaUrl, locale)}
               tabIndex={isEditing ? -1 : undefined}
               className="inline-block px-6 py-3 bg-blue-800 text-white text-sm font-semibold rounded hover:bg-blue-900 transition-colors"
             >

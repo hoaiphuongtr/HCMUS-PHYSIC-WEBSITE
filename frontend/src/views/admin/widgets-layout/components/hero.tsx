@@ -11,6 +11,16 @@ import { localizedTextField } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
 import { resolveOptimizerSrc } from "./media-src";
 
+const withLocalePrefix = (
+  url: string | null | undefined,
+  locale: string,
+): string => {
+  if (!url) return "#";
+  if (/^(?:https?:|mailto:|tel:|#)/.test(url)) return url;
+  if (/^\/(?:vi|en)(?:\/|$)/.test(url)) return url;
+  return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
+};
+
 type HeroSlide = {
   src: string;
   alt: string;
@@ -275,7 +285,7 @@ function HeroFullScreenText({
       {ctaLabel && (
         <a
           key={`c-${current}`}
-          href={isEditing ? "#" : slide?.ctaUrl || "#"}
+          href={isEditing ? "#" : withLocalePrefix(slide?.ctaUrl, locale)}
           tabIndex={isEditing ? -1 : undefined}
           className="px-8 py-3 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100 font-semibold rounded-full hover:bg-white/90 transition-all animate-[fadeInUp_0.8s_ease_0.4s_both] text-sm uppercase tracking-wider"
         >
