@@ -9,6 +9,7 @@ import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
 import { localizedTextField } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { resolveOptimizerSrc } from "./media-src";
 
 type HeroSlide = {
   src: string;
@@ -144,7 +145,7 @@ function HeroFullScreenClient({
           >
             {s.src ? (
               <Image
-                src={s.src}
+                src={resolveOptimizerSrc(s.src)}
                 alt={s.alt}
                 fill
                 sizes="100vw"

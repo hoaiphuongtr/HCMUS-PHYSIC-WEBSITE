@@ -22,6 +22,7 @@ import {
   localizedTextField,
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { resolveMediaSrc } from "./media-src";
 
 type NavbarSubItem = {
   label: LocalizedString;
@@ -262,7 +263,7 @@ function NavbarClient({
         >
           {logoSrc ? (
             <img
-              src={logoSrc}
+              src={resolveMediaSrc(logoSrc)}
               alt={logoAlt || "Logo"}
               className="h-10 object-contain"
               loading="lazy"

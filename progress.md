@@ -432,3 +432,45 @@ building on-box works normally. Deferred.
 - Quy trình docx: Phương yêu cầu giữ nguyên bản họ đang có → lấy Downloads hiện tại làm TPL
   (diff body chỉ là Word evaluate mục lục, không có sửa tay); regen + copy lại. Lighthouse
   không đo lại: font woff2 vốn đã được tải trong các lần đo (chỉ không được áp), LCP là ảnh.
+
+## Session 2026-07-15 (tối) — Chuẩn bị demo Thứ 6 17/07
+
+### Đã xong
+- **Media sandbox: phủ 100%** — 3162/3162 file khớp local↔box (diff C-locale, 0 thiếu 0 thừa);
+  spot-check URL legacy (dấu, khoảng trắng, NFC) đều 200. KHÔNG cần sửa DB cho media thường
+  (toàn đường dẫn tương đối /uploads/...).
+- **2 tài khoản demo/e2e** (đều verify đăng nhập + đúng quyền qua Playwright):
+  - SUPER_ADMIN mới: `demo.superadmin@hcmus.edu.vn` / `Demo@Ab9trMxtjwno` (INSERT trực tiếp, bcrypt cost 10, id demo_superadmin_2026)
+  - Bộ môn VLUD (e2e): `vlud_admin@hcmus.edu.vn` / `E2e@Ad8OJT6BmLSx` (reset hash; dept_legacy_6)
+  - Lưu ý acc mới: tab "Bài của tôi" = 0 là ĐÚNG (chưa viết bài); tab "Đã xuất bản" đủ 1607.
+    Tour onboarding sẽ tự chạy lần đăng nhập đầu (feature) — biết trước để khỏi bối rối khi demo.
+- **QA sweep**: public 7 trang (5 sạch tuyệt đối; trang chủ vi/en + landing bộ môn dính đúng 2 ảnh
+  vỡ — xem Pending); admin 8 màn hình với acc mới: 0 lỗi console, 0 ảnh vỡ, 0 HTTP fail;
+  log backend/public 24h sạch; đĩa 18GB trống, RAM ổn, containers Up.
+- **Mirror hotlink đã dựng sẵn** (chưa kích hoạt): 281/283 file tải từ phys.hcmus.edu.vn (2 file 403
+  ngay tại nguồn) → 408MB đã nằm ở `~/hcmus-cms/backend/uploads/legacy-mirror` trên box;
+  map JSON + script rewrite (`~/rewrite-mirror.js`, `~/mirror-map.json`) đã ở trên box;
+  backup 3 bảng: `~/backup-pre-mirror-20260715.sql.gz`.
+
+### PENDING — cần Phương duyệt (auto-mode chặn thao tác ghi lên box)
+1. **Rewrite 281 hotlink → /uploads/legacy-mirror/...** trong PageLayout/Post/Media (docker exec node
+   /tmp/rewrite-mirror.js). Lý do: hero trang chủ đang phụ thuộc site cũ lúc demo.
+2. **Sửa 2 cover chết** (di trú map thiếu — file thật CÓ trên đĩa):
+   - `/uploads/legacy/vat-ly-tin-hoc/Nghe%20nghiep/image001.png` → `/uploads/legacy/khoa-vat-ly/TUI_LA_NGU/TIN_TUYỂN_DỤNG/TMA.jpg` (bài TMA internship)
+   - `/uploads/legacy/vat-ly-tin-hoc/H%E1%BB%99i%20th%E1%BA%A3o/1351.jpg` → `/uploads/legacy/khoa-vat-ly/Hoi thao Nganh moi/1351.JPG` (đúng bài hội thảo đó)
+   Ảnh hưởng: Post.coverUrl 2 bài + snapshot trong 23 layout (trang chủ + landing bộ môn).
+3. **Cổng 80 → public** (compose thêm "80:3002" + firewall-cmd add-port 80) để demo gõ IP trần.
+Sau khi chạy 1–3: flush Redis (docker exec hcmus-cms-redis-1 redis-cli FLUSHALL), verify lại 3 trang.
+
+### Rollback
+`gunzip -c ~/backup-pre-mirror-20260715.sql.gz | docker exec -i hcmus-cms-db-1 psql -U physics -d hcmus_physics`
+
+### CHECKLIST DEMO THỨ 6 (17/07) — cập nhật 15/07 tối
+**URL:**
+- Gõ trần `http://103.88.121.212` → tự về /login (còn token 7 ngày thì vào thẳng /admin)
+- Public: `http://103.88.121.212:3002/vi` | Admin: `:3000` | API: `:3001`
+**Tài khoản:** demo.superadmin@hcmus.edu.vn / Demo@Ab9trMxtjwno (toàn quyền) · vlud_admin@hcmus.edu.vn / E2e@Ad8OJT6BmLSx (bộ môn VLUD — demo phân quyền)
+**Lưu ý:** lần đăng nhập ĐẦU của demo.superadmin sẽ bật tour onboarding (đăng nhập trước 1 lần nếu không muốn hiện lúc demo). Refresh token 7 ngày → login trước Thứ 6 là auto-vào.
+**Đã làm hôm nay:** media 100% (3162 file); 281 hotlink site cũ → mirror trên box (backup: ~/backup-pre-mirror-20260715.sql.gz); 2 cover chết map lại file thật; cổng 80 → admin; CORS thêm origin trần; widget components resolve /uploads qua media-src.ts (fix ảnh tương đối + optimizer nội bộ backend:3001).
+**Khôi phục nhanh nếu box restart:** `cd ~/hcmus-cms && docker compose -f docker-compose.sandbox.yml up -d`
+**Rollback DB:** `gunzip -c ~/backup-pre-mirror-20260715.sql.gz | docker exec -i hcmus-cms-db-1 psql -U physics -d hcmus_physics`

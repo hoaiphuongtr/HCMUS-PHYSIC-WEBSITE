@@ -11,6 +11,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Origin the image optimizer fetches media from at runtime (baked, never used by
+# browsers). On the sandbox set http://backend:3001 — no hairpin to the public IP.
+ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
+ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm exec next build
 

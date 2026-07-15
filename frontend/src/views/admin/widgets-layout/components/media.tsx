@@ -18,6 +18,7 @@ import {
   localizedTextField,
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { resolveMediaSrc } from "./media-src";
 
 export const ImageBlock: ComponentConfig<{
   src: string;
@@ -61,7 +62,7 @@ export const ImageBlock: ComponentConfig<{
   },
   render: ({ src, alt, caption, fit, borderRadius }) => (
     <ImageBlockRender
-      src={src}
+      src={resolveMediaSrc(src)}
       alt={alt}
       caption={caption}
       fit={fit}
@@ -96,7 +97,7 @@ function ImageBlockRender({
     <div>
       {src ? (
         <img
-          src={src}
+          src={resolveMediaSrc(src)}
           alt={alt}
           className={`w-full ${radii[borderRadius] || "rounded-md"}`}
           style={{ objectFit: (fit as any) || "cover" }}
@@ -187,7 +188,7 @@ export const ImageGallery: ComponentConfig<{
           <div key={i}>
             {img.src ? (
               <img
-                src={img.src}
+                src={resolveMediaSrc(img.src)}
                 alt={img.alt || ""}
                 className="w-full aspect-square object-cover rounded-md"
                 loading="lazy"
@@ -235,7 +236,7 @@ export const VideoEmbed: ComponentConfig<{
         )}
         {videoUrl ? (
           <iframe
-            src={videoUrl}
+            src={resolveMediaSrc(videoUrl)}
             className={`w-full ${ratio} rounded-lg`}
             allowFullScreen
           />
@@ -286,7 +287,7 @@ export const MapEmbed: ComponentConfig<{
       );
     return (
       <iframe
-        src={src}
+        src={resolveMediaSrc(src)}
         title="Map"
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
@@ -358,7 +359,7 @@ function ImageSliderClient({
     <div className={`relative overflow-hidden ${r}`} style={{ height: h }}>
       {slide?.src ? (
         <img
-          src={slide.src}
+          src={resolveMediaSrc(slide.src)}
           alt={slide.alt || ""}
           className="w-full h-full object-cover transition-opacity duration-500"
           loading="lazy"
@@ -623,7 +624,7 @@ export const LogoGrid: ComponentConfig<{
             >
               {logo.src ? (
                 <img
-                  src={logo.src}
+                  src={resolveMediaSrc(logo.src)}
                   alt={logo.alt || ""}
                   style={{ height: `${h}px` }}
                   className="object-contain"
@@ -727,7 +728,7 @@ function LogoSliderRender({
     <div className="relative py-12 px-6 overflow-hidden">
       {bgImageUrl ? (
         <img
-          src={bgImageUrl}
+          src={resolveMediaSrc(bgImageUrl)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
@@ -760,7 +761,7 @@ function LogoSliderRender({
               >
                 {logo.src ? (
                   <img
-                    src={logo.src}
+                    src={resolveMediaSrc(logo.src)}
                     alt={logo.alt}
                     className="object-contain rounded-full"
                     style={{
@@ -869,7 +870,7 @@ function PartnerShowcaseClient({
                   >
                     {partner.logoUrl ? (
                       <img
-                        src={partner.logoUrl}
+                        src={resolveMediaSrc(partner.logoUrl)}
                         alt={partner.name}
                         className="h-20 max-h-20 max-w-[240px] object-contain"
                         loading="lazy"

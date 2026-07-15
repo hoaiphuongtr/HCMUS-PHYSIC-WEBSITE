@@ -12,6 +12,7 @@ import {
   localizedTextField,
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { resolveMediaSrc } from "./media-src";
 
 export const Heading: ComponentConfig<{
   text: LocalizedString;
@@ -667,7 +668,7 @@ function NewsCardRender({
     >
       {imageUrl ? (
         <img
-          src={imageUrl}
+          src={resolveMediaSrc(imageUrl)}
           alt={titleText}
           className="w-full aspect-video object-cover rounded-md mb-2"
           loading="lazy"
@@ -693,7 +694,7 @@ function NewsCardRender({
     >
       {imageUrl ? (
         <img
-          src={imageUrl}
+          src={resolveMediaSrc(imageUrl)}
           alt={titleText}
           className="w-20 h-14 object-cover rounded shrink-0"
           loading="lazy"
@@ -804,7 +805,7 @@ function ProfileCardRender({
       <div className="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
           <img
-            src={imageUrl}
+            src={resolveMediaSrc(imageUrl)}
             alt={nameText}
             className="w-full aspect-[3/4] object-cover"
             loading="lazy"
@@ -898,7 +899,7 @@ function DepartmentCardRender({
     >
       {imageUrl ? (
         <img
-          src={imageUrl}
+          src={resolveMediaSrc(imageUrl)}
           alt={titleText}
           className="absolute inset-0 w-full h-full object-cover animate-[deptFloat_6s_ease-in-out_infinite] group-hover:scale-110 transition-transform duration-500"
           loading="lazy"
@@ -989,7 +990,7 @@ function ImageTextBlockClient({
         >
           {imageUrl ? (
             <img
-              src={imageUrl}
+              src={resolveMediaSrc(imageUrl)}
               alt={imageAlt}
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
@@ -1068,7 +1069,7 @@ function ImageTextBlockClient({
         >
           {imageUrl ? (
             <img
-              src={imageUrl}
+              src={resolveMediaSrc(imageUrl)}
               alt={imageAlt}
               className="w-full h-auto object-cover"
               loading="lazy"

@@ -11,6 +11,7 @@ import {
   localizedTextField,
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
+import { resolveMediaSrc } from "./media-src";
 
 export const NewsOverlayCard: ComponentConfig<{
   imageUrl: string;
@@ -92,7 +93,7 @@ function NewsOverlayCardRender({
     >
       {imageUrl ? (
         <img
-          src={imageUrl}
+          src={resolveMediaSrc(imageUrl)}
           alt={titleText}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
