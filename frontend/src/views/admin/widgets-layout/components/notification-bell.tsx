@@ -116,14 +116,14 @@ export function NotificationBell({ color }: { color?: string }) {
     } catch {
       posts = [];
     }
-    const watermark = posts[1]
-      ? postDate(posts[1])
-      : new Date(0).toISOString();
-    next[slug] = watermark;
+    // Bài di trú hay trùng mốc thời gian (cùng đợt migration), nên không dựa vào
+    // "mới hơn bài thứ 2"; thay vào đó hiện luôn vài bài mới nhất làm lô ban đầu,
+    // và đặt mốc = ngày bài mới nhất để về sau chỉ bài đăng SAU đó mới báo.
+    next[slug] = posts[0] ? postDate(posts[0]) : new Date().toISOString();
     writeSubs(next);
     setSubs(next);
     const fresh: NewItem[] = posts
-      .filter((p) => new Date(postDate(p)) > new Date(watermark))
+      .slice(0, 3)
       .map((p) => ({ ...p, catSlug: slug }));
     setNewItems((prev) =>
       [...prev.filter((i) => i.catSlug !== slug), ...fresh].sort(
