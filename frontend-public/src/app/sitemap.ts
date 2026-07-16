@@ -23,10 +23,16 @@ type PostListItem = {
   layoutSlug?: string | null;
 };
 
+// Giới hạn thời gian chờ để lúc build (CI runner / off-box) không có backend thì
+// fetch hủy nhanh -> trả [] -> build không treo; ISR lúc chạy (revalidate 300s)
+// sẽ dựng lại sitemap đầy đủ khi máy chủ API nội bộ sẵn sàng.
+const BUILD_FETCH_TIMEOUT_MS = 8000;
+
 const fetchPageLayouts = async (): Promise<PageLayoutListItem[]> => {
   try {
     const res = await fetch(`${API_URL}/page-layouts/published`, {
       next: { revalidate: 300, tags: ["sitemap"] },
+      signal: AbortSignal.timeout(BUILD_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as PageLayoutListItem[];
@@ -46,7 +52,10 @@ const fetchPosts = async (): Promise<PostListItem[]> => {
   try {
     const res = await fetch(
       `${API_URL}/posts/public/list?page=1&pageSize=500`,
-      { next: { revalidate: 300, tags: ["sitemap"] } },
+      {
+        next: { revalidate: 300, tags: ["sitemap"] },
+        signal: AbortSignal.timeout(BUILD_FETCH_TIMEOUT_MS),
+      },
     );
     if (!res.ok) return [];
     const data = (await res.json()) as { items: PostListItem[] };

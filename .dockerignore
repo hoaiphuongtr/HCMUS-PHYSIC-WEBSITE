@@ -12,3 +12,10 @@ backend/initialScript/migrate-legacy/dump
 **/*.log
 **/.env
 !**/.env.example
+# Không dính đến build ảnh — giữ khỏi context (quan trọng cho build trên CI runner):
+thesis
+benchmark
+docs
+deploy
+.github
+*.md

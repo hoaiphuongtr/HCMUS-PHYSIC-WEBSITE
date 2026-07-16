@@ -1,0 +1,117 @@
+name: Deploy (sandbox)
+
+# Tự động triển khai sandbox khi có commit lên main; cũng cho phép bấm tay
+# (Actions → Deploy (sandbox) → Run workflow). Ảnh được build trong runner rồi
+# đẩy lên GHCR; box chỉ kéo ảnh về và up. Xem deploy/CD.md để cấu hình secrets.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-sandbox
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/hoaiphuongtr/hcmus-physic-website
+
+jobs:
+  build-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_BASE }}/backend:latest,${{ env.IMAGE_BASE }}/backend:${{ github.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Build & push admin
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001
+          tags: ${{ env.IMAGE_BASE }}/admin:latest,${{ env.IMAGE_BASE }}/admin:${{ github.sha }}
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,scope=admin,mode=max
+
+      - name: Build & push public
+        uses: docker/build-push-action@v6
+        with:
+          # Monorepo: public bundle imports admin widgets via the @admin alias, so the
+          # build context must be the repo root (Dockerfile lives under frontend-public/).
+          context: .
+          file: ./frontend-public/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001
+          tags: ${{ env.IMAGE_BASE }}/public:latest,${{ env.IMAGE_BASE }}/public:${{ github.sha }}
+          cache-from: type=gha,scope=public
+          cache-to: type=gha,scope=public,mode=max
+
+  deploy:
+    name: Deploy to sandbox
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull images & restart on the box
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SANDBOX_HOST }}
+          port: ${{ secrets.SANDBOX_PORT }}
+          username: ${{ secrets.SANDBOX_USER }}
+          key: ${{ secrets.SANDBOX_SSH_KEY }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd ~/hcmus-cms
+            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose -f docker-compose.deploy.yml pull
+            docker compose -f docker-compose.deploy.yml up -d
+            docker image prune -f
+            docker exec hcmus-cms-redis-1 redis-cli FLUSHALL || true
+            docker logout ghcr.io || true
+
+  smoke-test:
+    name: Smoke test
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public endpoints
+        run: |
+          BASE="${{ vars.PUBLIC_SITE_URL }}"
+          API="${{ vars.PUBLIC_API_URL }}"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$BASE/vi" || true)
+            [ "$code" = "200" ] && break
+            sleep 5
+          done
+          test "$code" = "200" || { echo "public /vi = $code"; exit 1; }
+          test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$API/page-layouts/slug/trang-chu")" = "200"
+          echo "Smoke test OK: $BASE/vi + $API up"
