@@ -19,7 +19,7 @@ Từ khảo sát hiện trạng ở mục 1.1 và trao đổi với đơn vị s
 | Quản trị nội dung | CRUD bài viết song ngữ (tiêu đề, thân bài, tóm tắt, ảnh bìa, chuyên mục, thẻ, thông tin sự kiện); CRUD trang bố cục bằng Visual Builder; thư viện phương tiện có gắn thẻ |
 | Quy trình xuất bản | Trạng thái nháp → chờ duyệt → xuất bản; lên lịch xuất bản tự động; lịch sử phiên bản bố cục và khôi phục |
 | Phân quyền | Hai vai trò (quản trị viên cấp cao, quản trị viên); quản trị viên bộ môn chỉ thao tác trên nội dung bộ môn trực thuộc; văn phòng khoa quản lý nội dung toàn khoa |
-| Trang công khai | Kết xuất bố cục đã xuất bản; định tuyến song ngữ vi/en; trang riêng từng bộ môn; đăng ký nhận tin theo thẻ; thống kê truy cập |
+| Trang công khai | Kết xuất bố cục đã xuất bản; định tuyến song ngữ vi/en; trang riêng từng bộ môn; thông báo trong ứng dụng theo thẻ nội dung; thống kê truy cập |
 | Di trú | Bảo toàn toàn bộ bài viết, trang, chuyên mục, đơn vị và tư liệu phương tiện của website cũ; chuyển hướng URL cũ |
 | Phi chức năng | HTML đầy đủ cho máy thu thập (SEO); bộ nhớ đệm giảm tải cơ sở dữ liệu; backend không trạng thái; dựng lại được toàn bộ hệ thống từ mã nguồn; chạy được trên máy chủ 4 GB RAM |
 
@@ -169,7 +169,7 @@ Màn hình thứ nhất là trình soạn bài viết: các trường song ngữ
 
 ### 3.6.3 Giao diện công khai
 
-Trang công khai kết xuất từ ảnh chụp bố cục đã xuất bản với bộ thành phần hiển thị tương ứng. Trang chủ gồm khối hero, các khối tin tức – sự kiện tự cập nhật, khối giới thiệu và chân trang. Hệ thống định tuyến song ngữ đặt tiền tố ngôn ngữ (vi hoặc en) trên mọi URL; thanh điều hướng tái tạo đúng cấu trúc menu chín mục của website cũ (mục 3.7.5). Mỗi bộ môn có trang riêng tại địa chỉ mang tên bộ môn, và các bài viết của bộ môn nằm dưới chuyên mục tin tức của địa chỉ đó.
+Trang công khai kết xuất từ ảnh chụp bố cục đã xuất bản với bộ thành phần hiển thị tương ứng. Trang chủ gồm khối hero, các khối tin tức – sự kiện tự cập nhật, khối giới thiệu và chân trang. Hệ thống định tuyến song ngữ đặt tiền tố ngôn ngữ (vi hoặc en) trên mọi URL; thanh điều hướng tái tạo đúng cấu trúc menu chín mục của website cũ (mục 3.7.5). Mỗi bộ môn có trang riêng tại địa chỉ mang tên bộ môn, và các bài viết của bộ môn nằm dưới chuyên mục tin tức của địa chỉ đó. Trang học bổng minh họa khả năng lắp ghép của bộ thành phần: đầu trang và chân trang đồng bộ tự động từ trang chủ, phần thân là khối danh sách học bổng có ô tìm kiếm và phân trang lấy dữ liệu trực tiếp từ chuyên mục tương ứng. Trang này dùng cơ chế thông báo trong ứng dụng thay cho thu thập email: khách truy cập bấm nhận thông báo cho thẻ học bổng, và ở lần ghé sau một dải thông báo hiện ngay trên trang nếu có bài mới thuộc thẻ này — trạng thái theo dõi lưu phía trình duyệt của khách, hệ thống không lưu thông tin cá nhân của người xem.
 
 【HÌNH 3.9 — Ảnh chụp màn hình trang chủ công khai /vi và một trang bài viết】
 
