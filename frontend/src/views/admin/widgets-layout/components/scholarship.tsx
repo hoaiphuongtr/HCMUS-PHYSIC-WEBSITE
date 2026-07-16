@@ -34,10 +34,12 @@ const fmtDate = (iso: string | null | undefined, locale: string): string => {
 
 function ScholarshipListRender({
   title,
+  keyword,
   categorySlug,
   isEditing,
 }: {
   title: LocalizedString;
+  keyword: string;
   categorySlug: string;
   isEditing: boolean;
 }) {
@@ -54,9 +56,13 @@ function ScholarshipListRender({
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(PAGE_SIZE),
-        category: categorySlug || "hoc-bong",
       });
-      if (query.trim()) params.set("search", query.trim());
+      // Bài học bổng di trú nằm rải ở nhiều chuyên mục nên lọc theo từ khóa là
+      // đáng tin hơn lọc theo chuyên mục; ô tìm kiếm của người dùng thay thế từ
+      // khóa nền khi có nhập. Chuyên mục vẫn dùng nếu được cấu hình tường minh.
+      const search = query.trim() || keyword || "";
+      if (search) params.set("search", search);
+      if (categorySlug) params.set("category", categorySlug);
       fetch(`${API_URL}/posts/public/list?${params.toString()}`)
         .then((r) => (r.ok ? r.json() : { items: [], total: 0 }))
         .then((d) => {
@@ -70,7 +76,7 @@ function ScholarshipListRender({
         .finally(() => setLoading(false));
     }, 300);
     return () => window.clearTimeout(id);
-  }, [query, page, categorySlug]);
+  }, [query, page, keyword, categorySlug]);
 
   const postHref = (p: ScholarshipPost) => {
     const layoutSlug = p.layouts?.find((l) => l.isPublished)?.slug;
@@ -189,20 +195,24 @@ function ScholarshipListRender({
 
 export const ScholarshipList: ComponentConfig<{
   title: LocalizedString;
+  keyword: string;
   categorySlug: string;
 }> = {
   label: "Scholarship List",
   fields: {
     title: localizedTextField("Title"),
-    categorySlug: { type: "text", label: "Category slug" },
+    keyword: { type: "text", label: "Base keyword (search)" },
+    categorySlug: { type: "text", label: "Category slug (optional)" },
   },
   defaultProps: {
     title: { vi: "Các chương trình học bổng", en: "Scholarships" },
-    categorySlug: "hoc-bong",
+    keyword: "học bổng",
+    categorySlug: "",
   },
-  render: ({ title, categorySlug, puck }) => (
+  render: ({ title, keyword, categorySlug, puck }) => (
     <ScholarshipListRender
       title={title}
+      keyword={keyword}
       categorySlug={categorySlug}
       isEditing={Boolean(puck?.isEditing)}
     />

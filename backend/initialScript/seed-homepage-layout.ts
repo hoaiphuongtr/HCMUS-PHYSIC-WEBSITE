@@ -1875,13 +1875,23 @@ const main = async () => {
             {
               src: PHYS_IMAGES.edu.scholarship,
               alt: 'Học bổng HCMUS Physics',
-              headline: 'Học bổng HCMUS Physics',
-              subtitle: '',
-              ctaLabel: 'Xem danh sách',
+              headline: {
+                vi: 'Học bổng HCMUS Physics',
+                en: 'HCMUS Physics Scholarships',
+              },
+              subtitle: {
+                vi: 'Cơ hội tài trợ học tập, nghiên cứu và trao đổi quốc tế',
+                en: 'Funding opportunities for studies, research, and international exchange',
+              },
+              ctaLabel: { vi: 'Xem danh sách', en: 'View list' },
               ctaUrl: '#programs',
             },
           ],
-          tagline: '',
+          tagline: {
+            vi: 'TÀI NĂNG • CƠ HỘI • PHÁT TRIỂN',
+            en: 'TALENT • OPPORTUNITY • GROWTH',
+          },
+          taglineColor: '#fde68a',
           overlayOpacity: 'medium',
           height: 'lg',
           showScrollIndicator: true,
@@ -1892,7 +1902,8 @@ const main = async () => {
         props: {
           id: 'hb-list',
           title: { vi: 'Các chương trình học bổng', en: 'Scholarships' },
-          categorySlug: 'hoc-bong',
+          keyword: 'học bổng',
+          categorySlug: '',
         },
       },
       {
