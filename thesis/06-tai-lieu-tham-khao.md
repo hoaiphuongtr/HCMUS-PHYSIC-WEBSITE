@@ -12,7 +12,7 @@
 
 [6] D. An, “Find out how you stack up to new industry benchmarks for mobile page speed,” Think with Google, 2017. [Trực tuyến]. Available: https://www.thinkwithgoogle.com/marketing-strategies/app-and-mobile/mobile-page-speed-new-industry-benchmarks/. [Truy cập: 16/07/2026].
 
-[7] Google, “Web Vitals,” web.dev. [Trực tuyến]. Available: https://web.dev/articles/vitals. [Truy cập: 16/07/2026].
+[7] P. Walton, “Web Vitals,” web.dev, 04/5/2020 (cập nhật 31/10/2024). [Trực tuyến]. Available: https://web.dev/articles/vitals. [Truy cập: 16/07/2026].
 
 [8] Google, “SEO Starter Guide: The Basics,” Google Search Central. [Trực tuyến]. Available: https://developers.google.com/search/docs/fundamentals/seo-starter-guide. [Truy cập: 16/07/2026].
 
