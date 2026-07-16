@@ -7,7 +7,7 @@ import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { localizedTextField } from "../fields/localized-text-field";
 import { resolveMediaSrc } from "./media-src";
-import { readSubs, topicByKey, writeSubs } from "./notif-subs";
+import { readSubs, SUBS_EVENT, topicByKey, writeSubs } from "./notif-subs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PAGE_SIZE = 9;
@@ -58,7 +58,10 @@ function ScholarshipListRender({
   const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSubscribed(readSubs()[TOPIC_KEY] !== undefined);
+    const sync = () => setSubscribed(readSubs()[TOPIC_KEY] !== undefined);
+    sync();
+    window.addEventListener(SUBS_EVENT, sync);
+    return () => window.removeEventListener(SUBS_EVENT, sync);
   }, []);
 
   const load = useCallback(

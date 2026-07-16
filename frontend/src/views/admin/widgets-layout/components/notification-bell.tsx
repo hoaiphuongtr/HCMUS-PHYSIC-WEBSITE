@@ -7,6 +7,7 @@ import { useLocale } from "@/lib/locale-context";
 import {
   NOTIF_TOPICS,
   readSubs,
+  SUBS_EVENT,
   topicByKey,
   topicQuery,
   writeSubs,
@@ -82,6 +83,13 @@ export function NotificationBell({ color }: { color?: string }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  // Đồng bộ khi chuông ở trang học bổng (hoặc component khác) đổi đăng ký.
+  useEffect(() => {
+    const onChange = () => setSubs(readSubs());
+    window.addEventListener(SUBS_EVENT, onChange);
+    return () => window.removeEventListener(SUBS_EVENT, onChange);
+  }, []);
+
   const toggleTopic = async (key: string) => {
     const next = { ...readSubs() };
     if (next[key] !== undefined) {
@@ -132,7 +140,10 @@ export function NotificationBell({ color }: { color?: string }) {
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setSubs(readSubs()); // phản ánh đăng ký mới nhất khi mở
+          setOpen((v) => !v);
+        }}
         aria-label={locale === "en" ? "Notifications" : "Thông báo"}
         className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
         style={{ color: color || "#1e293b" }}
@@ -145,8 +156,8 @@ export function NotificationBell({ color }: { color?: string }) {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-xl z-[9999] overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-xl z-[9999]">
+          <div className="sticky top-0 z-10 bg-white dark:bg-[#1a2436] px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <p className="text-sm font-semibold text-[#0c2340] dark:text-slate-100">
               {locale === "en" ? "Notifications" : "Thông báo"}
             </p>
@@ -161,7 +172,7 @@ export function NotificationBell({ color }: { color?: string }) {
             )}
           </div>
 
-          <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {badge === 0 && (
               <li className="px-4 py-6 text-sm text-slate-400 text-center">
                 {Object.keys(subs).length === 0

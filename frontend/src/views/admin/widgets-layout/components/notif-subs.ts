@@ -43,6 +43,9 @@ export const topicQuery = (t: NotifTopic): string =>
     : `search=${encodeURIComponent(t.keyword || "")}`;
 
 const SUBS_KEY = "notif:subs";
+// Sự kiện đồng bộ trong cùng tab: `storage` chỉ bắn liên-tab, nên phát custom event
+// để chuông header và chuông trang học bổng cập nhật lẫn nhau ngay lập tức.
+export const SUBS_EVENT = "notif:subs-changed";
 
 // { [topicKey]: seenAtISO }. Chấp nhận cả dữ liệu cũ (giá trị chuỗi) — coi là mốc.
 export const readSubs = (): Record<string, string> => {
@@ -60,5 +63,7 @@ export const readSubs = (): Record<string, string> => {
   }
 };
 
-export const writeSubs = (s: Record<string, string>): void =>
+export const writeSubs = (s: Record<string, string>): void => {
   window.localStorage.setItem(SUBS_KEY, JSON.stringify(s));
+  window.dispatchEvent(new Event(SUBS_EVENT));
+};
