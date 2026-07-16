@@ -4,82 +4,68 @@ import { Bell, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
+import {
+  NOTIF_TOPICS,
+  readSubs,
+  topicByKey,
+  topicQuery,
+  writeSubs,
+} from "./notif-subs";
 
-// Trung tâm thông báo theo chủ đề, thuần trình duyệt (không đăng nhập, không email):
-// khách bấm "Nhận thông báo" cho một chuyên mục (vd Tuyển dụng) -> lưu ở localStorage
-// kèm mốc thời điểm đăng ký. Mỗi lần vào web, chuông đối chiếu ngày bài mới nhất của
-// từng chuyên mục đã theo dõi với mốc đó; có bài mới hơn thì hiện huy hiệu số và tự
-// bung danh sách. Bấm vào bài hoặc "đánh dấu đã đọc" thì cập nhật mốc, huy hiệu về 0.
+// Trung tâm thông báo theo chủ đề, thuần trình duyệt (không đăng nhập, không email).
+// Đọc/ghi cùng localStorage notif:subs với nút chuông trên trang học bổng.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const SUBS_KEY = "notif:subs"; // { [categorySlug]: seenAtISO }
-const POPPED_KEY = "notif:autoPopped"; // session flag
+const POPPED_KEY = "notif:autoPopped";
 
-type Category = { slug: string; name: LocalizedString; status?: boolean };
 type NotiPost = {
   slug: string;
   title: LocalizedString;
-  categoryId?: string;
   publishedAt: string | null;
   updatedAt: string;
   layouts?: { slug: string; isPublished: boolean }[];
 };
-type NewItem = NotiPost & { catSlug: string };
+type NewItem = NotiPost & { topicKey: string };
 
 const postDate = (p: NotiPost) => p.publishedAt || p.updatedAt;
-const readSubs = (): Record<string, string> => {
+
+const fetchTopicPosts = async (key: string): Promise<NotiPost[]> => {
+  const topic = topicByKey(key);
+  if (!topic) return [];
   try {
-    return JSON.parse(window.localStorage.getItem(SUBS_KEY) || "{}");
+    const d = await fetch(
+      `${API_URL}/posts/public/list?page=1&pageSize=5&${topicQuery(topic)}`,
+    ).then((r) => (r.ok ? r.json() : { items: [] }));
+    return d.items || [];
   } catch {
-    return {};
+    return [];
   }
 };
-const writeSubs = (s: Record<string, string>) =>
-  window.localStorage.setItem(SUBS_KEY, JSON.stringify(s));
 
 export function NotificationBell({ color }: { color?: string }) {
   const { locale } = useLocale();
-  const [cats, setCats] = useState<Category[]>([]);
   const [subs, setSubs] = useState<Record<string, string>>({});
   const [newItems, setNewItems] = useState<NewItem[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Nạp danh mục + tính bài mới cho các chuyên mục đã theo dõi.
   useEffect(() => {
     const current = readSubs();
     setSubs(current);
-    fetch(`${API_URL}/categories`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d) =>
-        setCats(
-          (Array.isArray(d) ? d : []).filter(
-            (c: Category) => c.status !== false,
-          ),
-        ),
-      )
-      .catch(() => {});
-
-    const slugs = Object.keys(current);
-    if (slugs.length === 0) return;
+    const keys = Object.keys(current);
+    if (keys.length === 0) return;
     Promise.all(
-      slugs.map((slug) =>
-        fetch(
-          `${API_URL}/posts/public/list?page=1&pageSize=5&category=${encodeURIComponent(slug)}`,
-        )
-          .then((r) => (r.ok ? r.json() : { items: [] }))
-          .then((d) =>
-            (d.items || [])
-              .filter((p: NotiPost) => new Date(postDate(p)) > new Date(current[slug]))
-              .map((p: NotiPost) => ({ ...p, catSlug: slug })),
-          )
-          .catch(() => [] as NewItem[]),
+      keys.map((key) =>
+        fetchTopicPosts(key).then((posts) =>
+          posts
+            .filter((p) => new Date(postDate(p)) > new Date(current[key]))
+            .map((p) => ({ ...p, topicKey: key })),
+        ),
       ),
     ).then((groups) => {
       const flat = groups
         .flat()
         .sort((a, b) => +new Date(postDate(b)) - +new Date(postDate(a)));
       setNewItems(flat);
-      // Tự bung một lần mỗi phiên nếu có bài mới.
       if (flat.length > 0 && !window.sessionStorage.getItem(POPPED_KEY)) {
         setOpen(true);
         window.sessionStorage.setItem(POPPED_KEY, "1");
@@ -96,37 +82,24 @@ export function NotificationBell({ color }: { color?: string }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const toggleSub = async (slug: string) => {
+  const toggleTopic = async (key: string) => {
     const next = { ...readSubs() };
-    if (next[slug] !== undefined) {
-      delete next[slug];
+    if (next[key] !== undefined) {
+      delete next[key];
       writeSubs(next);
       setSubs(next);
-      setNewItems((prev) => prev.filter((i) => i.catSlug !== slug));
+      setNewItems((prev) => prev.filter((i) => i.topicKey !== key));
       return;
     }
-    // Đăng ký: đặt mốc ngay TRƯỚC bài mới nhất của chuyên mục để khách thấy ngay
-    // bài gần nhất là "mới", đồng thời mọi bài đăng sau đó vẫn được tính.
-    let posts: NotiPost[] = [];
-    try {
-      const d = await fetch(
-        `${API_URL}/posts/public/list?page=1&pageSize=5&category=${encodeURIComponent(slug)}`,
-      ).then((r) => (r.ok ? r.json() : { items: [] }));
-      posts = d.items || [];
-    } catch {
-      posts = [];
-    }
-    // Bài di trú hay trùng mốc thời gian (cùng đợt migration), nên không dựa vào
-    // "mới hơn bài thứ 2"; thay vào đó hiện luôn vài bài mới nhất làm lô ban đầu,
-    // và đặt mốc = ngày bài mới nhất để về sau chỉ bài đăng SAU đó mới báo.
-    next[slug] = posts[0] ? postDate(posts[0]) : new Date().toISOString();
+    // Theo dõi: hiện thẳng vài bài mới nhất (bài di trú hay trùng mốc), đặt mốc =
+    // ngày bài mới nhất để về sau chỉ bài đăng SAU đó mới báo.
+    const posts = await fetchTopicPosts(key);
+    next[key] = posts[0] ? postDate(posts[0]) : new Date().toISOString();
     writeSubs(next);
     setSubs(next);
-    const fresh: NewItem[] = posts
-      .slice(0, 3)
-      .map((p) => ({ ...p, catSlug: slug }));
+    const fresh = posts.slice(0, 3).map((p) => ({ ...p, topicKey: key }));
     setNewItems((prev) =>
-      [...prev.filter((i) => i.catSlug !== slug), ...fresh].sort(
+      [...prev.filter((i) => i.topicKey !== key), ...fresh].sort(
         (a, b) => +new Date(postDate(b)) - +new Date(postDate(a)),
       ),
     );
@@ -201,7 +174,7 @@ export function NotificationBell({ color }: { color?: string }) {
               </li>
             )}
             {newItems.map((p) => (
-              <li key={`${p.catSlug}-${p.slug}`}>
+              <li key={`${p.topicKey}-${p.slug}`}>
                 <a
                   href={href(p)}
                   onClick={() => setOpen(false)}
@@ -223,13 +196,13 @@ export function NotificationBell({ color }: { color?: string }) {
               {locale === "en" ? "Follow topics" : "Nhận thông báo theo chủ đề"}
             </p>
             <div className="flex flex-wrap gap-2">
-              {cats.map((c) => {
-                const on = subs[c.slug] !== undefined;
+              {NOTIF_TOPICS.map((topic) => {
+                const on = subs[topic.key] !== undefined;
                 return (
                   <button
-                    key={c.slug}
+                    key={topic.key}
                     type="button"
-                    onClick={() => toggleSub(c.slug)}
+                    onClick={() => toggleTopic(topic.key)}
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                       on
                         ? "bg-blue-600 text-white border-blue-600"
@@ -237,7 +210,7 @@ export function NotificationBell({ color }: { color?: string }) {
                     }`}
                   >
                     {on && <Check className="w-3 h-3" />}
-                    {t(c.name, locale)}
+                    {t(topic.label, locale)}
                   </button>
                 );
               })}

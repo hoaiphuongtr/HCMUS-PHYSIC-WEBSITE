@@ -1906,20 +1906,6 @@ const main = async () => {
           categorySlug: '',
         },
       },
-      {
-        type: 'TagNotificationBar',
-        props: {
-          id: 'hb-tag-notif',
-          tagSlug: 'hoc-bong',
-          message: 'Bạn truy cập học bổng nhiều lần — bật thông báo để không bỏ lỡ đợt mới.',
-          linkLabel: 'Nhận thông báo',
-          linkUrl: '#programs',
-          bgColor: '#0c2340',
-          textColor: '#ffffff',
-          minWeight: 2,
-          dismissible: true,
-        },
-      },
       { type: 'Footer', props: { id: 'hb-footer' } },
     ],
   };

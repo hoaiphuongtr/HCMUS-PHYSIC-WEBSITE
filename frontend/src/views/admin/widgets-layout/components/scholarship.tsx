@@ -1,25 +1,28 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { Search as SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Bell, BellRing, Search as SearchIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { localizedTextField } from "../fields/localized-text-field";
 import { resolveMediaSrc } from "./media-src";
+import { readSubs, topicByKey, writeSubs } from "./notif-subs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PAGE_SIZE = 9;
+const TOPIC_KEY = "hoc-bong"; // đồng bộ với chuông trên header
 
 type ScholarshipPost = {
   slug: string;
   title: LocalizedString;
-  excerpt: LocalizedString | null;
   coverUrl: string | null;
   publishedAt: string | null;
   updatedAt: string;
   layouts?: { slug: string; isPublished: boolean }[];
 };
+
+const postDate = (p: ScholarshipPost) => p.publishedAt || p.updatedAt;
 
 const fmtDate = (iso: string | null | undefined, locale: string): string => {
   if (!iso) return "";
@@ -48,45 +51,112 @@ function ScholarshipListRender({
   const [items, setItems] = useState<ScholarshipPost[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [subscribed, setSubscribed] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLoading(true);
-    const id = window.setTimeout(() => {
+    setSubscribed(readSubs()[TOPIC_KEY] !== undefined);
+  }, []);
+
+  const load = useCallback(
+    (pageToLoad: number, replace: boolean) => {
+      setLoading(true);
       const params = new URLSearchParams({
-        page: String(page),
+        page: String(pageToLoad),
         pageSize: String(PAGE_SIZE),
       });
-      // Bài học bổng di trú nằm rải ở nhiều chuyên mục nên lọc theo từ khóa là
-      // đáng tin hơn lọc theo chuyên mục; ô tìm kiếm của người dùng thay thế từ
-      // khóa nền khi có nhập. Chuyên mục vẫn dùng nếu được cấu hình tường minh.
       const search = query.trim() || keyword || "";
       if (search) params.set("search", search);
       if (categorySlug) params.set("category", categorySlug);
       fetch(`${API_URL}/posts/public/list?${params.toString()}`)
-        .then((r) => (r.ok ? r.json() : { items: [], total: 0 }))
+        .then((r) => (r.ok ? r.json() : { items: [], total: 0, hasMore: false }))
         .then((d) => {
-          setItems(d.items || []);
+          const list: ScholarshipPost[] = d.items || [];
+          setItems((prev) => (replace ? list : [...prev, ...list]));
           setTotal(d.total || 0);
+          setHasMore(Boolean(d.hasMore));
         })
         .catch(() => {
-          setItems([]);
-          setTotal(0);
+          if (replace) {
+            setItems([]);
+            setTotal(0);
+          }
+          setHasMore(false);
         })
         .finally(() => setLoading(false));
-    }, 300);
+    },
+    [query, keyword, categorySlug],
+  );
+
+  // Đổi từ khóa -> nạp lại từ trang 1.
+  useEffect(() => {
+    setPage(1);
+    const id = window.setTimeout(() => load(1, true), 300);
     return () => window.clearTimeout(id);
-  }, [query, page, keyword, categorySlug]);
+  }, [load]);
+
+  // Infinite scroll: chạm sentinel cuối danh sách -> nạp trang kế và nối thêm.
+  useEffect(() => {
+    if (isEditing || !hasMore || loading) return;
+    const el = sentinel.current;
+    if (!el) return;
+    const ob = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          const next = page + 1;
+          setPage(next);
+          load(next, false);
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, [hasMore, loading, page, load, isEditing]);
+
+  const flash = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2600);
+  };
+
+  const toggleSubscribe = () => {
+    if (isEditing) return;
+    const subs = readSubs();
+    if (subs[TOPIC_KEY] !== undefined) {
+      delete subs[TOPIC_KEY];
+      writeSubs(subs);
+      setSubscribed(false);
+      flash(
+        locale === "en"
+          ? "Scholarship notifications turned off."
+          : "Đã tắt thông báo học bổng.",
+      );
+    } else {
+      subs[TOPIC_KEY] = items[0]
+        ? postDate(items[0])
+        : new Date().toISOString();
+      writeSubs(subs);
+      setSubscribed(true);
+      const label = t(topicByKey(TOPIC_KEY)?.label, locale) || "học bổng";
+      flash(
+        locale === "en"
+          ? `Notifications on for "${label}" — we'll remind you of new rounds.`
+          : `Đã cài đặt nhận thông báo của "${label}" — sẽ nhắc bạn khi có đợt mới.`,
+      );
+    }
+  };
 
   const postHref = (p: ScholarshipPost) => {
     const layoutSlug = p.layouts?.find((l) => l.isPublished)?.slug;
     return `/${locale}/${layoutSlug ?? `tin-tuc/${p.slug}`}`;
   };
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <section className="max-w-6xl mx-auto px-4 py-12">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-[#0c2340] dark:text-slate-100">
             {t(title, locale) ||
@@ -98,34 +168,51 @@ function ScholarshipListRender({
               : `${total} thông báo học bổng`}
           </p>
         </div>
-        <div className="relative w-full md:w-80">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            disabled={isEditing}
-            placeholder={
-              locale === "en" ? "Search scholarships…" : "Tìm học bổng…"
+        {/* Góc trên phải: ô tìm kiếm + chuông theo dõi (list là infinite scroll,
+            không có chân trang phân trang để neo nút này). */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative w-full md:w-72">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={isEditing}
+              placeholder={
+                locale === "en" ? "Search scholarships…" : "Tìm học bổng…"
+              }
+              className="w-full pl-9 pr-3 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={toggleSubscribe}
+            aria-pressed={subscribed}
+            title={
+              subscribed
+                ? locale === "en"
+                  ? "Turn off notifications"
+                  : "Tắt thông báo"
+                : locale === "en"
+                  ? "Get notified of new scholarships"
+                  : "Nhận thông báo học bổng mới"
             }
-            className="w-full pl-9 pr-3 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 transition-colors"
-          />
+            className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
+              subscribed
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-[#1a2436] text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-blue-500"
+            }`}
+          >
+            {subscribed ? (
+              <BellRing className="w-5 h-5" />
+            ) : (
+              <Bell className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div
-              key={i}
-              className="h-64 rounded-xl bg-slate-100 dark:bg-[#1a2436] animate-pulse"
-            />
-          ))}
-        </div>
-      ) : items.length === 0 ? (
+      {items.length === 0 && !loading ? (
         <p className="text-center text-slate-500 dark:text-slate-400 py-16">
           {locale === "en"
             ? "No scholarships match your search."
@@ -161,7 +248,7 @@ function ScholarshipListRender({
                   {t(p.title, locale)}
                 </h3>
                 <p className="mt-auto pt-3 text-xs text-slate-400">
-                  {fmtDate(p.publishedAt || p.updatedAt, locale)}
+                  {fmtDate(postDate(p), locale)}
                 </p>
               </div>
             </a>
@@ -169,24 +256,23 @@ function ScholarshipListRender({
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .slice(0, 8)
-            .map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setPage(n)}
-                className={`w-9 h-9 rounded-full text-sm font-medium transition-colors ${
-                  n === page
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 dark:bg-[#202c44] text-slate-600 dark:text-slate-300 hover:bg-slate-200"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+      {loading && (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div
+              key={i}
+              className="h-64 rounded-xl bg-slate-100 dark:bg-[#1a2436] animate-pulse"
+            />
+          ))}
+        </div>
+      )}
+      {/* mốc kích hoạt nạp thêm cho infinite scroll */}
+      <div ref={sentinel} className="h-px w-full" />
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-3 rounded-lg bg-[#0c2340] text-white text-sm shadow-xl animate-[fadeInUp_0.25s_ease]">
+          <BellRing className="w-4 h-4 shrink-0" />
+          {toast}
         </div>
       )}
     </section>

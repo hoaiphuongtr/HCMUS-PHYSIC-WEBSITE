@@ -195,7 +195,10 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
-        <main className="min-w-0">
+        {/* overflow-x-auto: bảng legacy có bề rộng cố định (vd bảng chỉ tiêu tuyển
+            sinh) rộng hơn cột nội dung — cho cuộn ngang trong cột thay vì tràn đè
+            lên sidebar. */}
+        <main className="min-w-0 overflow-x-auto">
           <LegacyHtmlRender html={html} injected={false} />
         </main>
         <aside className="space-y-8">
