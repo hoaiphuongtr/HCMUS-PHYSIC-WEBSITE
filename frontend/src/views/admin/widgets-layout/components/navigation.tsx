@@ -17,6 +17,7 @@ import { DynamicIcon } from "@/components/admin/icons";
 import { LOCALE_LABELS, LOCALES, type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
+import { NotificationBell } from "./notification-bell";
 import {
   localizedTextareaField,
   localizedTextField,
@@ -229,6 +230,7 @@ function NavbarClient({
   searchPlaceholder,
   searchSuggestions,
   showLanguageSwitcher,
+  showNotificationBell,
   isEditing,
 }: {
   logoSrc: string;
@@ -242,6 +244,7 @@ function NavbarClient({
   searchPlaceholder: LocalizedString;
   searchSuggestions: NavbarSuggestion[];
   showLanguageSwitcher: boolean;
+  showNotificationBell: boolean;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
@@ -353,6 +356,9 @@ function NavbarClient({
               >
                 <Search className="w-5 h-5" />
               </button>
+            )}
+            {showNotificationBell && !isEditing && (
+              <NotificationBell color={textColor || "#1e293b"} />
             )}
             {showLanguageSwitcher && (
               <button
@@ -627,6 +633,7 @@ export const Navbar: ComponentConfig<{
   searchPlaceholder: LocalizedString;
   searchSuggestions: NavbarSuggestion[];
   showLanguageSwitcher: boolean;
+  showNotificationBell: boolean;
 }> = {
   label: "Navbar",
   defaultProps: {
@@ -676,6 +683,7 @@ export const Navbar: ComponentConfig<{
     hoverLineColor: "#2563eb",
     hoverTextColor: "#2563eb",
     showSearch: true,
+    showNotificationBell: true,
     searchPlaceholder: { vi: "Nhập từ khóa...", en: "Enter keyword..." },
     searchSuggestions: [
       {
@@ -746,6 +754,14 @@ export const Navbar: ComponentConfig<{
         { label: "No", value: false },
       ],
     },
+    showNotificationBell: {
+      type: "radio",
+      label: "Show Notification Bell",
+      options: [
+        { label: "Yes", value: true },
+        { label: "No", value: false },
+      ],
+    },
   },
   render: ({
     logoSrc,
@@ -759,6 +775,7 @@ export const Navbar: ComponentConfig<{
     searchPlaceholder,
     searchSuggestions,
     showLanguageSwitcher,
+    showNotificationBell,
     puck,
   }) => (
     <NavbarClient
@@ -773,6 +790,7 @@ export const Navbar: ComponentConfig<{
       searchPlaceholder={searchPlaceholder}
       searchSuggestions={searchSuggestions}
       showLanguageSwitcher={showLanguageSwitcher}
+      showNotificationBell={showNotificationBell ?? true}
       isEditing={!!puck?.isEditing}
     />
   ),
