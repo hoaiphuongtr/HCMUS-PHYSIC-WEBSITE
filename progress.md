@@ -494,3 +494,19 @@ Sau khi chạy 1–3: flush Redis (docker exec hcmus-cms-redis-1 redis-cli FLUSH
   (không re-seed → không ghi đè nội dung live). Enabler: `sitemap.ts` timeout 8s (hết treo build),
   root `.dockerignore` bỏ thesis/benchmark/docs, font đã self-host. CHƯA active — cần đặt secrets/vars
   + GHCR pull token + deploy SSH key + merge lên main (xem deploy/CD.md). Chạy trên nhánh wip hiện tại.
+
+## Session 2026-07-16 (chiều) — sửa chồng layout + thiết kế lại thông báo học bổng
+- **Chồng nội dung** trang legacy 2 cột (vd tuyen-sinh-dai-hoc "ADMISSION TARGETS"): bảng rộng
+  đè sidebar → thêm `overflow-x-auto` vào `<main>` trong legacy-page.tsx. Verify: main.right 944 <
+  aside.left 976, hết overlap, bảng cuộn ngang trong cột.
+- **List học bổng trống**: layout live để categorySlug='hoc-bong' (chuyên mục rỗng — bài học bổng
+  di trú nằm rải chuyên mục khác). Chuyển ScholarshipList sang lọc theo **keyword "học bổng"** (~83 bài).
+- **Thiết kế lại (theo yêu cầu)**: ScholarshipList = **infinite scroll** (IntersectionObserver, bỏ phân
+  trang; verify 9→45 khi cuộn) + **chuông góc trên phải** cạnh ô tìm kiếm; bấm → **toast** "Đã cài đặt
+  nhận thông báo của \"Học bổng\" — sẽ nhắc bạn khi có đợt mới" (bấm lại để tắt). Bỏ TagNotificationBar
+  faded khỏi layout hoc-bong.
+- **Mô hình thông báo hợp nhất** `notif-subs.ts` (NOTIF_TOPICS: 4 category + "Học bổng"=keyword;
+  read/writeSubs localStorage `notif:subs`) — chuông header và chuông trang học bổng đọc/ghi CHUNG,
+  theo dõi ở đâu cũng báo. notification-bell.tsx viết lại theo TOPICS cố định (không fetch /categories).
+- Layout hoc-bong live cập nhật qua ship-hoc-bong-v2.js (content: Header,HeroFullScreen,ScholarshipList,Footer).
+  Seed đồng bộ. Docx Hình 3.9 đã thay ảnh trang chủ mới (có chuông) ở phiên trước.
