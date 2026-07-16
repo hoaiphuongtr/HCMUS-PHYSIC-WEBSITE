@@ -410,6 +410,11 @@ function NavbarClient({
               <Search className="w-5 h-5" />
             </button>
           )}
+          {showNotificationBell && !isEditing && (
+            <div className="hidden lg:block ml-1">
+              <NotificationBell color={textColor || "#1e293b"} />
+            </div>
+          )}
           {showLanguageSwitcher && (
             <div className="relative hidden lg:block">
               <button
