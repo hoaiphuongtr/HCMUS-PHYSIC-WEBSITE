@@ -479,3 +479,18 @@ Sau khi chạy 1–3: flush Redis (docker exec hcmus-cms-redis-1 redis-cli FLUSH
 1✓ Editor ảnh: absolutize khi nạp/relativize khi lưu (markdown-editor.tsx); img rỗng còn lại là artifact của tiptap-extension-resize-image (vô hình, không phải bug). 2✓ Back arrow trái tiêu đề composer. 3✓ View live đọc NEXT_PUBLIC_SITE_URL (Dockerfile+compose arg; PROD chỉ đổi env). 4✓ favicon (app/icon.png huy hiệu) + title/og đổi theo locale. 5a✓ withLocale cho mọi href navigation + hero/content CTA. 5b✓ bài body rỗng ẩn khỏi 3 query public (Prisma.DbNull) + notice khi vào thẳng; đã check site cũ không public bài đó. 6✓ 2 card xám = bài rỗng (tự ẩn); script backfill-covers 0 ứng viên thật. 7✓ copy fallback execCommand (HTTP), FB sharer mở tab. 8✓ sidebar Danh mục = categoryApi. 9✓ search overlay sống (debounce /posts/public/list) + prune-dead-nav.js gỡ menu chết (nha-tuyen-dung, cuu-sinh-vien, lien-he…); map /bo-mon/*→slug thật, /nhan-su/*→doi-ngu, /nghien-cuu→nghien-cuu-khoa-hoc. 10✓ hoc-bong: Header/Footer đồng bộ, widget ScholarshipList (search+phân trang, category hoc-bong), bỏ SubscribeBanner email, giữ TagNotificationBar; publish. 11✓ sweep: 0 link chết, 0 ảnh vỡ, 0 console error (8 trang + crawl 25 link vi/en).
 - QUAN TRỌNG: **self-host fonts** (public/fonts + fonts.css cả 2 app, bỏ next/font/google) vì mạng Google đứt làm build fail liên tục; proxy.ts phải exclude /fonts. Backend Dockerfile heap 3GB (nest build OOM 2GB).
 - Scripts trên box: /tmp trong container backend (backfill-covers, prune-dead-nav, revamp-hoc-bong). Seed SCHOLARSHIP_PUCK_DATA trong repo CHƯA cập nhật theo layout mới (làm sau, sandbox là nguồn hiện hành).
+
+## Session 2026-07-16 (khuya) — chuông thông báo in-app + CD (GHCR auto-deploy)
+- **Chuông thông báo** (`notification-bell.tsx`, gắn trong Navbar desktop lg+ và mobile bar):
+  theo dõi chủ đề = category thật; localStorage `notif:subs` {slug: watermark}. Vào web đối
+  chiếu bài mới hơn watermark → badge + tự bung 1 lần/phiên (sessionStorage `notif:autoPopped`).
+  Bài di trú trùng timestamp → khi theo dõi hiện thẳng top-3 mới nhất, watermark = ngày mới nhất
+  (bài đăng SAU đó mới báo). Verify sandbox: theo dõi "Tuyển dụng" → badge 3 + 3 bài. Prop
+  `showNotificationBell` mặc định bật (Header đồng bộ không cần đổi DB).
+- **ScholarshipList** đổi sang lọc theo keyword "học bổng" (category hoc-bong/scholarship rỗng do
+  di trú gán rải) → ~83 bài. Seed hero học bổng đã localize.
+- **CD** (`.github/workflows/deploy.yml` + `docker-compose.deploy.yml` + `deploy/CD.md`): push main →
+  build 3 ảnh ở runner → GHCR → SSH box pull+up+`db push`+flush → smoke test /vi. db-setup CHỈ db push
+  (không re-seed → không ghi đè nội dung live). Enabler: `sitemap.ts` timeout 8s (hết treo build),
+  root `.dockerignore` bỏ thesis/benchmark/docs, font đã self-host. CHƯA active — cần đặt secrets/vars
+  + GHCR pull token + deploy SSH key + merge lên main (xem deploy/CD.md). Chạy trên nhánh wip hiện tại.
