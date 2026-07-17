@@ -72,7 +72,9 @@ export function HelpCenter() {
           className="w-full gap-0 p-0 sm:max-w-md dark:bg-[#0B1120]"
         >
           <SheetHeader className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-            <div className="flex items-center justify-between gap-3">
+            {/* pr-9 keeps the VI/EN toggle clear of the Sheet's absolute close (X)
+                button at top-3 right-3 (they were overlapping). */}
+            <div className="flex items-center justify-between gap-3 pr-9">
               <div>
                 <SheetTitle className="text-base">
                   {T("Trung tâm trợ giúp", "Help center")}

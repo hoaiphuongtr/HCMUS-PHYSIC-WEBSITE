@@ -78,6 +78,10 @@ export type WalkStep = {
   side?: "top" | "right" | "bottom" | "left";
   waitMs?: number; // how long to wait for the element (route change / portal)
   preAction?: () => void; // e.g. open a menu so its item mounts
+  // When true, clicking the highlighted element itself advances the tour to the
+  // next step (the user's real action drives it — no "Next" click needed). The
+  // next step's preAction is skipped since the user already performed the action.
+  advanceOnClick?: boolean;
 };
 
 export type Walkthrough = {
@@ -110,10 +114,11 @@ export const WALKTHROUGHS: Walkthrough[] = [
         selector: '[data-tour="new-layout"]',
         title: { vi: "Bước 1 — Tạo mới", en: "Step 1 — New" },
         body: {
-          vi: "Bấm nút <b>New</b> để mở hộp thoại tạo layout. (Bấm Tiếp để tôi mở giúp bạn.)",
-          en: "Click <b>New</b> to open the create-layout dialog. (Press Next and I'll open it.)",
+          vi: "Bấm nút <b>New</b> để mở hộp thoại tạo layout; hướng dẫn sẽ tự chuyển bước khi bạn bấm.",
+          en: "Click <b>New</b> to open the create-layout dialog; the guide advances when you do.",
         },
         side: "bottom",
+        advanceOnClick: true,
       },
       {
         selector: '[data-tour="layout-name"]',
@@ -136,6 +141,7 @@ export const WALKTHROUGHS: Walkthrough[] = [
           en: "Click <b>Create</b>. The layout opens in the drag-and-drop editor.",
         },
         side: "top",
+        advanceOnClick: true,
       },
     ],
   },
@@ -260,6 +266,57 @@ export const WALKTHROUGHS: Walkthrough[] = [
       },
     ],
   },
+  {
+    id: "find-posts",
+    route: "/admin/posts/list",
+    label: { vi: "Tìm và lọc bài đăng", en: "Find and filter posts" },
+    summary: {
+      vi: "Tìm nhanh bài theo từ khoá và tạo bài mới.",
+      en: "Search posts by keyword and create a new one.",
+    },
+    steps: [
+      {
+        route: "/admin/posts/list",
+        selector: '[data-tour="post-search"]',
+        title: { vi: "Bước 1 — Tìm kiếm", en: "Step 1 — Search" },
+        body: {
+          vi: "Gõ <b>tiêu đề, slug hoặc mô tả</b> để lọc nhanh danh sách bài đăng. Dùng các ô lọc bên cạnh để lọc theo danh mục và trạng thái.",
+          en: "Type a <b>title, slug or description</b> to filter the list. Use the selectors beside it to filter by category and status.",
+        },
+        side: "bottom",
+      },
+      {
+        selector: '[data-tour="post-new"]',
+        title: { vi: "Bước 2 — Tạo bài mới", en: "Step 2 — New post" },
+        body: {
+          vi: "Không tìm thấy bài cần sửa? Bấm <b>Tạo bài đăng mới</b> để soạn một bài từ đầu.",
+          en: "Can't find the post you need? Click <b>New post</b> to write one from scratch.",
+        },
+        side: "left",
+      },
+    ],
+  },
+  {
+    id: "change-password",
+    route: "/admin/settings",
+    label: { vi: "Đổi mật khẩu tài khoản", en: "Change your password" },
+    summary: {
+      vi: "Cập nhật mật khẩu đăng nhập trong trang Cài đặt.",
+      en: "Update your login password in Settings.",
+    },
+    steps: [
+      {
+        route: "/admin/settings",
+        selector: '[data-tour="settings-password"]',
+        title: { vi: "Đổi mật khẩu", en: "Change password" },
+        body: {
+          vi: "Nhập <b>mật khẩu hiện tại</b>, rồi <b>mật khẩu mới</b> (tối thiểu 6 ký tự) và xác nhận, sau đó bấm lưu. Cùng trang này bạn cũng cập nhật được hồ sơ cá nhân.",
+          en: "Enter your <b>current password</b>, then a <b>new password</b> (min 6 chars) and confirm, then save. You can also update your profile on this page.",
+        },
+        side: "top",
+      },
+    ],
+  },
 ];
 
 // --- Doc FAQ (pre-written issues + resolution steps) -------------------------
@@ -324,6 +381,86 @@ export const FAQ: FaqItem[] = [
       {
         vi: "Nếu vẫn lỗi, nhờ super-admin đặt lại mật khẩu trong Quản lý Admin.",
         en: "Still stuck? Ask a super-admin to reset it in Admin Management.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Nhập nội dung song ngữ (Tiếng Việt / Tiếng Anh) thế nào?",
+      en: "How do I enter bilingual (VI/EN) content?",
+    },
+    steps: [
+      {
+        vi: "Trong trình soạn bài, mỗi ô tiêu đề và thân bài có hai thẻ VI và EN.",
+        en: "In the post editor, the title and body fields each have VI and EN tabs.",
+      },
+      {
+        vi: "Nhập bản Tiếng Việt ở thẻ VI, bản Tiếng Anh ở thẻ EN.",
+        en: "Type the Vietnamese text on the VI tab, the English text on the EN tab.",
+      },
+      {
+        vi: "Nếu để trống thẻ EN, trang công khai sẽ tự hiển thị bản Tiếng Việt.",
+        en: "If the EN tab is empty, the public site falls back to Vietnamese.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Khôi phục một phiên bản cũ của trang (layout)?",
+      en: "How do I restore an older version of a page (layout)?",
+    },
+    steps: [
+      {
+        vi: "Mở layout trong trình chỉnh sửa, vào mục Lịch sử phiên bản.",
+        en: "Open the layout in the editor and go to Version history.",
+      },
+      {
+        vi: "Chọn phiên bản muốn khôi phục để xem lại nội dung.",
+        en: "Pick the version you want to restore to preview it.",
+      },
+      {
+        vi: "Khôi phục về bản nháp để chỉnh tiếp, hoặc khôi phục và xuất bản lại ngay.",
+        en: "Restore it as a draft to keep editing, or restore and re-publish immediately.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Cấp tài khoản cho quản trị viên một bộ môn?",
+      en: "How do I create an account for a department admin?",
+    },
+    steps: [
+      {
+        vi: "Chỉ super-admin thực hiện được, trong mục Quản lý Admin.",
+        en: "Only a super-admin can do this, in Admin Management.",
+      },
+      {
+        vi: "Tạo tài khoản mới và gán đúng bộ môn cho người dùng.",
+        en: "Create the account and assign the correct department to the user.",
+      },
+      {
+        vi: "Quản trị viên bộ môn chỉ thao tác được trên nội dung của bộ môn mình.",
+        en: "A department admin can only manage content belonging to their department.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Đổi mật khẩu hoặc cập nhật hồ sơ ở đâu?",
+      en: "Where do I change my password or update my profile?",
+    },
+    steps: [
+      {
+        vi: "Vào mục Cài đặt (biểu tượng ở thanh điều hướng).",
+        en: "Open Settings (icon in the navigation bar).",
+      },
+      {
+        vi: "Cập nhật họ tên, chức danh, ảnh đại diện ở phần Hồ sơ.",
+        en: "Update your name, title and avatar in the Profile section.",
+      },
+      {
+        vi: "Đổi mật khẩu ở phần Bảo mật: nhập mật khẩu hiện tại và mật khẩu mới.",
+        en: "Change your password in the Security section: enter the current and the new password.",
       },
     ],
   },

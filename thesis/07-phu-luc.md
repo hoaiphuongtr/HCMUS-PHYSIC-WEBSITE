@@ -1,6 +1,6 @@
 ## PHỤ LỤC A: LƯỢC ĐỒ CƠ SỞ DỮ LIỆU ĐẦY ĐỦ
 
-Phụ lục này bổ trợ cho mục 3.3 của khóa luận, liệt kê đầy đủ lược đồ dữ liệu của hệ thống được trích xuất trực tiếp từ tệp lược đồ Prisma trong mã nguồn, gồm 33 thực thể và 43 quan hệ khóa ngoại. Các trường quan hệ ảo (chỉ tồn tại ở tầng truy vấn, không phải cột dữ liệu) không được liệt kê.
+Phụ lục này bổ trợ cho mục 3.3 của khóa luận, liệt kê đầy đủ lược đồ dữ liệu của hệ thống được trích xuất trực tiếp từ tệp lược đồ Prisma trong mã nguồn, gồm 33 thực thể và 43 quan hệ khóa ngoại. Các trường quan hệ ảo (chỉ tồn tại ở tầng truy vấn, không phải cột dữ liệu) không được liệt kê. Trong số này, hai thực thể ChatbotTraining và AIConfig được khai báo sẵn trong lược đồ để dự phòng cho hướng phát triển trợ lý hỏi đáp tự động; chúng chưa được đưa vào vận hành và không thuộc phạm vi kiểm thử của khóa luận.
 
 ### Phụ lục A – 1: Danh sách thực thể và trường dữ liệu
 
@@ -14,7 +14,7 @@ Phụ lục này bổ trợ cho mục 3.3 của khóa luận, liệt kê đầy 
 | VerificationCode | id (PK), email, code, expiresAt, createdAt |
 | Department | id (PK), name, slug (duy nhất), description, email, phone, address, createdAt, updatedAt |
 | Template | id (PK), name, slug (duy nhất), description, structure, isActive, createdBy, createdAt, updatedAt, snapshotId (duy nhất) |
-| Post | id (PK), title, slug (duy nhất), body, excerpt, categoryId, departmentId, legacyId (duy nhất), coverMediaId, coverUrl, coverAlt, publishedAt, scheduledAt, rejectedAt, rejectReason, createdAt, updatedAt, createdBy, approvedBy, templateId, eventStartAt, eventEndAt, eventLocation, eventSpeakers, registrationUrl, metadata, aiSummary |
+| Post | id (PK), title, slug (duy nhất), body, excerpt, categoryId, departmentId, legacyId (duy nhất), coverMediaId, coverUrl, coverAlt, publishedAt, scheduledAt, createdAt, updatedAt, createdBy, approvedBy, templateId, eventStartAt, eventEndAt, eventLocation, eventSpeakers, registrationUrl, metadata, aiSummary |
 | Category | id (PK), slug (duy nhất), name, excerpt, image, legacyId (duy nhất), status, createdAt, updatedAt |
 | ContentBlock | id (PK), postId, content, order, createdAt, updatedAt |
 | PostTranslation | id (PK), postId, title, excerpt, blocks, aiSummary, isConfirmed, confirmedBy, confirmedAt, createdAt, updatedAt |
@@ -94,19 +94,19 @@ Phụ lục này trình bày bổ sung một số màn hình của hệ thống 
 
 ### Phụ lục B – 1: Màn hình quản lý bài viết trong trang quản trị
 
-【HÌNH B.1 — ảnh danh sách bài viết admin】
+【HÌNH B.1, ảnh danh sách bài viết admin】
 
 ### Phụ lục B – 2: Màn hình quản lý tài khoản quản trị theo bộ môn
 
-【HÌNH B.2 — ảnh quản lý tài khoản quản trị】
+【HÌNH B.2, ảnh quản lý tài khoản quản trị】
 
 ### Phụ lục B – 3: Một bài viết di trú trên giao diện công khai
 
-【HÌNH B.3 — ảnh bài viết công khai】
+【HÌNH B.3, ảnh bài viết công khai】
 
 ### Phụ lục B – 4: Trang chủ phiên bản tiếng Anh
 
-【HÌNH B.4 — ảnh trang chủ EN】
+【HÌNH B.4, ảnh trang chủ EN】
 
 ## PHỤ LỤC C: QUY TRÌNH TRIỂN KHAI HỆ THỐNG
 
@@ -128,4 +128,4 @@ Phụ lục này tóm tắt quy trình đưa hệ thống lên một máy chủ 
 | Bí mật xác thực | Khóa ký access token, refresh token và phiên đăng nhập |
 | Tài khoản khởi tạo | Email, mật khẩu của quản trị viên cấp cao được nạp lần đầu |
 | Liên kết chéo | Danh sách origin được phép (CORS) và mã bí mật cho tín hiệu làm mới giữa máy chủ API với trang công khai |
-| Tích hợp tùy chọn | Dịch vụ gửi email cho OTP, đăng nhập Google, giám sát lỗi — thiếu nhóm này hệ thống vẫn vận hành |
+| Tích hợp tùy chọn | Dịch vụ gửi email cho OTP, đăng nhập Google, giám sát lỗi (thiếu nhóm này hệ thống vẫn vận hành) |

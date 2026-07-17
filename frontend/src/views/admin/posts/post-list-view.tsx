@@ -26,15 +26,13 @@ const STATUS_STYLES: Record<ContentStatusValue, string> = {
   PENDING: "bg-blue-100 text-blue-700",
   SCHEDULED: "bg-amber-100 text-amber-700",
   PUBLISHED: "bg-emerald-100 text-emerald-700",
-  REJECTED: "bg-rose-100 text-rose-700",
 };
 
 const STATUS_LABELS: Record<ContentStatusValue, string> = {
-  DRAFT: "Draft",
-  PENDING: "Pending",
-  SCHEDULED: "Scheduled",
-  PUBLISHED: "Published",
-  REJECTED: "Rejected",
+  DRAFT: "Nháp",
+  PENDING: "Chờ xuất bản",
+  SCHEDULED: "Lên lịch",
+  PUBLISHED: "Công khai",
 };
 
 const layoutBadgeStyle = (layout: PostLayoutRef): string => {
@@ -238,6 +236,7 @@ export function PostListView() {
         </div>
         <Link
           href="/admin/posts"
+          data-tour="post-new"
           className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
         >
           Tạo bài đăng mới
@@ -292,6 +291,7 @@ export function PostListView() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Tìm theo tiêu đề, slug, mô tả…"
+            data-tour="post-search"
             className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="min-w-[200px]">

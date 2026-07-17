@@ -22,9 +22,11 @@ export async function generateMetadata({
   try {
     const layout = await getLayoutBySlug(HOMEPAGE_SLUG);
     if (!layout.isPublished) return {};
+    // The homepage always uses the faculty's own name — never the internal
+    // layout name (e.g. "New Homepage"), which must not leak into the tab title.
     const title = isEn
       ? "Faculty of Physics & Engineering Physics | HCMUS"
-      : layout.name || "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS";
+      : "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS";
     const description =
       layout.description ??
       (isEn
@@ -32,7 +34,8 @@ export async function generateMetadata({
         : "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.");
     const canonical = buildCanonical("/");
     return {
-      title,
+      // absolute so the root "%s | Khoa Vật lý - HCMUS" template isn't appended
+      title: { absolute: title },
       description,
       alternates: { canonical, languages: buildLanguageAlternates("/") },
       openGraph: {

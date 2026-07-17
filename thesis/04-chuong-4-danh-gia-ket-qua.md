@@ -2,7 +2,7 @@
 
 Chương này đánh giá hệ thống trên năm phương diện: tính đúng đắn chức năng (4.2), Chỉ số Web cốt lõi (4.3), điểm tổng hợp Lighthouse (4.4), bảo mật (4.5) và SEO – GEO (4.6); sau đó so sánh với website cũ và đối chiếu mức độ hoàn thành mục tiêu đề ra ở Chương 1 (4.7).
 
-Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và ngày đo; các chỉ số hiệu năng là số đo phòng thí nghiệm bằng Lighthouse theo cấu hình mô tả tại mục 4.1.2. Việc đánh giá được thực hiện theo hai vòng: đo lần đầu ngày 12/07/2026, dùng kết quả để xác định và xử lý các điểm yếu, sau đó đo lại ngày 14/07/2026; số liệu trình bày trong chương là kết quả vòng sau, các thay đổi giữa hai vòng được thuyết minh tại chỗ.
+Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và ngày đo; các chỉ số hiệu năng là số đo phòng thí nghiệm bằng Lighthouse theo cấu hình mô tả tại mục 4.1.2. Việc đánh giá được thực hiện theo hai vòng: đo lần đầu ngày 12/07/2026, dùng kết quả để xác định và xử lý các điểm yếu, sau đó đo lại ngày 14/07/2026; số liệu trình bày trong chương là kết quả vòng sau, các thay đổi giữa hai vòng được thuyết minh tại chỗ. Riêng trang bài viết di trú được đo lại một lần nữa ngày 15/07/2026, sau khi việc rà soát nhật ký đo phát hiện một lỗi cấu hình khiến bộ tối ưu ảnh từ chối một phần ảnh trong phép đo ngày 14/07 (trình bày tại mục 4.3); số liệu của riêng trang này là kết quả lần đo sau cùng đó.
 
 ## 4.1 Phương pháp đánh giá
 
@@ -20,9 +20,9 @@ Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và
 
 ### 4.1.2 Môi trường kiểm thử
 
-Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (1.637 bài viết di trú cùng các bố cục tương ứng, 3,9 GB phương tiện) — nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
+Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (1.637 bài viết di trú cùng các bố cục tương ứng, 3,9 GB phương tiện), nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
 
-Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên bản build production phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật — hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
+Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên bản build production phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật, hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
 
 ### 4.1.3 Các trang được kiểm thử
 
@@ -59,9 +59,9 @@ Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản tr�
 
 | Mã | Kịch bản | Kết quả mong đợi | Kết quả |
 |---|---|---|---|
-| P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết của bộ môn trực thuộc | Đạt — trả về 32 bài, toàn bộ thuộc đúng bộ môn |
+| P1 | Quản trị viên bộ môn liệt kê danh sách bài viết | Chỉ nhận bài viết của bộ môn trực thuộc | Đạt, trả về 32 bài, toàn bộ thuộc đúng bộ môn |
 | P2 | Quản trị viên bộ môn đọc chi tiết bài viết của bộ môn trực thuộc | HTTP 200 | Đạt |
-| P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404 — không tiết lộ tồn tại | Đạt |
+| P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404, không tiết lộ tồn tại | Đạt |
 | P4 | Quản trị viên bộ môn mở thư viện phương tiện | Xem được tư liệu của bộ môn trực thuộc + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
 | P5 | Quản trị viên thường truy cập trang quản lý quản trị viên | Bị chuyển hướng; API trả 403 (khai báo quyền ở mức toàn phân hệ) | Đạt |
 | P6 | 24 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
@@ -101,9 +101,9 @@ Kiểm tra hiển thị bằng Playwright trên các trang đại diện xác nh
 
 ## 4.3 Đánh giá Core Web Vitals
 
-Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 200 ms; ≤ 0,1 — mục 2.2.1) được đo ở chế độ phòng thí nghiệm theo cấu hình mô tả tại mục 4.1.2; trong môi trường mô phỏng không có thao tác người dùng thật, INP được thay bằng chỉ số gần đúng TBT (Total Blocking Time, ngưỡng tốt ≤ 200 ms). Kết quả trên bốn trang đại diện trình bày trong Bảng 4.6.
+Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 200 ms; ≤ 0,1, mục 2.2.1) được đo ở chế độ phòng thí nghiệm theo cấu hình mô tả tại mục 4.1.2; trong môi trường mô phỏng không có thao tác người dùng thật, INP được thay bằng chỉ số gần đúng TBT (Total Blocking Time, ngưỡng tốt ≤ 200 ms). Kết quả trên bốn trang đại diện trình bày trong Bảng 4.6.
 
-*Bảng 4.6. Chỉ số Web cốt lõi (lab) của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
+*Bảng 4.6. Chỉ số Web cốt lõi (lab) của bốn trang đại diện, Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
 
 | Trang | LCP (s) | TBT (ms) | CLS | FCP (s) | Speed Index (s) |
 |---|---|---|---|---|---|
@@ -113,17 +113,17 @@ Bộ ba chỉ số LCP, INP, CLS (ngưỡng tốt lần lượt ≤ 2,5 s; ≤ 2
 | Trang giới thiệu | 3,39 | 182 | 0,000 | 1,08 | 1,08 |
 | *Ngưỡng tốt* | *≤ 2,5* | *≤ 200* | *≤ 0,1* | *≤ 1,8* | — |
 
-Kết quả phản ánh hiệu quả của vòng tối ưu giữa hai lần đo. Ở lần đo đầu (12/07), trang bài viết di trú là điểm yếu nặng nhất: thân bài nhúng sáu ảnh gốc chưa nén ở độ phân giải đầy đủ (ảnh lớn nhất tới khoảng 45 MB) nên tổng dung lượng trình duyệt phải tải về của trang lên tới 221 MB, thời gian chặn luồng chính (TBT) 1.963 ms — gấp gần mười lần ngưỡng tốt. Sau khi nén lại toàn bộ kho ảnh di trú, bổ sung thuộc tính kích thước cho 5.877 thẻ ảnh (mục 3.7.3), định tuyến ảnh bìa lẫn ảnh thân bài qua bộ tối ưu ảnh của Next.js (thu về kích thước hiển thị, định dạng WebP), ưu tiên nạp ảnh bìa và nạp trễ các ảnh phía sau, trọng lượng trang giảm còn 0,9 MB (99,6%) và TBT giảm còn 215 mili giây (89%); TBT của ba trang còn lại đều dưới ngưỡng 200 mili giây. Độ ổn định bố cục đạt mức tuyệt đối (CLS = 0,000) trên ba trang do hệ thống kiểm soát toàn bộ — so với 0,243 của trang chủ website cũ — và thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây.
+Kết quả phản ánh hiệu quả của vòng tối ưu giữa hai lần đo. Ở lần đo đầu (12/07), trang bài viết di trú là điểm yếu nặng nhất: thân bài nhúng sáu ảnh gốc chưa nén ở độ phân giải đầy đủ (ảnh lớn nhất tới khoảng 45 MB) nên tổng dung lượng trình duyệt phải tải về của trang lên tới 221 MB, thời gian chặn luồng chính (TBT) 1.963 ms, gấp gần mười lần ngưỡng tốt. Sau khi nén lại toàn bộ kho ảnh di trú, bổ sung thuộc tính kích thước cho 5.877 thẻ ảnh (mục 3.7.3), định tuyến ảnh bìa lẫn ảnh thân bài qua bộ tối ưu ảnh của Next.js (thu về kích thước hiển thị, định dạng WebP), ưu tiên nạp ảnh bìa và nạp trễ các ảnh phía sau, trọng lượng trang giảm còn 0,9 MB (99,6%) và TBT giảm còn 215 mili giây (89%); TBT của ba trang còn lại đều dưới ngưỡng 200 mili giây. Độ ổn định bố cục đạt mức tuyệt đối (CLS = 0,000) trên ba trang do hệ thống kiểm soát toàn bộ (so với 0,243 của trang chủ website cũ) và thời gian hiển thị nội dung đầu tiên đều dưới 1,4 giây.
 
-Số liệu của trang bài viết di trú là kết quả đo lại ngày 15/07/2026. Việc rà soát nhật ký đo của vòng hai phát hiện bộ tối ưu ảnh từ chối yêu cầu với mã trạng thái 400: phiên bản Next.js 16 mặc định chỉ chấp nhận mức chất lượng ảnh 75, trong khi ảnh thân bài dùng mức 70 và ảnh hero dùng mức 65, khiến một phần ảnh của trang không được tải — và không được tính — trong phép đo ngày 14/07. Sau khi khai báo danh sách mức chất lượng hợp lệ trong cấu hình và đưa cả ảnh bìa qua bộ tối ưu, trang được đo lại với toàn bộ ảnh tải thành công; kết quả trong Bảng 4.6 vì vậy phản ánh đúng chi phí thật của trang.
+Số liệu của trang bài viết di trú là kết quả đo lại ngày 15/07/2026. Việc rà soát nhật ký đo của vòng hai phát hiện bộ tối ưu ảnh từ chối yêu cầu với mã trạng thái 400: phiên bản Next.js 16 mặc định chỉ chấp nhận mức chất lượng ảnh 75, trong khi ảnh thân bài dùng mức 70 và ảnh hero dùng mức 65, khiến một phần ảnh của trang không được tải (và không được tính) trong phép đo ngày 14/07. Sau khi khai báo danh sách mức chất lượng hợp lệ trong cấu hình và đưa cả ảnh bìa qua bộ tối ưu, trang được đo lại với toàn bộ ảnh tải thành công; kết quả trong Bảng 4.6 vì vậy phản ánh đúng chi phí thật của trang.
 
-Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP của các trang vẫn trên ngưỡng tốt 2,5 giây trong điều kiện Slow 4G mô phỏng: 3,4–4,2 giây (đã cải thiện từ 4,2–6,2 giây của vòng đo đầu nhờ ưu tiên tải ảnh hero, hoãn các ảnh ẩn và nạp ảnh qua bộ tối ưu); phần chi phí còn lại nằm ở chính kích thước hiển thị toàn màn hình của ảnh hero trên đường truyền 1,6 Mbps. Thứ hai, trang bài viết di trú dạng thư viện ảnh còn CLS 0,270 do khối thư viện ảnh chèn theo nội dung: đáng chú ý, chỉ số LCP vòng đo đầu (2,58 giây; CLS 0,179) thấp hơn không phải vì trang tốt hơn, mà vì 221 MB ảnh gốc khi đó không kịp tải xong trong khung thời gian đo nên chưa được tính vào chỉ số — sau khi tối ưu, toàn bộ ảnh tải được và phép đo phản ánh đúng chi phí thật của một bài nhiều ảnh trên mạng di động chậm. Việc tinh chỉnh tiếp cho nhóm trang này được ghi nhận tại mục 5.3.
+Hai điểm chưa đạt được trình bày trung thực. Thứ nhất, LCP của các trang vẫn trên ngưỡng tốt 2,5 giây trong điều kiện Slow 4G mô phỏng: 3,4–4,2 giây (đã cải thiện từ 4,2–6,2 giây của vòng đo đầu nhờ ưu tiên tải ảnh hero, hoãn các ảnh ẩn và nạp ảnh qua bộ tối ưu); phần chi phí còn lại nằm ở chính kích thước hiển thị toàn màn hình của ảnh hero trên đường truyền 1,6 Mbps. Thứ hai, trang bài viết di trú dạng thư viện ảnh còn CLS 0,270 do khối thư viện ảnh chèn theo nội dung: đáng chú ý, chỉ số LCP vòng đo đầu (2,58 giây; CLS 0,179) thấp hơn không phải vì trang tốt hơn, mà vì 221 MB ảnh gốc khi đó không kịp tải xong trong khung thời gian đo nên chưa được tính vào chỉ số, sau khi tối ưu, toàn bộ ảnh tải được và phép đo phản ánh đúng chi phí thật của một bài nhiều ảnh trên mạng di động chậm. Việc tinh chỉnh tiếp cho nhóm trang này được ghi nhận tại mục 5.3.
 
 ## 4.4 Đánh giá bằng Lighthouse
 
 Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practices, SEO; thang 0–100) [17] của bốn trang đại diện được trình bày trong Bảng 4.7.
 
-*Bảng 4.7. Điểm Lighthouse của bốn trang đại diện — Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
+*Bảng 4.7. Điểm Lighthouse của bốn trang đại diện, Lighthouse 13.4.0, mobile, mạng Slow 4G mô phỏng, bản build production tại máy đo, trung vị 3 lượt, 14/07/2026; riêng trang bài viết di trú đo lại ngày 15/07/2026 (trung vị 6 lượt) sau khi sửa lỗi cấu hình bộ tối ưu ảnh*
 
 | Trang | Performance | Accessibility | Best Practices | SEO |
 |---|---|---|---|---|
@@ -134,29 +134,29 @@ Bốn điểm tổng hợp Lighthouse (Performance, Accessibility, Best Practice
 
 Điểm SEO đạt 92–100 trên cả bốn trang, phản ánh các hạng mục kỹ thuật đã hiện thực ở mục 3.8 (HTML đầy đủ, metadata, canonical, hreflang, robots hợp lệ); điểm Tuân thủ thông lệ tốt ổn định ở mức 96. Điểm Performance đạt 87–89 ở ba trang bố cục; riêng trang bài viết di trú dạng thư viện ảnh đạt 68 do đặc thù khối lượng ảnh đã phân tích tại mục 4.3.
 
-Điểm Accessibility là hạng mục thay đổi rõ nhất giữa hai vòng đo. Ở vòng đầu, trang chủ chỉ đạt 80 — thấp hơn cả website cũ (88), một kết quả ngược kỳ vọng: giao diện mới nhiều thành phần tương tác hơn thì mỗi thành phần là một điểm có thể vi phạm. Các vi phạm cụ thể do Lighthouse chỉ ra (nút chuyển ảnh của khối hero thiếu nhãn truy cập và có vùng chạm 10 điểm ảnh, chữ phụ xám nhạt thiếu tương phản, liên kết mạng xã hội không có tên truy cập, cấp tiêu đề nhảy bậc) đã được xử lý trực tiếp trong các khối giao diện; kết quả vòng hai đạt 94–100, trong đó trang chủ đạt điểm tuyệt đối 100 — vượt website cũ trên cả bốn trang đại diện.
+Điểm Accessibility là hạng mục thay đổi rõ nhất giữa hai vòng đo. Ở vòng đầu, trang chủ chỉ đạt 80, thấp hơn cả website cũ (88), một kết quả ngược kỳ vọng: giao diện mới nhiều thành phần tương tác hơn thì mỗi thành phần là một điểm có thể vi phạm. Các vi phạm cụ thể do Lighthouse chỉ ra (nút chuyển ảnh của khối hero thiếu nhãn truy cập và có vùng chạm 10 điểm ảnh, chữ phụ xám nhạt thiếu tương phản, liên kết mạng xã hội không có tên truy cập, cấp tiêu đề nhảy bậc) đã được xử lý trực tiếp trong các khối giao diện; kết quả vòng hai đạt 94–100, trong đó trang chủ đạt điểm tuyệt đối 100, vượt website cũ trên cả bốn trang đại diện.
 
 ## 4.5 Đánh giá bảo mật
 
 Ở tầng ứng dụng, các biện pháp bảo mật chủ động đã hiện thực gồm: băm mật khẩu bằng bcrypt, tách cặp mã thông báo access/refresh, phân quyền hai lớp được kiểm thử đầy đủ (mục 4.2.3), làm sạch HTML di trú (loại mã kịch bản và thuộc tính bắt sự kiện), và trả 404 thay vì 403 cho tài nguyên khác bộ môn để tránh dò tài nguyên.
 
-Ở tầng thư viện phụ thuộc, kết quả quét bằng `pnpm audit` lần đầu (09/07/2026) ghi nhận 51 cảnh báo lỗ hổng trong cây phụ thuộc, trong đó 3 mức nghiêm trọng và 21 mức cao. Toàn bộ các gói có bản vá sau đó được nâng cấp đồng loạt bằng cơ chế ghim phiên bản của trình quản lý gói; kết quả quét lại (14/07/2026) chỉ còn 4 cảnh báo (2 cao, 2 trung bình), tất cả đều thuộc một công cụ trong bộ kiểm thử phát triển — thành phần không được đóng gói vào bản vận hành. Sau nâng cấp, toàn bộ 40/40 ca kiểm thử đơn vị và các bước đóng gói production đều đạt, xác nhận việc vá không phá vỡ chức năng. Việc quét lỗ hổng được đưa vào cổng chất lượng định kỳ.
+Ở tầng thư viện phụ thuộc, kết quả quét bằng `pnpm audit` lần đầu (09/07/2026) ghi nhận 51 cảnh báo lỗ hổng trong cây phụ thuộc, trong đó 3 mức nghiêm trọng và 21 mức cao. Toàn bộ các gói có bản vá sau đó được nâng cấp đồng loạt bằng cơ chế ghim phiên bản của trình quản lý gói; kết quả quét lại (14/07/2026) chỉ còn 4 cảnh báo (2 cao, 2 trung bình), tất cả đều thuộc một công cụ trong bộ kiểm thử phát triển, thành phần không được đóng gói vào bản vận hành. Sau nâng cấp, toàn bộ 40/40 ca kiểm thử đơn vị và các bước đóng gói production đều đạt, xác nhận việc vá không phá vỡ chức năng. Việc quét lỗ hổng được đưa vào cổng chất lượng định kỳ.
 
 ## 4.6 Đánh giá SEO và GEO
 
 ### 4.6.1 SEO kỹ thuật
 
-Kiểm tra trực tiếp mã HTML trả về (14/07/2026) xác nhận các hạng mục thiết kế tại mục 3.8 hoạt động đúng: mỗi trang có thẻ tiêu đề, mô tả và canonical riêng; trang chủ phát 6 khối dữ liệu có cấu trúc JSON-LD và trang bài viết phát 8 khối; bộ thẻ Open Graph đầy đủ (9 thẻ); 44/45 ảnh trên trang chủ được nạp trễ; `robots.txt` hợp lệ và `sitemap.xml` liệt kê các trang đã xuất bản kèm thời điểm cập nhật `lastmod` — trong khi địa chỉ `sitemap.xml` của website cũ trả về một trang HTML, tức không có sitemap thực. 397 URL cũ chuyển hướng 308 về địa chỉ mới (kiểm chứng tại Bảng 4.5); điểm SEO on-page định lượng đạt 92–100 (Bảng 4.7).
+Kiểm tra trực tiếp mã HTML trả về (14/07/2026) xác nhận các hạng mục thiết kế tại mục 3.8 hoạt động đúng: mỗi trang có thẻ tiêu đề, mô tả và canonical riêng; trang chủ phát 6 khối dữ liệu có cấu trúc JSON-LD và trang bài viết phát 8 khối; bộ thẻ Open Graph đầy đủ (9 thẻ); 44/45 ảnh trên trang chủ được nạp trễ; `robots.txt` hợp lệ và `sitemap.xml` liệt kê các trang đã xuất bản kèm thời điểm cập nhật `lastmod`, trong khi địa chỉ `sitemap.xml` của website cũ trả về một trang HTML, tức không có sitemap thực. 397 URL cũ chuyển hướng 308 về địa chỉ mới (kiểm chứng tại Bảng 4.5); điểm SEO on-page định lượng đạt 92–100 (Bảng 4.7).
 
 Về song ngữ, mỗi trang phát đủ bộ ba thẻ `hreflang` (vi, en và x-default) khai báo quan hệ giữa hai phiên bản ngôn ngữ. Hạng mục này còn thiếu ở vòng đo đầu và đã được bổ sung ngay trong cấu hình metadata; kiểm tra HTML ngày 14/07/2026 xác nhận cả ba thẻ xuất hiện trên trang chủ lẫn trang bài viết.
 
 ### 4.6.2 Khả năng thu thập và kết xuất
 
-Kiểm tra bằng cách tải trang với JavaScript tắt (curl) trên môi trường phát triển: HTML phản hồi chứa đầy đủ tiêu đề, thân bài và liên kết điều hướng — máy thu thập không cần thực thi JavaScript vẫn đọc trọn nội dung. Đây là hệ quả trực tiếp của kiến trúc SSR/ISR (mục 3.8.1) và là khác biệt nền tảng so với các ứng dụng kết xuất phía trình duyệt.
+Kiểm tra bằng cách tải trang với JavaScript tắt (curl) trên môi trường phát triển: HTML phản hồi chứa đầy đủ tiêu đề, thân bài và liên kết điều hướng, máy thu thập không cần thực thi JavaScript vẫn đọc trọn nội dung. Đây là hệ quả trực tiếp của kiến trúc SSR/ISR (mục 3.8.1) và là khác biệt nền tảng so với các ứng dụng kết xuất phía trình duyệt.
 
-### 4.6.3 GEO — mức sẵn sàng cho tìm kiếm AI
+### 4.6.3 GEO: mức sẵn sàng cho tìm kiếm AI
 
-Đối chiếu với các tiêu chí GEO (mục 2.2.3): hệ thống đáp ứng nhóm tiêu chí hạ tầng — HTML tự chứa, dữ liệu có cấu trúc, metadata nhất quán, `robots.txt` không chặn máy thu thập AI, tóm tắt tự chứa ngữ cảnh ở đầu bài viết. Nhóm tiêu chí nội dung (mật độ dữ kiện, trích dẫn nguồn trong bài) phụ thuộc người biên tập, nằm ngoài phạm vi kiểm soát của hệ thống. Đánh giá định lượng mức độ được trích dẫn chỉ khả thi sau khi website vận hành trên tên miền chính thức một thời gian đủ dài.
+Đối chiếu với các tiêu chí GEO (mục 2.2.3): hệ thống đáp ứng nhóm tiêu chí hạ tầng, HTML tự chứa, dữ liệu có cấu trúc, metadata nhất quán, `robots.txt` không chặn máy thu thập AI, tóm tắt tự chứa ngữ cảnh ở đầu bài viết. Nhóm tiêu chí nội dung (mật độ dữ kiện, trích dẫn nguồn trong bài) phụ thuộc người biên tập, nằm ngoài phạm vi kiểm soát của hệ thống. Đánh giá định lượng mức độ được trích dẫn chỉ khả thi sau khi website vận hành trên tên miền chính thức một thời gian đủ dài.
 
 ## 4.7 So sánh và đối chiếu
 
@@ -169,8 +169,8 @@ Việc so sánh được thực hiện trên hai bình diện: năng lực chứ
 | Tiêu chí | Website cũ (PHP/MariaDB) | Hệ thống mới |
 |---|---|---|
 | Kiến trúc | Nguyên khối, hiển thị gắn dữ liệu | Headless ba tầng, API duy nhất, backend không trạng thái |
-| Dàn trang | Không — bố cục cố định trong mã | Visual Builder kéo – thả, mẫu tái sử dụng |
-| Quy trình xuất bản | Đăng trực tiếp | Nháp → duyệt → xuất bản; lên lịch; lịch sử phiên bản + khôi phục |
+| Dàn trang | Không, bố cục cố định trong mã | Visual Builder kéo – thả, mẫu tái sử dụng |
+| Quy trình xuất bản | Đăng trực tiếp | Nháp → chờ xuất bản → xuất bản; lên lịch; lịch sử phiên bản + khôi phục |
 | Song ngữ | Bảng dịch riêng, phải kết nối bảng mỗi truy vấn | JSON song ngữ, giao diện hai thẻ, tự lùi về tiếng Việt |
 | Phân quyền | Mọi tài khoản thao tác toàn bộ nội dung | 2 vai trò × phạm vi bộ môn, kiểm thử 40 ca |
 | Bộ nhớ đệm | Không | 3 tầng (ISR, Redis, đệm module) |
@@ -179,9 +179,9 @@ Việc so sánh được thực hiện trên hai bình diện: năng lực chứ
 | Triển khai | Cài tay trên máy chủ | Docker Compose tự chứa, kịch bản một lệnh |
 | Hướng dẫn người dùng | Không | Tour tương tác + trung tâm trợ giúp song ngữ |
 
-Hai trang chủ được đo cùng ngày, cùng phiên bản công cụ và cùng cấu hình tiết lưu (mục 4.1.2). Tuy nhiên, do website mới được phục vụ ngay tại máy đo còn website cũ được đo qua Internet, hai môi trường khác nhau về độ trễ mạng thật; vì vậy Bảng 4.9 chỉ đối chiếu trực tiếp các chỉ số không phụ thuộc độ trễ mạng — khối lượng tài nguyên, cấu trúc trang và các điểm chất lượng tĩnh. Các chỉ số thời gian của từng hệ thống được trình bày riêng như hai phép đo tham khảo độc lập: của website mới tại Bảng 4.6, của website cũ trong phân tích hiện trạng ở mục 1.1.
+Hai trang chủ được đo cùng ngày, cùng phiên bản công cụ và cùng cấu hình tiết lưu (mục 4.1.2). Tuy nhiên, do website mới được phục vụ ngay tại máy đo còn website cũ được đo qua Internet, hai môi trường khác nhau về độ trễ mạng thật; vì vậy Bảng 4.9 chỉ đối chiếu trực tiếp các chỉ số không phụ thuộc độ trễ mạng, khối lượng tài nguyên, cấu trúc trang và các điểm chất lượng tĩnh. Các chỉ số thời gian của từng hệ thống được trình bày riêng như hai phép đo tham khảo độc lập: của website mới tại Bảng 4.6, của website cũ trong phân tích hiện trạng ở mục 1.1.
 
-*Bảng 4.9. So sánh các chỉ số không phụ thuộc độ trễ mạng giữa hai trang chủ — Lighthouse 13.4.0, mobile, 12/07/2026*
+*Bảng 4.9. So sánh các chỉ số không phụ thuộc độ trễ mạng giữa hai trang chủ, Lighthouse 13.4.0, mobile, 12/07/2026*
 
 | Chỉ số | Website cũ (phys.hcmus.edu.vn) | Website mới | Thay đổi |
 |---|---|---|---|
@@ -195,9 +195,9 @@ Hai trang chủ được đo cùng ngày, cùng phiên bản công cụ và cùn
 | Điểm Best Practices | 96 | 96 | ngang bằng |
 | Điểm Accessibility | 88 | 100 | +12 điểm |
 
-Kết quả cho thấy khoảng cách lớn nhất nằm ở khối lượng tài nguyên — yếu tố quyết định tốc độ tải và không phụ thuộc môi trường đo. Trang chủ cũ tải về 21,2 MB qua 137 yêu cầu HTTP mà không nạp trễ bất kỳ ảnh nào; với khối lượng như vậy, phép đo hiện trạng ở mục 1.1 ghi nhận thời gian hiển thị nội dung lớn nhất của nó trong điều kiện di động mô phỏng lên tới hơn 80 giây, nghĩa là người dùng điện thoại ở điều kiện mạng trung bình gần như không đợi được đến lúc trang hiển thị xong. Trang chủ mới, với lượng nội dung hiển thị tương đương, chỉ tải 0,82 MB qua 27 yêu cầu — mức giảm 96% đến từ kết xuất HTML sẵn phía máy chủ, nạp trễ 44/45 ảnh và tối ưu kích thước ảnh tự động — đồng thời đạt độ ổn định bố cục lý tưởng (CLS 0,243 về 0,000). Các chỉ số thời gian của bản mới (Bảng 4.6) không được đặt cạnh số đo của bản cũ để so sánh trực tiếp do khác biệt môi trường đã nêu; phép so sánh thời gian công bằng sẽ chỉ thực hiện được khi hai hệ thống cùng được đo qua Internet.
+Kết quả cho thấy khoảng cách lớn nhất nằm ở khối lượng tài nguyên, yếu tố quyết định tốc độ tải và không phụ thuộc môi trường đo. Trang chủ cũ tải về 21,2 MB qua 137 yêu cầu HTTP mà không nạp trễ bất kỳ ảnh nào; với khối lượng như vậy, phép đo hiện trạng ở mục 1.1 ghi nhận thời gian hiển thị nội dung lớn nhất của nó trong điều kiện di động mô phỏng lên tới hơn 80 giây, nghĩa là người dùng điện thoại ở điều kiện mạng trung bình gần như không đợi được đến lúc trang hiển thị xong. Trang chủ mới, với lượng nội dung hiển thị tương đương, chỉ tải 0,82 MB qua 27 yêu cầu (mức giảm 96% đến từ kết xuất HTML sẵn phía máy chủ, nạp trễ 44/45 ảnh và tối ưu kích thước ảnh tự động) đồng thời đạt độ ổn định bố cục lý tưởng (CLS 0,243 về 0,000). Các chỉ số thời gian của bản mới (Bảng 4.6) không được đặt cạnh số đo của bản cũ để so sánh trực tiếp do khác biệt môi trường đã nêu; phép so sánh thời gian công bằng sẽ chỉ thực hiện được khi hai hệ thống cùng được đo qua Internet.
 
-Ở nhóm khả năng được tìm thấy, điểm SEO tăng từ 85 lên 92 chưa phản ánh hết khác biệt về chất: website cũ tuy có thẻ mô tả và canonical nhưng hoàn toàn không có dữ liệu có cấu trúc và không có sitemap thực (địa chỉ `sitemap.xml` trả về một trang HTML), nghĩa là hơn 1.600 bài viết không có bản đồ nội dung nào cho máy tìm kiếm; hệ thống mới bổ sung 6 khối JSON-LD trên trang chủ, sitemap XML hợp lệ kèm thời điểm cập nhật và 397 chuyển hướng vĩnh viễn bảo toàn giá trị các URL cũ. Điểm Accessibility của trang chủ mới đạt tuyệt đối 100, vượt trang cũ 12 điểm — kết quả của việc xử lý các vi phạm cụ thể được chỉ ra ở vòng đo đầu (mục 4.4). Tổng hợp lại, hệ thống mới vượt rõ rệt nền tảng cũ ở nhóm chỉ tiêu cấu trúc, khả năng truy cập, khả năng được tìm thấy và năng lực quản trị; riêng nhóm chỉ số thời gian, bản mới đã ở mức khá (Bảng 4.6) nhưng còn hạng mục LCP phải hoàn thiện trước khi có thể khẳng định trọn vẹn mục tiêu hiệu năng.
+Ở nhóm khả năng được tìm thấy, điểm SEO tăng từ 85 lên 92 chưa phản ánh hết khác biệt về chất: website cũ tuy có thẻ mô tả và canonical nhưng hoàn toàn không có dữ liệu có cấu trúc và không có sitemap thực (địa chỉ `sitemap.xml` trả về một trang HTML), nghĩa là hơn 1.600 bài viết không có bản đồ nội dung nào cho máy tìm kiếm; hệ thống mới bổ sung 6 khối JSON-LD trên trang chủ, sitemap XML hợp lệ kèm thời điểm cập nhật và 397 chuyển hướng vĩnh viễn bảo toàn giá trị các URL cũ. Điểm Accessibility của trang chủ mới đạt tuyệt đối 100, vượt trang cũ 12 điểm, kết quả của việc xử lý các vi phạm cụ thể được chỉ ra ở vòng đo đầu (mục 4.4). Tổng hợp lại, hệ thống mới vượt rõ rệt nền tảng cũ ở nhóm chỉ tiêu cấu trúc, khả năng truy cập, khả năng được tìm thấy và năng lực quản trị; riêng nhóm chỉ số thời gian, bản mới đã ở mức khá (Bảng 4.6) nhưng còn hạng mục LCP phải hoàn thiện trước khi có thể khẳng định trọn vẹn mục tiêu hiệu năng.
 
 ### 4.7.2 Mức độ hoàn thành mục tiêu khóa luận
 

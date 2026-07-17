@@ -608,8 +608,7 @@ export type ContentStatusValue =
   | "DRAFT"
   | "PENDING"
   | "SCHEDULED"
-  | "PUBLISHED"
-  | "REJECTED";
+  | "PUBLISHED";
 
 export type PostLayoutRef = {
   id: string;

@@ -16,7 +16,6 @@ const STATUS_DOT: Record<string, string> = {
   PENDING: "bg-blue-500",
   SCHEDULED: "bg-amber-500",
   PUBLISHED: "bg-emerald-500",
-  REJECTED: "bg-rose-500",
 };
 
 const relativeTime = (iso: string): string => {

@@ -23,7 +23,6 @@ enum ContentStatus {
   PENDING
   SCHEDULED
   PUBLISHED
-  REJECTED
 }
 
 enum MediaType {
@@ -246,8 +245,6 @@ model Post {
   coverAlt        String?
   publishedAt     DateTime?
   scheduledAt     DateTime?
-  rejectedAt      DateTime?
-  rejectReason    String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   createdBy       String

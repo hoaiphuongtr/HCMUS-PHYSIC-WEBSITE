@@ -26,11 +26,37 @@ const widgetInclude = {
   },
 } as const;
 
+// Projection for LIST endpoints: every scalar the admin list + public sitemap
+// need, but WITHOUT the heavy `puckData`/`publishedPuckData` JSON trees (each
+// layout carries ~KB–MB of Puck data; ~1.600 layouts made the unprojected list
+// return tens of MB and take ~100s). Detail endpoints (findById/findPublishedBySlug)
+// still return the full row.
+const listSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  isPublished: true,
+  publishedAt: true,
+  scheduledAt: true,
+  sourcePostId: true,
+  departmentId: true,
+  createdBy: true,
+  createdAt: true,
+  updatedAt: true,
+  _count: { select: { widgets: true } },
+} as const;
+
 @Injectable()
 export class PageLayoutRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreatePageLayoutBodyType & { createdBy: string }) {
+  create(
+    data: CreatePageLayoutBodyType & {
+      createdBy: string;
+      departmentId?: string | null;
+    },
+  ) {
     return this.prisma.pageLayout.create({ data });
   }
 
@@ -88,7 +114,7 @@ export class PageLayoutRepository {
   findAll() {
     return this.prisma.pageLayout.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { widgets: true } } },
+      select: listSelect,
     });
   }
 
@@ -96,7 +122,7 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.findMany({
       where: { OR: [{ isPublished: true }, { createdBy: userId }] },
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { widgets: true } } },
+      select: listSelect,
     });
   }
 
@@ -112,7 +138,7 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.findMany({
       where: where as never,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { widgets: true } } },
+      select: listSelect,
     });
   }
 
@@ -120,7 +146,7 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.findMany({
       where: { isPublished: true },
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { widgets: true } } },
+      select: listSelect,
     });
   }
 

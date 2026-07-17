@@ -122,6 +122,58 @@ export async function runWalkthrough(
   }
 
   let d: Driver;
+  let advancing = false;
+  const detachers: Array<() => void> = [];
+  const clearClickAdvancers = () => {
+    while (detachers.length) detachers.pop()?.();
+  };
+
+  // For a step flagged advanceOnClick, clicking the real highlighted element
+  // advances the tour itself — so the guide stays in sync with what the user does.
+  const attachClickAdvance = (idx: number) => {
+    const step = steps[idx];
+    if (!step?.advanceOnClick) return;
+    const el = document.querySelector(step.selector);
+    if (!el) return;
+    const handler = () => {
+      el.removeEventListener("click", handler, true);
+      void goNext(true);
+    };
+    el.addEventListener("click", handler, true);
+    detachers.push(() => el.removeEventListener("click", handler, true));
+  };
+
+  // userActed = the user performed the real action (clicked the highlighted
+  // element) rather than pressing "Next"; in that case skip the next step's
+  // preAction, which would redo/undo what the user just did.
+  const goNext = async (userActed: boolean) => {
+    if (advancing) return;
+    advancing = true;
+    clearClickAdvancers();
+    const idx = d.getActiveIndex() ?? 0;
+    const next = steps[idx + 1];
+    if (!next) {
+      d.destroy();
+      advancing = false;
+      return;
+    }
+    if (next.route && !window.location.pathname.startsWith(next.route)) {
+      navigate(next.route);
+    }
+    if (!userActed) next.preAction?.();
+    const el = await waitForElement(next.selector, next.waitMs ?? 7000);
+    if (!el) {
+      toast(
+        locale === "en"
+          ? `Skipped a step: ${t(next.title, locale)}`
+          : `Đã bỏ qua một bước: ${t(next.title, locale)}`,
+      );
+    }
+    d.moveNext();
+    attachClickAdvance(idx + 1);
+    advancing = false;
+  };
+
   const stepDefs = steps.map((s) => ({
     element: s.selector,
     popover: {
@@ -139,29 +191,18 @@ export async function runWalkthrough(
     popoverClass: "hcmus-tour",
     ...labels(locale),
     steps: stepDefs,
-    onNextClick: async () => {
-      const idx = d.getActiveIndex() ?? 0;
-      const next = steps[idx + 1];
-      if (!next) {
-        d.destroy();
-        return;
-      }
-      const el = await prepare(next);
-      if (!el) {
-        toast(
-          locale === "en"
-            ? `Skipped a step: ${t(next.title, locale)}`
-            : `Đã bỏ qua một bước: ${t(next.title, locale)}`,
-        );
-      }
-      d.moveNext();
+    onNextClick: () => {
+      void goNext(false);
     },
     onPrevClick: () => {
+      clearClickAdvancers();
       d.movePrevious();
     },
     onDestroyed: () => {
+      clearClickAdvancers();
       onDone?.();
     },
   });
   d.drive();
+  attachClickAdvance(0);
 }

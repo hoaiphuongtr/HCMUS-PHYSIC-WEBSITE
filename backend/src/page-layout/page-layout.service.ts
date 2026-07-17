@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   canAccessDepartment,
   departmentScopeWhere,
+  FACULTY_DEPT_ID,
   toSlug,
 } from '../shared/helpers';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -83,10 +84,25 @@ export class PageLayoutService {
     }
   }
 
-  async create(body: CreatePageLayoutBodyType, userId: string) {
+  async create(
+    body: CreatePageLayoutBodyType,
+    userId: string,
+    roleName: string,
+  ) {
+    // Assign the new layout to the creator's department so they can immediately
+    // see and open it. Super-admin and faculty-office keep it null (global /
+    // faculty scope); a department admin's layout is scoped to their department.
+    // Without this the layout is created with departmentId=null, which a
+    // department admin's own scope can't list and getById rejects (404) — the
+    // editor never opens, only the "created" toast shows.
+    const dept =
+      roleName === 'SUPER_ADMIN'
+        ? null
+        : await this.pageLayoutRepository.findUserDepartmentId(userId);
     const layout = await this.pageLayoutRepository.create({
       ...body,
       createdBy: userId,
+      departmentId: dept && dept !== FACULTY_DEPT_ID ? dept : null,
     });
     await this.cache.clear();
     return layout;

@@ -45,8 +45,9 @@ export class PageLayoutController {
   create(
     @Body() body: CreatePageLayoutBodyDTO,
     @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.pageLayoutService.create(body, userId);
+    return this.pageLayoutService.create(body, userId, roleName);
   }
 
   @Get('published')

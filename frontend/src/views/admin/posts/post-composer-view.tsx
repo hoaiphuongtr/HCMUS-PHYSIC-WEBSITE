@@ -22,11 +22,14 @@ import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
 
+// PENDING không phải lựa chọn tay: nó được đặt tự động khi bài được gắn vào layout
+// (xem cloneIntoLayout ở backend). Nó chỉ xuất hiện trong dropdown nếu bài đang ở
+// trạng thái đó, để hiển thị đúng nhãn.
 const STATUS_OPTIONS: { value: ContentStatusValue; label: string }[] = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "PENDING", label: "Pending" },
-  { value: "SCHEDULED", label: "Scheduled" },
-  { value: "PUBLISHED", label: "Published" },
+  { value: "DRAFT", label: "Nháp" },
+  { value: "PENDING", label: "Chờ xuất bản" },
+  { value: "SCHEDULED", label: "Lên lịch" },
+  { value: "PUBLISHED", label: "Công khai" },
 ];
 
 const parseTagInput = (value: string): string[] => {
@@ -266,6 +269,10 @@ export function PostComposerView() {
   const attachedLayouts = postQuery.data?.layouts ?? [];
   const hasPublishedLayout = attachedLayouts.some((l) => l.isPublished);
   const canSchedule = status === "SCHEDULED" && hasPublishedLayout;
+  // Ẩn "Chờ xuất bản" khỏi lựa chọn tay; chỉ giữ nếu bài đang ở trạng thái đó.
+  const statusOptions = STATUS_OPTIONS.filter(
+    (o) => o.value !== "PENDING" || status === "PENDING",
+  );
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -361,8 +368,12 @@ export function PostComposerView() {
               id="post-status"
               value={status}
               onChange={(next) => setStatus(next as ContentStatusValue)}
-              options={STATUS_OPTIONS}
+              options={statusOptions}
             />
+            <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+              Nháp: đang soạn nội dung. Gắn bài vào một layout sẽ tự chuyển sang
+              “Chờ xuất bản”. Chọn Lên lịch hoặc Công khai khi trang đã sẵn sàng.
+            </p>
           </div>
         </section>
 

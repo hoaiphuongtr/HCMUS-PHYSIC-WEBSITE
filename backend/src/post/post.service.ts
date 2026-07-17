@@ -61,6 +61,49 @@ const postInclude = {
   },
 } as const;
 
+// Projection for LIST endpoints: everything the list serializers need but WITHOUT
+// the heavy `body` JSON tree. Detail endpoints (findById/create/update) keep using
+// `postInclude`, which returns the full row incl. body. Cutting body here is what
+// makes the admin "Bài của tôi" list (pageSize 100) small instead of ~2 MB.
+const postListSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  excerpt: true,
+  categoryId: true,
+  departmentId: true,
+  status: true,
+  coverMediaId: true,
+  coverUrl: true,
+  coverAlt: true,
+  eventStartAt: true,
+  eventEndAt: true,
+  eventLocation: true,
+  publishedAt: true,
+  scheduledAt: true,
+  createdBy: true,
+  createdAt: true,
+  updatedAt: true,
+  postTags: { include: { tag: true } },
+  layouts: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      isPublished: true,
+      scheduledAt: true,
+      publishedAt: true,
+    },
+  },
+} as const;
+
+type PostListRecord = Prisma.PostGetPayload<{ select: typeof postListSelect }>;
+
+// A post is publicly visible only once it has at least one PUBLISHED layout
+// (the public site resolves an article by its published layout; without one the
+// standalone URL 404s). This clause keeps such "orphan" posts out of the feeds.
+const HAS_PUBLISHED_LAYOUT = { layouts: { some: { isPublished: true } } } as const;
+
 @Injectable()
 export class PostService {
   private readonly logger = new Logger(PostService.name);
@@ -230,9 +273,9 @@ export class PostService {
     const posts = await this.prisma.post.findMany({
       where: (departmentScopeWhere(roleName, departmentId) ?? {}) as any,
       orderBy: { updatedAt: 'desc' },
-      include: postInclude,
+      select: postListSelect,
     });
-    return posts.map((p) => this.serialize(p));
+    return posts.map((p) => this.serializeListItem(p));
   }
 
   async listAdminPaged(params: {
@@ -271,13 +314,13 @@ export class PostService {
       this.prisma.post.findMany({
         where: where as any,
         orderBy: { updatedAt: 'desc' },
-        include: postInclude,
+        select: postListSelect,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
     ]);
     return {
-      items: posts.map((p) => this.serialize(p)),
+      items: posts.map((p) => this.serializeListItem(p)),
       total,
       page,
       pageSize,
@@ -292,10 +335,12 @@ export class PostService {
         status: 'PUBLISHED',
         // bài di trú rỗng nội dung (nguồn cũ không có bài) không đưa ra trang công khai
         body: { not: Prisma.DbNull },
+        // chỉ công khai bài đã gắn vào một layout đã xuất bản (nếu không, URL bài lẻ 404)
+        ...HAS_PUBLISHED_LAYOUT,
         OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }],
       },
       orderBy: { updatedAt: 'desc' },
-      include: postInclude,
+      select: postListSelect,
       take: limit,
     });
     return posts.map((p) => this.serializePublic(p));
@@ -307,10 +352,11 @@ export class PostService {
       where: {
         status: 'PUBLISHED',
         body: { not: Prisma.DbNull },
+        ...HAS_PUBLISHED_LAYOUT,
         eventStartAt: { gte: now },
       },
       orderBy: { eventStartAt: 'asc' },
-      include: postInclude,
+      select: postListSelect,
       take: limit,
     });
     return posts.map((p) => this.serializePublic(p));
@@ -328,6 +374,7 @@ export class PostService {
     const where: Record<string, unknown> = {
       status: 'PUBLISHED',
       body: { not: Prisma.DbNull },
+      ...HAS_PUBLISHED_LAYOUT,
     };
     if (category) where.category = { slug: category };
     if (fromDate || toDate) {
@@ -351,7 +398,7 @@ export class PostService {
       this.prisma.post.findMany({
         where: where as any,
         orderBy: { updatedAt: 'desc' },
-        include: postInclude,
+        select: postListSelect,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -365,19 +412,7 @@ export class PostService {
     };
   }
 
-  private serializePublic(
-    record: Awaited<ReturnType<PrismaService['post']['findFirstOrThrow']>> & {
-      postTags: Array<{ tag: { slug: string; name: string } }>;
-      layouts: Array<{
-        id: string;
-        name: string;
-        slug: string;
-        isPublished: boolean;
-        scheduledAt: Date | null;
-        publishedAt: Date | null;
-      }>;
-    },
-  ) {
+  private serializePublic(record: PostListRecord) {
     const publishedLayout = record.layouts.find((l) => l.isPublished) ?? null;
     return {
       id: record.id,
@@ -492,6 +527,14 @@ export class PostService {
       },
       select: { id: true, slug: true },
     });
+    // Gắn bài vào một layout = nội dung đã sẵn sàng có trang: đưa bài đang ở
+    // nháp sang "chờ xuất bản" (PENDING). Không đụng bài đã SCHEDULED/PUBLISHED.
+    if (post.status === 'DRAFT') {
+      await this.prisma.post.update({
+        where: { id: post.id },
+        data: { status: 'PENDING' },
+      });
+    }
     await this.cache.clear();
     return layout;
   }
@@ -681,6 +724,36 @@ export class PostService {
       title: asLocalized(record.title),
       slug: record.slug,
       body: asLocalized(record.body),
+      excerpt: asLocalized(record.excerpt),
+      categoryId: record.categoryId,
+      departmentId: record.departmentId,
+      status: record.status,
+      coverMediaId: record.coverMediaId,
+      coverUrl: record.coverUrl,
+      coverAlt: record.coverAlt,
+      tags: record.postTags.map((pt) => ({
+        slug: pt.tag.slug,
+        name: pt.tag.name,
+      })),
+      eventStartAt: record.eventStartAt,
+      eventEndAt: record.eventEndAt,
+      eventLocation: record.eventLocation,
+      publishedAt: record.publishedAt,
+      scheduledAt: record.scheduledAt,
+      createdBy: record.createdBy,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      layouts: record.layouts,
+    };
+  }
+
+  // Same shape as serialize() but for LIST rows fetched with postListSelect
+  // (no `body`). The admin post list doesn't render body, so it never asks for it.
+  private serializeListItem(record: PostListRecord) {
+    return {
+      id: record.id,
+      title: asLocalized(record.title),
+      slug: record.slug,
       excerpt: asLocalized(record.excerpt),
       categoryId: record.categoryId,
       departmentId: record.departmentId,
