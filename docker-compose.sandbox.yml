@@ -16,7 +16,9 @@
 # an isolated single-tenant sandbox. Drop it once the host's libseccomp is modern.
 services:
   db:
-    image: postgres:16-alpine
+    # pgvector image = drop-in superset of postgres:16-alpine, adds the `vector` type
+    # the chatbot's ChatbotChunk table needs. Same data dir/volume — image swap only.
+    image: pgvector/pgvector:pg16
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
@@ -45,6 +47,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Self-hosted answer LLM (CPU). On this 4 GB box the small model is the safe
+  # default — the 1.5b model + the full stack will OOM. Pull it once after boot:
+  #   docker compose -f docker-compose.sandbox.yml exec ollama ollama pull qwen2.5:0.5b-instruct
+  # deploy.sh sets up swap, which is essential for CPU inference here.
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ollama_models:/root/.ollama
 
   db-setup:
     build:
@@ -81,9 +95,14 @@ services:
       # media store must live OUTSIDE the container: containers are recreated on every
       # redeploy and anything copied in with `docker cp` is silently lost with them.
       - ./backend/uploads:/app/uploads
+      # persist the downloaded embedding model (~120MB) across container recreations
+      - hf_cache:/app/.hf-cache
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:0.5b-instruct
+      HF_CACHE_DIR: /app/.hf-cache
     depends_on:
       db:
         condition: service_healthy
@@ -91,6 +110,8 @@ services:
         condition: service_healthy
       db-setup:
         condition: service_completed_successfully
+      ollama:
+        condition: service_started
 
   admin:
     build:
@@ -133,3 +154,5 @@ services:
 volumes:
   pgdata:
   redisdata:
+  ollama_models:
+  hf_cache:
