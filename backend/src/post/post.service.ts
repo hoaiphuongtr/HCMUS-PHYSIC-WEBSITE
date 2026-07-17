@@ -23,6 +23,7 @@ import {
   toSlugPath,
 } from '../shared/helpers';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
+import { ChatbotService } from '../chatbot/chatbot.service';
 import type { InputJsonValue } from '../generated/prisma/internal/prismaNamespace';
 import type { JsonValue } from '../generated/prisma/internal/prismaNamespace';
 
@@ -113,6 +114,7 @@ export class PostService {
     private readonly pageLayoutRepo: PageLayoutRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private readonly publicRevalidate: PublicRevalidateService,
+    private readonly chatbot: ChatbotService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDuePosts' })
@@ -137,6 +139,9 @@ export class PostService {
           },
         });
         await this.syncAttachedLayouts(row.id);
+        await this.chatbot.indexPost(row.id).catch((e) =>
+          this.logger.error(`Chatbot index failed for ${row.id}`, e as Error),
+        );
         this.logger.log(`Auto-published scheduled post ${row.id}`);
       } catch (err) {
         this.logger.error(
@@ -193,6 +198,7 @@ export class PostService {
     });
     if (created.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
+      await this.chatbot.indexPost(created.id).catch(() => undefined);
       this.publicRevalidate.trigger(['sitemap', `post:${created.id}`]);
     }
     return this.serialize(created);
@@ -261,6 +267,9 @@ export class PostService {
       await this.syncNewsFeedSnapshots();
     }
     await this.cache.clear();
+    if (updated.status === 'PUBLISHED' || existing.status === 'PUBLISHED') {
+      await this.chatbot.indexPost(id).catch(() => undefined);
+    }
     this.publicRevalidate.trigger([
       'sitemap',
       `post:${id}`,

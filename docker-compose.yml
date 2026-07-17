@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgres:16-alpine
+    # pgvector image = drop-in superset of postgres:16-alpine, adds vector support.
+    image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -16,6 +17,14 @@ services:
       timeout: 3s
       retries: 5
 
+  # Self-hosted answer LLM. Pull the model once after first boot:
+  #   docker compose exec ollama ollama pull qwen2.5:1.5b-instruct
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+
   backend:
     build:
       context: ./backend
@@ -27,13 +36,19 @@ services:
       - ./backend/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:1.5b-instruct
+      HF_CACHE_DIR: /app/.hf-cache
     volumes:
       - ./backend/.env:/app/.env:ro
+      - hf_cache:/app/.hf-cache
     depends_on:
       db:
         condition: service_healthy
       db-setup:
         condition: service_completed_successfully
+      ollama:
+        condition: service_started
 
   frontend:
     build:
@@ -66,3 +81,5 @@ services:
 
 volumes:
   pgdata:
+  ollama_models:
+  hf_cache:

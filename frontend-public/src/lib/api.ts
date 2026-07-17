@@ -151,3 +151,15 @@ export const postPublicApi = {
     );
   },
 };
+
+// ---- Chatbot ----
+export type ChatSource = { title: string | null; slug: string | null };
+export type ChatAnswer = { answer: string; sources: ChatSource[] };
+
+export const chatbotApi = {
+  ask: (question: string, language: "VI" | "EN" = "VI") =>
+    apiFetch<ChatAnswer>(`/chatbot/ask`, {
+      method: "POST",
+      body: JSON.stringify({ question, language }),
+    }),
+};

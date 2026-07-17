@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JsonLd, organizationSchema, websiteSchema } from "@/components/JsonLd";
+import ChatWidget from "@/components/ChatWidget";
 import { defaultMetadata, facultyOrganization } from "@/lib/seo";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
         className="antialiased"
       >
         {children}
+        <ChatWidget />
       </body>
     </html>
   );
