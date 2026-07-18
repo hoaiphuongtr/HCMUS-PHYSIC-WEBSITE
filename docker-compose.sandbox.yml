@@ -57,6 +57,11 @@ services:
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
+    environment:
+      # keep both the embed + answer models warm in RAM so each question doesn't
+      # pay the ~10-15s model-reload penalty (2 small models fit in the free ~1.7G).
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_MAX_LOADED_MODELS: "2"
     volumes:
       - ollama_models:/root/.ollama
 

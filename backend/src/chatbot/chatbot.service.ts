@@ -259,7 +259,12 @@ export class ChatbotService {
       lit,
     );
 
-    if (!rows.length) {
+    // Grounding gate: cosine distance is 0 (identical) … 2 (opposite). If even the
+    // closest chunk is farther than the threshold, the question isn't covered by the
+    // site content — return the fallback WITHOUT calling the LLM, so off-topic
+    // questions can never be answered from the model's general knowledge.
+    const maxDist = Number(process.env.CHATBOT_MAX_DISTANCE) || 0.7;
+    if (!rows.length || rows[0].dist > maxDist) {
       return {
         answer:
           language === 'EN'

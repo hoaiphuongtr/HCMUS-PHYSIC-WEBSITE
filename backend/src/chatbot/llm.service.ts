@@ -1,18 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 /**
- * Fully self-hosted answer generation via Ollama (CPU).
- * Default model: qwen2.5:1.5b-instruct (~1.2GB). Drop to qwen2.5:0.5b-instruct
- * if you see memory pressure. No API key, no limits, private.
+ * Answer generation via Google Gemini (2.5 Flash-Lite), grounded STRICTLY on the
+ * retrieved site content passed in as CONTEXT. No local model — fast + accurate,
+ * and (unlike a tiny local model) it actually obeys the "answer only from context"
+ * instruction, so it won't invent facts that aren't on the faculty website.
  *
- * Runs as a sibling container — see docker-compose.additions.yml.
- * CPU inference is slow (~10-40s per answer); fine for a low-traffic site.
+ * Requires GEMINI_API_KEY (free key from https://aistudio.google.com/apikey).
  */
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
-  private readonly baseUrl = process.env.OLLAMA_URL || 'http://ollama:11434';
-  private readonly model = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b-instruct';
+  private readonly apiKey = process.env.GEMINI_API_KEY || '';
+  private readonly model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
   async answer(params: {
     question: string;
@@ -20,36 +20,53 @@ export class LlmService {
     language: 'VI' | 'EN';
   }): Promise<string> {
     const { question, context, language } = params;
+    if (!this.apiKey) {
+      this.logger.error('GEMINI_API_KEY is not set');
+      throw new Error('LLM not configured');
+    }
     const lang = language === 'EN' ? 'English' : 'Vietnamese';
     const system =
-      'You are the assistant for the Faculty of Physics - Engineering Physics ' +
-      'website (HCMUS). Answer ONLY from the CONTEXT below. If the answer is not ' +
-      "in the context, say you don't have that information and suggest contacting " +
-      `the faculty. Reply in ${lang}. Be concise. Cite sources by their title ` +
-      'when relevant.';
+      'You are the virtual assistant for the Faculty of Physics - Engineering ' +
+      'Physics website (HCMUS). You answer ONLY from the CONTEXT below, which is ' +
+      'content taken from the faculty website. Rules you must follow strictly:\n' +
+      '1. Use ONLY the CONTEXT. Never use outside or general knowledge.\n' +
+      "2. If the answer is not clearly in the CONTEXT, say you don't have that " +
+      'information yet and suggest contacting the faculty office. Never guess or ' +
+      'invent names, numbers, dates, or facts.\n' +
+      '3. Only answer questions about the Faculty of Physics. Politely decline ' +
+      'anything unrelated (it is outside your scope).\n' +
+      `4. Reply in ${lang}. Be concise, accurate, and helpful.`;
 
-    const res = await fetch(`${this.baseUrl}/api/chat`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': this.apiKey,
+      },
       body: JSON.stringify({
-        model: this.model,
-        stream: false,
-        options: { temperature: 0.2, num_ctx: 4096 },
-        messages: [
-          { role: 'system', content: system },
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [
           {
             role: 'user',
-            content: `CONTEXT:\n${context}\n\nQUESTION: ${question}`,
+            parts: [{ text: `CONTEXT:\n${context}\n\nQUESTION: ${question}` }],
           },
         ],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
       }),
     });
     if (!res.ok) {
       const body = await res.text();
-      this.logger.error(`Ollama failed: ${res.status} ${body}`);
+      this.logger.error(`Gemini failed: ${res.status} ${body}`);
       throw new Error('LLM request failed');
     }
-    const json = (await res.json()) as { message?: { content: string } };
-    return json.message?.content?.trim() ?? '';
+    const json = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = json.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text ?? '')
+      .join('')
+      .trim();
+    return text ?? '';
   }
 }
