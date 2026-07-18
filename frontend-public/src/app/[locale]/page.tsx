@@ -26,12 +26,12 @@ export async function generateMetadata({
     // layout name (e.g. "New Homepage"), which must not leak into the tab title.
     const title = isEn
       ? "Faculty of Physics & Engineering Physics | HCMUS"
-      : "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS";
+      : "Khoa Vật lý - Vật lý kỹ thuật | HCMUS";
     const description =
       layout.description ??
       (isEn
         ? "Faculty of Physics & Engineering Physics, VNUHCM-University of Science. News, events, scholarships and admissions."
-        : "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.");
+        : "Khoa Vật lý - Vật lý kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.");
     const canonical = buildCanonical("/");
     return {
       // absolute so the root "%s | Khoa Vật lý - HCMUS" template isn't appended

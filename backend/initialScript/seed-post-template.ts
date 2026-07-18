@@ -36,7 +36,7 @@ const POST_TEMPLATE_PUCK = {
       props: {
         id: 'post-tpl-navbar',
         logoSrc: PHYS_LOGO,
-        logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+        logoAlt: 'Khoa Vật lý - Vật lý kỹ thuật',
         menuItems: [
           { label: 'Trang chủ', url: '/', children: '' },
           { label: 'Tin tức', url: '/tin-tuc', children: '' },

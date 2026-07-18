@@ -355,7 +355,7 @@ const WIDGETS = [
         '227 Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh',
       contactPhone: '028 38355272',
       contactEmail: 'khoavatly@hcmus.edu.vn',
-      copyrightText: '© 2026 Khoa Vật lý - Vật lý Kỹ thuật, ĐHKHTN - ĐHQG-HCM',
+      copyrightText: '© 2026 Khoa Vật lý - Vật lý kỹ thuật, ĐHKHTN - ĐHQG-HCM',
       footerLinks: [
         { label: 'Fanpage', url: 'https://facebook.com/khoavatly.hcmus' },
         { label: 'ĐHKHTN', url: 'https://hcmus.edu.vn' },

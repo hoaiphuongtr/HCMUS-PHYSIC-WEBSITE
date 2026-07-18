@@ -40,17 +40,17 @@ export const buildOgImage = (args?: {
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
   title: {
-    default: "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS",
+    default: "Khoa Vật lý - Vật lý kỹ thuật | HCMUS",
     template: "%s | Khoa Vật lý - HCMUS",
   },
   description:
-    "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.",
+    "Khoa Vật lý - Vật lý kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.",
   keywords: [
     "Khoa Vật lý",
     "HCMUS",
     "Đại học Khoa học Tự nhiên",
     "ĐHQG TP.HCM",
-    "Vật lý Kỹ thuật",
+    "Vật lý kỹ thuật",
     "Tuyển sinh",
     "Học bổng",
   ],
@@ -59,9 +59,9 @@ export const defaultMetadata: Metadata = {
     type: "website",
     locale: "vi_VN",
     siteName: "Khoa Vật lý - HCMUS",
-    title: "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS",
+    title: "Khoa Vật lý - Vật lý kỹ thuật | HCMUS",
     description:
-      "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+      "Khoa Vật lý - Vật lý kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
     images: [
       {
         url: buildOgImage(),
@@ -73,9 +73,9 @@ export const defaultMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Khoa Vật lý - Vật lý Kỹ thuật | HCMUS",
+    title: "Khoa Vật lý - Vật lý kỹ thuật | HCMUS",
     description:
-      "Khoa Vật lý - Vật lý Kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
+      "Khoa Vật lý - Vật lý kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM",
     images: [buildOgImage()],
   },
   robots: {
@@ -97,7 +97,7 @@ export const defaultMetadata: Metadata = {
 export const facultyOrganization = () => ({
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
-  name: "Khoa Vật lý - Vật lý Kỹ thuật, HCMUS",
+  name: "Khoa Vật lý - Vật lý kỹ thuật, HCMUS",
   alternateName: "Faculty of Physics & Engineering Physics",
   url: getBaseUrl(),
   logo: `${getBaseUrl()}/Logo_Phys-blue.png`,

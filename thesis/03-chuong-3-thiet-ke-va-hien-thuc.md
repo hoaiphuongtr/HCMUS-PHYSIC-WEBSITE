@@ -279,7 +279,7 @@ Mỗi thành phần có tệp mô tả ảnh Docker riêng; tệp mô tả Docke
 
 ### 3.9.3 Ràng buộc môi trường máy chủ
 
-Máy chủ được cấp chạy CentOS 7.9 với glibc 2.17, trong khi Node.js 24 yêu cầu glibc ≥ 2.28, Node không thể chạy trực tiếp trên máy. Ràng buộc này là lý do quyết định chọn triển khai toàn bộ bằng Docker: ứng dụng chạy trong ảnh chứa glibc mới, tách khỏi hệ điều hành chủ. Hai ràng buộc thực tế khác: CentOS 7 đã hết vòng đời nên kịch bản triển khai phải chuyển nguồn cài đặt gói về kho lưu trữ dài hạn của CentOS trước khi cài Docker; máy chỉ có 4 GB RAM nên phải bật bộ nhớ hoán đổi trước khi đóng gói ảnh (quá trình đóng gói Next.js có thể vượt RAM vật lý) và đóng gói tuần tự từng ảnh khi cần.
+Máy chủ được cấp chạy CentOS 7.9 với glibc 2.17, trong khi Node.js 20 yêu cầu glibc ≥ 2.28, Node không thể chạy trực tiếp trên máy. Ràng buộc này là lý do quyết định chọn triển khai toàn bộ bằng Docker: ứng dụng chạy trong ảnh chứa glibc mới, tách khỏi hệ điều hành chủ. Hai ràng buộc thực tế khác: CentOS 7 đã hết vòng đời nên kịch bản triển khai phải chuyển nguồn cài đặt gói về kho lưu trữ dài hạn của CentOS trước khi cài Docker; máy chỉ có 4 GB RAM nên phải bật bộ nhớ hoán đổi trước khi đóng gói ảnh (quá trình đóng gói Next.js có thể vượt RAM vật lý) và đóng gói tuần tự từng ảnh khi cần.
 
 ### 3.9.4 Cấu hình và biến môi trường
 

@@ -20,7 +20,7 @@ Mọi số liệu trong chương là kết quả đo thật, kèm công cụ và
 
 ### 4.1.2 Môi trường kiểm thử
 
-Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 24, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (1.637 bài viết di trú cùng các bố cục tương ứng, 3,9 GB phương tiện), nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
+Kiểm thử chức năng và kiểm thử đơn vị thực hiện trên môi trường phát triển (WSL2, Node.js 20, PostgreSQL và Redis cục bộ qua Docker), với cơ sở dữ liệu chứa toàn bộ dữ liệu di trú thật (1.637 bài viết di trú cùng các bố cục tương ứng, 3,9 GB phương tiện), nghĩa là các phép kiểm thử chạy trên khối lượng dữ liệu tương đương vận hành thật, không phải dữ liệu mẫu. Môi trường triển khai đích là máy chủ CentOS 7.9 (4 vCPU, 4 GB RAM) qua Docker Compose như mô tả tại mục 3.9.
 
 Các phép đo hiệu năng dùng Lighthouse 13.4.0 (Chromium headless) với cấu hình mặc định: giả lập thiết bị di động, tiết lưu mô phỏng mạng Slow 4G và CPU chậm 4 lần; mỗi trang được đo ba lượt và lấy giá trị trung vị để hạn chế nhiễu. Website mới được đo trên bản build production phục vụ tại máy đo, kết nối máy chủ API và toàn bộ dữ liệu di trú thật; website cũ được đo qua Internet tại cùng thời điểm, cùng phiên bản công cụ. Cách bố trí này giữ cho hai phép đo cùng điều kiện tiết lưu; điểm bất đối xứng duy nhất là thời gian phản hồi máy chủ (TTFB) của bản mới không chứa độ trễ mạng thật, hạn chế này được ghi chú tại các bảng liên quan và sẽ được loại bỏ khi đo lại trên bản triển khai có tên miền.
 
@@ -64,7 +64,7 @@ Kịch bản sử dụng ba danh tính: quản trị viên cấp cao, quản tr�
 | P3 | Quản trị viên bộ môn đọc bài viết của bộ môn khác (Vật lý Lý thuyết) | HTTP 404, không tiết lộ tồn tại | Đạt |
 | P4 | Quản trị viên bộ môn mở thư viện phương tiện | Xem được tư liệu của bộ môn trực thuộc + tư liệu dùng chung của khoa; không có nút sửa/xóa trên tư liệu dùng chung | Đạt |
 | P5 | Quản trị viên thường truy cập trang quản lý quản trị viên | Bị chuyển hướng; API trả 403 (khai báo quyền ở mức toàn phân hệ) | Đạt |
-| P6 | 24 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
+| P6 | 9 ca kiểm thử đơn vị trên ba hàm phạm vi bộ môn (mọi tổ hợp vai trò × bộ môn) | Toàn bộ nhánh logic đúng đặc tả Bảng 3.3 | Đạt (trong 40/40, mục 4.2.1) |
 
 ### 4.2.4 Kiểm thử quy trình xuất bản
 
@@ -98,6 +98,18 @@ Tính đúng đắn của di trú được đối chiếu bằng số liệu ngu
 | Chuyển hướng URL cũ | — | 397 quy tắc | kiểm tra mẫu: URL phẳng cũ trả 308 về URL mang tiền tố bộ môn, URL mới trả 200 |
 
 Kiểm tra hiển thị bằng Playwright trên các trang đại diện xác nhận nội dung di trú giữ nguyên định dạng gốc: bảng biểu giữ đường kẻ, tiêu đề màu và danh sách dấu đầu dòng hiển thị đúng, lưới ảnh giảng viên khớp trang cũ, chuyển ngôn ngữ EN đổi đúng nhãn menu và nội dung.
+
+### 4.2.6 Khảo sát người dùng quản trị
+
+Trong buổi sáng ngày 17/07/2026, trợ lý Khoa đã có buổi dùng thử trang quản trị (admin) mới trên bản triển khai thử nghiệm và đưa ra nhận xét dựa trên ba câu hỏi: trang web mới có dễ dùng không; những cải tiến nào mang lại cảm giác thoải mái hơn so với trang cũ; và những điểm nào còn hạn chế cần khắc phục. Nhận xét được tóm tắt như sau:
+
+“Trang web mới khá dễ sử dụng và có nhiều cải tiến tích cực; tuy nhiên trong giai đoạn đầu làm quen, người dùng vẫn có thể cảm thấy hơi bỡ ngỡ do cách bố trí và thao tác có một số điểm khác so với trang web cũ. Đối với quản trị viên, hệ thống có sẵn phần hướng dẫn sử dụng dành cho người mới giúp quá trình làm quen dễ dàng hơn; đặc biệt, chức năng hẹn giờ và lên lịch đăng bài là một cải tiến rất hữu ích trong quá trình quản lý nội dung. Về hạn chế, hệ thống cần tiếp tục cải thiện để việc quản lý nội dung đăng của quản trị viên thuận tiện hơn: hiện tại đôi khi phải tìm qua khá nhiều bố cục khác nhau để chỉnh sửa nội dung, nên bố trí sẵn một số bố cục thường dùng ở vị trí dễ tìm; bên cạnh đó, nếu có thêm thanh tìm kiếm các bài viết đã đăng dành cho quản trị viên thì việc quản lý nội dung sẽ thuận tiện và hiệu quả hơn rất nhiều.”
+
+Các cải tiến được nêu đều là chức năng đã hiện thực trong hệ thống: lớp hướng dẫn tương tác cho người dùng mới (mục 3.6) và cơ chế lên lịch xuất bản nội dung (mục 3.5). Hai đề xuất về việc truy cập nhanh các bố cục thường dùng và bổ sung một thanh tìm kiếm bài viết ngay trong trang quản trị là những góp ý xác đáng, được ghi nhận làm hướng hoàn thiện cho trang quản trị.
+
+【HÌNH 4.1, ảnh buổi dùng thử trang quản trị của trợ lý Khoa ngày 17/07/2026】
+
+*Hình 4.1. Trợ lý Khoa dùng thử trang quản trị mới (17/07/2026)*
 
 ## 4.3 Đánh giá Core Web Vitals
 

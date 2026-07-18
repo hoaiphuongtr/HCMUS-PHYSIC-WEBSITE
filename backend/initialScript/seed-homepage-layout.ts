@@ -71,7 +71,7 @@ const HOMEPAGE_PUCK_DATA = {
       props: {
         id: 'main-navbar',
         logoSrc: PHYS_IMAGES.logo,
-        logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+        logoAlt: 'Khoa Vật lý - Vật lý kỹ thuật',
         menuItems: MENU_ITEMS,
         bgColor: '#ffffff',
         textColor: '#1e293b',
@@ -85,8 +85,8 @@ const HOMEPAGE_PUCK_DATA = {
         slides: [
           {
             src: PHYS_IMAGES.hero.asiin,
-            alt: 'Khoa Vật lý - Vật lý Kỹ thuật',
-            caption: 'Chào mừng đến với Khoa Vật lý - Vật lý Kỹ thuật',
+            alt: 'Khoa Vật lý - Vật lý kỹ thuật',
+            caption: 'Chào mừng đến với Khoa Vật lý - Vật lý kỹ thuật',
             linkUrl: '/gioi-thieu',
           },
           {
@@ -687,7 +687,7 @@ const HOMEPAGE_PUCK_DATA = {
         bgImageUrl: PHYS_IMAGES.hero.asiin,
         title: 'Liên kết',
         description:
-          'Giảng viên Khoa Vật lý - Vật lý Kỹ thuật tham gia hoạt động giảng dạy và nghiên cứu cùng nhiều trường Đại học uy tín và Viện, Trung tâm nghiên cứu trong và ngoài nước.',
+          'Giảng viên Khoa Vật lý - Vật lý kỹ thuật tham gia hoạt động giảng dạy và nghiên cứu cùng nhiều trường Đại học uy tín và Viện, Trung tâm nghiên cứu trong và ngoài nước.',
         logoSize: '80',
       },
     },
@@ -900,7 +900,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       props: {
         id: 'new-navbar',
         logoSrc: PHYS_IMAGES.logo,
-        logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+        logoAlt: 'Khoa Vật lý - Vật lý kỹ thuật',
         menuItems: [
           { label: 'Giới thiệu', url: '#gioi-thieu', children: '' },
           { label: 'Đội ngũ', url: '#doi-ngu', children: '' },
@@ -943,7 +943,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
           {
             src: PHYS_IMAGES.hero.asiin,
             alt: 'Đội ngũ Khoa Vật lý',
-            headline: 'Khoa Vật lý - Vật lý Kỹ thuật',
+            headline: 'Khoa Vật lý - Vật lý kỹ thuật',
             subtitle: 'Đại học Khoa học Tự nhiên - ĐHQG TP.HCM',
             ctaLabel: 'Tìm hiểu thêm',
             ctaUrl: '/gioi-thieu',
@@ -994,11 +994,11 @@ const NEW_HOMEPAGE_PUCK_DATA = {
       props: {
         id: 'about-block',
         imageUrl: PHYS_IMAGES.hero.asiin,
-        imageAlt: 'Khoa Vật lý - Vật lý Kỹ thuật HCMUS',
+        imageAlt: 'Khoa Vật lý - Vật lý kỹ thuật HCMUS',
         imagePosition: 'left',
         fullBleed: true,
-        headline: 'Khoa Vật lý - Vật lý Kỹ thuật',
-        body: 'Là một trong những khoa lâu đời nhất tại Đại học Khoa học Tự nhiên - ĐHQG TP.HCM, Khoa Vật lý - Vật lý Kỹ thuật đào tạo nguồn nhân lực chất lượng cao trong lĩnh vực vật lý và công nghệ, với 5 ngành đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu.',
+        headline: 'Khoa Vật lý - Vật lý kỹ thuật',
+        body: 'Là một trong những khoa lâu đời nhất tại Đại học Khoa học Tự nhiên - ĐHQG TP.HCM, Khoa Vật lý - Vật lý kỹ thuật đào tạo nguồn nhân lực chất lượng cao trong lĩnh vực vật lý và công nghệ, với 5 ngành đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu.',
         stats: [
           { value: '50+', label: 'Năm thành lập' },
           { value: '120+', label: 'Giảng viên & NCS' },
@@ -1592,7 +1592,7 @@ const NEW_HOMEPAGE_PUCK_DATA = {
         title: 'Trợ lý AI',
         subtitle: 'Hỏi đáp về Khoa Vật lý',
         welcomeMessage:
-          'Xin chào! Tôi là trợ lý ảo của Khoa Vật lý - Vật lý Kỹ thuật. Bạn cần hỗ trợ thông tin gì?',
+          'Xin chào! Tôi là trợ lý ảo của Khoa Vật lý - Vật lý kỹ thuật. Bạn cần hỗ trợ thông tin gì?',
         placeholder: 'Nhập câu hỏi của bạn...',
       },
     },
@@ -1639,7 +1639,7 @@ const main = async () => {
       data: {
         name: 'Trang chủ',
         slug: 'trang-chu',
-        description: 'Trang chủ Khoa Vật lý - Vật lý Kỹ thuật (phiên bản cũ)',
+        description: 'Trang chủ Khoa Vật lý - Vật lý kỹ thuật (phiên bản cũ)',
         puckData: HOMEPAGE_PUCK_DATA as any,
         isPublished: false,
         createdBy: admin.id,
@@ -1684,7 +1684,7 @@ const main = async () => {
         props: {
           id: 'sub-navbar',
           logoSrc: PHYS_IMAGES.logo,
-          logoAlt: 'Khoa Vật lý - Vật lý Kỹ thuật',
+          logoAlt: 'Khoa Vật lý - Vật lý kỹ thuật',
           menuItems: [
             { label: 'Trang chủ', url: '/trang-chu-moi', children: '' },
             { label: 'Giới thiệu', url: '#gioi-thieu', children: '' },
@@ -1710,7 +1710,7 @@ const main = async () => {
           imagePosition: 'left',
           fullBleed: true,
           headline: 'Tuyển sinh Đại học 2026',
-          body: 'Khoa Vật lý - Vật lý Kỹ thuật tuyển sinh 7 ngành đào tạo bậc Đại học, trong đó 5 ngành đã đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu. Thông tin chi tiết về chỉ tiêu, phương thức xét tuyển và học bổng.',
+          body: 'Khoa Vật lý - Vật lý kỹ thuật tuyển sinh 7 ngành đào tạo bậc Đại học, trong đó 5 ngành đã đạt kiểm định quốc tế ASIIN theo chuẩn châu Âu. Thông tin chi tiết về chỉ tiêu, phương thức xét tuyển và học bổng.',
           stats: [
             { value: '7', label: 'Ngành đào tạo' },
             { value: '5', label: 'Ngành đạt ASIIN' },
