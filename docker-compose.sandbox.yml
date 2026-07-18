@@ -69,6 +69,11 @@ services:
       - seccomp:unconfined
     env_file:
       - ./backend/.env
+    # config.ts hard-requires a physical ./.env at the WORKDIR — env_file only injects
+    # vars, it doesn't create a file, so mount it too (same as the backend service)
+    # or the seed step exits 1 with "Cannot find env file".
+    volumes:
+      - ./backend/.env:/app/.env:ro
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
