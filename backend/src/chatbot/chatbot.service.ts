@@ -121,6 +121,44 @@ export class ChatbotService {
     }
   }
 
+  /** Re-index one layout page. Call from the page-layout publish flow. */
+  async indexPage(layoutId: string) {
+    await this.removePage(layoutId);
+    const layout = await this.prisma.pageLayout.findUnique({
+      where: { id: layoutId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        isPublished: true,
+        publishedPuckData: true,
+        puckData: true,
+      },
+    });
+    if (!layout || !layout.isPublished) return;
+    const text = flattenBody(layout.publishedPuckData ?? layout.puckData);
+    if (!text) return;
+    for (const c of chunk(text)) {
+      await this.insertChunk({
+        sourceType: 'page',
+        sourceId: layout.id,
+        language: 'VI',
+        slug: layout.slug,
+        title: layout.name,
+        content: c,
+      });
+    }
+  }
+
+  /** Drop a layout's chunks (e.g. on unpublish/delete). */
+  async removePage(layoutId: string) {
+    await this.prisma.$executeRawUnsafe(
+      'DELETE FROM "ChatbotChunk" WHERE "sourceType" = $1 AND "sourceId" = $2',
+      'page',
+      layoutId,
+    );
+  }
+
   /** Full rebuild: published posts + active FAQ + curated ChatbotTraining. */
   async reindexAll() {
     await this.prisma.$executeRawUnsafe('TRUNCATE TABLE "ChatbotChunk"');
