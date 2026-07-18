@@ -155,8 +155,41 @@ export class ChatbotService {
         content: `${t.question}\n${t.answer}${t.context ? '\n' + t.context : ''}`,
       });
     }
+
+    // Published layout pages (Puck content) — this is where standalone pages like
+    // the homepage / "who is the dean" info live; posts alone don't cover them.
+    const layouts = await this.prisma.pageLayout.findMany({
+      where: { isPublished: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        publishedPuckData: true,
+        puckData: true,
+      },
+    });
+    for (const l of layouts) {
+      const text = flattenBody(l.publishedPuckData ?? l.puckData);
+      if (!text) continue;
+      for (const c of chunk(text)) {
+        await this.insertChunk({
+          sourceType: 'page',
+          sourceId: l.id,
+          language: 'VI',
+          slug: l.slug,
+          title: l.name,
+          content: c,
+        });
+      }
+    }
+
     await this.cache.clear();
-    return { posts: posts.length, faqs: faqs.length, training: training.length };
+    return {
+      posts: posts.length,
+      faqs: faqs.length,
+      training: training.length,
+      pages: layouts.length,
+    };
   }
 
   /** Answer a question with RAG. */
@@ -207,7 +240,7 @@ export class ChatbotService {
     const sources = rows
       .filter(
         (r) =>
-          r.sourceType === 'post' &&
+          (r.sourceType === 'post' || r.sourceType === 'page') &&
           r.slug &&
           !seen.has(r.slug) &&
           seen.add(r.slug),

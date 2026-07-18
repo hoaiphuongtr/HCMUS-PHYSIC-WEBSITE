@@ -69,7 +69,7 @@ services:
     # exists post-setup, then seed. Order matters: push -> migration -> seed.
     command: >
       sh -c "npx prisma db push
-      && npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260717_chatbot_vectors/migration.sql
+      && npx prisma db execute --file prisma/migrations/20260717_chatbot_vectors/migration.sql
       && npm run db:seed-all"
     security_opt:
       - seccomp:unconfined
