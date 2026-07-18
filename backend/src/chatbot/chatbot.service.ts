@@ -12,13 +12,25 @@ const pickLang = (v: Localized, lang: 'VI' | 'EN'): string => {
   return (lang === 'EN' ? v.en : v.vi) || v.vi || v.en || '';
 };
 
-// Flatten Puck/rich body JSON into plain text.
+// Puck layout noise pollutes embeddings and confuses the LLM (CSS classes, ids,
+// slugs, URLs, hex colors, size tokens). Keep only human-readable text.
+const isNoise = (s: string): boolean => {
+  const t = s.trim();
+  if (!t) return true;
+  if (/\s/.test(t)) return false; // contains a space → real text, keep
+  if (/^(https?:|\/|#|data:)/i.test(t)) return true; // url / path / hex / data-uri
+  if (/[-_/]/.test(t)) return true; // css class / slug / id like "leaders-sp-new"
+  if (/^[a-z]{1,4}$/.test(t)) return true; // util/size tokens: sm, lg, md, base, full
+  return false;
+};
+
+// Flatten Puck/rich body JSON into plain text, dropping layout noise.
 const flattenBody = (body: unknown): string => {
   const out: string[] = [];
   const walk = (n: any) => {
     if (n == null) return;
     if (typeof n === 'string') {
-      out.push(n);
+      if (!isNoise(n)) out.push(n);
       return;
     }
     if (Array.isArray(n)) {
@@ -255,7 +267,7 @@ export class ChatbotService {
               ("embedding" <=> $1::vector) AS dist
          FROM "ChatbotChunk"
         ORDER BY "embedding" <=> $1::vector
-        LIMIT 6`,
+        LIMIT 8`,
       lit,
     );
 
