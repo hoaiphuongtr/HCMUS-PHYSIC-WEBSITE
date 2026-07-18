@@ -8,7 +8,7 @@
 
 ## 0. Dự án là gì
 
-**hcmus-physic-website** — CMS cho Khoa Vật lý – Vật lý Kỹ thuật, ĐH KHTN (ĐHQG-HCM).
+**hcmus-physic-website** — CMS cho Khoa Vật lý – Vật lý kỹ thuật, ĐH KHTN (ĐHQG-HCM).
 Đây là đề tài khóa luận tốt nghiệp (KLTN) của **Trần Hoài Phương** (SVTH), GVHD **ThS.
 Nguyễn Vương Thùy Ngân** ("Cô"); người liên hệ demo/hội đồng là **thầy Tuấn**.
 

@@ -129,3 +129,21 @@ Phụ lục này tóm tắt quy trình đưa hệ thống lên một máy chủ 
 | Tài khoản khởi tạo | Email, mật khẩu của quản trị viên cấp cao được nạp lần đầu |
 | Liên kết chéo | Danh sách origin được phép (CORS) và mã bí mật cho tín hiệu làm mới giữa máy chủ API với trang công khai |
 | Tích hợp tùy chọn | Dịch vụ gửi email cho OTP, đăng nhập Google, giám sát lỗi (thiếu nhóm này hệ thống vẫn vận hành) |
+
+## PHỤ LỤC D: PHIẾU KHẢO SÁT TRẢI NGHIỆM NGƯỜI DÙNG
+
+Phiếu khảo sát trực tuyến (Google Biểu mẫu) được dùng để thu thập ý kiến người dùng về website mới của Khoa, bổ trợ cho mục 4.2.6. Tại thời điểm hoàn thành khóa luận, phiếu khảo sát vẫn đang trong quá trình thu thập phản hồi; do đó phần này chỉ trình bày nội dung câu hỏi, số liệu tổng hợp sẽ được bổ sung khi thu thập đủ mẫu. Biểu mẫu gồm một câu sàng lọc và bốn phần; địa chỉ truy cập tại https://forms.gle/mpXE8g9fUk9ZWpz57 (mã QR ở Hình D.1). Nội dung câu hỏi như sau.
+
+Câu sàng lọc: người dùng đã từng dùng website cũ phys.hcmus.edu.vn hay chưa; nếu chưa thì dừng khảo sát, nếu đã dùng thì tiếp tục.
+
+Phần 1 – Thông tin người dùng: đối tượng người dùng (học sinh phổ thông, sinh viên, giảng viên và cán bộ, hoặc phụ huynh và khách ngoài) và thiết bị sử dụng chính (máy tính, điện thoại hoặc máy tính bảng).
+
+Phần 2 – Trải nghiệm website mới: người dùng đánh giá theo thang năm mức từ hoàn toàn không đồng ý đến hoàn toàn đồng ý trên chín phát biểu, chia bốn nhóm. Về giao diện: (1) giao diện hiện đại và chuyên nghiệp; (2) màu sắc, phông chữ dễ đọc, không gây mỏi mắt; (3) trang hiển thị đúng và đẹp trên thiết bị đang dùng. Về khả năng sử dụng: (4) dễ tìm thấy thông tin cần; (5) menu điều hướng rõ ràng, không bị lạc khi duyệt; (6) trang tải nhanh, không phải chờ lâu. Về nội dung: (7) nội dung đầy đủ, cập nhật và đáng tin cậy; (8) hỗ trợ tiếng Anh giúp ích khi cần. Về tổng thể: (9) nhìn chung hài lòng với website mới.
+
+Phần 3 – So sánh cũ và mới: người dùng so sánh website mới với website cũ theo thang năm mức (kém hơn nhiều, kém hơn, như nhau, tốt hơn, tốt hơn nhiều) trên bốn tiêu chí: giao diện, tốc độ tải trang, khả năng tìm thông tin và khả năng đọc trên điện thoại; kèm một câu tổng hợp về việc thích dùng website nào hơn (website cũ, không khác biệt, hay website mới).
+
+Phần 4 – Câu hỏi mở: điều người dùng thích nhất ở website mới và điều người dùng mong muốn cải thiện.
+
+【HÌNH D.1, mã QR truy cập phiếu khảo sát trực tuyến (https://forms.gle/mpXE8g9fUk9ZWpz57)】
+
+*Hình D.1. Mã QR truy cập phiếu khảo sát trực tuyến*

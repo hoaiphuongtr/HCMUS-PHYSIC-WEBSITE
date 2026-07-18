@@ -1,6 +1,6 @@
 # CHƯƠNG 5. KẾT LUẬN VÀ KIẾN NGHỊ
 
-Chương 5 khái quát lại những kết quả chính đã đạt được của đề tài, đối chiếu với các mục tiêu đặt ra ở Chương 1 và các số liệu đánh giá ở Chương 4. Trên cơ sở đó, chương đưa ra một số hàm ý quản trị nhằm hỗ trợ Khoa Vật lý – Vật lý Kỹ thuật và bộ phận được giao vận hành hệ thống có căn cứ để đưa website mới vào sử dụng chính thức và duy trì chất lượng lâu dài. Đồng thời, chương cũng trình bày những hạn chế của đề tài và đề xuất định hướng phát triển tiếp theo.
+Chương 5 khái quát lại những kết quả chính đã đạt được của đề tài, đối chiếu với các mục tiêu đặt ra ở Chương 1 và các số liệu đánh giá ở Chương 4. Trên cơ sở đó, chương đưa ra một số hàm ý quản trị nhằm hỗ trợ Khoa Vật lý – Vật lý kỹ thuật và bộ phận được giao vận hành hệ thống có căn cứ để đưa website mới vào sử dụng chính thức và duy trì chất lượng lâu dài. Đồng thời, chương cũng trình bày những hạn chế của đề tài và đề xuất định hướng phát triển tiếp theo.
 
 ## 5.1 Những kết quả chính của nghiên cứu
 

@@ -21,3 +21,10 @@ blob-report/
 .claude/
 CONTEXT.md
 docs/adr/
+
+# DB backup dumps (contain password hashes — never commit)
+backup/
+*.sql.gz
+
+# Accidental Windows-path lighthouse temp dirs
+benchmark/v7/C:*

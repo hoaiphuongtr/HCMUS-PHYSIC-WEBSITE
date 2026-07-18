@@ -111,7 +111,7 @@ export const personSchema = (args: {
 export const educationalOrganizationSchema = (): Schema => ({
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
-  name: "Khoa Vật lý - Vật lý Kỹ thuật, HCMUS",
+  name: "Khoa Vật lý - Vật lý kỹ thuật, HCMUS",
   url: getBaseUrl(),
   logo: `${getBaseUrl()}/Logo_Phys-blue.png`,
 });

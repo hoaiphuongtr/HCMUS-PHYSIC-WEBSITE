@@ -331,7 +331,7 @@ export const HeroFullScreen: ComponentConfig<{
         src: "",
         alt: "Slide 1",
         headline: {
-          vi: "Khoa Vật lý - Vật lý Kỹ thuật",
+          vi: "Khoa Vật lý - Vật lý kỹ thuật",
           en: "Faculty of Physics - Engineering Physics",
         },
         subtitle: {
