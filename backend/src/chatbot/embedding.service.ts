@@ -1,56 +1,44 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 /**
- * Fully self-hosted embeddings — runs in-process on CPU, no API key, no limits.
- * Model: Xenova/multilingual-e5-small (384 dims, ~120MB, ~400MB peak RAM).
- * Strong on Vietnamese + English, matching the site's bilingual content.
+ * Self-hosted embeddings via Ollama — the SAME container that serves the answer
+ * LLM. This deliberately avoids in-process native modules (onnxruntime-node,
+ * sharp) that don't build/load cleanly on this deployment, and offloads the
+ * embedding RAM to the Ollama container instead of the Node process.
  *
- * Install: npm i @xenova/transformers
- * e5 convention: prefix queries with "query: " and documents with "passage: ".
+ * Model: nomic-embed-text (768-dim). Pull it once:
+ *   docker compose ... exec ollama ollama pull nomic-embed-text
+ * nomic convention: prefix documents with "search_document: " and queries with
+ * "search_query: ". The vector dimension (768) must match ChatbotChunk.embedding.
  */
 @Injectable()
-export class EmbeddingService implements OnModuleInit {
+export class EmbeddingService {
   private readonly logger = new Logger(EmbeddingService.name);
-  private extractor: any = null;
-  private loading: Promise<void> | null = null;
+  private readonly baseUrl = process.env.OLLAMA_URL || 'http://ollama:11434';
+  private readonly model = process.env.EMBED_MODEL || 'nomic-embed-text';
 
-  async onModuleInit() {
-    // Warm the model on boot so the first request isn't slow.
-    this.load().catch((e) => this.logger.error('Model preload failed', e));
-  }
-
-  private async load() {
-    if (this.extractor) return;
-    if (!this.loading) {
-      this.loading = (async () => {
-        const { pipeline, env } = await import('@xenova/transformers');
-        // Cache weights on disk so they download only once.
-        env.cacheDir = process.env.HF_CACHE_DIR || './.hf-cache';
-        this.extractor = await pipeline(
-          'feature-extraction',
-          'Xenova/multilingual-e5-small',
-        );
-        this.logger.log('Embedding model loaded (multilingual-e5-small)');
-      })();
-    }
-    await this.loading;
-  }
-
-  private async run(text: string): Promise<number[]> {
-    await this.load();
-    const output = await this.extractor(text.slice(0, 2000), {
-      pooling: 'mean',
-      normalize: true,
+  private async embed(text: string): Promise<number[]> {
+    const res = await fetch(`${this.baseUrl}/api/embeddings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: this.model, prompt: text.slice(0, 2000) }),
     });
-    return Array.from(output.data as Float32Array);
+    if (!res.ok) {
+      const body = await res.text();
+      this.logger.error(`Ollama embeddings failed: ${res.status} ${body}`);
+      throw new Error('Embedding request failed');
+    }
+    const json = (await res.json()) as { embedding?: number[] };
+    if (!json.embedding?.length) throw new Error('Empty embedding from Ollama');
+    return json.embedding;
   }
 
   embedQuery(text: string): Promise<number[]> {
-    return this.run(`query: ${text}`);
+    return this.embed(`search_query: ${text}`);
   }
 
   embedDocument(text: string): Promise<number[]> {
-    return this.run(`passage: ${text}`);
+    return this.embed(`search_document: ${text}`);
   }
 
   /** Serialize a JS number[] into the pgvector text literal: [0.1,0.2,...] */

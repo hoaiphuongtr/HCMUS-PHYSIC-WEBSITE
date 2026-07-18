@@ -8,12 +8,15 @@ type LegacyLocalized = Record<LangId, string | null | undefined>;
 
 const SUPER_ADMIN_EMAIL = 'phuong@boompay.app';
 
+// Defaults match the local dev flow (README: temp MariaDB on host port 3309).
+// Override via env when running elsewhere — e.g. on the server, point at the
+// temp MariaDB container by name: LEGACY_HOST=legacy-mariadb LEGACY_PORT=3306.
 const LEGACY = {
-  host: 'localhost',
-  port: 3309,
-  user: 'root',
-  password: 'root',
-  database: 'legacy',
+  host: process.env.LEGACY_HOST || 'localhost',
+  port: Number(process.env.LEGACY_PORT) || 3309,
+  user: process.env.LEGACY_USER || 'root',
+  password: process.env.LEGACY_PASSWORD || 'root',
+  database: process.env.LEGACY_DATABASE || 'legacy',
 };
 
 const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });

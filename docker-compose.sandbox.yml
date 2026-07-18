@@ -64,7 +64,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "npx prisma db push && npm run db:seed-all"
+    # After `prisma db push` (which drops the raw ChatbotChunk table because it's
+    # not a Prisma model), re-apply the chatbot migration so the table always
+    # exists post-setup, then seed. Order matters: push -> migration -> seed.
+    command: >
+      sh -c "npx prisma db push
+      && npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260717_chatbot_vectors/migration.sql
+      && npm run db:seed-all"
     security_opt:
       - seccomp:unconfined
     env_file:
@@ -100,14 +106,12 @@ services:
       # media store must live OUTSIDE the container: containers are recreated on every
       # redeploy and anything copied in with `docker cp` is silently lost with them.
       - ./backend/uploads:/app/uploads
-      # persist the downloaded embedding model (~120MB) across container recreations
-      - hf_cache:/app/.hf-cache
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: qwen2.5:0.5b-instruct
-      HF_CACHE_DIR: /app/.hf-cache
+      EMBED_MODEL: nomic-embed-text
     depends_on:
       db:
         condition: service_healthy
@@ -160,4 +164,3 @@ volumes:
   pgdata:
   redisdata:
   ollama_models:
-  hf_cache:

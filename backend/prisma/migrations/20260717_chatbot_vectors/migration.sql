@@ -3,7 +3,8 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Chunked, embedded content the chatbot searches over.
--- 384 dims = multilingual-e5-small.
+-- 768 dims = nomic-embed-text (served by Ollama). If you change EMBED_MODEL to a
+-- model with a different dimension, update vector(768) here to match and rebuild.
 CREATE TABLE IF NOT EXISTS "ChatbotChunk" (
   "id"         TEXT PRIMARY KEY,
   "sourceType" TEXT NOT NULL,            -- 'post' | 'faq' | 'training'
@@ -12,7 +13,7 @@ CREATE TABLE IF NOT EXISTS "ChatbotChunk" (
   "title"      TEXT,
   "slug"       TEXT,                      -- used to build the source link
   "content"    TEXT NOT NULL,
-  "embedding"  vector(384) NOT NULL,
+  "embedding"  vector(768) NOT NULL,
   "createdAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

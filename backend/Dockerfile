@@ -1,9 +1,17 @@
-FROM node:20-alpine AS base
+# glibc (Debian) base — required by onnxruntime-node (the @xenova/transformers
+# embedding backend), whose native .so is built against glibc and cannot load on
+# Alpine/musl (ERR_DLOPEN_FAILED: ld-linux-x86-64.so.2 missing).
+FROM node:20-slim AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
 
 FROM base AS deps
 COPY package.json ./
+# build toolchain in case any native dep must compile from source (most ship
+# glibc prebuilds, so this is a safety net); cleaned up in the same layer.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 RUN pnpm install --prod=false --no-frozen-lockfile
 
 FROM base AS builder
