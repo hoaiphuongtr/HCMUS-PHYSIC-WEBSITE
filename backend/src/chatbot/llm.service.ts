@@ -12,7 +12,10 @@ import { Injectable, Logger } from '@nestjs/common';
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
   private readonly apiKey = process.env.GEMINI_API_KEY || '';
-  private readonly model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+  // Full Flash (not flash-lite): better at synthesising a complete answer from
+  // several retrieved chunks — fewer "listed 4 of 8" truncations. The `-latest`
+  // alias avoids the "model not available to new projects" pinning issues.
+  private readonly model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
   async answer(params: {
     question: string;

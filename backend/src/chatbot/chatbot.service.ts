@@ -43,13 +43,102 @@ const flattenBody = (body: unknown): string => {
   return out.join(' ').replace(/\s+/g, ' ').trim();
 };
 
-const chunk = (text: string, size = 900, overlap = 150): string[] => {
-  const clean = text.replace(/\s+/g, ' ').trim();
-  if (clean.length <= size) return clean ? [clean] : [];
+// Legacy CKEditor bodies encode the Latin-1 accented letters as named entities
+// (nh&agrave; = nhà, kh&ocirc;ng = không, &yacute; = ý) and leave the rest of the
+// Vietnamese letters as literal UTF-8. Beyond-Latin-1 chars (ả, ộ, đ…) show up as
+// numeric entities. Decoding both — plus a curated named map — is what keeps the
+// text readable instead of drowning the embedding in "&acirc;" noise.
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  ndash: '–', mdash: '—', hellip: '…', middot: '·', bull: '•',
+  lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', laquo: '«', raquo: '»',
+  copy: '©', reg: '®', trade: '™', deg: '°', euro: '€', pound: '£',
+  sect: '§', para: '¶', times: '×', divide: '÷',
+  Agrave: 'À', Aacute: 'Á', Acirc: 'Â', Atilde: 'Ã', Auml: 'Ä', Aring: 'Å',
+  AElig: 'Æ', Ccedil: 'Ç', Egrave: 'È', Eacute: 'É', Ecirc: 'Ê', Euml: 'Ë',
+  Igrave: 'Ì', Iacute: 'Í', Icirc: 'Î', Iuml: 'Ï', ETH: 'Ð', Ntilde: 'Ñ',
+  Ograve: 'Ò', Oacute: 'Ó', Ocirc: 'Ô', Otilde: 'Õ', Ouml: 'Ö', Oslash: 'Ø',
+  Ugrave: 'Ù', Uacute: 'Ú', Ucirc: 'Û', Uuml: 'Ü', Yacute: 'Ý', szlig: 'ß',
+  agrave: 'à', aacute: 'á', acirc: 'â', atilde: 'ã', auml: 'ä', aring: 'å',
+  aelig: 'æ', ccedil: 'ç', egrave: 'è', eacute: 'é', ecirc: 'ê', euml: 'ë',
+  igrave: 'ì', iacute: 'í', icirc: 'î', iuml: 'ï', eth: 'ð', ntilde: 'ñ',
+  ograve: 'ò', oacute: 'ó', ocirc: 'ô', otilde: 'õ', ouml: 'ö', oslash: 'ø',
+  ugrave: 'ù', uacute: 'ú', ucirc: 'û', uuml: 'ü', yacute: 'ý', yuml: 'ÿ',
+  thorn: 'þ', THORN: 'Þ',
+};
+
+const decodeEntities = (s: string): string =>
+  s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => {
+      try {
+        return String.fromCodePoint(parseInt(h, 16));
+      } catch {
+        return ' ';
+      }
+    })
+    .replace(/&#(\d+);/g, (_, d) => {
+      try {
+        return String.fromCodePoint(parseInt(d, 10));
+      } catch {
+        return ' ';
+      }
+    })
+    .replace(/&([a-zA-Z][a-zA-Z0-9]{1,8});/g, (m, name) =>
+      Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, name)
+        ? NAMED_ENTITIES[name]
+        : m,
+    );
+
+// Strip HTML markup and decode entities to get clean, human-readable text.
+const htmlToText = (s: string): string => {
+  if (!s || !/[<&]/.test(s)) return s; // plain text already — cheap no-op
+  const stripped = s
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr|h[1-6])\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ');
+  return decodeEntities(stripped)
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .trim();
+};
+
+// Chunk on sentence boundaries so a fact (a name + its title, a full list) is
+// never cut across two chunks — the fixed-width slicer used to split
+// "PGS.TS. Huỳnh Văn Tuấn" from "– Trưởng khoa", breaking retrieval. One
+// oversized sentence still falls back to a hard split.
+const chunk = (text: string, size = 900, overlapSentences = 1): string[] => {
+  const clean = text.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim();
+  if (!clean) return [];
+  if (clean.length <= size) return [clean];
+  const sents = (
+    clean.match(/[^.!?…\n]+[.!?…]+(?:\s|$)|[^.!?…\n]+(?:\n|$)/g) ?? [clean]
+  )
+    .map((s) => s.trim())
+    .filter(Boolean);
   const chunks: string[] = [];
-  for (let i = 0; i < clean.length; i += size - overlap) {
-    chunks.push(clean.slice(i, i + size));
+  let cur: string[] = [];
+  let curLen = 0;
+  const flush = () => {
+    if (cur.length) chunks.push(cur.join(' '));
+  };
+  for (const s of sents) {
+    if (s.length > size) {
+      flush();
+      cur = [];
+      curLen = 0;
+      for (let i = 0; i < s.length; i += size) chunks.push(s.slice(i, i + size));
+      continue;
+    }
+    if (curLen + s.length + 1 > size && cur.length) {
+      flush();
+      cur = cur.slice(-overlapSentences); // carry a sentence for continuity
+      curLen = cur.join(' ').length;
+    }
+    cur.push(s);
+    curLen += s.length + 1;
   }
+  flush();
   return chunks;
 };
 
@@ -112,12 +201,13 @@ export class ChatbotService {
     const slug = post.layouts[0]?.slug ?? post.slug;
 
     for (const lang of ['VI', 'EN'] as const) {
-      const title = pickLang(post.title as Localized, lang);
-      const excerpt = pickLang(post.excerpt as Localized, lang);
-      const bodyText =
+      const title = htmlToText(pickLang(post.title as Localized, lang));
+      const excerpt = htmlToText(pickLang(post.excerpt as Localized, lang));
+      const bodyText = htmlToText(
         post.aiSummary ||
-        pickLang(post.body as Localized, lang) ||
-        flattenBody(post.body);
+          pickLang(post.body as Localized, lang) ||
+          flattenBody(post.body),
+      );
       const full = [excerpt, bodyText].filter(Boolean).join('\n');
       if (!title && !full) continue;
       for (const c of chunk(full || title)) {
@@ -148,7 +238,9 @@ export class ChatbotService {
       },
     });
     if (!layout || !layout.isPublished) return;
-    const text = flattenBody(layout.publishedPuckData ?? layout.puckData);
+    const text = htmlToText(
+      flattenBody(layout.publishedPuckData ?? layout.puckData),
+    );
     if (!text) return;
     for (const c of chunk(text)) {
       await this.insertChunk({
@@ -273,7 +365,7 @@ export class ChatbotService {
       },
     });
     for (const l of layouts) {
-      const text = flattenBody(l.publishedPuckData ?? l.puckData);
+      const text = htmlToText(flattenBody(l.publishedPuckData ?? l.puckData));
       if (!text) continue;
       for (const c of chunk(text)) {
         await this.insertChunk({
