@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import { AskBodyDTO } from './chatbot.dto';
+import { AskBodyDTO, TrainBodyDTO } from './chatbot.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
 import { RoleName } from '../shared/constants/role.constants';
@@ -20,5 +20,13 @@ export class ChatbotController {
   @Roles(RoleName.SuperAdmin)
   reindex() {
     return this.service.reindexAll();
+  }
+
+  // Admin-only: add curated Q&A (dean, contact, admissions…) and index them
+  // incrementally — no full reindex needed.
+  @Post('train')
+  @Roles(RoleName.SuperAdmin)
+  train(@Body() body: TrainBodyDTO) {
+    return this.service.train(body.items);
   }
 }

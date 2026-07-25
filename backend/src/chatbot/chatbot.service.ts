@@ -171,6 +171,60 @@ export class ChatbotService {
     );
   }
 
+  /** Re-index one curated Q&A (training) entry incrementally. */
+  async indexTraining(id: string) {
+    await this.prisma.$executeRawUnsafe(
+      'DELETE FROM "ChatbotChunk" WHERE "sourceType" = $1 AND "sourceId" = $2',
+      'training',
+      id,
+    );
+    const t = await this.prisma.chatbotTraining.findUnique({ where: { id } });
+    if (!t || !t.isActive) return;
+    await this.insertChunk({
+      sourceType: 'training',
+      sourceId: t.id,
+      language: t.language as 'VI' | 'EN',
+      slug: null,
+      title: t.question,
+      content: `${t.question}\n${t.answer}${t.context ? '\n' + t.context : ''}`,
+    });
+  }
+
+  /**
+   * Add curated Q&A the faculty wants answered authoritatively (dean, contact,
+   * admissions…). Persists to ChatbotTraining so it survives a future full
+   * reindex, and indexes just these few entries — no 31k-chunk rebuild. These
+   * curated answers are what make the bot reliably better than generic ChatGPT.
+   */
+  async train(
+    items: {
+      question: string;
+      answer: string;
+      language: 'VI' | 'EN';
+      context?: string;
+    }[],
+  ) {
+    const admin = await this.prisma.user.findFirst({ select: { id: true } });
+    if (!admin) throw new Error('No user to attribute curated Q&A to');
+
+    let indexed = 0;
+    for (const it of items) {
+      const row = await this.prisma.chatbotTraining.create({
+        data: {
+          question: it.question,
+          answer: it.answer,
+          context: it.context ?? null,
+          language: it.language,
+          createdBy: admin.id,
+        },
+      });
+      await this.indexTraining(row.id);
+      indexed++;
+    }
+    await this.cache.clear();
+    return { indexed };
+  }
+
   /** Full rebuild: published posts + active FAQ + curated ChatbotTraining. */
   async reindexAll() {
     await this.prisma.$executeRawUnsafe('TRUNCATE TABLE "ChatbotChunk"');
@@ -291,15 +345,20 @@ export class ChatbotService {
       .join('\n\n');
     const answer = await this.llm.answer({ question: q, context, language });
 
+    // Only surface the few closest, on-topic sources (below the grounding
+    // threshold) — dumping all 12 retrieved rows makes the widget look noisy and
+    // lists posts that were only tangentially related.
     const seen = new Set<string>();
     const sources = rows
       .filter(
         (r) =>
           (r.sourceType === 'post' || r.sourceType === 'page') &&
+          r.dist <= maxDist &&
           r.slug &&
           !seen.has(r.slug) &&
           seen.add(r.slug),
       )
+      .slice(0, 3)
       .map((r) => ({ title: r.title, slug: r.slug }));
 
     const result = { answer, sources };

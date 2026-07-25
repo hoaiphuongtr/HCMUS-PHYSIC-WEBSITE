@@ -395,6 +395,7 @@ export default function ChatWidget() {
                             key={j}
                             className="cw-src"
                             href={`/${s.slug}`}
+                            title={s.title ?? s.slug ?? ""}
                             style={{
                               fontSize: 12,
                               color: BRAND,
@@ -407,13 +408,22 @@ export default function ChatWidget() {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: 4,
+                              maxWidth: "100%",
                             }}
                           >
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flex: "0 0 auto" }}>
                               <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
                               <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
                             </svg>
-                            {s.title ?? s.slug}
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {s.title ?? s.slug}
+                            </span>
                           </a>
                         ))}
                       </div>
