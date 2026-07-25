@@ -267,7 +267,7 @@ export class ChatbotService {
               ("embedding" <=> $1::vector) AS dist
          FROM "ChatbotChunk"
         ORDER BY "embedding" <=> $1::vector
-        LIMIT 8`,
+        LIMIT 12`,
       lit,
     );
 
