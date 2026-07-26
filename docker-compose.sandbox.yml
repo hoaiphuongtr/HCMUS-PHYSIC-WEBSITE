@@ -57,6 +57,11 @@ services:
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
+    environment:
+      # keep both the embed + answer models warm in RAM so each question doesn't
+      # pay the ~10-15s model-reload penalty (2 small models fit in the free ~1.7G).
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_MAX_LOADED_MODELS: "2"
     volumes:
       - ollama_models:/root/.ollama
 
@@ -109,9 +114,9 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
-      OLLAMA_URL: http://ollama:11434
-      OLLAMA_MODEL: qwen2.5:0.5b-instruct
-      EMBED_MODEL: nomic-embed-text
+      # Both LLM answers and embeddings now go through Gemini (GEMINI_API_KEY /
+      # GEMINI_MODEL live in backend/.env). Ollama is no longer used.
+      EMBED_MODEL: gemini-embedding-001
     depends_on:
       db:
         condition: service_healthy

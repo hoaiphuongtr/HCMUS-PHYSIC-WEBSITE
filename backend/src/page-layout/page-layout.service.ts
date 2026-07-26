@@ -30,6 +30,7 @@ import {
 import type { RollbackPageLayoutVersionBodyType } from './page-layout.model';
 import { WidgetNotFoundException } from '../widget/widget.error';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
+import { ChatbotService } from '../chatbot/chatbot.service';
 
 @Injectable()
 export class PageLayoutService {
@@ -41,6 +42,7 @@ export class PageLayoutService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private readonly publicRevalidate: PublicRevalidateService,
     private readonly notification: NotificationService,
+    private readonly chatbot: ChatbotService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDueLayouts' })
@@ -68,6 +70,7 @@ export class PageLayoutService {
           layout.id,
           layout.createdBy,
         );
+        await this.chatbot.indexPage(layout.id).catch(() => undefined);
         publishedSlugs.push(layout.slug);
         await this.notification.notifyPublished({
           departmentId: layout.departmentId,
@@ -237,6 +240,7 @@ export class PageLayoutService {
     const result = await this.pageLayoutRepository.publish(id);
     await this.pageLayoutRepository.snapshotPublishedVersion(id, userId);
     await this.cache.clear();
+    await this.chatbot.indexPage(id).catch(() => undefined);
     this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     // In-app notification to super-admins + this layout's department admins.
     await this.notification.notifyPublished({
@@ -282,6 +286,7 @@ export class PageLayoutService {
     const result = await this.pageLayoutRepository.unpublish(id);
     await this.pageLayoutRepository.archiveCurrentVersions(id);
     await this.cache.clear();
+    await this.chatbot.removePage(id).catch(() => undefined);
     this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
     return result;
   }

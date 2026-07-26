@@ -1,18 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 /**
- * Fully self-hosted answer generation via Ollama (CPU).
- * Default model: qwen2.5:1.5b-instruct (~1.2GB). Drop to qwen2.5:0.5b-instruct
- * if you see memory pressure. No API key, no limits, private.
+ * Answer generation via Google Gemini (2.5 Flash-Lite), grounded STRICTLY on the
+ * retrieved site content passed in as CONTEXT. No local model — fast + accurate,
+ * and (unlike a tiny local model) it actually obeys the "answer only from context"
+ * instruction, so it won't invent facts that aren't on the faculty website.
  *
- * Runs as a sibling container — see docker-compose.additions.yml.
- * CPU inference is slow (~10-40s per answer); fine for a low-traffic site.
+ * Requires GEMINI_API_KEY (free key from https://aistudio.google.com/apikey).
  */
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
-  private readonly baseUrl = process.env.OLLAMA_URL || 'http://ollama:11434';
-  private readonly model = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b-instruct';
+  private readonly apiKey = process.env.GEMINI_API_KEY || '';
+  // Full Flash (not flash-lite): better at synthesising a complete answer from
+  // several retrieved chunks — fewer "listed 4 of 8" truncations. The `-latest`
+  // alias avoids the "model not available to new projects" pinning issues.
+  private readonly model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
   async answer(params: {
     question: string;
@@ -20,36 +23,70 @@ export class LlmService {
     language: 'VI' | 'EN';
   }): Promise<string> {
     const { question, context, language } = params;
+    if (!this.apiKey) {
+      this.logger.error('GEMINI_API_KEY is not set');
+      throw new Error('LLM not configured');
+    }
     const lang = language === 'EN' ? 'English' : 'Vietnamese';
     const system =
-      'You are the assistant for the Faculty of Physics - Engineering Physics ' +
-      'website (HCMUS). Answer ONLY from the CONTEXT below. If the answer is not ' +
-      "in the context, say you don't have that information and suggest contacting " +
-      `the faculty. Reply in ${lang}. Be concise. Cite sources by their title ` +
-      'when relevant.';
+      'You are "Trợ lý Khoa" — the official virtual assistant of the Faculty of ' +
+      'Physics - Engineering Physics, VNUHCM University of Science (HCMUS). You ' +
+      'help students, prospective students, parents and visitors with ' +
+      'faculty-specific information taken from the faculty website.\n' +
+      '\n' +
+      'PERSONALITY & STYLE:\n' +
+      '- Warm, friendly and natural, like a helpful faculty staff member — NOT a ' +
+      'generic AI. In Vietnamese, refer to yourself as "mình" and the user as ' +
+      '"bạn"; keep an approachable, respectful tone. Never say "As an AI" or ' +
+      'similar robotic phrasing.\n' +
+      '- Answer directly and briefly. No long preambles, no restating the ' +
+      'question, no filler. Prefer short paragraphs or bullet points.\n' +
+      '- When the answer is in the CONTEXT, answer confidently. When useful, point ' +
+      'the user to the relevant page or the faculty office for more.\n' +
+      '\n' +
+      'GROUNDING (strict — this is what makes you more reliable than ChatGPT):\n' +
+      '1. Use ONLY the CONTEXT below (real content from the faculty website). ' +
+      'Never use outside or general knowledge.\n' +
+      '2. NEVER state a name, title, number, date, or contact unless it appears ' +
+      'VERBATIM in the CONTEXT. Do not guess or paraphrase a person’s name. If the ' +
+      'specific answer is not in the CONTEXT, briefly say you don’t have it yet ' +
+      'and suggest contacting the faculty office or checking the website — do NOT ' +
+      'invent anything.\n' +
+      '3. Only answer questions about this Faculty. For anything unrelated, ' +
+      'politely say it’s outside your scope and offer to help with faculty topics ' +
+      'instead.\n' +
+      `4. Reply in ${lang}.`;
 
-    const res = await fetch(`${this.baseUrl}/api/chat`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': this.apiKey,
+      },
       body: JSON.stringify({
-        model: this.model,
-        stream: false,
-        options: { temperature: 0.2, num_ctx: 4096 },
-        messages: [
-          { role: 'system', content: system },
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [
           {
             role: 'user',
-            content: `CONTEXT:\n${context}\n\nQUESTION: ${question}`,
+            parts: [{ text: `CONTEXT:\n${context}\n\nQUESTION: ${question}` }],
           },
         ],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
       }),
     });
     if (!res.ok) {
       const body = await res.text();
-      this.logger.error(`Ollama failed: ${res.status} ${body}`);
+      this.logger.error(`Gemini failed: ${res.status} ${body}`);
       throw new Error('LLM request failed');
     }
-    const json = (await res.json()) as { message?: { content: string } };
-    return json.message?.content?.trim() ?? '';
+    const json = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = json.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text ?? '')
+      .join('')
+      .trim();
+    return text ?? '';
   }
 }
