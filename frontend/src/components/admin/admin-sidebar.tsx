@@ -6,21 +6,24 @@ import {
   FolderOpen,
   LayoutDashboard,
   LayoutPanelLeft,
+  HelpCircle,
   LogOut,
   type LucideIcon,
-  Mail,
   Moon,
   Puzzle,
   Settings,
   Sun,
   Users,
+  Tags,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAdminTheme } from "@/components/admin/admin-theme";
+import { AdminNotificationBell } from "@/components/admin/notification-bell-admin";
 import { authApi, resolveMediaUrl } from "@/lib/api";
+import { isFacultyWide } from "@/lib/department";
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
 
@@ -34,7 +37,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: LayoutPanelLeft,
   },
   { name: "Widget Types", href: "/admin/widgets", icon: Puzzle },
-  { name: "Subscribers", href: "/admin/subscriptions", icon: Mail },
 ];
 
 const SYSTEM_ITEMS: NavItem[] = [
@@ -42,6 +44,7 @@ const SYSTEM_ITEMS: NavItem[] = [
 ];
 
 const SUPER_ADMIN_ITEMS: NavItem[] = [
+  { name: "Category & Tag", href: "/admin/taxonomy", icon: Tags },
   { name: "Admin Management", href: "/admin/admins", icon: Users },
 ];
 
@@ -178,7 +181,7 @@ export function AdminSidebar() {
               </span>
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
               {displayName}
             </p>
@@ -186,6 +189,7 @@ export function AdminSidebar() {
               {roleLabel}
             </p>
           </div>
+          <AdminNotificationBell />
         </div>
       )}
 
@@ -230,13 +234,27 @@ export function AdminSidebar() {
           (collapsed ? "px-2" : "px-3")
         }
       >
-        {profile?.role === "SUPER_ADMIN" &&
+        {isFacultyWide(profile?.role, profile?.departmentId) &&
           SUPER_ADMIN_ITEMS.map((item) =>
             renderNavItem(item, isPathActive(pathname, item.href)),
           )}
         {SYSTEM_ITEMS.map((item) =>
           renderNavItem(item, isPathActive(pathname, item.href)),
         )}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("open-help"))}
+          title={collapsed ? "Help" : undefined}
+          data-tour="help-button"
+          className={
+            "flex items-center gap-3 rounded-lg text-[13px] font-medium text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors w-full " +
+            (collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2")
+          }
+        >
+          <HelpCircle className="w-5 h-5" />
+          {!collapsed && "Help"}
+        </button>
+
         <button
           type="button"
           onClick={handleLogout}

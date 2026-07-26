@@ -27,6 +27,7 @@ export function WidgetFormModal({
   const [type, setType] = useState(widget?.type || "");
   const [name, setName] = useState(widget?.name || "");
   const [description, setDescription] = useState(widget?.description || "");
+  const [usage, setUsage] = useState(widget?.usage || "");
   const [category, setCategory] = useState(widget?.category || "CONTENT");
   const [icon, setIcon] = useState(widget?.icon || "widgets");
   const [configSchema, setConfigSchema] = useState<Record<string, any>>(
@@ -108,6 +109,7 @@ export function WidgetFormModal({
       type,
       name,
       description: description || undefined,
+      usage: usage || undefined,
       category,
       icon,
       configSchema,
@@ -187,6 +189,22 @@ export function WidgetFormModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What does this widget do?"
               rows={2}
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+              Cách dùng / Usage
+              <span className="ml-1 font-normal text-slate-400">
+                (hiện trong Help → tab Widgets)
+              </span>
+            </label>
+            <textarea
+              value={usage}
+              onChange={(e) => setUsage(e.target.value)}
+              placeholder="Hướng dẫn ngắn cho biên tập viên: khi nào dùng, các field chính…"
+              rows={3}
               className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 resize-none"
             />
           </div>

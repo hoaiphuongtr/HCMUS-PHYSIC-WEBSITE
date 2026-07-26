@@ -13,6 +13,7 @@ import {
   setSubscriberEmail,
 } from "@/lib/visitor";
 import { colorField } from "../fields/color-field";
+import { localizedSummary } from "../fields/item-summary";
 import {
   localizedTextareaField,
   localizedTextField,
@@ -450,6 +451,8 @@ export const SearchOverlay: ComponentConfig<{
     suggestedLinks: {
       type: "array",
       label: "Suggested Links",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, item.url || `Link ${(i ?? 0) + 1}`),
       arrayFields: {
         label: localizedTextField("Label"),
         url: { type: "text", label: "URL" },
@@ -458,6 +461,8 @@ export const SearchOverlay: ComponentConfig<{
     hotLinks: {
       type: "array",
       label: "Hot Links",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, item.url || `Link ${(i ?? 0) + 1}`),
       arrayFields: {
         label: localizedTextField("Label"),
         url: { type: "text", label: "URL" },
@@ -761,6 +766,8 @@ export const PersonaSelector: ComponentConfig<{
     personas: {
       type: "array",
       label: "Personas",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, `Persona ${(i ?? 0) + 1}`),
       arrayFields: {
         label: localizedTextField("Label"),
         icon: { type: "text", label: "Material Icon" },
@@ -1030,6 +1037,8 @@ export const SubscribeBanner: ComponentConfig<{
     tagOptions: {
       type: "array",
       label: "Tag Options",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, item.value || `Tag ${(i ?? 0) + 1}`),
       arrayFields: {
         label: localizedTextField("Label"),
         value: { type: "text", label: "Value (tag slug)" },

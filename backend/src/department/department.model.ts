@@ -19,6 +19,13 @@ export type UpdateDepartmentBodyType = z.infer<
   typeof UpdateDepartmentBodySchema
 >;
 
+export const MergeDepartmentBodySchema = z.object({
+  targetId: z.string().min(1),
+});
+export type MergeDepartmentBodyType = z.infer<
+  typeof MergeDepartmentBodySchema
+>;
+
 export const DepartmentResSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -2,7 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "react-toastify";
 import {
   ChevronDownIcon,
@@ -26,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { type PageLayout, pageLayoutApi } from "@/lib/api";
+import { type PageLayout, pageLayoutApi, authApi } from "@/lib/api";
 import { CreateLayoutModal } from "./create-layout-modal";
 import { EditLayoutModal } from "./edit-layout-modal";
 import { PortalMenu } from "./portal-menu";
@@ -68,6 +76,7 @@ export function WidgetsLayoutView() {
   const [editTargetId, setEditTargetId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [layoutMenuId, setLayoutMenuId] = useState<string | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: layouts = [] } = useQuery({
@@ -146,6 +155,31 @@ export function WidgetsLayoutView() {
       toast.error(err.message || "Không nhân bản được layout");
     },
   });
+
+  // Soft-deleted layouts (private/dept-scoped by the BE) for the trash modal.
+  const trashedQuery = useQuery({
+    queryKey: ["PAGE_LAYOUTS", "TRASH"],
+    queryFn: () => pageLayoutApi.list(true),
+    enabled: showTrash,
+  });
+  const restoreLayoutMutation = useMutation({
+    mutationKey: ["PAGE_LAYOUTS", "RESTORE"],
+    mutationFn: (layoutId: string) => pageLayoutApi.restore(layoutId),
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+      toast.success("Đã khôi phục layout");
+    },
+    onError(err: { message?: string }) {
+      toast.error(err.message || "Không khôi phục được layout");
+    },
+  });
+  const trashDaysLeft = (deletedAt?: string | null) =>
+    deletedAt
+      ? Math.max(
+          0,
+          30 - Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86400000),
+        )
+      : null;
 
   const handleSavePuckData = async (puckData: any) => {
     if (!selectedLayoutId) return;
@@ -242,15 +276,28 @@ export function WidgetsLayoutView() {
             </button>
           </PortalMenu>
         )}
-        <button
-          type="button"
-          onClick={() => setShowCreateModal(true)}
-          data-tour="new-layout"
-          className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 transition-colors flex items-center gap-1.5 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-300"
-        >
-          <PlusIcon className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium">New</span>
-        </button>
+        {/* New + Thùng rác gom chung một nhóm để đứng cạnh nhau bên phải, thay vì
+            bị justify-between của thanh công cụ đẩy tách xa ra. */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            data-tour="new-layout"
+            className="shrink-0 px-3 py-1.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 transition-colors flex items-center gap-1.5 text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-300"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium">New</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTrash(true)}
+            title="Thùng rác — khôi phục layout đã xoá (trong 30 ngày)"
+            className="shrink-0 px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#202c44] transition-colors flex items-center gap-1.5 text-slate-500 dark:text-slate-300"
+          >
+            <TrashIcon className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-medium">Thùng rác</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
@@ -306,9 +353,9 @@ export function WidgetsLayoutView() {
             <AlertDialogTitle>Delete Layout</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete{" "}
-              <strong>{deleteTargetLayout?.name}</strong>? All widget
-              configurations in this layout will be permanently removed. This
-              action cannot be undone.
+              <strong>{deleteTargetLayout?.name}</strong>? It will be moved to
+              the trash and can be restored within 30 days, after which it is
+              permanently removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -329,6 +376,68 @@ export function WidgetsLayoutView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showTrash && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setShowTrash(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-xl bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-700 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 inline-flex items-center gap-2">
+                <TrashIcon className="w-4 h-4" /> Thùng rác — layout đã xoá
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTrash(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-2">
+              {trashedQuery.isLoading ? (
+                <p className="px-3 py-6 text-center text-xs text-slate-400">
+                  Đang tải…
+                </p>
+              ) : (trashedQuery.data ?? []).length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-slate-400">
+                  Thùng rác trống.
+                </p>
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {(trashedQuery.data ?? []).map((l) => (
+                    <li
+                      key={l.id}
+                      className="flex items-center gap-3 px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                          {l.name}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-mono truncate">
+                          /{l.slug} · còn {trashDaysLeft(l.deletedAt)} ngày
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => restoreLayoutMutation.mutate(l.id)}
+                        disabled={restoreLayoutMutation.isPending}
+                        className="shrink-0 px-2 py-1 text-xs text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-50 disabled:opacity-50"
+                      >
+                        Khôi phục
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -378,7 +487,40 @@ function LayoutPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState<LayoutStatus>("published");
+  const [showAll, setShowAll] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Per-user starred layouts (persisted to UserPreference). Favourites float to
+  // the top and the dropdown shows them first, with the rest behind "Show all".
+  const pickerQueryClient = useQueryClient();
+  const { data: profile } = useQuery({
+    queryKey: ["PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+  const starredIds = useMemo(
+    () => new Set(profile?.starredLayoutIds ?? []),
+    [profile],
+  );
+  const starMutation = useMutation({
+    mutationFn: (nextIds: string[]) => authApi.setStarred({ layoutIds: nextIds }),
+    onMutate: async (nextIds: string[]) => {
+      await pickerQueryClient.cancelQueries({ queryKey: ["PROFILE"] });
+      const prev = pickerQueryClient.getQueryData(["PROFILE"]);
+      pickerQueryClient.setQueryData(["PROFILE"], (old: unknown) =>
+        old ? { ...(old as object), starredLayoutIds: nextIds } : old,
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) pickerQueryClient.setQueryData(["PROFILE"], ctx.prev);
+    },
+  });
+  const toggleStar = (id: string) => {
+    const next = starredIds.has(id)
+      ? [...starredIds].filter((x) => x !== id)
+      : [...starredIds, id];
+    starMutation.mutate(next);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -408,19 +550,38 @@ function LayoutPicker({
   };
   for (const l of layouts) counts[computeStatus(l)]++;
 
-  const filtered = layouts
-    .filter((l) => computeStatus(l) === groupFilter)
-    .filter((l) => {
-      if (!search.trim()) return true;
-      const q = search.trim().toLowerCase();
-      return (
-        l.name.toLowerCase().includes(q) || l.slug.toLowerCase().includes(q)
-      );
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    );
+  // Vietnamese IME fires many intermediate onChange events; defer the value
+  // used for filtering so typing stays responsive while React re-filters the
+  // (potentially 1000+) layouts off the critical path.
+  const deferredSearch = useDeferredValue(search);
+  const MAX_RESULTS = 60;
+  const hasSearch = deferredSearch.trim().length > 0;
+  const allFiltered = useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
+    return layouts
+      .filter((l) => computeStatus(l) === groupFilter)
+      .filter(
+        (l) =>
+          !q ||
+          l.name.toLowerCase().includes(q) ||
+          l.slug.toLowerCase().includes(q),
+      )
+      .sort((a, b) => {
+        const sa = starredIds.has(a.id) ? 1 : 0;
+        const sb = starredIds.has(b.id) ? 1 : 0;
+        if (sa !== sb) return sb - sa; // favourites first
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+  }, [layouts, groupFilter, deferredSearch, starredIds]);
+  const starredList = allFiltered.filter((l) => starredIds.has(l.id));
+  const otherList = allFiltered.filter((l) => !starredIds.has(l.id));
+  // No search → show starred first; reveal the rest ("Other layouts") only on
+  // "Show all". With a search → show every match (starred-first).
+  const source = hasSearch || showAll ? allFiltered : starredList;
+  const filtered = source.slice(0, MAX_RESULTS);
+  const hiddenCount = source.length - filtered.length;
+  const collapsedOtherCount = !hasSearch && !showAll ? otherList.length : 0;
+  const firstOtherId = otherList[0]?.id;
 
   const selected = layouts.find((l) => l.id === selectedLayoutId);
   const selectedStatus = selected ? computeStatus(selected) : null;
@@ -518,55 +679,108 @@ function LayoutPicker({
           <ul role="listbox" className="max-h-[60vh] overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                {search.trim() ? "Không có layout phù hợp" : "Không có layout"}
+                {hasSearch
+                  ? "Không có layout phù hợp"
+                  : collapsedOtherCount > 0
+                    ? "Chưa ghim layout nào — bấm ☆ để ghim, hoặc “Hiện tất cả” bên dưới."
+                    : "Không có layout"}
               </li>
             ) : (
               filtered.map((l) => {
                 const isActive = selectedLayoutId === l.id;
+                const isStarred = starredIds.has(l.id);
                 const status = computeStatus(l);
                 const meta = STATUS_META[status];
                 const itemClass = isActive
                   ? "flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 transition-colors"
                   : "flex items-center gap-2 px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors";
                 return (
-                  <li key={l.id} role="option" aria-selected={isActive}>
-                    <div className={itemClass}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onSelect(l.id);
-                          setOpen(false);
-                        }}
-                        className="flex-1 min-w-0 text-left"
-                      >
-                        <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`}
-                          />
-                          <span className="truncate">{l.name}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate ml-3">
-                          /{l.slug}
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenItemMenu(l.id, e.currentTarget);
-                        }}
-                        className="shrink-0 p-1 rounded hover:bg-slate-200/60 text-slate-400 dark:text-slate-500"
-                        aria-label="Layout options"
-                        aria-haspopup="menu"
-                        aria-expanded={openMenuId === l.id}
-                      >
-                        <MoreVerticalIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </li>
+                  <Fragment key={l.id}>
+                    {!hasSearch && showAll && l.id === firstOtherId ? (
+                      <li className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                        Other layouts
+                      </li>
+                    ) : null}
+                    <li role="option" aria-selected={isActive}>
+                      <div className={itemClass}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStar(l.id);
+                          }}
+                          className={`shrink-0 p-0.5 text-base leading-none ${
+                            isStarred ? "text-amber-400" : "text-slate-300"
+                          } hover:text-amber-400`}
+                          aria-label={isStarred ? "Bỏ ghim" : "Ghim layout"}
+                        >
+                          {isStarred ? "★" : "☆"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelect(l.id);
+                            setOpen(false);
+                          }}
+                          className="flex-1 min-w-0 text-left"
+                        >
+                          <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`}
+                            />
+                            <span className="truncate">{l.name}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate ml-3">
+                            /{l.slug}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenItemMenu(l.id, e.currentTarget);
+                          }}
+                          className="shrink-0 p-1 rounded hover:bg-slate-200/60 text-slate-400 dark:text-slate-500"
+                          aria-label="Layout options"
+                          aria-haspopup="menu"
+                          aria-expanded={openMenuId === l.id}
+                        >
+                          <MoreVerticalIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </li>
+                  </Fragment>
                 );
               })
             )}
+            {collapsedOtherCount > 0 ? (
+              <li className="border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="w-full px-3 py-2 text-center text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                >
+                  Hiện tất cả ({collapsedOtherCount} layout khác)
+                </button>
+              </li>
+            ) : null}
+            {!hasSearch && showAll && starredList.length > 0 ? (
+              <li className="border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAll(false)}
+                  className="w-full px-3 py-1.5 text-center text-[10px] text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                >
+                  Chỉ hiện đã ghim
+                </button>
+              </li>
+            ) : null}
+            {hiddenCount > 0 ? (
+              <li className="px-3 py-2 text-center text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
+                Hiển thị {MAX_RESULTS} kết quả đầu · còn {hiddenCount} — gõ thêm
+                để lọc
+              </li>
+            ) : null}
           </ul>
         </div>
       )}

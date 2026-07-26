@@ -4,6 +4,9 @@ RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
 
 FROM base AS deps
 COPY package.json ./
+# The admin build context is ./frontend, which has no pnpm-lock.yaml (the lockfile
+# lives at the monorepo root and isn't reachable from this context). Frozen-lockfile
+# therefore can't be used here — install resolves from package.json directly.
 RUN pnpm install --prod=false --no-frozen-lockfile
 
 FROM base AS builder
@@ -13,7 +16,7 @@ ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 # Origin the image optimizer fetches media from at runtime (baked, never used by
 # browsers). On the sandbox set http://backend:3001 — no hairpin to the public IP.
-ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
+ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001
 ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 # Public-site origin for the builder's "View live" button.
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3002

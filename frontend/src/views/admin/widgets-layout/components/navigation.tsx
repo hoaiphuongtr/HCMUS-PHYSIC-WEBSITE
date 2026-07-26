@@ -38,6 +38,16 @@ const withLocale = (url: string | null | undefined, locale: string): string => {
   return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
 };
 
+// Hiển thị nhãn của mục trong thanh array của Puck thay vì "item #0".
+const labelItemSummary = (
+  item: { label?: LocalizedString | string; url?: string },
+  index?: number,
+): string => {
+  const l = item?.label;
+  const text = typeof l === "string" ? l : l?.vi || l?.en;
+  return text || item?.url || `Mục ${(index ?? 0) + 1}`;
+};
+
 type NavbarSubItem = {
   label: LocalizedString;
   url: string;
@@ -221,6 +231,8 @@ function NavbarChildItem({
 function NavbarClient({
   logoSrc,
   logoAlt,
+  logoAbbr,
+  logoName,
   menuItems,
   bgColor,
   textColor,
@@ -235,6 +247,8 @@ function NavbarClient({
 }: {
   logoSrc: string;
   logoAlt: string;
+  logoAbbr: string;
+  logoName: LocalizedString;
   menuItems: NavbarMenuItem[];
   bgColor: string;
   textColor: string;
@@ -251,7 +265,12 @@ function NavbarClient({
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   // Tìm kiếm thật: gõ >=2 ký tự -> gọi API bài viết công khai (debounce 300ms).
-  type LiveResult = { slug: string; title: LocalizedString; layoutSlug: string | null };
+  type LiveResult = {
+    slug: string;
+    title: LocalizedString;
+    layoutSlug: string | null;
+    publishedAt: string | null;
+  };
   const [results, setResults] = useState<LiveResult[]>([]);
   const [searching, setSearching] = useState(false);
   useEffect(() => {
@@ -262,27 +281,68 @@ function NavbarClient({
     }
     setSearching(true);
     const id = window.setTimeout(() => {
+      // pageSize lớn: trả HẾT bài khớp (không giới hạn 6); danh sách kết quả có
+      // cuộn dọc riêng. Sắp xếp theo ngày đăng mới nhất trước.
       fetch(
-        `${MEDIA_API_URL}/posts/public/list?page=1&pageSize=6&search=${encodeURIComponent(q)}`,
+        `${MEDIA_API_URL}/posts/public/list?page=1&pageSize=100&search=${encodeURIComponent(q)}`,
       )
         .then((r) => (r.ok ? r.json() : { items: [] }))
-        .then((d) =>
-          setResults(
-            (d.items || []).map(
-              (p: { slug: string; title: LocalizedString; layouts?: { slug: string; isPublished: boolean }[] }) => ({
-                slug: p.slug,
-                title: p.title,
-                layoutSlug:
-                  p.layouts?.find((l) => l.isPublished)?.slug ?? null,
-              }),
-            ),
-          ),
-        )
+        .then((d) => {
+          const items: LiveResult[] = (d.items || []).map(
+            (p: {
+              slug: string;
+              title: LocalizedString;
+              publishedAt?: string | null;
+              layouts?: { slug: string; isPublished: boolean }[];
+            }) => ({
+              slug: p.slug,
+              title: p.title,
+              layoutSlug: p.layouts?.find((l) => l.isPublished)?.slug ?? null,
+              publishedAt: p.publishedAt ?? null,
+            }),
+          );
+          items.sort((a, b) =>
+            (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
+          );
+          setResults(items);
+        })
         .catch(() => setResults([]))
         .finally(() => setSearching(false));
     }, 300);
     return () => window.clearTimeout(id);
   }, [query]);
+  // Tìm kiếm gần đây: lưu localStorage, hiện khi ô tìm kiếm còn trống.
+  const RECENT_KEY = "phys-search-recent";
+  const [recent, setRecent] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(RECENT_KEY);
+      if (raw) setRecent(JSON.parse(raw) as string[]);
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
+  const saveRecent = (q: string) => {
+    const term = q.trim();
+    if (term.length < 2) return;
+    setRecent((prev) => {
+      const next = [term, ...prev.filter((x) => x !== term)].slice(0, 6);
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        // ignore quota / privacy-mode errors
+      }
+      return next;
+    });
+  };
+  const clearRecent = () => {
+    setRecent([]);
+    try {
+      window.localStorage.removeItem(RECENT_KEY);
+    } catch {
+      // ignore
+    }
+  };
   const [langOpen, setLangOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<Record<number, boolean>>(
@@ -299,6 +359,49 @@ function NavbarClient({
     window.location.href = `/${parts.join("/")}${window.location.search}`;
   };
 
+  // Shared language dropdown — rendered under BOTH the mobile and desktop globe
+  // buttons (previously only the desktop one had it, so tapping the globe on mobile
+  // did nothing).
+  const langMenu = langOpen ? (
+    <>
+      <button
+        type="button"
+        onClick={() => setLangOpen(false)}
+        className="fixed inset-0 z-40 cursor-default"
+        aria-label="Close language menu"
+      />
+      <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-hidden">
+        <ul role="menu">
+          {LOCALES.map((code) => {
+            const isActive = code === locale;
+            const itemClass = isActive
+              ? "w-full flex items-center gap-2 px-3 py-2 text-sm text-left bg-blue-50 text-blue-700 font-semibold"
+              : "w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 hover:bg-slate-50";
+            return (
+              <li key={code} role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setLangOpen(false);
+                    if (!isEditing && code !== locale) swapLocale(code);
+                  }}
+                  className={itemClass}
+                >
+                  <span className="font-mono text-[10px] uppercase opacity-60 w-6 shrink-0">
+                    {code}
+                  </span>
+                  <span>{LOCALE_LABELS[code] || code}</span>
+                  {isActive && <Check className="w-4 h-4 ml-auto" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </>
+  ) : null;
+
   return (
     <>
       <nav
@@ -310,7 +413,18 @@ function NavbarClient({
           aria-label="Trang chủ"
           className="flex items-center gap-3 hover:opacity-90 transition-opacity"
         >
-          {logoSrc ? (
+          {logoAbbr ? (
+            <span className="flex items-baseline gap-2 leading-none">
+              <span className="text-3xl md:text-4xl font-black tracking-tight text-[#1e3a8a]">
+                {logoAbbr}
+              </span>
+              {t(logoName, locale) ? (
+                <span className="text-base md:text-xl font-bold text-slate-500">
+                  {t(logoName, locale)}
+                </span>
+              ) : null}
+            </span>
+          ) : logoSrc ? (
             <img
               src={resolveMediaSrc(logoSrc)}
               alt={logoAlt || "Logo"}
@@ -361,18 +475,21 @@ function NavbarClient({
               <NotificationBell color={textColor || "#1e293b"} />
             )}
             {showLanguageSwitcher && (
-              <button
-                type="button"
-                onClick={() => !isEditing && setLangOpen((p) => !p)}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
-                style={{ color: textColor || "#1e293b" }}
-                aria-haspopup="menu"
-                aria-expanded={langOpen}
-                aria-label="Language"
-                tabIndex={mobileMenuOpen ? -1 : undefined}
-              >
-                <Globe className="w-5 h-5" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => !isEditing && setLangOpen((p) => !p)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-[#202c44] transition-colors"
+                  style={{ color: textColor || "#1e293b" }}
+                  aria-haspopup="menu"
+                  aria-expanded={langOpen}
+                  aria-label="Language"
+                  tabIndex={mobileMenuOpen ? -1 : undefined}
+                >
+                  <Globe className="w-5 h-5" />
+                </button>
+                {langMenu}
+              </div>
             )}
           </div>
           <button
@@ -428,48 +545,7 @@ function NavbarClient({
               >
                 <Globe className="w-5 h-5" />
               </button>
-              {langOpen && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setLangOpen(false)}
-                    className="fixed inset-0 z-40 cursor-default"
-                    aria-label="Close language menu"
-                  />
-                  <div className="absolute top-full right-0 mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-hidden">
-                    <ul role="menu">
-                      {LOCALES.map((code) => {
-                        const isActive = code === locale;
-                        const itemClass = isActive
-                          ? "w-full flex items-center gap-2 px-3 py-2 text-sm text-left bg-blue-50 text-blue-700 font-semibold"
-                          : "w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-slate-700 hover:bg-slate-50";
-                        return (
-                          <li key={code} role="none">
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setLangOpen(false);
-                                if (!isEditing && code !== locale)
-                                  swapLocale(code);
-                              }}
-                              className={itemClass}
-                            >
-                              <span className="font-mono text-[10px] uppercase opacity-60 w-6 shrink-0">
-                                {code}
-                              </span>
-                              <span>{LOCALE_LABELS[code] || code}</span>
-                              {isActive && (
-                                <Check className="w-4 h-4 ml-auto" />
-                              )}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </>
-              )}
+              {langMenu}
             </div>
           )}
         </div>
@@ -564,10 +640,15 @@ function NavbarClient({
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveRecent(query);
+                }}
                 placeholder={t(searchPlaceholder, locale) || "Nhập từ khóa..."}
-                className="w-full bg-transparent border-b-2 border-white/30 focus:border-white text-white text-2xl md:text-3xl pb-4 outline-none placeholder:text-white/30 transition-colors"
+                // Ô nhập dạng hộp sáng rõ (nền trắng mờ + viền rõ + placeholder sáng)
+                // để dễ nhìn khi gõ trên nền navy tối, thay cho gạch chân mờ.
+                className="w-full bg-white/10 rounded-2xl border-2 border-white/40 focus:border-white focus:bg-white/15 text-white text-2xl md:text-3xl px-6 py-4 pr-16 outline-none placeholder:text-white/60 transition-colors"
               />
-              <Search className="absolute right-0 top-1 w-8 h-8 text-white/50" />
+              <Search className="absolute right-5 top-1/2 -translate-y-1/2 w-8 h-8 text-white/60 pointer-events-none" />
             </div>
             {query.trim().length >= 2 && (
               <div className="mt-8 w-full max-w-2xl">
@@ -580,11 +661,12 @@ function NavbarClient({
                       ? `Results (${results.length})`
                       : `Kết quả (${results.length})`}
                 </p>
-                <ul className="divide-y divide-white/10">
+                <ul className="divide-y divide-white/10 max-h-[50vh] overflow-y-auto pr-1">
                   {results.map((r) => (
                     <li key={r.slug}>
                       <a
                         href={`/${locale}/${r.layoutSlug ?? `tin-tuc/${r.slug}`}`}
+                        onClick={() => saveRecent(query)}
                         className="block py-3 text-white/80 hover:text-white transition-colors"
                       >
                         {t(r.title, locale)}
@@ -601,10 +683,38 @@ function NavbarClient({
                 </ul>
               </div>
             )}
+            {query.trim().length < 2 && recent.length > 0 && (
+              <div className="mt-10 w-full max-w-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-white/40 text-xs uppercase tracking-[0.2em]">
+                    {locale === "en" ? "Recent searches" : "Tìm kiếm gần đây"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearRecent}
+                    className="text-white/40 hover:text-white/80 text-xs"
+                  >
+                    {locale === "en" ? "Clear" : "Xóa"}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {recent.map((term, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setQuery(term)}
+                      className="px-5 py-2.5 rounded-full border border-white/20 text-white/70 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all text-sm"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {query.trim().length < 2 && searchSuggestions?.length > 0 && (
               <div className="mt-10 w-full max-w-2xl">
                 <p className="text-white/40 text-xs uppercase tracking-[0.2em] mb-4">
-                  Gợi ý
+                  {locale === "en" ? "Suggestions" : "Gợi ý"}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {searchSuggestions.map((s: NavbarSuggestion, i: number) => (
@@ -629,6 +739,8 @@ function NavbarClient({
 export const Navbar: ComponentConfig<{
   logoSrc: string;
   logoAlt: string;
+  logoAbbr: string;
+  logoName: LocalizedString;
   menuItems: NavbarMenuItem[];
   bgColor: string;
   textColor: string;
@@ -644,6 +756,8 @@ export const Navbar: ComponentConfig<{
   defaultProps: {
     logoSrc: "",
     logoAlt: "Logo",
+    logoAbbr: "",
+    logoName: { vi: "", en: "" },
     showLanguageSwitcher: true,
     menuItems: [
       {
@@ -706,21 +820,29 @@ export const Navbar: ComponentConfig<{
   fields: {
     logoSrc: mediaPickerField("Logo"),
     logoAlt: { type: "text", label: "Logo Alt" },
+    logoAbbr: {
+      type: "text",
+      label: "Logo abbreviation (e.g. VLTH) — overrides the image logo",
+    },
+    logoName: localizedTextField("Logo name (shown beside the abbreviation)"),
     menuItems: {
       type: "array",
       label: "Menu Items",
+      getItemSummary: labelItemSummary,
       arrayFields: {
         label: localizedTextField("Label"),
         url: { type: "text", label: "URL" },
         children: {
           type: "array",
           label: "Dropdown (level 2)",
+          getItemSummary: labelItemSummary,
           arrayFields: {
             label: localizedTextField("Label"),
             url: { type: "text", label: "URL" },
             subChildren: {
               type: "array",
               label: "Sub-dropdown (level 3)",
+              getItemSummary: labelItemSummary,
               arrayFields: {
                 label: localizedTextField("Label"),
                 url: { type: "text", label: "URL" },
@@ -746,6 +868,7 @@ export const Navbar: ComponentConfig<{
     searchSuggestions: {
       type: "array",
       label: "Search Suggestions",
+      getItemSummary: labelItemSummary,
       arrayFields: {
         label: localizedTextField("Label"),
         url: { type: "text", label: "URL" },
@@ -771,6 +894,8 @@ export const Navbar: ComponentConfig<{
   render: ({
     logoSrc,
     logoAlt,
+    logoAbbr,
+    logoName,
     menuItems,
     bgColor,
     textColor,
@@ -786,6 +911,8 @@ export const Navbar: ComponentConfig<{
     <NavbarClient
       logoSrc={logoSrc}
       logoAlt={logoAlt}
+      logoAbbr={logoAbbr}
+      logoName={logoName}
       menuItems={menuItems}
       bgColor={bgColor}
       textColor={textColor}
@@ -826,6 +953,7 @@ export const NavLinks: ComponentConfig<{
     links: {
       type: "array",
       label: "Links",
+      getItemSummary: labelItemSummary,
       arrayFields: {
         label: localizedTextField("Label"),
         url: { type: "text", label: "URL" },
@@ -991,6 +1119,7 @@ export const QuickLinks: ComponentConfig<{
     links: {
       type: "array",
       label: "Links",
+      getItemSummary: labelItemSummary,
       arrayFields: {
         icon: { type: "text", label: "Icon (Material Symbol)" },
         label: localizedTextField("Label"),
@@ -1062,7 +1191,7 @@ function QuickLinksRender({
 }
 
 export const SocialIcons: ComponentConfig<{
-  icons: { icon: string; url: string; color: string }[];
+  icons: { icon: string; url: string; color: string; visible?: boolean }[];
   size: string;
   gap: string;
   alignment: string;
@@ -1071,9 +1200,11 @@ export const SocialIcons: ComponentConfig<{
   label: "Social Icons",
   defaultProps: {
     icons: [
-      { icon: "facebook", url: "#", color: "#1877f2" },
-      { icon: "mail", url: "#", color: "#ea4335" },
-      { icon: "phone", url: "#", color: "#34a853" },
+      { icon: "facebook", url: "#", color: "#1877f2", visible: true },
+      { icon: "youtube", url: "#", color: "#ff0000", visible: true },
+      { icon: "tiktok", url: "#", color: "#010101", visible: true },
+      { icon: "instagram", url: "#", color: "#e4405f", visible: false },
+      { icon: "mail", url: "#", color: "#ea4335", visible: true },
     ],
     size: "md",
     gap: "sm",
@@ -1084,10 +1215,23 @@ export const SocialIcons: ComponentConfig<{
     icons: {
       type: "array",
       label: "Icons",
+      getItemSummary: (item: { icon?: string }) => item?.icon || "icon",
       arrayFields: {
-        icon: { type: "text", label: "Icon (Material Symbol)" },
+        icon: {
+          type: "text",
+          label:
+            "Icon (facebook / youtube / tiktok / instagram / twitter, tên Material Symbol, hoặc URL ảnh)",
+        },
         url: { type: "text", label: "URL" },
         color: colorField("Color"),
+        visible: {
+          type: "radio",
+          label: "Hiển thị",
+          options: [
+            { label: "Hiện", value: true },
+            { label: "Ẩn", value: false },
+          ],
+        },
       },
     },
     size: {
@@ -1187,6 +1331,36 @@ export const SocialIcons: ComponentConfig<{
           </svg>
         );
       }
+      if (icon === "tiktok") {
+        return (
+          <svg {...svgProps} viewBox="0 0 24 24" role="img" aria-label="TikTok">
+            <title>TikTok</title>
+            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+          </svg>
+        );
+      }
+      if (icon === "instagram") {
+        return (
+          <svg
+            {...svgProps}
+            viewBox="0 0 24 24"
+            role="img"
+            aria-label="Instagram"
+          >
+            <title>Instagram</title>
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+          </svg>
+        );
+      }
+      if (/^(https?:|\/uploads)/.test(icon || "")) {
+        return (
+          <img
+            src={resolveMediaSrc(icon)}
+            alt=""
+            style={{ width: s.px, height: s.px, objectFit: "contain" }}
+          />
+        );
+      }
       return (
         <DynamicIcon
           name={icon || "link"}
@@ -1199,8 +1373,18 @@ export const SocialIcons: ComponentConfig<{
       <div
         className={`flex items-center ${gaps[gap] || "gap-3"} ${aligns[alignment] || "justify-start"}`}
       >
-        {(icons || []).map(
-          (item: { icon: string; url: string; color: string }, i: number) =>
+        {(icons || [])
+          .filter((item) => item.visible !== false)
+          .map(
+          (
+            item: {
+              icon: string;
+              url: string;
+              color: string;
+              visible?: boolean;
+            },
+            i: number,
+          ) =>
             isFlat ? (
               <a
                 key={i}

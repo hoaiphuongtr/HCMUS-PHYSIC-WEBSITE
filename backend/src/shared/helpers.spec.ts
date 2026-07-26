@@ -13,15 +13,11 @@ describe('departmentScopeWhere', () => {
     expect(departmentScopeWhere('SUPER_ADMIN', BOMON)).toBeUndefined();
     expect(departmentScopeWhere('SUPER_ADMIN', null)).toBeUndefined();
   });
-  it('faculty admin → faculty + untagged', () => {
-    expect(departmentScopeWhere('ADMIN', FACULTY_DEPT_ID)).toEqual({
-      OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }],
-    });
+  it('faculty admin is faculty-wide → no restriction', () => {
+    expect(departmentScopeWhere('ADMIN', FACULTY_DEPT_ID)).toBeUndefined();
   });
-  it('dept-less admin → faculty + untagged', () => {
-    expect(departmentScopeWhere('ADMIN', null)).toEqual({
-      OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }],
-    });
+  it('dept-less admin is faculty-wide → no restriction', () => {
+    expect(departmentScopeWhere('ADMIN', null)).toBeUndefined();
   });
   it('bộ-môn admin → only their department', () => {
     expect(departmentScopeWhere('ADMIN', BOMON)).toEqual({ departmentId: BOMON });
@@ -37,10 +33,10 @@ describe('canAccessDepartment (mutation)', () => {
     expect(canAccessDepartment('ADMIN', BOMON, 'dept_legacy_3')).toBe(false);
     expect(canAccessDepartment('ADMIN', BOMON, null)).toBe(false);
   });
-  it('faculty admin → faculty + untagged only', () => {
+  it('faculty admin is faculty-wide → anything', () => {
     expect(canAccessDepartment('ADMIN', FACULTY_DEPT_ID, FACULTY_DEPT_ID)).toBe(true);
     expect(canAccessDepartment('ADMIN', FACULTY_DEPT_ID, null)).toBe(true);
-    expect(canAccessDepartment('ADMIN', FACULTY_DEPT_ID, BOMON)).toBe(false);
+    expect(canAccessDepartment('ADMIN', FACULTY_DEPT_ID, BOMON)).toBe(true);
   });
 });
 

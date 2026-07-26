@@ -1,12 +1,23 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { Image as ImageIcon, User } from "lucide-react";
+import { Image as ImageIcon, Mail, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DynamicIcon } from "@/components/admin/icons";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
+import { localizedSummary } from "../fields/item-summary";
+import {
+  resolveSizeStyle,
+  type SizeStyle,
+  sizeField,
+} from "../fields/size-field";
+import {
+  resolveTextStyle,
+  type TextStyle,
+  textStyleField,
+} from "../fields/text-style-field";
 import {
   localizedTextareaField,
   localizedTextField,
@@ -30,6 +41,7 @@ export const Heading: ComponentConfig<{
   alignment: string;
   color: string;
   anchorId: string;
+  textStyle?: TextStyle;
 }> = {
   label: "Heading",
   defaultProps: {
@@ -64,14 +76,16 @@ export const Heading: ComponentConfig<{
       ],
     },
     color: colorField("Color"),
+    textStyle: textStyleField,
   },
-  render: ({ text, level, alignment, color, anchorId }) => (
+  render: ({ text, level, alignment, color, anchorId, textStyle }) => (
     <HeadingRender
       text={text}
       level={level}
       alignment={alignment}
       color={color}
       anchorId={anchorId}
+      textStyle={textStyle}
     />
   ),
 };
@@ -82,28 +96,36 @@ function HeadingRender({
   alignment,
   color,
   anchorId,
+  textStyle,
 }: {
   text: LocalizedString;
   level: string;
   alignment: string;
   color: string;
   anchorId: string;
+  textStyle?: TextStyle;
 }) {
   const { locale } = useLocale();
   const Tag = (level || "h2") as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  // Scale down on phones so long Vietnamese titles (e.g. section headers on the home
+  // and department pages) stay inside the viewport instead of overflowing the sides.
   const sizes: Record<string, string> = {
-    h1: "text-4xl font-bold",
-    h2: "text-3xl font-bold",
-    h3: "text-2xl font-semibold",
-    h4: "text-xl font-semibold",
-    h5: "text-lg font-semibold",
-    h6: "text-base font-medium",
+    h1: "text-2xl sm:text-3xl md:text-4xl font-bold",
+    h2: "text-xl sm:text-2xl md:text-3xl font-bold",
+    h3: "text-lg sm:text-xl md:text-2xl font-semibold",
+    h4: "text-base sm:text-lg md:text-xl font-semibold",
+    h5: "text-sm sm:text-base md:text-lg font-semibold",
+    h6: "text-sm md:text-base font-medium",
   };
   return (
     <Tag
       id={anchorId || undefined}
-      className={`${sizes[level] || sizes.h2} scroll-mt-20`}
-      style={{ textAlign: alignment as any, color: color || "#1e293b" }}
+      className={`${sizes[level] || sizes.h2} scroll-mt-20 break-words max-w-full`}
+      style={{
+        textAlign: alignment as any,
+        color: color || "#1e293b",
+        ...resolveTextStyle(textStyle),
+      }}
     >
       {t(text, locale) || "Heading"}
     </Tag>
@@ -115,6 +137,7 @@ export const TextBlock: ComponentConfig<{
   fontSize: string;
   alignment: string;
   color: string;
+  textStyle?: TextStyle;
 }> = {
   label: "Text",
   defaultProps: {
@@ -146,13 +169,15 @@ export const TextBlock: ComponentConfig<{
       ],
     },
     color: colorField("Color"),
+    textStyle: textStyleField,
   },
-  render: ({ content, fontSize, alignment, color }) => (
+  render: ({ content, fontSize, alignment, color, textStyle }) => (
     <TextBlockRender
       content={content}
       fontSize={fontSize}
       alignment={alignment}
       color={color}
+      textStyle={textStyle}
     />
   ),
 };
@@ -162,11 +187,13 @@ function TextBlockRender({
   fontSize,
   alignment,
   color,
+  textStyle,
 }: {
   content: LocalizedString;
   fontSize: string;
   alignment: string;
   color: string;
+  textStyle?: TextStyle;
 }) {
   const { locale } = useLocale();
   const sizes: Record<string, string> = {
@@ -177,8 +204,12 @@ function TextBlockRender({
   };
   return (
     <p
-      className={`${sizes[fontSize] || "text-base"} leading-relaxed`}
-      style={{ textAlign: alignment as any, color: color || "#475569" }}
+      className={`${sizes[fontSize] || "text-base"} leading-relaxed break-words max-w-full px-6`}
+      style={{
+        textAlign: alignment as any,
+        color: color || "#475569",
+        ...resolveTextStyle(textStyle),
+      }}
     >
       {t(content, locale) || "Enter your text here..."}
     </p>
@@ -191,6 +222,7 @@ export const IconText: ComponentConfig<{
   description: LocalizedString;
   iconColor: string;
   layout: string;
+  textStyle?: TextStyle;
 }> = {
   label: "Icon + Text",
   defaultProps: {
@@ -216,14 +248,16 @@ export const IconText: ComponentConfig<{
         { label: "Vertical", value: "vertical" },
       ],
     },
+    textStyle: textStyleField,
   },
-  render: ({ icon, title, description, iconColor, layout }) => (
+  render: ({ icon, title, description, iconColor, layout, textStyle }) => (
     <IconTextRender
       icon={icon}
       title={title}
       description={description}
       iconColor={iconColor}
       layout={layout}
+      textStyle={textStyle}
     />
   ),
 };
@@ -234,12 +268,14 @@ function IconTextRender({
   description,
   iconColor,
   layout,
+  textStyle,
 }: {
   icon: string;
   title: LocalizedString;
   description: LocalizedString;
   iconColor: string;
   layout: string;
+  textStyle?: TextStyle;
 }) {
   const { locale } = useLocale();
   const isVertical = layout === "vertical";
@@ -255,7 +291,10 @@ function IconTextRender({
         style={{ color: iconColor || "#3b82f6" }}
       />
       <div>
-        <div className="text-base font-semibold text-slate-800 dark:text-slate-100">
+        <div
+          className="text-base font-semibold text-slate-800 dark:text-slate-100"
+          style={resolveTextStyle(textStyle)}
+        >
           {titleText || "Feature"}
         </div>
         {descriptionText && (
@@ -585,6 +624,8 @@ export const NewsCard: ComponentConfig<{
     tags: {
       type: "array",
       label: "Tags (for personalization)",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.slug, `Tag ${(i ?? 0) + 1}`),
       arrayFields: {
         slug: { type: "text", label: "Tag slug" },
       },
@@ -738,7 +779,9 @@ export const ProfileCard: ComponentConfig<{
   role: LocalizedString;
   description: LocalizedString;
   linkUrl: string;
+  email: string;
   overlayName: boolean;
+  size?: SizeStyle;
 }> = {
   label: "Profile Card",
   defaultProps: {
@@ -747,6 +790,7 @@ export const ProfileCard: ComponentConfig<{
     role: { vi: "Chức vụ", en: "Title" },
     description: { vi: "", en: "" },
     linkUrl: "#",
+    email: "",
     overlayName: false,
   },
   fields: {
@@ -754,7 +798,8 @@ export const ProfileCard: ComponentConfig<{
     name: localizedTextField("Name"),
     role: localizedTextField("Role/Title"),
     description: localizedTextareaField("Description"),
-    linkUrl: { type: "text", label: "Link URL" },
+    linkUrl: { type: "text", label: "Link URL (trang hồ sơ)" },
+    email: { type: "text", label: "Email (liên hệ)" },
     overlayName: {
       type: "radio",
       label: "Hiển thị tên đè lên ảnh",
@@ -763,6 +808,7 @@ export const ProfileCard: ComponentConfig<{
         { label: "Đè lên ảnh", value: true },
       ],
     },
+    size: sizeField,
   },
   render: ({
     imageUrl,
@@ -770,15 +816,19 @@ export const ProfileCard: ComponentConfig<{
     role,
     description,
     linkUrl,
+    email,
     overlayName,
+    size,
     puck,
   }) => (
     <ProfileCardRender
+      size={size}
       imageUrl={imageUrl}
       name={name}
       role={role}
       description={description}
       linkUrl={linkUrl}
+      email={email}
       overlayName={!!overlayName}
       isEditing={!!puck?.isEditing}
     />
@@ -791,7 +841,9 @@ function ProfileCardRender({
   role,
   description,
   linkUrl,
+  email,
   overlayName,
+  size,
   isEditing,
 }: {
   imageUrl: string;
@@ -799,18 +851,25 @@ function ProfileCardRender({
   role: LocalizedString;
   description: LocalizedString;
   linkUrl: string;
+  email: string;
   overlayName: boolean;
+  size?: SizeStyle;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
   const nameText = t(name, locale);
   const roleText = t(role, locale);
   const descriptionText = t(description, locale);
+  // Nếu có link hồ sơ riêng thì cả card là link; nếu không, dùng <div> để
+  // ô mailto bên trong không bị lồng trong thẻ <a> (invalid HTML).
+  const hasLink = !!linkUrl && linkUrl !== "#";
+  const Wrapper: React.ElementType = hasLink ? "a" : "div";
   return (
-    <a
-      href={isEditing ? "#" : linkUrl || "#"}
+    <Wrapper
+      href={hasLink ? (isEditing ? "#" : linkUrl) : undefined}
       tabIndex={isEditing ? -1 : undefined}
-      className="block text-center group"
+      className="block text-center group mx-auto"
+      style={resolveSizeStyle(size)}
     >
       <div className="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm mb-3">
         {imageUrl ? (
@@ -856,9 +915,20 @@ function ProfileCardRender({
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {roleText}
           </p>
+          {email && (
+            <a
+              href={isEditing ? "#" : `mailto:${email}`}
+              tabIndex={isEditing ? -1 : undefined}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline mt-1 break-all"
+            >
+              <Mail className="w-3.5 h-3.5 shrink-0" />
+              {email}
+            </a>
+          )}
         </>
       )}
-    </a>
+    </Wrapper>
   );
 }
 
@@ -866,6 +936,7 @@ export const DepartmentCard: ComponentConfig<{
   imageUrl: string;
   title: LocalizedString;
   linkUrl: string;
+  size?: SizeStyle;
 }> = {
   label: "Department Card",
   defaultProps: {
@@ -877,12 +948,14 @@ export const DepartmentCard: ComponentConfig<{
     imageUrl: mediaPickerField("Background Image"),
     title: localizedTextField("Title"),
     linkUrl: { type: "text", label: "Link URL" },
+    size: sizeField,
   },
-  render: ({ imageUrl, title, linkUrl, puck }) => (
+  render: ({ imageUrl, title, linkUrl, size, puck }) => (
     <DepartmentCardRender
       imageUrl={imageUrl}
       title={title}
       linkUrl={linkUrl}
+      size={size}
       isEditing={!!puck?.isEditing}
     />
   ),
@@ -892,11 +965,13 @@ function DepartmentCardRender({
   imageUrl,
   title,
   linkUrl,
+  size,
   isEditing,
 }: {
   imageUrl: string;
   title: LocalizedString;
   linkUrl: string;
+  size?: SizeStyle;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
@@ -905,7 +980,8 @@ function DepartmentCardRender({
     <a
       href={isEditing ? "#" : linkUrl || "#"}
       tabIndex={isEditing ? -1 : undefined}
-      className="block relative aspect-square sm:aspect-[16/10] rounded-lg overflow-hidden group"
+      className="block relative aspect-square sm:aspect-[16/10] rounded-lg overflow-hidden group mx-auto"
+      style={resolveSizeStyle(size)}
     >
       {imageUrl ? (
         <img
@@ -941,6 +1017,9 @@ function ImageTextBlockClient({
   ctaUrl,
   bgColor,
   fullBleed,
+  textStyle,
+  imageSize,
+  buttonSize,
   isEditing,
 }: {
   imageUrl: string;
@@ -953,6 +1032,9 @@ function ImageTextBlockClient({
   ctaUrl: string;
   bgColor: string;
   fullBleed: boolean;
+  textStyle?: TextStyle;
+  imageSize?: SizeStyle;
+  buttonSize?: SizeStyle;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
@@ -996,6 +1078,7 @@ function ImageTextBlockClient({
           style={{
             clipPath: imgClip,
             transition: "clip-path 1s cubic-bezier(0.4, 0, 0.2, 1)",
+            ...resolveSizeStyle(imageSize),
           }}
         >
           {imageUrl ? (
@@ -1021,7 +1104,10 @@ function ImageTextBlockClient({
           }}
         >
           {headlineText && (
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight">
+            <h2
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-6 leading-tight"
+              style={resolveTextStyle(textStyle)}
+            >
               {headlineText}
             </h2>
           )}
@@ -1048,7 +1134,8 @@ function ImageTextBlockClient({
             <a
               href={isEditing ? "#" : withLocalePrefix(ctaUrl, locale)}
               tabIndex={isEditing ? -1 : undefined}
-              className="inline-block px-8 py-4 bg-blue-800 text-white text-base font-semibold rounded hover:bg-blue-900 transition-colors self-start"
+              className="inline-block px-8 py-4 bg-blue-800 text-white text-base font-semibold rounded hover:bg-blue-900 transition-colors self-start text-center"
+              style={resolveSizeStyle(buttonSize)}
             >
               {ctaText}
             </a>
@@ -1127,7 +1214,8 @@ function ImageTextBlockClient({
             <a
               href={isEditing ? "#" : withLocalePrefix(ctaUrl, locale)}
               tabIndex={isEditing ? -1 : undefined}
-              className="inline-block px-6 py-3 bg-blue-800 text-white text-sm font-semibold rounded hover:bg-blue-900 transition-colors"
+              className="inline-block px-6 py-3 bg-blue-800 text-white text-sm font-semibold rounded hover:bg-blue-900 transition-colors text-center"
+              style={resolveSizeStyle(buttonSize)}
             >
               {ctaText}
             </a>
@@ -1149,6 +1237,9 @@ export const ImageTextBlock: ComponentConfig<{
   ctaUrl: string;
   bgColor: string;
   fullBleed: boolean;
+  textStyle?: TextStyle;
+  imageSize?: SizeStyle;
+  buttonSize?: SizeStyle;
 }> = {
   label: "Image + Text Block",
   defaultProps: {
@@ -1187,6 +1278,8 @@ export const ImageTextBlock: ComponentConfig<{
     stats: {
       type: "array",
       label: "Stats",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, item.value || `Stat ${(i ?? 0) + 1}`),
       arrayFields: {
         value: { type: "text", label: "Value (e.g. 50+)" },
         label: localizedTextField("Label"),
@@ -1195,6 +1288,9 @@ export const ImageTextBlock: ComponentConfig<{
     ctaLabel: localizedTextField("CTA Label"),
     ctaUrl: { type: "text", label: "CTA URL" },
     bgColor: colorField("Background Color"),
+    textStyle: textStyleField,
+    imageSize: sizeField,
+    buttonSize: sizeField,
   },
   render: (props) => (
     <ImageTextBlockClient
@@ -1208,6 +1304,9 @@ export const ImageTextBlock: ComponentConfig<{
       ctaUrl={props.ctaUrl}
       bgColor={props.bgColor}
       fullBleed={!!props.fullBleed}
+      textStyle={props.textStyle}
+      imageSize={props.imageSize}
+      buttonSize={props.buttonSize}
       isEditing={!!props.puck?.isEditing}
     />
   ),

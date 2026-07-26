@@ -102,24 +102,24 @@ model User {
   lastLoginAt       DateTime?
   tourCompletedAt   DateTime?
 
-  department          Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  preference          UserPreference?
-  sessions            Session[]
-  accounts            Account[]
-  templates           Template[]
-  posts               Post[]
-  postsApproved       Post[]            @relation("PostApprovedBy")
-  postReactions       PostReaction[]
-  postComments        PostComment[]
-  postTranslations    PostTranslation[]
-  media               Media[]
-  notifications       Notification[]
-  faqItems            FAQ[]
-  faqUpdated          FAQ[]             @relation("FAQUpdatedBy")
-  chatbotTraining     ChatbotTraining[]
-  auditLogs           AuditLog[]
-  pageLayouts         PageLayout[]
-  pageLayoutVersions  PageLayoutVersion[]
+  department         Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  preference         UserPreference?
+  sessions           Session[]
+  accounts           Account[]
+  templates          Template[]
+  posts              Post[]
+  postsApproved      Post[]              @relation("PostApprovedBy")
+  postReactions      PostReaction[]
+  postComments       PostComment[]
+  postTranslations   PostTranslation[]
+  media              Media[]
+  notifications      Notification[]
+  faqItems           FAQ[]
+  faqUpdated         FAQ[]               @relation("FAQUpdatedBy")
+  chatbotTraining    ChatbotTraining[]
+  auditLogs          AuditLog[]
+  pageLayouts        PageLayout[]
+  pageLayoutVersions PageLayoutVersion[]
 
   @@index([role])
   @@index([email])
@@ -132,6 +132,8 @@ model UserPreference {
   userId               String                @unique
   categories           String[]
   tags                 String[]
+  starredLayoutIds     String[]              @default([])
+  starredWidgetIds     String[]              @default([])
   notificationChannels NotificationChannel[] @default([EMAIL, IN_APP])
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -257,6 +259,7 @@ model Post {
   registrationUrl String?
   metadata        Json?
   aiSummary       String?
+  deletedAt       DateTime?
 
   createdByUser  User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   approvedByUser User?             @relation("PostApprovedBy", fields: [approvedBy], references: [id], onDelete: SetNull)
@@ -282,6 +285,7 @@ model Post {
   @@index([slug])
   @@index([eventStartAt])
   @@index([coverMediaId])
+  @@index([deletedAt])
 }
 
 model Category {
@@ -295,7 +299,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  posts Post[]
+  posts   Post[]
+  layouts PageLayout[] @relation("PageLayoutCategory")
 
   @@index([slug])
 }
@@ -363,10 +368,10 @@ model PostComment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  post     Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent   PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
-  replies  PostComment[] @relation("CommentReplies")
+  post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies PostComment[] @relation("CommentReplies")
 
   @@index([postId])
   @@index([userId])
@@ -378,6 +383,7 @@ model Widget {
   type          String         @unique
   name          String
   description   String?
+  usage         String?
   category      WidgetCategory
   icon          String?
   configSchema  Json
@@ -424,13 +430,16 @@ model PageLayout {
   scheduledAt       DateTime?
   sourcePostId      String?
   departmentId      String?
+  categoryId        String?
   createdBy         String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
 
   createdByUser User                @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   sourcePost    Post?               @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
   department    Department?         @relation("PageLayoutDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  category      Category?           @relation("PageLayoutCategory", fields: [categoryId], references: [id], onDelete: SetNull)
   widgets       WidgetInstance[]
   seoMetadata   SEOMetadata?
   versions      PageLayoutVersion[]
@@ -438,9 +447,11 @@ model PageLayout {
   @@index([slug])
   @@index([isPublished])
   @@index([departmentId])
+  @@index([categoryId])
   @@index([createdBy])
   @@index([scheduledAt])
   @@index([sourcePostId])
+  @@index([deletedAt])
 }
 
 enum PageLayoutVersionStatus {
@@ -449,17 +460,17 @@ enum PageLayoutVersionStatus {
 }
 
 model PageLayoutVersion {
-  id           String                  @id @default(cuid())
-  pageLayoutId String
+  id            String                  @id @default(cuid())
+  pageLayoutId  String
   versionNumber Int
-  name         String
-  slug         String
-  description  String?
-  puckData     Json?
-  status       PageLayoutVersionStatus @default(ARCHIVED)
-  publishedAt  DateTime
-  publishedBy  String
-  createdAt    DateTime                @default(now())
+  name          String
+  slug          String
+  description   String?
+  puckData      Json?
+  status        PageLayoutVersionStatus @default(ARCHIVED)
+  publishedAt   DateTime
+  publishedBy   String
+  createdAt     DateTime                @default(now())
 
   pageLayout      PageLayout @relation(fields: [pageLayoutId], references: [id], onDelete: Cascade)
   publishedByUser User       @relation(fields: [publishedBy], references: [id], onDelete: Cascade)
@@ -474,6 +485,7 @@ model Tag {
   id        String   @id @default(cuid())
   name      String   @unique
   slug      String   @unique
+  icon      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -507,19 +519,19 @@ model MediaTag {
 }
 
 model Media {
-  id        String    @id @default(cuid())
-  name      String
-  type      MediaType
-  url       String
-  mimeType  String?
-  size      Int?
-  width     Int?
-  height    Int?
-  alt       String?
-  createdBy String
+  id           String    @id @default(cuid())
+  name         String
+  type         MediaType
+  url          String
+  mimeType     String?
+  size         Int?
+  width        Int?
+  height       Int?
+  alt          String?
+  createdBy    String
   departmentId String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   createdByUser    User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   department       Department? @relation("MediaDepartment", fields: [departmentId], references: [id], onDelete: SetNull)

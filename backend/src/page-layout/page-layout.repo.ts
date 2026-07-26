@@ -41,6 +41,7 @@ const listSelect = {
   scheduledAt: true,
   sourcePostId: true,
   departmentId: true,
+  categoryId: true,
   createdBy: true,
   createdAt: true,
   updatedAt: true,
@@ -62,7 +63,7 @@ export class PageLayoutRepository {
 
   findPublishedBySlug(slug: string) {
     return this.prisma.pageLayout.findFirst({
-      where: { slug, isPublished: true },
+      where: { slug, isPublished: true, deletedAt: null },
       include: {
         widgets: {
           include: widgetInclude,
@@ -78,6 +79,7 @@ export class PageLayoutRepository {
       where: {
         slug,
         isPublished: true,
+        deletedAt: null,
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },
       select: { id: true },
@@ -93,6 +95,7 @@ export class PageLayoutRepository {
       where: {
         slug,
         isPublished,
+        deletedAt: null,
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },
       select: { id: true, name: true },
@@ -113,6 +116,7 @@ export class PageLayoutRepository {
 
   findAll() {
     return this.prisma.pageLayout.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
       select: listSelect,
     });
@@ -120,7 +124,10 @@ export class PageLayoutRepository {
 
   findOwnedOrPublished(userId: string) {
     return this.prisma.pageLayout.findMany({
-      where: { OR: [{ isPublished: true }, { createdBy: userId }] },
+      where: {
+        deletedAt: null,
+        OR: [{ isPublished: true }, { createdBy: userId }],
+      },
       orderBy: { createdAt: 'desc' },
       select: listSelect,
     });
@@ -136,17 +143,39 @@ export class PageLayoutRepository {
 
   findAllScoped(where: Record<string, unknown>) {
     return this.prisma.pageLayout.findMany({
-      where: where as never,
+      where: { deletedAt: null, ...where } as never,
       orderBy: { createdAt: 'desc' },
       select: listSelect,
     });
   }
 
+  // Soft-deleted layouts within the retention window (the "Đã xoá" tab).
+  findTrashed(where: Record<string, unknown>) {
+    return this.prisma.pageLayout.findMany({
+      where: { deletedAt: { not: null }, ...where } as never,
+      orderBy: { deletedAt: 'desc' },
+      select: { ...listSelect, deletedAt: true },
+    });
+  }
+
   findAllPublished() {
     return this.prisma.pageLayout.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       select: listSelect,
+    });
+  }
+
+  // Layouts tagged with a category = selectable "post templates" in the composer.
+  findPostTemplates(where: Record<string, unknown>) {
+    return this.prisma.pageLayout.findMany({
+      where: { categoryId: { not: null }, deletedAt: null, ...where } as never,
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        ...listSelect,
+        categoryId: true,
+        category: { select: { slug: true, name: true } },
+      },
     });
   }
 
@@ -154,8 +183,20 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.update({ where: { id }, data });
   }
 
+  // Soft delete: hidden from every query but restorable for 30 days
+  // (post.service.purgeExpiredTrash hard-deletes it after the window).
   delete(id: string) {
-    return this.prisma.pageLayout.delete({ where: { id } });
+    return this.prisma.pageLayout.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  restore(id: string) {
+    return this.prisma.pageLayout.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
   }
 
   async publish(id: string) {
@@ -192,6 +233,7 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.findMany({
       where: {
         scheduledAt: { not: null, lte: now },
+        deletedAt: null,
       },
       select: { id: true },
     });
@@ -248,7 +290,13 @@ export class PageLayoutRepository {
         isVisible: boolean;
       }>;
     },
-    newData: { name: string; slug: string; createdBy: string },
+    newData: {
+      name: string;
+      slug: string;
+      createdBy: string;
+      puckData?: JsonValue | null;
+      departmentId?: string | null;
+    },
   ) {
     return this.prisma.$transaction(async (tx) => {
       const layout = await tx.pageLayout.create({
@@ -257,6 +305,11 @@ export class PageLayoutRepository {
           slug: newData.slug,
           description: original.description,
           createdBy: newData.createdBy,
+          departmentId: newData.departmentId ?? null,
+          // Copy the visual-builder content so the duplicate isn't blank.
+          ...(newData.puckData != null
+            ? { puckData: newData.puckData as InputJsonValue }
+            : {}),
         },
       });
       if (original.widgets.length > 0) {
@@ -272,7 +325,19 @@ export class PageLayoutRepository {
           })),
         });
       }
-      return this.findById(layout.id);
+      // Re-fetch INSIDE the transaction (tx) — using the main client here would
+      // not see the just-created row (read-your-writes) and returns null, which
+      // then fails response serialization (the "Unexpected end of JSON input" the
+      // duplicate button hit).
+      return tx.pageLayout.findUnique({
+        where: { id: layout.id },
+        include: {
+          widgets: {
+            include: widgetInclude,
+            orderBy: [{ row: 'asc' }, { order: 'asc' }],
+          },
+        },
+      });
     });
   }
 

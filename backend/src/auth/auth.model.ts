@@ -121,11 +121,19 @@ export const UserResSchema = z.object({
     .nullable()
     .optional(),
   tourCompletedAt: z.date().nullable(),
+  starredLayoutIds: z.array(z.string()).default([]),
+  starredWidgetIds: z.array(z.string()).default([]),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 
 export type UserResType = z.infer<typeof UserResSchema>;
+
+export const SetStarredBodySchema = z.object({
+  layoutIds: z.array(z.string()).optional(),
+  widgetIds: z.array(z.string()).optional(),
+});
+export type SetStarredBodyType = z.infer<typeof SetStarredBodySchema>;
 
 export const UpdateProfileBodySchema = z.object({
   firstName: z.string().min(1).max(100).optional(),

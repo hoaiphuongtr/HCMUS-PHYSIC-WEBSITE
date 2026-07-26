@@ -13,6 +13,7 @@ import {
   MessageResSchema,
   UpdateProfileBodySchema,
   ChangePasswordBodySchema,
+  SetStarredBodySchema,
 } from './auth.model';
 
 export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
@@ -36,3 +37,4 @@ export class UpdateProfileBodyDTO extends createZodDto(
 export class ChangePasswordBodyDTO extends createZodDto(
   ChangePasswordBodySchema,
 ) {}
+export class SetStarredBodyDTO extends createZodDto(SetStarredBodySchema) {}

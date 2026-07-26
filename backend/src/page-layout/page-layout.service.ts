@@ -9,6 +9,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
+import { NotificationService } from '../notification/notification.service';
 import {
   CreatePageLayoutBodyType,
   UpdatePageLayoutBodyType,
@@ -39,6 +40,7 @@ export class PageLayoutService {
     private readonly widgetRepository: WidgetRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private readonly publicRevalidate: PublicRevalidateService,
+    private readonly notification: NotificationService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDueLayouts' })
@@ -67,6 +69,12 @@ export class PageLayoutService {
           layout.createdBy,
         );
         publishedSlugs.push(layout.slug);
+        await this.notification.notifyPublished({
+          departmentId: layout.departmentId,
+          actorId: layout.createdBy,
+          title: layout.name,
+          slug: layout.slug,
+        });
         this.logger.log(`Auto-published scheduled layout ${layout.id}`);
       } catch (err) {
         this.logger.error(
@@ -108,17 +116,40 @@ export class PageLayoutService {
     return layout;
   }
 
-  async findAllForAdmin(userId: string, roleName: string) {
+  async findAllForAdmin(userId: string, roleName: string, deleted = false) {
+    // The "Đã xoá" (trash) tab is private/dept-scoped: a dept account only sees the
+    // layouts trashed within its own scope; super admins see everything.
     if (roleName === 'SUPER_ADMIN') {
-      return this.pageLayoutRepository.findAll();
+      return deleted
+        ? this.pageLayoutRepository.findTrashed({})
+        : this.pageLayoutRepository.findAll();
     }
     const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
     const scope = departmentScopeWhere(roleName, dept) ?? {};
-    return this.pageLayoutRepository.findAllScoped(scope);
+    return deleted
+      ? this.pageLayoutRepository.findTrashed(scope)
+      : this.pageLayoutRepository.findAllScoped(scope);
   }
 
   findAllPublished() {
     return this.pageLayoutRepository.findAllPublished();
+  }
+
+  // Composer picker: only layouts tagged with a category (the ~few "post
+  // templates"), optionally narrowed to one category slug, department-scoped.
+  async findPostTemplates(
+    categorySlug: string | undefined,
+    userId: string,
+    roleName: string,
+  ) {
+    const where: Record<string, unknown> = {};
+    if (categorySlug) where.category = { slug: categorySlug };
+    if (roleName !== 'SUPER_ADMIN') {
+      const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
+      const scope = departmentScopeWhere(roleName, dept);
+      if (scope) Object.assign(where, scope);
+    }
+    return this.pageLayoutRepository.findPostTemplates(where);
   }
 
   async findById(id: string) {
@@ -179,9 +210,20 @@ export class PageLayoutService {
   }
 
   async delete(id: string, userId: string, roleName: string) {
-    await this.assertOwnership(id, userId, roleName);
+    const layout = await this.assertOwnership(id, userId, roleName);
     const result = await this.pageLayoutRepository.delete(id);
     await this.cache.clear();
+    this.publicRevalidate.trigger([`page:${layout.slug}`, 'sitemap']);
+    return result;
+  }
+
+  // Restore a soft-deleted layout (within the 30-day retention window).
+  async restore(id: string, userId: string, roleName: string) {
+    const layout = await this.assertOwnership(id, userId, roleName);
+    if (!layout.deletedAt) throw PageLayoutNotFoundException;
+    const result = await this.pageLayoutRepository.restore(id);
+    await this.cache.clear();
+    this.publicRevalidate.trigger([`page:${layout.slug}`, 'sitemap']);
     return result;
   }
 
@@ -196,6 +238,13 @@ export class PageLayoutService {
     await this.pageLayoutRepository.snapshotPublishedVersion(id, userId);
     await this.cache.clear();
     this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
+    // In-app notification to super-admins + this layout's department admins.
+    await this.notification.notifyPublished({
+      departmentId: layout.departmentId,
+      actorId: userId,
+      title: layout.name,
+      slug: layout.slug,
+    });
     return result;
   }
 
@@ -388,7 +437,16 @@ export class PageLayoutService {
           isVisible: w.isVisible,
         })),
       },
-      { name: baseName, slug, createdBy: userId },
+      {
+        name: baseName,
+        slug,
+        createdBy: userId,
+        // Duplicate must carry the content (puckData) — the published snapshot
+        // if the source was published, otherwise its draft — and stay in the
+        // same department so the owner can open it.
+        puckData: original.publishedPuckData ?? original.puckData,
+        departmentId: original.departmentId,
+      },
     );
     await this.cache.clear();
     return duplicated;

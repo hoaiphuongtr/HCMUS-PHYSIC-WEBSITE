@@ -5,6 +5,7 @@ import { PageLayoutService } from './page-layout.service';
 import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
+import { NotificationService } from '../notification/notification.service';
 import {
   PageLayoutNotFoundException,
   PageLayoutSlugExistsException,
@@ -22,10 +23,13 @@ const makeRepoMock = (): RepoMock => ({
   findAll: vi.fn(),
   findOwnedOrPublished: vi.fn(),
   findAllScoped: vi.fn(),
+  findTrashed: vi.fn(),
+  findPostTemplates: vi.fn(),
   findUserDepartmentId: vi.fn(),
   findAllPublished: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  restore: vi.fn(),
   publish: vi.fn(),
   scheduleManyPublish: vi.fn(),
   unpublish: vi.fn(),
@@ -93,6 +97,10 @@ describe('PageLayoutService versioning', () => {
         { provide: WidgetRepository, useValue: {} },
         { provide: PublicRevalidateService, useValue: revalidate },
         { provide: CACHE_MANAGER, useValue: cache },
+        {
+          provide: NotificationService,
+          useValue: { notifyPublished: vi.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 

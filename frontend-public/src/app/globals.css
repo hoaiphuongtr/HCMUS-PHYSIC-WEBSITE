@@ -1,6 +1,10 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* Vendored locally: shadcn is a `frontend` dep (not reachable from frontend-public
+   under node-linker=isolated), so importing "shadcn/tailwind.css" breaks a fresh
+   Docker install. These files are small + static — vendored under ./vendor to make
+   the public build reproducible. Re-sync from the packages if they change. */
+@import "./vendor/tw-animate.css";
+@import "./vendor/shadcn-tailwind.css";
 @import "../../../frontend/src/app/shared.css";
 
 @source "../../../frontend/src/views/admin/widgets-layout/**/*.{ts,tsx,js,jsx}";

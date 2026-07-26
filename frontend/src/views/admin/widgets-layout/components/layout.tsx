@@ -3,8 +3,11 @@
 import type { ComponentConfig, Slot } from "@puckeditor/core";
 import { useEffect, useState } from "react";
 import { visitorApi } from "@/lib/api";
+import { type LocalizedString, t } from "@/lib/i18n";
+import { useLocale } from "@/lib/locale-context";
 import { getOrCreateVisitorId } from "@/lib/visitor";
 import { colorField } from "../fields/color-field";
+import { localizedTextField } from "../fields/localized-text-field";
 
 export const Spacer: ComponentConfig<{ direction: string; size: string }> = {
   label: "Spacer",
@@ -454,6 +457,7 @@ function GridClient({
   reorderByTags: boolean;
 }) {
   const [orderedKeys, setOrderedKeys] = useState<string[]>(keys);
+  const { locale } = useLocale();
 
   useEffect(() => {
     setOrderedKeys(keys);
@@ -488,26 +492,84 @@ function GridClient({
     5: "md:grid-cols-5",
     6: "md:grid-cols-6",
   };
-  return (
-    <div
-      className={`grid grid-cols-1 ${mdColsClass[cols] ?? "md:grid-cols-3"} ${gapClass}`}
+  const titleText = t(props.title as LocalizedString, locale);
+  const titleNode = titleText ? (
+    <h3
+      className="text-2xl font-bold mb-4"
+      style={{
+        color: (props.titleColor as string) || "#1e293b",
+        textAlign:
+          (props.titleAlign as "left" | "center" | "right" | "justify") ||
+          "left",
+      }}
     >
-      {orderedKeys.map((key) => {
-        const CellSlot = props[key];
-        return (
-          <div key={key}>
-            <CellSlot />
-          </div>
-        );
-      })}
+      {titleText}
+    </h3>
+  ) : null;
+  const titleBelow = props.titlePosition === "bottom";
+  return (
+    <div>
+      {titleText && !titleBelow ? titleNode : null}
+      <div
+        className={`grid grid-cols-1 ${mdColsClass[cols] ?? "md:grid-cols-3"} ${gapClass}`}
+      >
+        {orderedKeys.map((key, i) => {
+          const CellSlot = props[key];
+          // Quy ước DUY NHẤT cho mobile — hàng 3 ô (đúng bố cục lãnh đạo: trưởng
+          // khoa/bộ môn soạn ở Ô GIỮA để desktop/tablet hiển thị như đã soạn): ô
+          // giữa được đưa lên ĐẦU khi xếp dọc 1 cột. md+ giữ nguyên thứ tự đã soạn.
+          // Lưới nhiều/ít ô khác (vd Các Bộ môn) không bị ảnh hưởng.
+          const orderCls =
+            cols === 3 && orderedKeys.length === 3 && i === 1
+              ? "order-first md:order-none"
+              : "";
+          return (
+            <div key={key} className={orderCls}>
+              <CellSlot />
+            </div>
+          );
+        })}
+      </div>
+      {titleText && titleBelow ? (
+        <div className="mt-4">{titleNode}</div>
+      ) : null}
     </div>
   );
 }
 
 export const Grid: ComponentConfig<any> = {
   label: "Grid",
-  defaultProps: { columns: "3", rows: "1", gap: "md", reorderByTags: false },
+  defaultProps: {
+    columns: "3",
+    rows: "1",
+    gap: "md",
+    reorderByTags: false,
+    title: { vi: "", en: "" },
+    titleColor: "#1e293b",
+    titleAlign: "left",
+    titlePosition: "top",
+  },
   fields: {
+    title: localizedTextField("Title"),
+    titleColor: colorField("Title Color"),
+    titleAlign: {
+      type: "select",
+      label: "Title Alignment",
+      options: [
+        { label: "Left", value: "left" },
+        { label: "Center", value: "center" },
+        { label: "Right", value: "right" },
+        { label: "Justify", value: "justify" },
+      ],
+    },
+    titlePosition: {
+      type: "select",
+      label: "Title Position",
+      options: [
+        { label: "Above grid", value: "top" },
+        { label: "Below grid", value: "bottom" },
+      ],
+    },
     columns: {
       type: "select",
       label: "Columns",

@@ -129,6 +129,11 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3002}
+        # The Puck layout-preview optimizer runs in-container and cannot hairpin to
+        # the host's public IP, so it fetches media from the backend service directly
+        # (same as the public site). Without this, injected post-body images 404 in
+        # the preview.
+        NEXT_PUBLIC_IMAGE_FETCH_ORIGIN: ${NEXT_PUBLIC_IMAGE_FETCH_ORIGIN:-http://backend:3001}
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
@@ -146,6 +151,9 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3002}
+        # The image optimizer runs in-container and cannot hairpin to the host's
+        # public IP, so it fetches media from the backend service directly.
+        NEXT_PUBLIC_IMAGE_FETCH_ORIGIN: ${NEXT_PUBLIC_IMAGE_FETCH_ORIGIN:-http://backend:3001}
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined

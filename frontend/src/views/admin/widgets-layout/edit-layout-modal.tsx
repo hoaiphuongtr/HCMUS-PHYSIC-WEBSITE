@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type PageLayout, pageLayoutApi } from "@/lib/api";
+import { categoryApi, type PageLayout, pageLayoutApi } from "@/lib/api";
 import { toSlug } from "@/lib/utils";
 
 export function EditLayoutModal({
@@ -29,12 +29,21 @@ export function EditLayoutModal({
   const [name, setName] = useState(layout.name);
   const [slug, setSlug] = useState(layout.slug);
   const [description, setDescription] = useState(layout.description || "");
+  const [categoryId, setCategoryId] = useState(layout.categoryId ?? "");
   const [slugTouched, setSlugTouched] = useState(false);
+  const categoriesQuery = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: categoryApi.list,
+  });
 
   const updateMutation = useMutation({
     mutationKey: ["PAGE_LAYOUTS", "UPDATE"],
-    mutationFn: (body: { name: string; slug: string; description?: string }) =>
-      pageLayoutApi.update(layout.id, body),
+    mutationFn: (body: {
+      name: string;
+      slug: string;
+      description?: string;
+      categoryId?: string | null;
+    }) => pageLayoutApi.update(layout.id, body),
     onSuccess(data) {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       queryClient.invalidateQueries({
@@ -60,6 +69,7 @@ export function EditLayoutModal({
       name,
       slug,
       description: description || undefined,
+      categoryId: categoryId || null,
     });
   };
 
@@ -98,6 +108,25 @@ export function EditLayoutModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Danh mục — làm layout mẫu cho bài post (tuỳ chọn)</Label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a2436]"
+            >
+              <option value="">— Không phải layout mẫu —</option>
+              {(categoriesQuery.data ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name.vi}
+                </option>
+              ))}
+            </select>
+            <p className="text-[10px] text-muted-foreground">
+              Gắn danh mục để layout này xuất hiện trong picker khi tạo layout từ
+              bài post.
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

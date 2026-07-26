@@ -26,6 +26,7 @@ const optimizedBodyImageUrl = (src: string): string => {
   return `/_next/image?url=${encodeURIComponent(fetchUrl)}&w=1080&q=70`;
 };
 
+import { DynamicIcon } from "@/components/admin/icons";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import {
@@ -234,12 +235,10 @@ function PostBodyRender({
             background: transparent !important;
             line-height: inherit;
           }
-          [data-post-body] p,
-          [data-post-body] span,
-          [data-post-body] li,
-          [data-post-body] td,
-          [data-post-body] th,
-          [data-post-body] div {
+          /* Normalise font-size on EVERY non-heading element (incl. <b>/<strong>/
+             <font>/<small> that legacy Word-export markup uses) so quoted/bold text
+             doesn't render tiny and inconsistent — especially on mobile. */
+          [data-post-body] *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6) {
             font-size: inherit !important;
           }
           [data-post-body] iframe,
@@ -253,7 +252,9 @@ function PostBodyRender({
           }
           [data-post-body] img {
             max-width: 100% !important;
-            width: auto !important;
+            /* KHÔNG ép width:auto — giữ thuộc tính width/height của ảnh để trình
+               duyệt tính aspect-ratio và giữ chỗ trước khi ảnh tải xong (tránh CLS
+               khi tải nguội). max-width:100% vẫn co ảnh vừa cột trên mobile. */
             height: auto !important;
             display: inline-block;
           }
@@ -463,7 +464,7 @@ function PostCoverImageRender({
   );
 }
 
-type TagChip = { slug: string; name: LocalizedString };
+type TagChip = { slug: string; name: LocalizedString; icon?: string | null };
 
 const tagArrayField = {
   type: "array",
@@ -471,6 +472,7 @@ const tagArrayField = {
   arrayFields: {
     slug: { type: "text", label: "Slug" },
     name: localizedTextField("Name"),
+    icon: { type: "text", label: "Icon (image URL or Material Symbol)" },
   },
   getItemSummary: (item: { slug: string; name: LocalizedString }) => {
     if (typeof item.name === "string") return item.name || item.slug || "Tag";
@@ -482,46 +484,90 @@ const tagArrayField = {
 export const PostTagList: ComponentConfig<{
   tags: TagChip[];
   defaultTags: TagChip[];
+  injected?: boolean;
+  iconSize?: number;
 }> = {
   label: "Post Tags",
   defaultProps: {
     tags: [],
+    iconSize: 50,
     defaultTags: [
       { slug: "tag-mau", name: { vi: "Tag mẫu", en: "Sample tag" } },
       { slug: "thong-bao", name: { vi: "Thông báo", en: "Notice" } },
     ],
   },
   fields: {
+    iconSize: {
+      type: "number",
+      label: "Kích thước icon (px)",
+      min: 16,
+      max: 240,
+    },
     defaultTags: tagArrayField,
     tags: { ...tagArrayField, label: "Injected tags (auto)" },
   },
-  render: ({ tags, defaultTags }) => (
-    <PostTagListRender tags={tags} defaultTags={defaultTags} />
+  render: ({ tags, defaultTags, injected, iconSize }) => (
+    <PostTagListRender
+      tags={tags}
+      defaultTags={defaultTags}
+      injected={injected}
+      iconSize={iconSize}
+    />
   ),
 };
 
 function PostTagListRender({
   tags,
   defaultTags,
+  injected,
+  iconSize,
 }: {
   tags: TagChip[];
   defaultTags: TagChip[];
+  injected?: boolean;
+  iconSize?: number;
 }) {
   const { locale } = useLocale();
-  const list = tags && tags.length ? tags : defaultTags || [];
+  const size = iconSize && iconSize > 0 ? iconSize : 50;
+  // Once a post is injected, trust its tags verbatim — even an empty array
+  // (post had its tags removed) must render nothing, not fall back to the
+  // template's sample tags. defaultTags are only for the un-injected preview.
+  const list = injected ? tags || [] : tags && tags.length ? tags : defaultTags || [];
   if (!list.length) {
     return <div className="hidden" aria-hidden="true" />;
   }
   return (
-    <div data-post-body className="flex flex-wrap gap-2 my-3">
+    <div className="flex flex-wrap items-center gap-2 my-3">
       {list.map((tag) => {
         const tagName = t(tag.name, locale) || tag.slug;
+        const icon = tag.icon;
+        const isImg = icon ? /^(https?:|\/uploads)/.test(icon) : false;
+        // Image-icon tags (e.g. SDG badges) render as the image alone — no pill,
+        // no "#name" — small and inline, like the faculty site presents them.
+        if (isImg && icon) {
+          return (
+            // biome-ignore lint/performance/noImgElement: external tag badge, not a Next asset
+            <img
+              key={tag.slug}
+              src={resolveMediaUrl(icon)}
+              alt={tagName}
+              title={tagName}
+              className="object-contain rounded-sm"
+              style={{
+                height: `${size}px`,
+                width: "auto",
+                maxWidth: `${size}px`,
+              }}
+            />
+          );
+        }
         return (
           <span
             key={tag.slug}
-            className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium"
           >
-            #{tagName}
+            {icon && <DynamicIcon name={icon} className="w-3.5 h-3.5" />}#
+            {tagName}
           </span>
         );
       })}
@@ -632,7 +678,7 @@ export const PostHeader: ComponentConfig<{
   defaultCategoryLabel: LocalizedString;
   publishedAt: string;
 }> = {
-  label: "Post Header (TT-style)",
+  label: "Post Header",
   defaultProps: {
     text: "",
     defaultText: { vi: "Tiêu đề bài đăng", en: "Post title" },
@@ -702,7 +748,10 @@ function PostHeaderRender({
       <div className="flex items-start justify-between gap-4 mb-3">
         <nav
           aria-label="Breadcrumb"
-          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 min-w-0"
+          // Single scrollable line (no flex-wrap): giữ chiều cao cố định ~1 dòng nên
+          // dù render sau hydration cũng không đẩy tiêu đề xuống (tránh CLS) và gọn
+          // hơn trên mobile thay vì xuống 5–6 dòng.
+          className="flex items-center gap-x-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 min-w-0 overflow-x-auto whitespace-nowrap [&>*]:shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <NextLink
             href={`/${locale}`}
@@ -764,29 +813,11 @@ const FONT_SIZE_LEVELS = [
 ];
 const DEFAULT_FONT_LEVEL = 8;
 
-const STYLE_TAG_ID = "post-reader-tools-style";
-
-const ensureStyleTag = () => {
-  let tag = document.getElementById(STYLE_TAG_ID) as HTMLStyleElement | null;
-  if (!tag) {
-    tag = document.createElement("style");
-    tag.id = STYLE_TAG_ID;
-    document.head.appendChild(tag);
-  }
-  return tag;
-};
-
-const applyFontLevel = (level: number) => {
-  const found =
+const scaleForLevel = (level: number) =>
+  (
     FONT_SIZE_LEVELS.find((l) => l.level === level) ??
-    FONT_SIZE_LEVELS[DEFAULT_FONT_LEVEL];
-  const s = found.scale;
-  const tag = ensureStyleTag();
-  // Use `zoom` (works across modern browsers) — scales the entire subtree
-  // visually, including text rendered by the prose plugin or HTML content,
-  // without fighting Tailwind's `:where(...)` specificity rules.
-  tag.textContent = `[data-post-body]{zoom:${s};}`;
-};
+    FONT_SIZE_LEVELS[DEFAULT_FONT_LEVEL]
+  ).scale;
 
 const TOOL_LABELS = {
   decrease: { vi: "Giảm cỡ chữ", en: "Decrease font" },
@@ -879,12 +910,10 @@ function PostReaderToolsRender({
     const saved = window.localStorage.getItem(FONT_SIZE_KEY);
     const initial = saved ? Number.parseInt(saved, 10) : DEFAULT_FONT_LEVEL;
     const safe = Number.isFinite(initial) ? initial : DEFAULT_FONT_LEVEL;
-    setLevel(safe);
-    applyFontLevel(safe);
-    return () => {
-      const tag = document.getElementById(STYLE_TAG_ID);
-      if (tag) tag.remove();
-    };
+    // Thẻ <style> zoom đã được render sẵn ở SSR theo mức mặc định, nên chỉ cập nhật
+    // khi người dùng có mức lưu khác mặc định — trường hợp phổ biến không đổi gì,
+    // tránh reflow toàn bài sau hydrate (nguyên nhân CLS trên bài nhiều ảnh).
+    if (safe !== DEFAULT_FONT_LEVEL) setLevel(safe);
   }, []);
 
   useEffect(() => {
@@ -907,7 +936,8 @@ function PostReaderToolsRender({
   const changeLevel = (next: number) => {
     const clamped = Math.max(0, Math.min(FONT_SIZE_LEVELS.length - 1, next));
     setLevel(clamped);
-    applyFontLevel(clamped);
+    // Zoom áp qua thẻ <style> render theo `level` bên dưới (phản ứng theo state),
+    // không thao tác DOM trực tiếp nữa.
     window.localStorage.setItem(FONT_SIZE_KEY, String(clamped));
   };
 
@@ -946,19 +976,44 @@ function PostReaderToolsRender({
   };
 
   const onShareFacebook = () => {
-    // Trang chia sẻ chính thức của Meta (không cần app-id): mở TAB mới — Facebook
-    // tự yêu cầu đăng nhập theo phiên hiện có của người dùng rồi hiện hộp soạn bài
-    // kèm liên kết; nội dung xem trước lấy từ thẻ Open Graph của trang.
-    const url = encodeURIComponent(window.location.href);
+    // Chia sẻ qua hộp thoại chính thức của Facebook: mở popup, người dùng bấm "Đăng"
+    // trong UI của FB → tạo bài thật trên tường/nhóm/Trang họ chọn. Đây là cách DUY
+    // NHẤT được phép đăng lên tường cá nhân (Meta bỏ publish_actions từ 2018 nên
+    // KHÔNG thể tự đăng bằng token). Preview (ảnh/tiêu đề) lấy từ thẻ Open Graph —
+    // chỉ hiện khi site chạy trên domain công khai + HTTPS (FB crawler không đọc IP).
+    //
+    // Ưu tiên og:url/canonical (dùng domain thật khi đã cấu hình NEXT_PUBLIC_SITE_URL)
+    // thay vì window.location.href thô theo IP sandbox.
+    const canonical =
+      document
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content") ||
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href") ||
+      window.location.href;
+    // Có app-id → dùng /dialog/share (đẹp hơn, hỗ trợ quote/hashtag); không có →
+    // rơi về /sharer/sharer.php (không cần app-id). Cả hai chỉ là popup tới facebook.com.
+    const appId = process.env.NEXT_PUBLIC_FB_APP_ID;
+    const href = encodeURIComponent(canonical);
+    const shareUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${href}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${href}`;
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      shareUrl,
       "_blank",
-      "noopener,noreferrer",
+      "noopener,noreferrer,width=600,height=650",
     );
   };
 
   return (
     <>
+      {/* Render thẳng ở SSR: mức phóng mặc định có mặt ngay lần vẽ đầu tiên nên
+          không còn cú nhảy zoom sau hydrate (nguồn gốc CLS ~0.4 trên bài nhiều ảnh). */}
+      <style
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: static, không có dữ liệu người dùng
+        dangerouslySetInnerHTML={{
+          __html: `[data-post-body]{zoom:${scaleForLevel(level)};}`,
+        }}
+      />
       <div ref={anchorRef} aria-hidden="true" className="h-0 w-0" />
       <aside
         aria-label="Reader tools"

@@ -17,7 +17,7 @@ import {
 import { localize } from "@/lib/localized";
 import { buildCategoryOptions, categoryLabel } from "@/lib/post-categories";
 
-type TabKey = "mine" | "published";
+type TabKey = "mine" | "published" | "trash";
 
 const PAGE_SIZE = 12;
 
@@ -136,8 +136,9 @@ export function PostListView() {
         page: tab === "mine" ? 1 : page,
         pageSize: tab === "mine" ? 100 : PAGE_SIZE,
         category: category || undefined,
-        status: serverStatus,
+        status: tab === "trash" ? undefined : serverStatus,
         search: search || undefined,
+        deleted: tab === "trash" ? true : undefined,
       }),
     placeholderData: (prev) => prev,
     enabled: profileQuery.data !== undefined,
@@ -162,12 +163,19 @@ export function PostListView() {
     return items.filter((p) => p.createdBy === ownerId).length;
   }, [allMineQuery.data, ownerId]);
   const publishedCount = publishedCountQuery.data?.total ?? 0;
+  // Private/dept-scoped trash count (the BE scopes it to the caller's department).
+  const trashCountQuery = useQuery({
+    queryKey: ["POSTS", "COUNT", "TRASH"],
+    queryFn: () => postApi.listPaged({ page: 1, pageSize: 1, deleted: true }),
+    enabled: !!ownerId,
+  });
+  const trashCount = trashCountQuery.data?.total ?? 0;
 
   const deleteMutation = useMutation({
     mutationKey: ["POSTS", "DELETE"],
     mutationFn: (id: string) => postApi.remove(id),
     onSuccess: () => {
-      toast.success("Đã xóa bài đăng");
+      toast.success("Đã chuyển vào thùng rác (khôi phục được trong 30 ngày)");
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
     },
     onError: (err: { message?: string }) => {
@@ -175,10 +183,23 @@ export function PostListView() {
     },
   });
 
+  const restoreMutation = useMutation({
+    mutationKey: ["POSTS", "RESTORE"],
+    mutationFn: (id: string) => postApi.restore(id),
+    onSuccess: () => {
+      toast.success("Đã khôi phục bài đăng");
+      queryClient.invalidateQueries({ queryKey: ["POSTS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Không thể khôi phục");
+    },
+  });
+
   const confirmDelete = async (id: string, title: string) => {
     const ok = await confirm({
       title: `Xóa bài "${title}"?`,
-      description: "Hành động này không thể hoàn tác.",
+      description:
+        "Bài sẽ được chuyển vào thùng rác và có thể khôi phục trong 30 ngày trước khi bị xoá vĩnh viễn.",
       confirmLabel: "Xóa",
       destructive: true,
     });
@@ -202,10 +223,10 @@ export function PostListView() {
   const mineStart = (page - 1) * PAGE_SIZE;
   const mineSlice = mineFiltered.slice(mineStart, mineStart + PAGE_SIZE);
 
+  const serverPaged = tab === "published" || tab === "trash";
   const items = tab === "mine" ? mineSlice : rawItems;
-  const total = tab === "published" ? (data?.total ?? 0) : mineTotal;
-  const totalPages =
-    tab === "published" ? (data?.totalPages ?? 1) : mineTotalPages;
+  const total = serverPaged ? (data?.total ?? 0) : mineTotal;
+  const totalPages = serverPaged ? (data?.totalPages ?? 1) : mineTotalPages;
   const hasFilters = Boolean(category || statusInTab || search);
 
   const switchTab = (next: TabKey) => {
@@ -253,6 +274,7 @@ export function PostListView() {
                 label: "Đã xuất bản",
                 count: publishedCount,
               },
+              { key: "trash", label: "Đã xoá", count: trashCount },
             ] as { key: TabKey; label: string; count: number }[]
           ).map((t) => {
             const active = tab === t.key;
@@ -441,23 +463,44 @@ export function PostListView() {
                         {formatPublicAt(post)}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="inline-flex gap-1">
-                          <Link
-                            href={`/admin/posts?id=${post.id}`}
-                            className="px-2 py-1 text-xs text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44]"
-                          >
-                            Sửa
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              confirmDelete(post.id, localize(post.title, "vi"))
-                            }
-                            className="px-2 py-1 text-xs text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50"
-                          >
-                            Xóa
-                          </button>
-                        </div>
+                        {tab === "trash" ? (
+                          <div className="inline-flex items-center gap-2">
+                            {typeof post.trashDaysLeft === "number" ? (
+                              <span className="text-[11px] text-slate-400">
+                                còn {post.trashDaysLeft} ngày
+                              </span>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => restoreMutation.mutate(post.id)}
+                              disabled={restoreMutation.isPending}
+                              className="px-2 py-1 text-xs text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-50 disabled:opacity-50"
+                            >
+                              Khôi phục
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="inline-flex gap-1">
+                            <Link
+                              href={`/admin/posts?id=${post.id}`}
+                              className="px-2 py-1 text-xs text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-md hover:bg-slate-50 dark:hover:bg-[#202c44]"
+                            >
+                              Sửa
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                confirmDelete(
+                                  post.id,
+                                  localize(post.title, "vi"),
+                                )
+                              }
+                              className="px-2 py-1 text-xs text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50"
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

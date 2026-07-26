@@ -40,16 +40,28 @@ export class PostController {
   @IsPublic()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(PUBLIC_LIST_TTL_MS)
-  listLatestPublic(@Query('limit') limit?: string) {
-    return this.postService.listLatestPublic(parseLimit(limit, 4));
+  listLatestPublic(
+    @Query('limit') limit?: string,
+    @Query('department') department?: string,
+  ) {
+    return this.postService.listLatestPublic(
+      parseLimit(limit, 4),
+      department ? { department: { slug: department } } : undefined,
+    );
   }
 
   @Get('public/upcoming-events')
   @IsPublic()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(PUBLIC_LIST_TTL_MS)
-  listUpcomingEventsPublic(@Query('limit') limit?: string) {
-    return this.postService.listUpcomingEventsPublic(parseLimit(limit, 4));
+  listUpcomingEventsPublic(
+    @Query('limit') limit?: string,
+    @Query('department') department?: string,
+  ) {
+    return this.postService.listUpcomingEventsPublic(
+      parseLimit(limit, 4),
+      department ? { department: { slug: department } } : undefined,
+    );
   }
 
   @Get('public/list')
@@ -60,6 +72,7 @@ export class PostController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('category') category?: string,
+    @Query('department') department?: string,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
     @Query('search') search?: string,
@@ -70,6 +83,7 @@ export class PostController {
       page: pageNum,
       pageSize: sizeNum,
       category,
+      department,
       fromDate: fromDate ? new Date(fromDate) : undefined,
       toDate: toDate ? new Date(toDate) : undefined,
       search,
@@ -96,6 +110,7 @@ export class PostController {
     @Query('category') category?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('deleted') deleted?: string,
   ) {
     if (page === undefined && pageSize === undefined)
       return this.postService.list(userId, roleName, departmentId);
@@ -110,6 +125,7 @@ export class PostController {
       userId,
       roleName,
       departmentId,
+      deleted: deleted === 'true' || deleted === '1',
     });
   }
 
@@ -144,6 +160,16 @@ export class PostController {
     @ActiveUser('departmentId') departmentId: string | null,
   ) {
     return this.postService.delete(id, userId, roleName, departmentId);
+  }
+
+  @Post(':id/restore')
+  restore(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
+  ) {
+    return this.postService.restore(id, userId, roleName, departmentId);
   }
 
   @Post(':id/clone-into-layout')

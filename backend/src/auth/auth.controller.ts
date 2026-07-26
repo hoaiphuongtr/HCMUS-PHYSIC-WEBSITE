@@ -4,10 +4,13 @@ import {
   Get,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { ZodSerializerDto } from 'nestjs-zod';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -26,6 +29,7 @@ import {
   MessageResDTO,
   UpdateProfileBodyDTO,
   ChangePasswordBodyDTO,
+  SetStarredBodyDTO,
 } from './auth.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -34,6 +38,10 @@ import { RoleName } from '../shared/constants/role.constants';
 import envConfig from '../shared/config/config';
 
 @Controller('auth')
+// Brute-force protection on credential endpoints, keyed by real client IP.
+// Default 20/min for auth ops; sensitive routes tighten to 8/min below.
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 20, ttl: 60_000 } })
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -66,8 +74,19 @@ export class AuthController {
     return this.authService.changePassword(userId, body);
   }
 
+  // Persist the admin's starred/favourite layouts & widgets (per-user UI state).
+  @Put('starred')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  setStarred(
+    @ActiveUser('userId') userId: string,
+    @Body() body: SetStarredBodyDTO,
+  ) {
+    return this.authService.setStarred(userId, body);
+  }
+
   @Post('login')
   @IsPublic()
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @ZodSerializerDto(LoginResDTO)
   login(@Body() body: LoginBodyDTO) {
     return this.authService.login(body);
@@ -89,6 +108,7 @@ export class AuthController {
 
   @Post('otp')
   @IsPublic()
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @ZodSerializerDto(MessageResDTO)
   sendOTP(@Body() body: SendOTPBodyDTO) {
     return this.authService.sendOTP(body);
@@ -96,6 +116,7 @@ export class AuthController {
 
   @Post('verify-otp')
   @IsPublic()
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @ZodSerializerDto(MessageResDTO)
   verifyOTP(@Body() body: VerifyOTPBodyDTO) {
     return this.authService.verifyOTP(body);
@@ -103,6 +124,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @IsPublic()
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @ZodSerializerDto(MessageResDTO)
   forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
     return this.authService.forgotPassword(body);

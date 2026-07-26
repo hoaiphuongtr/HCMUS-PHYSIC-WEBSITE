@@ -3,10 +3,12 @@
 // Floating Help button + panel. Two tabs:
 //  - Interact: re-runnable guided walkthroughs (driver.js) + "replay the tab tour"
 //  - Doc: pre-written FAQ (problem → resolution steps)
-import { HelpCircle, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useQuery } from "@tanstack/react-query";
+import { widgetApi, type WidgetType } from "@/lib/api";
 import {
   Sheet,
   SheetContent,
@@ -19,11 +21,98 @@ import { t } from "@/lib/i18n";
 import { FAQ, type Locale, OVERVIEW_STEPS, WALKTHROUGHS } from "@/lib/tour/content";
 import { runOverview, runWalkthrough } from "@/lib/tour/driver";
 
+// The widget catalog stores English-only name/usage. This map provides the
+// Vietnamese equivalents so the help center's Widget tab respects the VI/EN toggle
+// (keyed by Widget.type; falls back to the catalog's English when a type is missing).
+const WIDGET_I18N: Record<string, { name: string; usage: string }> = {
+  ANNOUNCEMENTS_TICKER: {
+    name: "Thanh thông báo chạy",
+    usage: "Thanh thông báo khẩn cấp dạng chạy ngang",
+  },
+  BANNER: {
+    name: "Biểu ngữ",
+    usage: "Biểu ngữ màu tràn chiều rộng, có chữ và nút tùy chọn",
+  },
+  BUTTON: { name: "Nút bấm", usage: "Nút kêu gọi hành động với nhiều kiểu" },
+  CARD: { name: "Thẻ", usage: "Thẻ có viền, gồm tiêu đề, mô tả và ảnh" },
+  DEPARTMENTS_GRID: {
+    name: "Lưới bộ môn",
+    usage: "Các thẻ bộ môn xếp dạng lưới",
+  },
+  DIVIDER: { name: "Đường phân cách", usage: "Đường kẻ ngang phân cách" },
+  EVENTS_CALENDAR: {
+    name: "Lịch sự kiện",
+    usage: "Lịch nhỏ hiển thị các sự kiện sắp tới",
+  },
+  FOOTER: {
+    name: "Chân trang",
+    usage: "Chân trang nhiều cột với thông tin liên hệ và liên kết",
+  },
+  HEADING: {
+    name: "Tiêu đề",
+    usage: "Tiêu đề văn bản (h1–h6) với căn lề và màu sắc",
+  },
+  HERO_CAROUSEL: {
+    name: "Ảnh bìa trình chiếu",
+    usage: "Trình chiếu biểu ngữ quảng bá tràn chiều rộng",
+  },
+  ICON_TEXT: {
+    name: "Biểu tượng + Chữ",
+    usage: "Biểu tượng kèm tiêu đề và mô tả",
+  },
+  IMAGE: { name: "Hình ảnh", usage: "Một hình ảnh kèm chú thích tùy chọn" },
+  IMAGE_GALLERY: { name: "Thư viện ảnh", usage: "Lưới các hình ảnh" },
+  LATEST_NEWS_LIST: {
+    name: "Danh sách tin mới",
+    usage: "Danh sách tin dạng dọc kèm ảnh thu nhỏ",
+  },
+  LEADERSHIP_SECTION: {
+    name: "Ban lãnh đạo",
+    usage: "Các thẻ hồ sơ lãnh đạo khoa",
+  },
+  TOP_NAV_BAR: {
+    name: "Thanh điều hướng",
+    usage: "Điều hướng trên cùng gồm logo, menu, tìm kiếm và mạng xã hội",
+  },
+  NAV_LINKS: {
+    name: "Liên kết điều hướng",
+    usage: "Danh sách liên kết điều hướng đơn giản có mũi tên",
+  },
+  PARTNERS_GRID: {
+    name: "Đối tác & Liên kết",
+    usage: "Lưới logo các trường đối tác",
+  },
+  QUICK_LINKS: {
+    name: "Liên kết nhanh",
+    usage: "Lưới biểu tượng cho các công cụ hay dùng",
+  },
+  SEARCH_BAR: { name: "Thanh tìm kiếm", usage: "Ô tìm kiếm toàn trang" },
+  SPACER: { name: "Khoảng trống", usage: "Khoảng trống dọc" },
+  TEXT_BLOCK: {
+    name: "Khối văn bản",
+    usage: "Đoạn văn bản với cỡ chữ, căn lề và màu sắc",
+  },
+  THREE_COLUMN_NEWS: {
+    name: "Tin ba cột",
+    usage: "Lưới tin ba cột (Tin Giáo Vụ, TTKH, Tuyển Dụng)",
+  },
+  VIDEO_EMBED: {
+    name: "Nhúng video",
+    usage: "Khối video nhúng kèm tiêu đề",
+  },
+};
+
 export function HelpCenter() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [locale, setLocale] = useState<Locale>("vi");
   const [query, setQuery] = useState("");
+  // Widget feature docs — synced from the /admin/widgets catalog (usage field).
+  const widgetsQuery = useQuery({
+    queryKey: ["WIDGET_TYPES"],
+    queryFn: () => widgetApi.list(),
+    enabled: open,
+  });
 
   const launch = (fn: () => void) => {
     setOpen(false);
@@ -54,17 +143,16 @@ export function HelpCenter() {
 
   const T = (vi: string, en: string) => (locale === "en" ? en : vi);
 
+  // Opened from the sidebar "Trợ giúp" item (which dispatches `open-help`)
+  // instead of a floating button that overlapped the editor field panel.
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-help", handler);
+    return () => window.removeEventListener("open-help", handler);
+  }, []);
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={T("Trợ giúp", "Help")}
-        data-tour="help-button"
-        className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
-      >
-        <HelpCircle className="h-6 w-6" />
-      </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -107,11 +195,14 @@ export function HelpCenter() {
           </SheetHeader>
 
           <Tabs defaultValue="interact" className="flex min-h-0 flex-1 flex-col">
-            <TabsList className="mx-5 mt-4 grid grid-cols-2">
+            <TabsList className="mx-5 mt-4 grid grid-cols-3">
               <TabsTrigger value="interact">
                 {T("Hướng dẫn", "Interactive")}
               </TabsTrigger>
               <TabsTrigger value="doc">{T("Câu hỏi (FAQ)", "FAQ")}</TabsTrigger>
+              <TabsTrigger value="widgets">
+                {T("Widget", "Widgets")}
+              </TabsTrigger>
             </TabsList>
 
             {/* Interact */}
@@ -188,6 +279,51 @@ export function HelpCenter() {
                         <li key={j}>{t(s, locale)}</li>
                       ))}
                     </ol>
+                  </details>
+                ))
+              )}
+            </TabsContent>
+
+            {/* Widgets — feature docs synced from the /admin/widgets catalog */}
+            <TabsContent
+              value="widgets"
+              className="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-4"
+            >
+              {(widgetsQuery.data ?? []).length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  {T("Chưa có widget nào.", "No widgets yet.")}
+                </p>
+              ) : (
+                (widgetsQuery.data ?? []).map((w: WidgetType) => (
+                  <details
+                    key={w.id}
+                    className="rounded-lg border border-slate-200 dark:border-slate-800"
+                  >
+                    <summary className="cursor-pointer px-4 py-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {locale === "vi"
+                        ? (WIDGET_I18N[w.type]?.name ?? w.name)
+                        : w.name}
+                    </summary>
+                    <div className="space-y-2 border-t border-slate-100 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                      <p>
+                        {(locale === "vi"
+                          ? WIDGET_I18N[w.type]?.usage
+                          : undefined) ||
+                          w.usage ||
+                          w.description ||
+                          T(
+                            "Chưa có mô tả cách dùng.",
+                            "No usage description yet.",
+                          )}
+                      </p>
+                      {w.configSchema &&
+                      Object.keys(w.configSchema).length > 0 ? (
+                        <p className="text-xs text-slate-400">
+                          {T("Trường: ", "Fields: ")}
+                          {Object.keys(w.configSchema).join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
                   </details>
                 ))
               )}

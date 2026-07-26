@@ -19,6 +19,7 @@ import { injectPostIntoPuckData, PostInjectPayload } from './puck-inject';
 import {
   canAccessDepartment,
   departmentScopeWhere,
+  FACULTY_DEPT_ID,
   toSlug,
   toSlugPath,
 } from '../shared/helpers';
@@ -85,6 +86,7 @@ const postListSelect = {
   createdBy: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
   postTags: { include: { tag: true } },
   layouts: {
     select: {
@@ -103,7 +105,14 @@ type PostListRecord = Prisma.PostGetPayload<{ select: typeof postListSelect }>;
 // A post is publicly visible only once it has at least one PUBLISHED layout
 // (the public site resolves an article by its published layout; without one the
 // standalone URL 404s). This clause keeps such "orphan" posts out of the feeds.
-const HAS_PUBLISHED_LAYOUT = { layouts: { some: { isPublished: true } } } as const;
+// A post is only public if it has a published layout that has NOT been soft-deleted.
+const HAS_PUBLISHED_LAYOUT = {
+  layouts: { some: { isPublished: true, deletedAt: null } },
+} as const;
+// Soft-delete: exclude trashed rows from every normal (non-trash) query.
+const NOT_DELETED = { deletedAt: null } as const;
+// Items in the trash are permanently purged this long after deletion.
+const TRASH_RETENTION_DAYS = 30;
 
 @Injectable()
 export class PostService {
@@ -124,6 +133,7 @@ export class PostService {
       where: {
         status: 'SCHEDULED',
         scheduledAt: { lte: now },
+        ...NOT_DELETED,
       },
       select: { id: true },
     });
@@ -280,7 +290,10 @@ export class PostService {
 
   async list(userId: string, roleName: string, departmentId: string | null) {
     const posts = await this.prisma.post.findMany({
-      where: (departmentScopeWhere(roleName, departmentId) ?? {}) as any,
+      where: {
+        ...NOT_DELETED,
+        ...((departmentScopeWhere(roleName, departmentId) ?? {}) as any),
+      },
       orderBy: { updatedAt: 'desc' },
       select: postListSelect,
     });
@@ -296,9 +309,18 @@ export class PostService {
     userId: string;
     roleName: string;
     departmentId: string | null;
+    deleted?: boolean;
   }) {
-    const { page, pageSize, category, status, search, roleName, departmentId } =
-      params;
+    const {
+      page,
+      pageSize,
+      category,
+      status,
+      search,
+      roleName,
+      departmentId,
+      deleted,
+    } = params;
     const andClauses: Record<string, unknown>[] = [];
     const scope = departmentScopeWhere(roleName, departmentId);
     if (scope) andClauses.push(scope);
@@ -317,12 +339,22 @@ export class PostService {
     const where: Record<string, unknown> = {};
     if (category) where.category = { slug: category };
     if (status) where.status = status;
+    if (deleted) {
+      // Trash view: only rows soft-deleted within the retention window (older ones
+      // are purged by cron, but guard here too so nothing past 30 days shows).
+      const cutoff = new Date(
+        Date.now() - TRASH_RETENTION_DAYS * 86400000,
+      );
+      where.deletedAt = { not: null, gte: cutoff };
+    } else {
+      where.deletedAt = null;
+    }
     if (andClauses.length) where.AND = andClauses;
     const [total, posts] = await Promise.all([
       this.prisma.post.count({ where: where as any }),
       this.prisma.post.findMany({
         where: where as any,
-        orderBy: { updatedAt: 'desc' },
+        orderBy: deleted ? { deletedAt: 'desc' } : { updatedAt: 'desc' },
         select: postListSelect,
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -337,31 +369,71 @@ export class PostService {
     };
   }
 
-  async listLatestPublic(limit: number) {
+  // Scope a public feed by department. Default (no arg) = faculty homepage/main
+  // feed: only faculty-office + untagged posts, so bộ-môn posts never surface on
+  // the Khoa homepage. Pass a dept slug for a department page's own feed.
+  private feedDeptWhere(department?: string): Record<string, unknown> {
+    if (department && department.trim()) {
+      return { department: { slug: department.trim() } };
+    }
+    return { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] };
+  }
+
+  // By resolved departmentId (used when snapshotting per-layout).
+  private feedDeptWhereById(
+    departmentId: string | null,
+  ): Record<string, unknown> {
+    if (!departmentId || departmentId === FACULTY_DEPT_ID) {
+      return { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] };
+    }
+    return { departmentId };
+  }
+
+  async listLatestPublic(limit: number, deptWhere?: Record<string, unknown>) {
     const now = new Date();
     const posts = await this.prisma.post.findMany({
       where: {
+        ...NOT_DELETED,
         status: 'PUBLISHED',
         // bài di trú rỗng nội dung (nguồn cũ không có bài) không đưa ra trang công khai
         body: { not: Prisma.DbNull },
         // chỉ công khai bài đã gắn vào một layout đã xuất bản (nếu không, URL bài lẻ 404)
         ...HAS_PUBLISHED_LAYOUT,
-        OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }],
+        AND: [
+          deptWhere ?? this.feedDeptWhere(),
+          { OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }] },
+        ],
       },
-      orderBy: { updatedAt: 'desc' },
+      // Sắp theo NGÀY ĐĂNG GỐC (publishedAt) để tin mới viết gần đây luôn ở đầu;
+      // bài cũ (2021…) dù mới di trú/sửa cũng không nhảy lên trang chủ.
+      orderBy: { publishedAt: 'desc' },
       select: postListSelect,
-      take: limit,
+      // Over-fetch để ảnh bìa phá hoà khi cùng ngày (bài có bìa lên trước bài không).
+      take: Math.max(limit * 3, limit),
     });
-    return posts.map((p) => this.serializePublic(p));
+    const dateOf = (x: PostListRecord) =>
+      +new Date(x.publishedAt ?? x.updatedAt);
+    const sorted = posts.sort((a, b) => {
+      const d = dateOf(b) - dateOf(a); // mới viết gần đây nhất trước
+      if (d !== 0) return d;
+      // Hoà ngày → ưu tiên bài có ảnh bìa (bài không bìa dùng logo mặc định).
+      return (b.coverUrl ? 1 : 0) - (a.coverUrl ? 1 : 0);
+    });
+    return sorted.slice(0, limit).map((p) => this.serializePublic(p));
   }
 
-  async listUpcomingEventsPublic(limit: number) {
+  async listUpcomingEventsPublic(
+    limit: number,
+    deptWhere?: Record<string, unknown>,
+  ) {
     const now = new Date();
     const posts = await this.prisma.post.findMany({
       where: {
         status: 'PUBLISHED',
+        ...NOT_DELETED,
         body: { not: Prisma.DbNull },
         ...HAS_PUBLISHED_LAYOUT,
+        AND: [deptWhere ?? this.feedDeptWhere()],
         eventStartAt: { gte: now },
       },
       orderBy: { eventStartAt: 'asc' },
@@ -375,22 +447,28 @@ export class PostService {
     page: number;
     pageSize: number;
     category?: string;
+    department?: string;
     fromDate?: Date;
     toDate?: Date;
     search?: string;
   }) {
-    const { page, pageSize, category, fromDate, toDate, search } = params;
+    const { page, pageSize, category, department, fromDate, toDate, search } =
+      params;
     const where: Record<string, unknown> = {
+      ...NOT_DELETED,
       status: 'PUBLISHED',
       body: { not: Prisma.DbNull },
       ...HAS_PUBLISHED_LAYOUT,
+      // Faculty feed by default; a dept slug narrows to that department's posts.
+      AND: [this.feedDeptWhere(department)],
     };
     if (category) where.category = { slug: category };
     if (fromDate || toDate) {
       const range: Record<string, Date> = {};
       if (fromDate) range.gte = fromDate;
       if (toDate) range.lte = toDate;
-      where.updatedAt = range;
+      // Lọc theo ngày ĐĂNG GỐC cho khớp cột ngày hiển thị + sắp xếp.
+      where.publishedAt = range;
     }
     if (search && search.trim()) {
       const q = search.trim();
@@ -406,7 +484,8 @@ export class PostService {
       this.prisma.post.count({ where: where as any }),
       this.prisma.post.findMany({
         where: where as any,
-        orderBy: { updatedAt: 'desc' },
+        // Danh sách/tin tức/tìm kiếm: sắp theo ngày đăng gốc (mới viết trước).
+        orderBy: { publishedAt: 'desc' },
         select: postListSelect,
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -434,8 +513,17 @@ export class PostService {
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
       eventLocation: record.eventLocation,
-      publishedAt: record.updatedAt,
+      // Ngày HIỂN THỊ = ngày đăng GỐC (publishedAt), KHÔNG dùng updatedAt (là ngày
+      // di trú/chỉnh sửa) — nếu không bài cũ 2021 sửa lại năm 2026 sẽ mang nhãn 2026
+      // và nhảy lên đầu feed. Fallback updatedAt phòng khi thiếu (thực tế 0 bài null).
+      publishedAt: record.publishedAt ?? record.updatedAt,
       layoutSlug: publishedLayout?.slug ?? null,
+      // Tag icons (e.g. SDG badges) shown under the card on the public site.
+      tags: record.postTags.map((pt) => ({
+        slug: pt.tag.slug,
+        name: pt.tag.name,
+        icon: pt.tag.icon,
+      })),
     };
   }
 
@@ -463,12 +551,107 @@ export class PostService {
     if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
       throw PostNotFoundException;
     }
-    await this.prisma.post.delete({ where: { id } });
+    // Layouts created from this post become meaningless once the post is gone,
+    // so delete them too (and remember their slugs to revalidate the public site).
+    const attached = await this.prisma.pageLayout.findMany({
+      where: { sourcePostId: id },
+      select: { slug: true },
+    });
+    // Soft delete: stamp deletedAt on the post + its layouts so they drop out of
+    // every public/admin query but can be restored within the retention window.
+    // A daily cron (purgeExpiredTrash) hard-deletes anything older than 30 days.
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.pageLayout.updateMany({
+        where: { sourcePostId: id, deletedAt: null },
+        data: { deletedAt: now },
+      });
+      await tx.post.update({ where: { id }, data: { deletedAt: now } });
+    });
     if (existing.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
     }
     await this.cache.clear();
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `post:${id}`,
+      ...attached.map((l) => `page:${l.slug}`),
+    ]);
     return { ok: true };
+  }
+
+  // Restore a soft-deleted post (and the layouts deleted alongside it) back into
+  // the system. Only works while the post is still within the retention window.
+  async restore(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
+    const existing = await this.prisma.post.findUnique({ where: { id } });
+    if (!existing || !existing.deletedAt) throw PostNotFoundException;
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
+      throw PostNotFoundException;
+    }
+    const deletedAt = existing.deletedAt;
+    const attached = await this.prisma.pageLayout.findMany({
+      where: { sourcePostId: id },
+      select: { slug: true },
+    });
+    await this.prisma.$transaction(async (tx) => {
+      // Only un-delete layouts that were trashed together with this post (same
+      // timestamp), so a layout the user deleted separately stays in the trash.
+      await tx.pageLayout.updateMany({
+        where: { sourcePostId: id, deletedAt },
+        data: { deletedAt: null },
+      });
+      await tx.post.update({ where: { id }, data: { deletedAt: null } });
+    });
+    if (existing.status === 'PUBLISHED') {
+      await this.syncNewsFeedSnapshots();
+    }
+    await this.cache.clear();
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `post:${id}`,
+      ...attached.map((l) => `page:${l.slug}`),
+    ]);
+    return { ok: true };
+  }
+
+  // Permanently remove posts + layouts that have been in the trash longer than the
+  // retention window. Runs daily; nothing here is recoverable afterwards.
+  @Cron(CronExpression.EVERY_DAY_AT_3AM, { name: 'purgeExpiredTrash' })
+  async purgeExpiredTrash() {
+    const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86400000);
+    const expiredPosts = await this.prisma.post.findMany({
+      where: { deletedAt: { not: null, lt: cutoff } },
+      select: { id: true },
+    });
+    // Layouts deleted on their own (no live source post) also expire.
+    const expiredLayouts = await this.prisma.pageLayout.findMany({
+      where: { deletedAt: { not: null, lt: cutoff } },
+      select: { id: true },
+    });
+    if (expiredPosts.length === 0 && expiredLayouts.length === 0) return;
+    const postIds = expiredPosts.map((p) => p.id);
+    await this.prisma.$transaction(async (tx) => {
+      // Remove layouts of expiring posts first, then any independently-expired ones.
+      if (postIds.length) {
+        await tx.pageLayout.deleteMany({ where: { sourcePostId: { in: postIds } } });
+        await tx.postTag.deleteMany({ where: { postId: { in: postIds } } });
+        await tx.post.deleteMany({ where: { id: { in: postIds } } });
+      }
+      const layoutIds = expiredLayouts.map((l) => l.id);
+      if (layoutIds.length) {
+        await tx.pageLayout.deleteMany({
+          where: { id: { in: layoutIds }, deletedAt: { not: null, lt: cutoff } },
+        });
+      }
+    });
+    this.logger.log(
+      `Purged ${expiredPosts.length} post(s) + ${expiredLayouts.length} layout(s) past ${TRASH_RETENTION_DAYS}d retention`,
+    );
   }
 
   async cloneIntoLayout(
@@ -488,9 +671,34 @@ export class PostService {
     });
     if (!template) throw TemplateLayoutNotFoundException;
 
-    const layoutSlug = body.layoutSlug
-      ? toSlugPath(body.layoutSlug)
-      : toSlugPath(`${template.slug}/${post.slug}`);
+    // Enforce that a bộ-môn post's layout lives under that department's slug so
+    // it can never be published at the faculty root (/, /tin-tuc). Faculty and
+    // untagged posts keep the template-derived path.
+    let deptSlug: string | null = null;
+    if (post.departmentId && post.departmentId !== FACULTY_DEPT_ID) {
+      const dept = await this.prisma.department.findUnique({
+        where: { id: post.departmentId },
+        select: { slug: true },
+      });
+      deptSlug = dept?.slug ?? null;
+    }
+    // Faculty/untagged posts publish under the news prefix (/tin-tuc/<slug>);
+    // bộ-môn posts stay under their department slug (never at the faculty root).
+    let layoutSlug: string;
+    if (body.layoutSlug) {
+      layoutSlug = toSlugPath(body.layoutSlug);
+      if (
+        deptSlug &&
+        layoutSlug !== deptSlug &&
+        !layoutSlug.startsWith(`${deptSlug}/`)
+      ) {
+        layoutSlug = toSlugPath(`${deptSlug}/${layoutSlug}`);
+      }
+    } else if (deptSlug) {
+      layoutSlug = toSlugPath(`${deptSlug}/${post.slug}`);
+    } else {
+      layoutSlug = toSlugPath(`tin-tuc/${post.slug}`);
+    }
     const conflict = await this.pageLayoutRepo.findConflictBySlugAndStatus(
       layoutSlug,
       false,
@@ -512,6 +720,7 @@ export class PostService {
       tags: post.postTags.map((pt) => ({
         slug: pt.tag.slug,
         name: pt.tag.name,
+        icon: pt.tag.icon,
       })),
       category: postCategory?.slug ?? '',
       categoryLabel: viOf(postCategory?.name),
@@ -533,6 +742,9 @@ export class PostService {
         puckData: injectedTree as unknown as InputJsonValue,
         createdBy: userId,
         sourcePostId: post.id,
+        // Scope the layout to the post's department so dept-scoped public feeds
+        // (syncNewsFeedSnapshots) place it correctly and never on the homepage.
+        departmentId: post.departmentId,
       },
       select: { id: true, slug: true },
     });
@@ -561,48 +773,66 @@ export class PostService {
   }
 
   async syncNewsFeedSnapshots() {
-    const [latest, events] = await Promise.all([
-      this.listLatestPublic(12),
-      this.listUpcomingEventsPublic(12),
-    ]);
-
     const layouts = await this.prisma.pageLayout.findMany({
       select: {
         id: true,
+        departmentId: true,
         puckData: true,
         publishedPuckData: true,
       },
     });
 
-    const transformNode = (node: any): any => {
-      if (Array.isArray(node)) return node.map(transformNode);
+    // Each layout is snapshotted with a feed scoped to ITS department, so a
+    // faculty/homepage layout never shows bộ-môn posts and a department page
+    // shows its own. Memoize per scope to avoid re-querying.
+    type Feed = { latest: unknown[]; events: unknown[] };
+    const feedCache = new Map<string, Feed>();
+    const scopeKey = (deptId: string | null) =>
+      !deptId || deptId === FACULTY_DEPT_ID ? '__faculty__' : deptId;
+    const getFeed = async (deptId: string | null): Promise<Feed> => {
+      const key = scopeKey(deptId);
+      let feed = feedCache.get(key);
+      if (!feed) {
+        const w = this.feedDeptWhereById(deptId);
+        const [latest, events] = await Promise.all([
+          this.listLatestPublic(12, w),
+          this.listUpcomingEventsPublic(12, w),
+        ]);
+        feed = { latest, events };
+        feedCache.set(key, feed);
+      }
+      return feed;
+    };
+
+    const transformNode = (node: any, feed: Feed): any => {
+      if (Array.isArray(node)) return node.map((n) => transformNode(n, feed));
       if (!node || typeof node !== 'object') return node;
       const out = { ...node };
       if (out.props) out.props = { ...out.props };
       if (out.type === 'LatestNewsAuto' && out.props) {
         const limit = Math.max(1, Math.min(Number(out.props.limit) || 4, 12));
-        out.props.posts = latest.slice(0, limit);
+        out.props.posts = feed.latest.slice(0, limit);
       } else if (out.type === 'UpcomingEventsAuto' && out.props) {
         const limit = Math.max(1, Math.min(Number(out.props.limit) || 4, 12));
-        out.props.posts = events.slice(0, limit);
+        out.props.posts = feed.events.slice(0, limit);
       }
       if (out.props) {
         for (const k of Object.keys(out.props)) {
-          out.props[k] = transformNode(out.props[k]);
+          out.props[k] = transformNode(out.props[k], feed);
         }
       }
       return out;
     };
 
-    const transformTree = (data: any): any => {
+    const transformTree = (data: any, feed: Feed): any => {
       if (!data || typeof data !== 'object') return data;
       const out = { ...data };
       if (Array.isArray(out.content))
-        out.content = out.content.map(transformNode);
+        out.content = out.content.map((n: unknown) => transformNode(n, feed));
       if (out.zones && typeof out.zones === 'object') {
         const z: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(out.zones)) {
-          z[k] = Array.isArray(v) ? v.map(transformNode) : v;
+          z[k] = Array.isArray(v) ? v.map((n) => transformNode(n, feed)) : v;
         }
         out.zones = z;
       }
@@ -611,10 +841,11 @@ export class PostService {
 
     let changed = 0;
     for (const layout of layouts) {
+      const feed = await getFeed(layout.departmentId);
       const orig = JSON.stringify(layout.puckData);
       const origPub = JSON.stringify(layout.publishedPuckData);
-      const next = transformTree(layout.puckData);
-      const nextPub = transformTree(layout.publishedPuckData);
+      const next = transformTree(layout.puckData, feed);
+      const nextPub = transformTree(layout.publishedPuckData, feed);
       if (
         JSON.stringify(next) !== orig ||
         JSON.stringify(nextPub) !== origPub
@@ -661,6 +892,7 @@ export class PostService {
       tags: post.postTags.map((pt) => ({
         slug: pt.tag.slug,
         name: pt.tag.name,
+        icon: pt.tag.icon,
       })),
       category: postCategory?.slug ?? '',
       categoryLabel: viOf(postCategory?.name),
@@ -782,6 +1014,16 @@ export class PostService {
       createdBy: record.createdBy,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
+      deletedAt: record.deletedAt,
+      trashDaysLeft: record.deletedAt
+        ? Math.max(
+            0,
+            TRASH_RETENTION_DAYS -
+              Math.floor(
+                (Date.now() - new Date(record.deletedAt).getTime()) / 86400000,
+              ),
+          )
+        : null,
       layouts: record.layouts,
     };
   }

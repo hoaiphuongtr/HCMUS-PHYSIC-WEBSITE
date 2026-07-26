@@ -1,12 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AdminSelect } from "@/components/admin/admin-select";
+import { DynamicIcon } from "@/components/admin/icons";
 import {
   type ContentStatusValue,
   categoryApi,
@@ -14,6 +15,7 @@ import {
   pageLayoutApi,
   postApi,
   resolveMediaUrl,
+  tagApi,
   type UpsertPostBody,
 } from "@/lib/api";
 import { emptyLocalized, type Locale, toLocalized } from "@/lib/localized";
@@ -42,6 +44,22 @@ const parseTagInput = (value: string): string[] => {
 
 const addUnique = (list: string[], slug: string) =>
   list.includes(slug) ? list : [...list, slug];
+
+// A tag icon is either an image URL (/uploads or http) or a Material Symbol name.
+function TagIcon({ icon }: { icon?: string | null }) {
+  if (!icon) return null;
+  if (/^(https?:|\/uploads)/.test(icon)) {
+    // biome-ignore lint/performance/noImgElement: external tag icon, not a Next asset
+    return (
+      <img
+        src={resolveMediaUrl(icon)}
+        alt=""
+        className="w-3.5 h-3.5 object-contain rounded-sm"
+      />
+    );
+  }
+  return <DynamicIcon name={icon} className="w-3.5 h-3.5" />;
+}
 
 const toLocalInput = (iso: string | null): string => {
   if (!iso) return "";
@@ -75,7 +93,9 @@ export function PostComposerView() {
   const [eventEndAt, setEventEndAt] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [templateLayoutId, setTemplateLayoutId] = useState("");
+  const [templateLayoutIds, setTemplateLayoutIds] = useState<string[]>([]);
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
@@ -84,6 +104,32 @@ export function PostComposerView() {
     queryFn: categoryApi.list,
   });
   const categoryOptions = buildCategoryOptions(categoriesQuery.data, "vi");
+
+  // Existing tags (with icons) so the author can pick instead of typing slugs.
+  const tagsQuery = useQuery({ queryKey: ["TAGS"], queryFn: tagApi.list });
+  const allTags = tagsQuery.data ?? [];
+  const tagBySlug = (s: string) => allTags.find((tg) => tg.slug === s);
+  const toggleTag = (slug: string) =>
+    setTagSlugs((prev) =>
+      prev.includes(slug) ? prev.filter((x) => x !== slug) : [...prev, slug],
+    );
+  // Tag picker dropdown: 2 tabs (image-icon tags vs text tags) + search.
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [tagPickerTab, setTagPickerTab] = useState<"image" | "text">("image");
+  const [tagPickerSearch, setTagPickerSearch] = useState("");
+  const isImgIcon = (icon?: string | null): boolean =>
+    !!icon && /^(https?:|\/uploads)/.test(icon);
+  const pickerTags = allTags.filter((tg) => {
+    const inTab =
+      tagPickerTab === "image" ? isImgIcon(tg.icon) : !isImgIcon(tg.icon);
+    if (!inTab) return false;
+    const q = tagPickerSearch.trim().toLowerCase();
+    return (
+      !q ||
+      tg.name.toLowerCase().includes(q) ||
+      tg.slug.toLowerCase().includes(q)
+    );
+  });
 
   useEffect(() => {
     if (!categoryId && categoryOptions.length > 0) {
@@ -121,9 +167,11 @@ export function PostComposerView() {
     setScheduledAt(toLocalInput(data.scheduledAt));
   }, [postQuery.data]);
 
+  // Show ALL news (category-tagged) template layouts — not just the post's own
+  // category — since one post can be turned into several different layouts.
   const layoutsQuery = useQuery({
-    queryKey: ["PAGE_LAYOUTS", "ALL"],
-    queryFn: pageLayoutApi.list,
+    queryKey: ["POST_TEMPLATES", "all"],
+    queryFn: () => pageLayoutApi.postTemplates(),
   });
 
   const commitTagDraft = () => {
@@ -191,6 +239,9 @@ export function PostComposerView() {
       toast.success(postId ? "Đã cập nhật bài đăng" : "Đã lưu draft");
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+      // The backend re-injects the new content into every attached layout, so the
+      // single-layout editor cache must be refreshed too (else it looks unsynced).
+      queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUT"] });
       if (!postId) {
         setPostId(data.id);
         router.replace(`/admin/posts?id=${data.id}`);
@@ -203,15 +254,24 @@ export function PostComposerView() {
 
   const cloneMutation = useMutation({
     mutationKey: ["POSTS", postId ?? "NEW", "CLONE_INTO_LAYOUT"],
-    mutationFn: async (body: { templateLayoutId: string }) => {
+    mutationFn: async (body: { templateLayoutIds: string[] }) => {
       if (!postId) throw new Error("Hãy lưu draft trước khi tạo layout");
-      return postApi.cloneIntoLayout(postId, body);
+      // Inject the post into each chosen category template → one layout per
+      // category, each under its own slug prefix.
+      const results = [];
+      for (const templateLayoutId of body.templateLayoutIds) {
+        results.push(
+          await postApi.cloneIntoLayout(postId, { templateLayoutId }),
+        );
+      }
+      return results;
     },
-    onSuccess: (data) => {
-      toast.success("Đã tạo layout mới từ bài đăng");
+    onSuccess: (results) => {
+      toast.success(`Đã tạo ${results.length} layout từ bài đăng`);
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
-      router.push(`/admin/widgets-layout?edit=${data.id}`);
+      const first = results[0];
+      if (first) router.push(`/admin/widgets-layout?edit=${first.id}`);
     },
     onError: (err: { message?: string }) => {
       toast.error(err.message || "Không thể tạo layout");
@@ -253,8 +313,8 @@ export function PostComposerView() {
       toast.warn("Lưu draft trước khi tạo layout mới");
       return;
     }
-    if (!templateLayoutId) {
-      toast.warn("Chọn layout mẫu trước");
+    if (templateLayoutIds.length === 0) {
+      toast.warn("Chọn ít nhất một layout mẫu");
       return;
     }
     try {
@@ -262,7 +322,7 @@ export function PostComposerView() {
     } catch {
       return;
     }
-    cloneMutation.mutate({ templateLayoutId });
+    cloneMutation.mutate({ templateLayoutIds });
   };
 
   const previewCover = resolveMediaUrl(coverUrl);
@@ -295,23 +355,6 @@ export function PostComposerView() {
               bài có thể được gắn vào nhiều layout khác nhau.
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={saveDraft}
-            disabled={saveMutation.isPending}
-            data-tour="post-save"
-            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saveMutation.isPending
-              ? "Đang lưu…"
-              : canSchedule
-                ? "Lên lịch xuất bản"
-                : postId
-                  ? "Cập nhật bài đăng"
-                  : "Lưu draft"}
-          </button>
         </div>
       </header>
 
@@ -418,7 +461,7 @@ export function PostComposerView() {
             className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
             htmlFor="post-tags"
           >
-            Tags (Enter hoặc dấu phẩy để thêm)
+            Tags (chọn bên dưới, hoặc gõ tag mới rồi Enter)
           </label>
           <div className="flex flex-wrap items-center gap-1 w-full min-h-[38px] px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-200 bg-white dark:bg-[#1a2436]">
             {tagSlugs.map((tag) => (
@@ -426,7 +469,8 @@ export function PostComposerView() {
                 key={tag}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium"
               >
-                #{tag}
+                <TagIcon icon={tagBySlug(tag)?.icon} />
+                #{tagBySlug(tag)?.name ?? tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
@@ -444,9 +488,84 @@ export function PostComposerView() {
               onKeyDown={handleTagKeyDown}
               onBlur={commitTagDraft}
               className="flex-1 min-w-[120px] px-1 py-0.5 text-sm outline-none bg-transparent"
-              placeholder={tagSlugs.length ? "" : "hoc-vu, thong-bao, dang-ky"}
+              placeholder={tagSlugs.length ? "" : "tag mới…"}
             />
           </div>
+          {allTags.length > 0 && (
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onClick={() => setTagPickerOpen((v) => !v)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300"
+              >
+                + Chọn tag có sẵn
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+              {tagPickerOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Đóng"
+                    className="fixed inset-0 z-10 cursor-default"
+                    onClick={() => setTagPickerOpen(false)}
+                  />
+                  <div className="absolute left-0 z-20 mt-1 w-72 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
+                    <div className="flex border-b border-slate-100 dark:border-slate-800">
+                      {(["image", "text"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setTagPickerTab(tab)}
+                          className={`flex-1 px-3 py-2 text-xs font-medium ${
+                            tagPickerTab === tab
+                              ? "text-blue-600 border-b-2 border-blue-600"
+                              : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          {tab === "image" ? "Tag ảnh" : "Tag chữ"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2">
+                      <input
+                        value={tagPickerSearch}
+                        onChange={(e) => setTagPickerSearch(e.target.value)}
+                        placeholder="Tìm tag…"
+                        className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
+                      />
+                    </div>
+                    <div className="max-h-52 overflow-y-auto py-1">
+                      {pickerTags.length === 0 ? (
+                        <p className="px-3 py-2 text-xs text-slate-400">
+                          Không có tag.
+                        </p>
+                      ) : (
+                        pickerTags.map((tg) => {
+                          const active = tagSlugs.includes(tg.slug);
+                          return (
+                            <button
+                              key={tg.slug}
+                              type="button"
+                              onClick={() => toggleTag(tg.slug)}
+                              className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-[#202c44] ${
+                                active
+                                  ? "text-blue-600 font-medium"
+                                  : "text-slate-700 dark:text-slate-200"
+                              }`}
+                            >
+                              <TagIcon icon={tg.icon} />
+                              <span className="flex-1 truncate">{tg.name}</span>
+                              {active && <span className="text-blue-600">✓</span>}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </section>
 
         <section>
@@ -597,52 +716,119 @@ export function PostComposerView() {
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[240px]">
-              <label
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                htmlFor="template-layout"
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
+              Layout mẫu
+              <span className="ml-1 font-normal text-slate-400">
+                (tất cả layout tin tức — chọn được nhiều)
+              </span>
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setLayoutPickerOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a2436]"
               >
-                Layout mẫu
-              </label>
-              <AdminSelect
-                id="template-layout"
-                value={templateLayoutId}
-                onChange={setTemplateLayoutId}
-                placeholder="— Chọn layout mẫu —"
-                options={(layoutsQuery.data ?? []).map((layout) => ({
-                  value: layout.id,
-                  label: `${layout.name} · /${layout.slug} ${
-                    layout.isPublished ? "(published)" : "(draft)"
-                  }`,
-                }))}
-              />
+                <span
+                  className={
+                    templateLayoutIds.length
+                      ? "text-slate-700 dark:text-slate-200"
+                      : "text-slate-400"
+                  }
+                >
+                  {templateLayoutIds.length
+                    ? `Đã chọn ${templateLayoutIds.length} layout mẫu`
+                    : "Chọn layout mẫu…"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              </button>
+              {layoutPickerOpen ? (
+                <div className="relative z-20 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
+                    <div className="p-2">
+                      <input
+                        type="search"
+                        value={templateSearch}
+                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        placeholder="Tìm layout mẫu…"
+                        className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
+                      />
+                    </div>
+                    <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                      {(layoutsQuery.data ?? [])
+                        .filter((l) => {
+                          const q = templateSearch.trim().toLowerCase();
+                          return (
+                            !q ||
+                            l.name.toLowerCase().includes(q) ||
+                            l.slug.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((layout) => {
+                          const checked = templateLayoutIds.includes(layout.id);
+                          return (
+                            <label
+                              key={layout.id}
+                              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  setTemplateLayoutIds((prev) =>
+                                    checked
+                                      ? prev.filter((id) => id !== layout.id)
+                                      : [...prev, layout.id],
+                                  )
+                                }
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                                {layout.name}{" "}
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  /{layout.slug}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      {(layoutsQuery.data ?? []).length === 0 ? (
+                        <p className="px-3 py-4 text-xs text-center text-slate-400">
+                          Chưa có layout mẫu nào.
+                        </p>
+                      ) : null}
+                    </div>
+                </div>
+              ) : null}
             </div>
             <button
               type="button"
               onClick={createLayoutFromPost}
-              disabled={!postId || !templateLayoutId || cloneMutation.isPending}
+              disabled={
+                !postId ||
+                templateLayoutIds.length === 0 ||
+                cloneMutation.isPending
+              }
               className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
             >
               {cloneMutation.isPending
                 ? "Đang tạo layout…"
-                : "Tạo layout từ bài đăng"}
+                : `Tạo ${templateLayoutIds.length || ""} layout từ bài đăng`}
             </button>
           </div>
-          {templateLayoutId && slug ? (
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-              URL public sẽ là:{" "}
-              <span className="font-mono text-slate-700 dark:text-slate-200">
-                /
-                {[
-                  layoutsQuery.data?.find((l) => l.id === templateLayoutId)
-                    ?.slug,
-                  slug,
-                ]
-                  .filter(Boolean)
-                  .join("/")}
-              </span>
-            </p>
+          {templateLayoutIds.length > 0 && slug ? (
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 space-y-0.5">
+              URL public:
+              {templateLayoutIds.map((id) => {
+                const l = layoutsQuery.data?.find((x) => x.id === id);
+                return l ? (
+                  <div
+                    key={id}
+                    className="font-mono text-slate-700 dark:text-slate-200"
+                  >
+                    /{[l.slug, slug].filter(Boolean).join("/")}
+                  </div>
+                ) : null;
+              })}
+            </div>
           ) : null}
           {!postId ? (
             <p className="text-[11px] text-amber-600 mt-2">
@@ -650,6 +836,25 @@ export function PostComposerView() {
             </p>
           ) : null}
         </section>
+      </div>
+
+      {/* Save/publish action moved to a sticky bottom bar (was in the top header). */}
+      <div className="sticky bottom-0 z-10 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#1a2436]/95 backdrop-blur px-6 py-3 flex justify-end">
+        <button
+          type="button"
+          onClick={saveDraft}
+          disabled={saveMutation.isPending}
+          data-tour="post-save"
+          className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saveMutation.isPending
+            ? "Đang lưu…"
+            : canSchedule
+              ? "Lên lịch xuất bản"
+              : postId
+                ? "Cập nhật bài đăng"
+                : "Lưu draft"}
+        </button>
       </div>
 
       {pickerOpen ? (

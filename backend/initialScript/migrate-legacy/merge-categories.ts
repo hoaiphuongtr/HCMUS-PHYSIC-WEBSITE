@@ -10,13 +10,10 @@ const educational = 'cat_default_educational';
 const scientific = 'cat_default_scientific';
 const recruitment = 'cat_default_recruitment';
 const event = 'cat_default_event';
-const scholarship = 'cat_default_scholarship';
 
+// Học bổng là một trang riêng (/hoc-bong), không phải danh mục tin tức:
+// các bài liên quan học bổng rơi vào danh mục "Tin học vụ" (educational) qua fallback.
 const KEYWORDS: Array<{ patterns: RegExp[]; target: string }> = [
-  {
-    target: scholarship,
-    patterns: [/hoc[\s-]*bong/i, /scholarship/i],
-  },
   {
     target: event,
     patterns: [
@@ -73,7 +70,6 @@ const DEFAULT_IDS = new Set([
   scientific,
   recruitment,
   event,
-  scholarship,
 ]);
 
 const classify = (slug: string, viName: string): string => {

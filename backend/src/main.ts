@@ -10,6 +10,10 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Behind the sandbox reverse-proxy: trust the first proxy hop so req.ip
+  // reflects the real client IP (X-Forwarded-For) — required for per-client
+  // rate limiting to work instead of bucketing everyone under the proxy IP.
+  app.set('trust proxy', 1);
 
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalPipes(new ZodValidationPipe());

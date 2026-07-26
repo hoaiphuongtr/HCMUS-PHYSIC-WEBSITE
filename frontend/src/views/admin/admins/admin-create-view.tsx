@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ChevronLeftIcon } from "@/components/admin/icons";
 import { authApi, departmentApi, mediaApi, resolveMediaUrl } from "@/lib/api";
+import { FACULTY_DEPT_ID, isFacultyWide } from "@/lib/department";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 
 type FormState = {
@@ -71,7 +72,7 @@ export function AdminCreateView() {
   });
 
   useEffect(() => {
-    if (profile && profile.role !== "SUPER_ADMIN") {
+    if (profile && !isFacultyWide(profile.role, profile.departmentId)) {
       router.replace("/admin");
     }
   }, [profile, router]);
@@ -79,7 +80,7 @@ export function AdminCreateView() {
   const { data: departments = [] } = useQuery({
     queryKey: ["DEPARTMENTS"],
     queryFn: () => departmentApi.list(),
-    enabled: profile?.role === "SUPER_ADMIN",
+    enabled: isFacultyWide(profile?.role, profile?.departmentId),
   });
 
   const createAdminMut = useMutation({
@@ -103,6 +104,15 @@ export function AdminCreateView() {
     }
     if (form.password.length < 6) {
       toast.error("Mật khẩu phải tối thiểu 6 ký tự");
+      return;
+    }
+    // Publishing scope = department. Require one so an admin is never created
+    // dept-less (which would fall back to faculty-wide posting rights).
+    const hasDept = createNewDept
+      ? !!form.newDepartmentName.trim()
+      : !!form.departmentId;
+    if (!hasDept) {
+      toast.error("Chọn bộ môn (phạm vi đăng bài) cho admin");
       return;
     }
     setSubmitting(true);
@@ -148,10 +158,30 @@ export function AdminCreateView() {
             <ChevronLeftIcon className="w-3.5 h-3.5" />
             Quay lại
           </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/admin/admins"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              form="create-admin-form"
+              disabled={submitting}
+              className="px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+            >
+              {submitting ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
         </div>
       </header>
 
-      <form onSubmit={submit} className="max-w-3xl mx-auto px-6 py-8">
+      <form
+        id="create-admin-form"
+        onSubmit={submit}
+        className="max-w-3xl mx-auto px-6 py-8"
+      >
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           Create Admin
         </h1>
@@ -269,8 +299,12 @@ export function AdminCreateView() {
               htmlFor="departmentSelect"
               className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Department
+              Bộ môn (phạm vi đăng bài) <span className="text-red-500">*</span>
             </label>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+              Admin chỉ đăng bài trong phạm vi bộ môn này; bài không lọt lên
+              trang chủ của Khoa.
+            </p>
             {createNewDept ? (
               <div className="flex gap-2">
                 <input
@@ -301,12 +335,14 @@ export function AdminCreateView() {
                   onChange={(e) => setField("departmentId", e.target.value)}
                   className="flex-1 px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100"
                 >
-                  <option value="">— Chọn department —</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
+                  <option value="">— Chọn bộ môn —</option>
+                  {departments
+                    .filter((d) => d.id !== FACULTY_DEPT_ID)
+                    .map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
                 </select>
                 <button
                   type="button"
@@ -320,21 +356,6 @@ export function AdminCreateView() {
           </section>
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <Link
-            href="/admin/admins"
-            className="px-4 py-2 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-4 py-2 text-sm font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-          >
-            {submitting ? "Saving…" : "Save Changes"}
-          </button>
-        </div>
       </form>
 
       {showMediaPicker && (

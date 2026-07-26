@@ -18,7 +18,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 COPY frontend-public/package.json frontend-public/
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/ ./
@@ -39,7 +39,10 @@ ENV INTERNAL_API_URL=$INTERNAL_API_URL
 # Origin the image optimizer fetches media from at runtime (baked into the bundle,
 # never requested by browsers). On the sandbox set http://backend:3001 — the public
 # container cannot hairpin to the host's public IP.
-ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
+# Default to the in-compose backend host so the in-container image optimizer always
+# has a reachable fetch origin (it cannot hairpin to the host's public IP). Without a
+# default, an un-passed build arg bakes an empty value and every optimized image 504s.
+ARG NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001
 ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 # 4GB box: cap the Node heap so the build doesn't OOM (needs swap too — see deploy.sh).

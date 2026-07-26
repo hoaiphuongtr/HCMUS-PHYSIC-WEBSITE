@@ -12,6 +12,8 @@ COPY package.json ./
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
+# The backend build context is ./backend, which has no pnpm-lock.yaml (the lockfile
+# lives at the monorepo root and isn't reachable here) — install from package.json.
 RUN pnpm install --prod=false --no-frozen-lockfile
 
 FROM base AS builder

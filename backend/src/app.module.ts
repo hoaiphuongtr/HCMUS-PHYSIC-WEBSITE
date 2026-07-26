@@ -14,15 +14,22 @@ import { MediaModule } from './media/media.module';
 import { PostModule } from './post/post.module';
 import { AdminModule } from './admin/admin.module';
 import { CategoryModule } from './category/category.module';
+import { TagModule } from './tag/tag.module';
+import { NotificationModule } from './notification/notification.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ThrottlerModule } from '@nestjs/throttler';
 import KeyvRedis from '@keyv/redis';
 import envConfig from './shared/config/config';
 
 @Module({
   imports: [
+    // Rate limiting available app-wide; applied selectively (auth routes) via
+    // @UseGuards(ThrottlerGuard) — NOT global, to avoid throttling the public
+    // site's server-side API calls which all originate from one container IP.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: () => ({
@@ -46,6 +53,8 @@ import envConfig from './shared/config/config';
     PostModule,
     AdminModule,
     CategoryModule,
+    TagModule,
+    NotificationModule,
     ChatbotModule,
   ],
   controllers: [AppController],

@@ -1,12 +1,7 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import {
-  Calendar,
-  CalendarPlus,
-  Image as ImageIcon,
-  Search,
-} from "lucide-react";
+import { CalendarPlus, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +33,69 @@ const formatDate = (iso: string | null, locale: string): string => {
     d.getMonth() + 1
   } năm ${d.getFullYear()}`;
 };
+
+// Faculty seal shown when a post has no cover, or its cover image fails to
+// load (many migrated legacy covers point at files that 404).
+const DEFAULT_COVER = "/default-cover.png";
+
+function CoverImg({
+  src,
+  alt,
+  className,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const url = src && !failed ? resolveMediaUrl(src) : DEFAULT_COVER;
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        if (!failed) setFailed(true);
+      }}
+    />
+  );
+}
+
+// Tag icon badges (e.g. SDG images) shown under a post card / title. Only tags
+// whose icon is an image (URL or /uploads path) are rendered.
+function TagIcons({
+  tags,
+  size,
+}: {
+  tags?: { slug: string; name: string; icon: string | null }[];
+  size: number;
+}) {
+  const imgTags = (tags ?? []).filter(
+    (tg) => tg.icon && /^(https?:|\/uploads)/.test(tg.icon),
+  );
+  if (imgTags.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+      {imgTags.map((tg) => (
+        // biome-ignore lint/performance/noImgElement: tiny fixed-size badge
+        <img
+          key={tg.slug}
+          src={resolveMediaUrl(tg.icon as string)}
+          alt={tg.name}
+          title={tg.name}
+          width={size}
+          height={size}
+          style={{ width: size, height: size }}
+          className="object-contain"
+          loading="lazy"
+          decoding="async"
+        />
+      ))}
+    </div>
+  );
+}
 
 const formatGCalDate = (iso: string): string =>
   new Date(iso).toISOString().replace(/[-:]|\.\d{3}/g, "");
@@ -74,19 +132,11 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
   const cardInner = (
     <article className="group relative h-full flex flex-col bg-white dark:bg-[#1a2436] cursor-pointer">
       <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
-        {post.coverUrl ? (
-          <img
-            src={resolveMediaUrl(post.coverUrl)}
-            alt={post.coverAlt || title}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-            <ImageIcon className="w-9 h-9 text-slate-400 dark:text-slate-500" />
-          </div>
-        )}
+        <CoverImg
+          src={post.coverUrl}
+          alt={post.coverAlt || title}
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+        />
       </div>
       <div className="pt-3 pb-1 flex flex-col flex-1">
         <h3 className="text-sm md:text-[15px] font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
@@ -97,6 +147,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
             {dateText}
           </p>
         )}
+        <TagIcons tags={post.tags} size={30} />
       </div>
     </article>
   );
@@ -140,36 +191,20 @@ function EventCard({
       {href ? (
         <Link href={href} className="block">
           <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
-            {post.coverUrl ? (
-              <img
-                src={resolveMediaUrl(post.coverUrl)}
-                alt={post.coverAlt || title}
-                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-                <Calendar className="w-9 h-9 text-slate-400 dark:text-slate-500" />
-              </div>
-            )}
+            <CoverImg
+              src={post.coverUrl}
+              alt={post.coverAlt || title}
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+            />
           </div>
         </Link>
       ) : (
         <div className="relative w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 dark:bg-[#1a2436]">
-          {post.coverUrl ? (
-            <img
-              src={resolveMediaUrl(post.coverUrl)}
-              alt={post.coverAlt || title}
-              className="w-full h-full object-contain"
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300">
-              <Calendar className="w-9 h-9 text-slate-400 dark:text-slate-500" />
-            </div>
-          )}
+          <CoverImg
+            src={post.coverUrl}
+            alt={post.coverAlt || title}
+            className="w-full h-full object-contain"
+          />
         </div>
       )}
       <div className="pt-3 pb-1 flex flex-col flex-1 relative pr-12">
@@ -316,8 +351,8 @@ function LatestNewsAutoRender({
       {data.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {locale === "en"
-            ? "No news yet. Snapshot will populate after publishing a post."
-            : "Chưa có tin tức nào. Snapshot sẽ tự cập nhật khi có bài đăng được publish."}
+            ? "No news yet."
+            : "Chưa có tin tức nào."}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
@@ -340,6 +375,7 @@ export const UpcomingEventsAuto: ComponentConfig<{
   accentColor: string;
   limit: number;
   posts: PostPublicCard[];
+  emptyText: LocalizedString;
 }> = {
   label: "Upcoming Events (auto)",
   defaultProps: {
@@ -347,6 +383,10 @@ export const UpcomingEventsAuto: ComponentConfig<{
     accentColor: "#059669",
     limit: 4,
     posts: [],
+    emptyText: {
+      vi: "Hiện chưa có sự kiện sắp tới.",
+      en: "No upcoming events at the moment.",
+    },
   },
   fields: {
     title: localizedTextField("Section title"),
@@ -359,13 +399,15 @@ export const UpcomingEventsAuto: ComponentConfig<{
       type: "text",
       label: "Posts (auto-synced — do not edit)",
     } as any,
+    emptyText: localizedTextField("Empty-state message (no events)"),
   },
-  render: ({ title, accentColor, limit, posts }) => (
+  render: ({ title, accentColor, limit, posts, emptyText }) => (
     <UpcomingEventsAutoRender
       title={title}
       accentColor={accentColor}
       limit={limit}
       posts={posts || []}
+      emptyText={emptyText}
     />
   ),
 };
@@ -375,11 +417,13 @@ function UpcomingEventsAutoRender({
   accentColor,
   limit,
   posts,
+  emptyText,
 }: {
   title: LocalizedString;
   accentColor: string;
   limit: number;
   posts: PostPublicCard[];
+  emptyText: LocalizedString;
 }) {
   const { locale, prefix } = useLocalePrefix();
   const safeLimit = Math.max(1, Math.min(limit || 4, 12));
@@ -393,9 +437,10 @@ function UpcomingEventsAutoRender({
       />
       {data.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {locale === "en"
-            ? "No upcoming events. Snapshot will populate after publishing an event."
-            : "Hiện chưa có sự kiện sắp tới. Snapshot sẽ tự cập nhật khi publish sự kiện."}
+          {t(emptyText, locale) ||
+            (locale === "en"
+              ? "No upcoming events at the moment."
+              : "Hiện chưa có sự kiện sắp tới.")}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">

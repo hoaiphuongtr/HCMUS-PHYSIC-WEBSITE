@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
@@ -58,13 +59,28 @@ export class PageLayoutController {
     return this.pageLayoutService.findAllPublished();
   }
 
+  @Get('post-templates')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  findPostTemplates(
+    @Query('category') category: string | undefined,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.findPostTemplates(category, userId, roleName);
+  }
+
   @Get()
   @Roles(RoleName.Admin, RoleName.SuperAdmin)
   findAll(
     @ActiveUser('userId') userId: string,
     @ActiveUser('roleName') roleName: string,
+    @Query('deleted') deleted?: string,
   ) {
-    return this.pageLayoutService.findAllForAdmin(userId, roleName);
+    return this.pageLayoutService.findAllForAdmin(
+      userId,
+      roleName,
+      deleted === 'true' || deleted === '1',
+    );
   }
 
   @Get('slug/*slug')
@@ -109,6 +125,16 @@ export class PageLayoutController {
     @ActiveUser('roleName') roleName: string,
   ) {
     return this.pageLayoutService.delete(id, userId, roleName);
+  }
+
+  @Post(':id/restore')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  restore(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+  ) {
+    return this.pageLayoutService.restore(id, userId, roleName);
   }
 
   @Post(':id/duplicate')

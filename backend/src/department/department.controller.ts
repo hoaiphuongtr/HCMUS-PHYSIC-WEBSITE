@@ -5,6 +5,7 @@ import {
   CreateDepartmentBodyDTO,
   DepartmentResDTO,
   UpdateDepartmentBodyDTO,
+  MergeDepartmentBodyDTO,
 } from './department.dto';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -39,5 +40,12 @@ export class DepartmentController {
   @ZodSerializerDto(DepartmentResDTO)
   update(@Param('id') id: string, @Body() body: UpdateDepartmentBodyDTO) {
     return this.departmentService.update(id, body);
+  }
+
+  @Post(':id/merge')
+  @Roles(RoleName.SuperAdmin)
+  @ZodSerializerDto(DepartmentResDTO)
+  merge(@Param('id') id: string, @Body() body: MergeDepartmentBodyDTO) {
+    return this.departmentService.merge(id, body.targetId);
   }
 }

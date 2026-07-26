@@ -13,6 +13,9 @@ export type CreatePageLayoutBodyType = z.infer<
 export const UpdatePageLayoutBodySchema =
   CreatePageLayoutBodySchema.partial().extend({
     puckData: z.any().optional(),
+    // Tag a layout as a category's "post template" (or null to untag). Drives
+    // the scoped composer picker.
+    categoryId: z.string().nullable().optional(),
   });
 
 export const SavePuckDataBodySchema = z.object({

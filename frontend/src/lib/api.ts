@@ -18,6 +18,15 @@ export async function apiFetch<T>(
       window.location.href = "/login";
       throw new Error("Session expired");
     }
+    if (res.status === 429) {
+      // Rate limited (e.g. too many login attempts) — friendly message.
+      const retry = Number(res.headers.get("Retry-After"));
+      throw new Error(
+        retry > 0
+          ? `Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ${retry} giây.`
+          : "Bạn thao tác quá nhiều lần. Vui lòng đợi một lát rồi thử lại.",
+      );
+    }
     const error = await res.json().catch(() => ({ message: res.statusText }));
     throw error;
   }
@@ -51,6 +60,8 @@ export type UserProfile = {
   departmentId: string | null;
   department: { id: string; name: string } | null;
   tourCompletedAt: string | null;
+  starredLayoutIds: string[];
+  starredWidgetIds: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -64,6 +75,12 @@ export const authApi = {
       method: "PATCH",
       body: JSON.stringify({ tourCompletedAt: new Date().toISOString() }),
     });
+  },
+  setStarred(body: { layoutIds?: string[]; widgetIds?: string[] }) {
+    return authFetch<{ starredLayoutIds: string[]; starredWidgetIds: string[] }>(
+      "/auth/starred",
+      { method: "PUT", body: JSON.stringify(body) },
+    );
   },
   login(body: { email: string; password: string }) {
     return apiFetch<{ accessToken: string; refreshToken: string }>(
@@ -201,6 +218,21 @@ export const departmentApi = {
       body: JSON.stringify(body),
     });
   },
+  update(
+    id: string,
+    body: { name?: string; slug?: string; description?: string },
+  ) {
+    return authFetch<Department>(`/departments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+  merge(id: string, targetId: string) {
+    return authFetch<Department>(`/departments/${id}/merge`, {
+      method: "POST",
+      body: JSON.stringify({ targetId }),
+    });
+  },
 };
 
 export type WidgetType = {
@@ -208,6 +240,7 @@ export type WidgetType = {
   type: string;
   name: string;
   description: string | null;
+  usage: string | null;
   category: string;
   icon: string | null;
   configSchema: Record<string, any>;
@@ -246,8 +279,10 @@ export type PageLayout = {
   scheduledAt: string | null;
   createdBy: string;
   departmentId: string | null;
+  categoryId?: string | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
   widgets?: WidgetInstance[];
 };
 
@@ -275,9 +310,24 @@ export const widgetApi = {
   },
 };
 
+export type PostTemplateLayout = PageLayout & {
+  categoryId: string | null;
+  category?: { slug: string; name: { vi: string; en?: string } } | null;
+};
+
 export const pageLayoutApi = {
-  list() {
-    return authFetch<PageLayout[]>("/page-layouts");
+  list(deleted?: boolean) {
+    return authFetch<PageLayout[]>(
+      `/page-layouts${deleted ? "?deleted=true" : ""}`,
+    );
+  },
+  // Category-tagged "post template" layouts only — scopes the composer picker
+  // instead of loading all ~1600 layouts. Optionally narrowed to one category.
+  postTemplates(categorySlug?: string) {
+    const qs = categorySlug
+      ? `?category=${encodeURIComponent(categorySlug)}`
+      : "";
+    return authFetch<PostTemplateLayout[]>(`/page-layouts/post-templates${qs}`);
   },
   getById(id: string) {
     return authFetch<PageLayout>(`/page-layouts/${id}`);
@@ -300,6 +350,11 @@ export const pageLayoutApi = {
   remove(id: string) {
     return authFetch<{ message: string }>(`/page-layouts/${id}`, {
       method: "DELETE",
+    });
+  },
+  restore(id: string) {
+    return authFetch<{ message: string }>(`/page-layouts/${id}/restore`, {
+      method: "POST",
     });
   },
   publish(id: string) {
@@ -641,6 +696,8 @@ export type PostRecord = {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
+  trashDaysLeft?: number | null;
   layouts: PostLayoutRef[];
 };
 
@@ -675,6 +732,7 @@ export type PostPublicCard = {
   eventLocation: LocalizedText | string | null;
   publishedAt: string;
   layoutSlug: string | null;
+  tags?: { slug: string; name: string; icon: string | null }[];
 };
 
 export type PostPagedResponse = {
@@ -720,8 +778,12 @@ export const postApi = {
     category?: string;
     status?: string;
     search?: string;
+    deleted?: boolean;
   }) => {
-    return authFetch<PostListPage>(`/posts${buildQuery(params)}`);
+    const { deleted, ...rest } = params;
+    return authFetch<PostListPage>(
+      `/posts${buildQuery({ ...rest, deleted: deleted ? "true" : undefined })}`,
+    );
   },
   getById: (id: string) => authFetch<PostRecord>(`/posts/${id}`),
   create: (body: UpsertPostBody) =>
@@ -736,6 +798,8 @@ export const postApi = {
     }),
   remove: (id: string) =>
     authFetch<{ ok: boolean }>(`/posts/${id}`, { method: "DELETE" }),
+  restore: (id: string) =>
+    authFetch<{ ok: boolean }>(`/posts/${id}/restore`, { method: "POST" }),
   cloneIntoLayout: (
     id: string,
     body: {
@@ -773,4 +837,60 @@ export const categoryApi = {
     }),
   remove: (id: string) =>
     authFetch<{ ok: boolean }>(`/categories/${id}`, { method: "DELETE" }),
+};
+
+export type Tag = {
+  id: string;
+  name: string;
+  slug: string;
+  // Material Symbol name, image URL (/uploads or http), or null (text tag).
+  icon: string | null;
+  postCount?: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const tagApi = {
+  list: () => apiFetch<Tag[]>(`/tags`),
+  create: (body: { name: string; slug?: string; icon?: string | null }) =>
+    authFetch<Tag>(`/tags`, { method: "POST", body: JSON.stringify(body) }),
+  update: (
+    id: string,
+    body: { name?: string; slug?: string; icon?: string | null },
+  ) =>
+    authFetch<Tag>(`/tags/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  merge: (id: string, targetId: string) =>
+    authFetch<Tag>(`/tags/${id}/merge`, {
+      method: "PATCH",
+      body: JSON.stringify({ targetId }),
+    }),
+  remove: (id: string) =>
+    authFetch<{ ok: boolean }>(`/tags/${id}`, { method: "DELETE" }),
+};
+
+export type NotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export const notificationApi = {
+  list: (limit = 30) =>
+    authFetch<{ items: NotificationItem[]; unread: number }>(
+      `/notifications?limit=${limit}`,
+    ),
+  unreadCount: () => authFetch<{ unread: number }>(`/notifications/unread-count`),
+  markRead: (id: string) =>
+    authFetch<{ ok: boolean }>(`/notifications/${id}/read`, {
+      method: "PATCH",
+    }),
+  markAllRead: () =>
+    authFetch<{ ok: boolean }>(`/notifications/read-all`, { method: "PATCH" }),
 };

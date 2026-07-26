@@ -80,6 +80,14 @@ const POST_TEMPLATE_PUCK = {
             },
           },
           {
+            type: 'PostTagList',
+            props: {
+              id: 'post-tpl-tags',
+              tags: [],
+              defaultTags: [],
+            },
+          },
+          {
             type: 'PostCoverImage',
             props: {
               id: 'post-tpl-cover',
@@ -111,18 +119,6 @@ const POST_TEMPLATE_PUCK = {
               defaultStart: '',
               defaultEnd: '',
               defaultLocation: { vi: '', en: '' },
-            },
-          },
-          {
-            type: 'Spacer',
-            props: { id: 'post-tpl-spacer-tags', height: 'sm' },
-          },
-          {
-            type: 'PostTagList',
-            props: {
-              id: 'post-tpl-tags',
-              tags: [],
-              defaultTags: [],
             },
           },
         ],

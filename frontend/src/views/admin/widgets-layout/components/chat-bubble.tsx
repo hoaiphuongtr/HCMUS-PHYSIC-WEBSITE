@@ -7,6 +7,7 @@ import { DynamicIcon } from "@/components/admin/icons";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
+import { localizedSummary } from "../fields/item-summary";
 import { localizedTextField } from "../fields/localized-text-field";
 
 type ChatChannel = {
@@ -162,6 +163,8 @@ export const ChatBubble: ComponentConfig<{
     channels: {
       type: "array",
       label: "Channels",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.label, item.url || `Kênh ${(i ?? 0) + 1}`),
       arrayFields: {
         icon: { type: "text", label: "Icon (Material Symbol name)" },
         label: localizedTextField("Label"),

@@ -13,6 +13,7 @@ import {
   ForgotPasswordBodyType,
   UpdateProfileBodyType,
   ChangePasswordBodyType,
+  SetStarredBodyType,
 } from './auth.model';
 import { RoleName } from '../shared/constants/role.constants';
 import { VerificationMethod } from '../shared/constants/auth.constants';
@@ -48,7 +49,18 @@ export class AuthService {
     const user = await this.authRepository.findUniqueUserById(userId);
     if (!user) throw InvalidEmailException;
     this.authRepository.touchLastLogin(userId).catch(() => undefined);
-    return user;
+    return {
+      ...user,
+      starredLayoutIds: user.preference?.starredLayoutIds ?? [],
+      starredWidgetIds: user.preference?.starredWidgetIds ?? [],
+    };
+  }
+
+  async setStarred(userId: string, body: SetStarredBodyType) {
+    return this.authRepository.setStarred(userId, {
+      starredLayoutIds: body.layoutIds,
+      starredWidgetIds: body.widgetIds,
+    });
   }
 
   async login(body: LoginBodyType) {

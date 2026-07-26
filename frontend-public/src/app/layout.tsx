@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JsonLd, organizationSchema, websiteSchema } from "@/components/JsonLd";
-import ChatWidget from "@/components/ChatWidget";
+// Icon chatbot tạm ẩn theo yêu cầu (bật lại: bỏ comment import + <ChatWidget/> bên dưới).
+// import ChatWidget from "@/components/ChatWidget";
 import { defaultMetadata, facultyOrganization } from "@/lib/seo";
 import "./globals.css";
 
@@ -32,7 +33,7 @@ export default function RootLayout({
         className="antialiased"
       >
         {children}
-        <ChatWidget />
+        {/* <ChatWidget /> */}
       </body>
     </html>
   );

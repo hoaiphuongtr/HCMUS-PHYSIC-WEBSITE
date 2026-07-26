@@ -18,7 +18,35 @@ export class AuthRepository {
   findUniqueUserById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { department: { select: { id: true, name: true } } },
+      include: {
+        department: { select: { id: true, name: true } },
+        preference: {
+          select: { starredLayoutIds: true, starredWidgetIds: true },
+        },
+      },
+    });
+  }
+
+  async setStarred(
+    userId: string,
+    data: { starredLayoutIds?: string[]; starredWidgetIds?: string[] },
+  ) {
+    return this.prisma.userPreference.upsert({
+      where: { userId },
+      create: {
+        userId,
+        starredLayoutIds: data.starredLayoutIds ?? [],
+        starredWidgetIds: data.starredWidgetIds ?? [],
+      },
+      update: {
+        ...(data.starredLayoutIds !== undefined
+          ? { starredLayoutIds: data.starredLayoutIds }
+          : {}),
+        ...(data.starredWidgetIds !== undefined
+          ? { starredWidgetIds: data.starredWidgetIds }
+          : {}),
+      },
+      select: { starredLayoutIds: true, starredWidgetIds: true },
     });
   }
 

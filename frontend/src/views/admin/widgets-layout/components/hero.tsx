@@ -7,6 +7,12 @@ import { useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
+import { localizedSummary } from "../fields/item-summary";
+import {
+  resolveTextStyle,
+  type TextStyle,
+  textStyleField,
+} from "../fields/text-style-field";
 import { localizedTextField } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
 import { resolveOptimizerSrc } from "./media-src";
@@ -30,12 +36,15 @@ type HeroSlide = {
   ctaUrl: string;
 };
 
+// Mobile taglines must stay on one short line inside the viewport (the tagline is
+// uppercase + wide letter-spacing, so it overflows fast). Keep the phone sizes small
+// and let them scale up from md: to the intended desktop size.
 const TAGLINE_SIZES: Record<string, string> = {
-  xs: "text-xs md:text-sm",
-  sm: "text-sm md:text-base",
-  md: "text-base md:text-lg",
-  lg: "text-lg md:text-xl",
-  xl: "text-xl md:text-2xl",
+  xs: "text-[9px] md:text-sm",
+  sm: "text-[9px] md:text-base",
+  md: "text-[10px] md:text-lg",
+  lg: "text-[11px] md:text-xl",
+  xl: "text-xs md:text-2xl",
 };
 
 const FONT_FAMILIES: Record<string, string> = {
@@ -45,6 +54,22 @@ const FONT_FAMILIES: Record<string, string> = {
   mono: "font-mono",
   heading: "font-heading",
   "heading-italic": "font-heading italic",
+};
+
+// Khoảng cách phụ đề ↔ tiêu đề (thêm margin-top). "default" giữ nguyên như cũ.
+const SUBTITLE_GAP: Record<string, string> = {
+  default: "",
+  sm: "mt-2",
+  md: "mt-5",
+  lg: "mt-10",
+  xl: "mt-16",
+};
+// Bề rộng tối đa của phụ đề — càng rộng chữ càng dàn trải.
+const SUBTITLE_WIDTH: Record<string, string> = {
+  narrow: "max-w-2xl",
+  normal: "max-w-3xl",
+  wide: "max-w-5xl",
+  full: "max-w-none",
 };
 
 function HeroFullScreenClient({
@@ -58,6 +83,8 @@ function HeroFullScreenClient({
   overlayOpacity,
   height,
   showScrollIndicator,
+  subtitleGap,
+  subtitleWidth,
   isEditing,
 }: {
   slides: HeroSlide[];
@@ -70,6 +97,8 @@ function HeroFullScreenClient({
   overlayOpacity: string;
   height: string;
   showScrollIndicator: boolean;
+  subtitleGap?: string;
+  subtitleWidth?: string;
   isEditing: boolean;
 }) {
   const { locale } = useLocale();
@@ -101,6 +130,7 @@ function HeroFullScreenClient({
     lg: "min-h-[75vh]",
     xl: "min-h-[85vh]",
     full: "min-h-screen",
+    "16:9": "aspect-[16/9]",
   };
 
   const opacities: Record<string, string> = {
@@ -184,6 +214,8 @@ function HeroFullScreenClient({
           taglineFont={taglineFont}
           taglineClassName={taglineClassName}
           taglineStyle={taglineStyle}
+          subtitleGap={subtitleGap}
+          subtitleWidth={subtitleWidth}
           current={current}
           isEditing={isEditing}
           locale={locale}
@@ -225,6 +257,8 @@ function HeroFullScreenText({
   taglineFont,
   taglineClassName,
   taglineStyle,
+  subtitleGap,
+  subtitleWidth,
   current,
   isEditing,
   locale,
@@ -236,6 +270,8 @@ function HeroFullScreenText({
   taglineFont: string;
   taglineClassName?: string;
   taglineStyle?: Record<string, string | number>;
+  subtitleGap?: string;
+  subtitleWidth?: string;
   current: number;
   isEditing: boolean;
   locale: string;
@@ -249,7 +285,7 @@ function HeroFullScreenText({
     <>
       {taglineText && (
         <p
-          className={`inline-block uppercase tracking-[0.3em] font-bold px-5 py-2 rounded-full backdrop-blur-sm border border-white/30 animate-[fadeInUp_1s_ease_0.6s_both] ${TAGLINE_SIZES[taglineSize] || TAGLINE_SIZES.sm} ${FONT_FAMILIES[taglineFont] || ""} ${taglineClassName || ""}`}
+          className={`inline-block max-w-[calc(100vw-2rem)] uppercase tracking-[0.08em] md:tracking-[0.3em] font-bold px-3 py-1.5 md:px-5 md:py-2 rounded-full backdrop-blur-sm border border-white/30 animate-[fadeInUp_1s_ease_0.6s_both] ${TAGLINE_SIZES[taglineSize] || TAGLINE_SIZES.sm} ${FONT_FAMILIES[taglineFont] || ""} ${taglineClassName || ""}`}
           style={{
             color: taglineColor || "#ffffff",
             backgroundColor: "rgba(0, 0, 0, 0.25)",
@@ -263,7 +299,7 @@ function HeroFullScreenText({
       {headline && (
         <h1
           key={`h-${current}`}
-          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-none whitespace-nowrap font-heading italic"
+          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-full break-words md:whitespace-nowrap font-heading italic"
           style={{
             fontSize: "clamp(2rem, 7vw, 6.5rem)",
             textShadow: "0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
@@ -276,7 +312,7 @@ function HeroFullScreenText({
       {subtitle && (
         <p
           key={`s-${current}`}
-          className="text-xl md:text-2xl font-semibold text-white mb-6 animate-[fadeInUp_0.8s_ease_0.2s_both] max-w-2xl"
+          className={`text-base sm:text-lg md:text-2xl font-semibold text-white mb-6 break-words px-2 animate-[fadeInUp_0.8s_ease_0.2s_both] ${SUBTITLE_WIDTH[subtitleWidth || "narrow"] || "max-w-2xl"} ${SUBTITLE_GAP[subtitleGap || "default"] || ""}`}
           style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
         >
           {subtitle}
@@ -323,6 +359,8 @@ export const HeroFullScreen: ComponentConfig<{
   overlayOpacity: string;
   height: string;
   showScrollIndicator: boolean;
+  subtitleGap: string;
+  subtitleWidth: string;
 }> = {
   label: "Hero Full Screen",
   defaultProps: {
@@ -353,11 +391,15 @@ export const HeroFullScreen: ComponentConfig<{
     overlayOpacity: "medium",
     height: "full",
     showScrollIndicator: true,
+    subtitleGap: "default",
+    subtitleWidth: "narrow",
   },
   fields: {
     slides: {
       type: "array",
       label: "Slides",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.headline, item.alt || `Slide ${(i ?? 0) + 1}`),
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
@@ -400,6 +442,7 @@ export const HeroFullScreen: ComponentConfig<{
         { label: "Large (75vh)", value: "lg" },
         { label: "XL (85vh)", value: "xl" },
         { label: "Full Screen", value: "full" },
+        { label: "16:9 (khung hình)", value: "16:9" },
       ],
     },
     showScrollIndicator: {
@@ -408,6 +451,27 @@ export const HeroFullScreen: ComponentConfig<{
       options: [
         { label: "Yes", value: true },
         { label: "No", value: false },
+      ],
+    },
+    subtitleGap: {
+      type: "select",
+      label: "Phụ đề — khoảng cách với tiêu đề",
+      options: [
+        { label: "Mặc định (sát)", value: "default" },
+        { label: "Nhỏ", value: "sm" },
+        { label: "Vừa", value: "md" },
+        { label: "Lớn", value: "lg" },
+        { label: "Rất lớn", value: "xl" },
+      ],
+    },
+    subtitleWidth: {
+      type: "select",
+      label: "Phụ đề — bề rộng (dàn trải chữ)",
+      options: [
+        { label: "Hẹp", value: "narrow" },
+        { label: "Vừa", value: "normal" },
+        { label: "Rộng", value: "wide" },
+        { label: "Toàn bộ", value: "full" },
       ],
     },
   },
@@ -435,6 +499,8 @@ export const HeroFullScreen: ComponentConfig<{
       overlayOpacity={overlayOpacity}
       height={height}
       showScrollIndicator={showScrollIndicator}
+      subtitleGap={rest.subtitleGap}
+      subtitleWidth={rest.subtitleWidth}
       isEditing={!!puck?.isEditing}
     />
   ),
@@ -445,9 +511,11 @@ type StatItem = { value: number; suffix: string; label: LocalizedString };
 function StatsCounterClient({
   stats,
   isEditing,
+  textStyle,
 }: {
   stats: StatItem[];
   isEditing: boolean;
+  textStyle?: TextStyle;
 }) {
   const { locale } = useLocale();
   const [visible, setVisible] = useState(false);
@@ -503,7 +571,10 @@ function StatsCounterClient({
     >
       {(stats || []).map((stat: StatItem, i: number) => (
         <div key={i} className="text-center">
-          <div className="text-4xl md:text-5xl font-bold text-blue-800 mb-2">
+          <div
+            className="text-4xl md:text-5xl font-bold text-blue-800 mb-2"
+            style={resolveTextStyle(textStyle)}
+          >
             {counts[i] || 0}
             {stat.suffix}
           </div>
@@ -519,6 +590,7 @@ function StatsCounterClient({
 export const StatsCounter: ComponentConfig<{
   stats: StatItem[];
   bgColor: string;
+  textStyle?: TextStyle;
 }> = {
   label: "Stats Counter",
   defaultProps: {
@@ -550,6 +622,13 @@ export const StatsCounter: ComponentConfig<{
     stats: {
       type: "array",
       label: "Stats",
+      getItemSummary: (item, i) =>
+        localizedSummary(
+          item.label,
+          item.value != null
+            ? `${item.value}${item.suffix || ""}`
+            : `Stat ${(i ?? 0) + 1}`,
+        ),
       arrayFields: {
         value: { type: "number", label: "Value" },
         suffix: { type: "text", label: "Suffix (+, %, etc.)" },
@@ -557,14 +636,19 @@ export const StatsCounter: ComponentConfig<{
       },
     },
     bgColor: colorField("Background Color"),
+    textStyle: textStyleField,
   },
-  render: ({ stats, bgColor, puck }) => (
+  render: ({ stats, bgColor, puck, textStyle }) => (
     <div
       className="py-16 px-6"
       style={{ backgroundColor: bgColor || "#f8fafc" }}
     >
       <div className="max-w-5xl mx-auto">
-        <StatsCounterClient stats={stats} isEditing={!!puck?.isEditing} />
+        <StatsCounterClient
+          stats={stats}
+          isEditing={!!puck?.isEditing}
+          textStyle={textStyle}
+        />
       </div>
     </div>
   ),

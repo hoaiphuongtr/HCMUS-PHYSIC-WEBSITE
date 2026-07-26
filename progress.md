@@ -510,3 +510,7 @@ Sau khi chạy 1–3: flush Redis (docker exec hcmus-cms-redis-1 redis-cli FLUSH
   theo dõi ở đâu cũng báo. notification-bell.tsx viết lại theo TOPICS cố định (không fetch /categories).
 - Layout hoc-bong live cập nhật qua ship-hoc-bong-v2.js (content: Header,HeroFullScreen,ScholarshipList,Footer).
   Seed đồng bộ. Docx Hình 3.9 đã thay ảnh trang chủ mới (có chuông) ở phiên trước.
+
+## 26/07/2026 — Slide bảo vệ v3 + sửa spec phân quyền
+- Slide bảo vệ 17 trang (Downloads/KLTN_SLIDES_TRANHOAIPHUONG.pptx) theo góp ý cô: thêm ảnh minh họa (web cũ, staff accounts), screenshot test thật, TLTK, viết gọn, framing "vì sao thay hệ cũ đang chạy".
+- `backend/src/shared/helpers.spec.ts`: cập nhật 3 kỳ vọng theo hành vi mới isFacultyWide (gộp vai trò văn phòng khoa vào faculty-wide) → vitest 40/40 pass. Thay đổi nằm trên branch wip/feat-013-legacy-migration, chưa commit.

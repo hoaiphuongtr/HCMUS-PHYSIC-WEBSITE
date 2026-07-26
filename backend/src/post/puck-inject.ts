@@ -4,7 +4,7 @@ export type PostInjectPayload = {
   excerpt: string | null;
   coverUrl: string | null;
   coverAlt: string | null;
-  tags: { slug: string; name: string }[];
+  tags: { slug: string; name: string; icon?: string | null }[];
   category: string;
   categoryLabel: string;
   publishedAt: string | null;

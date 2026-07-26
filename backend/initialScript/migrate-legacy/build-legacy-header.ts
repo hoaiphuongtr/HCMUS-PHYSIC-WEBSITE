@@ -113,7 +113,7 @@ export const MENU_ITEMS: Item[] = [
       child('Đoàn Thanh Niên', 'Youth Union', '/doan-thanh-nien'),
       child('Hội sinh viên', "Students' Association", '/hoi-sinh-vien'),
       child('Câu lạc bộ', 'Club', CAT_46_URL),
-      child('Học bổng', 'Scholarship', '/hoc-bong1720684408'),
+      child('Học bổng', 'Scholarship', '/hoc-bong'),
     ],
   },
   {

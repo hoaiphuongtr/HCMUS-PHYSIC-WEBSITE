@@ -165,6 +165,23 @@ export function toSlugPath(text: string): string {
 export const FACULTY_DEPT_ID = 'dept_legacy_1';
 
 /**
+ * The Khoa's super admin and the văn-phòng-khoa admin are one and the same: a
+ * SUPER_ADMIN, or any admin with no department / the faculty department, has
+ * faculty-wide (unrestricted) access. Only bộ-môn admins (a specific department)
+ * stay scoped to their own department.
+ */
+export function isFacultyWide(
+  roleName: string,
+  departmentId: string | null | undefined,
+): boolean {
+  return (
+    roleName === 'SUPER_ADMIN' ||
+    !departmentId ||
+    departmentId === FACULTY_DEPT_ID
+  );
+}
+
+/**
  * Prisma `where` fragment restricting content to what this user may SEE/LIST by
  * department. Returns `undefined` for super-admin (no restriction).
  *  - Faculty admin (dept = faculty) or dept-less admin → faculty content + untagged.
@@ -174,11 +191,10 @@ export function departmentScopeWhere(
   roleName: string,
   departmentId: string | null | undefined,
 ): { departmentId: string } | { OR: { departmentId: string | null }[] } | undefined {
-  if (roleName === 'SUPER_ADMIN') return undefined;
-  if (!departmentId || departmentId === FACULTY_DEPT_ID) {
-    return { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] };
-  }
-  return { departmentId };
+  // Faculty-wide admins see everything (no restriction); reaching here means a
+  // bộ-môn admin with a concrete department id.
+  if (isFacultyWide(roleName, departmentId)) return undefined;
+  return { departmentId: departmentId as string };
 }
 
 /**
@@ -190,7 +206,7 @@ export function mediaScopeWhere(
   roleName: string,
   departmentId: string | null | undefined,
 ): { OR: { departmentId: string | null }[] } | undefined {
-  if (roleName === 'SUPER_ADMIN') return undefined;
+  if (isFacultyWide(roleName, departmentId)) return undefined;
   const ors: { departmentId: string | null }[] = [
     { departmentId: FACULTY_DEPT_ID },
     { departmentId: null },
@@ -207,9 +223,7 @@ export function canAccessDepartment(
   userDept: string | null | undefined,
   contentDept: string | null | undefined,
 ): boolean {
-  if (roleName === 'SUPER_ADMIN') return true;
-  if (!userDept || userDept === FACULTY_DEPT_ID) {
-    return !contentDept || contentDept === FACULTY_DEPT_ID;
-  }
+  // Faculty-wide admins may mutate any content; bộ-môn admins only their own.
+  if (isFacultyWide(roleName, userDept)) return true;
   return contentDept === userDept;
 }

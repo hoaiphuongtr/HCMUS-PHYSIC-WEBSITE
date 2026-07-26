@@ -3,6 +3,7 @@ import {
   CreateDepartmentBodySchema,
   DepartmentResSchema,
   UpdateDepartmentBodySchema,
+  MergeDepartmentBodySchema,
 } from './department.model';
 
 export class CreateDepartmentBodyDTO extends createZodDto(
@@ -12,3 +13,6 @@ export class UpdateDepartmentBodyDTO extends createZodDto(
   UpdateDepartmentBodySchema,
 ) {}
 export class DepartmentResDTO extends createZodDto(DepartmentResSchema) {}
+export class MergeDepartmentBodyDTO extends createZodDto(
+  MergeDepartmentBodySchema,
+) {}

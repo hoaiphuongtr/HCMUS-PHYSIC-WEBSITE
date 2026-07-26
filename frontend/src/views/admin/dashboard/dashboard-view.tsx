@@ -32,7 +32,7 @@ export function AdminDashboardView() {
   });
   const layoutsQuery = useQuery({
     queryKey: ["DASHBOARD", "LAYOUTS"],
-    queryFn: pageLayoutApi.list,
+    queryFn: () => pageLayoutApi.list(),
   });
 
   const allPosts: PostRecord[] = postsQuery.data?.items ?? [];

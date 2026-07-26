@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
-import {
-  localizedTextareaField,
-  localizedTextField,
-} from "../fields/localized-text-field";
+import { localizedTextField } from "../fields/localized-text-field";
+import { localizedRichTextField } from "../fields/localized-rich-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
 import { LegacyHtmlRender } from "./post-placeholders";
 
@@ -22,16 +20,22 @@ function PageHeroRender({
   title,
   subtitle,
   bgImage,
+  homeUrl,
+  homeLabel,
 }: {
   title: LocalizedString;
   subtitle: LocalizedString;
   bgImage: string;
+  homeUrl: string;
+  homeLabel: LocalizedString;
 }) {
   const { locale } = useLocale();
   const heading = t(title, locale);
   const sub = t(subtitle, locale);
   const bg = resolveMediaUrl(bgImage || "");
-  const home = locale === "en" ? "Home" : "Trang chủ";
+  const homeText =
+    t(homeLabel, locale) || (locale === "en" ? "Home" : "Trang chủ");
+  const homeHref = homeUrl ? `/${locale}${homeUrl}` : `/${locale}`;
   return (
     <>
       <section
@@ -46,13 +50,22 @@ function PageHeroRender({
             : undefined
         }
       >
-        <div className="absolute inset-0 bg-[#0c2340]/80" aria-hidden="true" />
+        {/* Với ảnh nền: dùng gradient nhẹ (đậm dần xuống dưới) để ẢNH HIỆN
+            RÕ mà chữ vẫn đọc được; không ảnh: phủ đặc để giữ nền navy. */}
+        <div
+          className={
+            bg
+              ? "absolute inset-0 bg-gradient-to-t from-[#0c2340]/85 via-[#0c2340]/45 to-[#0c2340]/30"
+              : "absolute inset-0 bg-[#0c2340]/80"
+          }
+          aria-hidden="true"
+        />
         <div className="relative max-w-[1200px] mx-auto px-6 py-14 md:py-20 text-center">
-          <h1 className="text-2xl md:text-4xl font-bold uppercase tracking-wide">
+          <h1 className="text-2xl md:text-4xl font-bold uppercase tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
             {heading}
           </h1>
           {sub ? (
-            <p className="mt-3 text-sm md:text-base text-white/85 max-w-3xl mx-auto">
+            <p className="mt-3 text-sm md:text-base text-white/90 max-w-3xl mx-auto drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
               {sub}
             </p>
           ) : null}
@@ -64,10 +77,10 @@ function PageHeroRender({
       >
         <div className="max-w-[1200px] mx-auto px-6 py-2.5 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <NextLink
-            href={`/${locale}`}
+            href={homeHref}
             className="hover:text-blue-700 dark:hover:text-blue-300 inline-flex items-center gap-1"
           >
-            🏠 {home}
+            🏠 {homeText}
           </NextLink>
           <span aria-hidden="true">/</span>
           <span className="text-slate-700 dark:text-slate-200">{heading}</span>
@@ -81,20 +94,32 @@ export const PageHero: ComponentConfig<{
   title: LocalizedString;
   subtitle: LocalizedString;
   bgImage: string;
+  homeUrl: string;
+  homeLabel: LocalizedString;
 }> = {
   label: "Page Hero",
   defaultProps: {
     title: { vi: "Tiêu đề trang", en: "Page title" },
     subtitle: { vi: "", en: "" },
     bgImage: "",
+    homeUrl: "/",
+    homeLabel: { vi: "Trang chủ", en: "Home" },
   },
   fields: {
     title: localizedTextField("Title"),
     subtitle: localizedTextField("Subtitle"),
     bgImage: mediaPickerField("Background image"),
+    homeUrl: { type: "text", label: "Breadcrumb — link Trang chủ" },
+    homeLabel: localizedTextField("Breadcrumb — nhãn Trang chủ"),
   },
-  render: ({ title, subtitle, bgImage }) => (
-    <PageHeroRender title={title} subtitle={subtitle} bgImage={bgImage} />
+  render: ({ title, subtitle, bgImage, homeUrl, homeLabel }) => (
+    <PageHeroRender
+      title={title}
+      subtitle={subtitle}
+      bgImage={bgImage}
+      homeUrl={homeUrl}
+      homeLabel={homeLabel}
+    />
   ),
 };
 
@@ -279,6 +304,6 @@ export const LegacyPageBody: ComponentConfig<{
 }> = {
   label: "Legacy Page Body",
   defaultProps: { html: { vi: "", en: "" } },
-  fields: { html: localizedTextareaField("Legacy HTML") },
+  fields: { html: localizedRichTextField("Nội dung trang") },
   render: ({ html }) => <LegacyPageBodyRender html={html} />,
 };

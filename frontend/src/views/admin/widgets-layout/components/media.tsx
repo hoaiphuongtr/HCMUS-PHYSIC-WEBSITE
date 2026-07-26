@@ -13,6 +13,12 @@ import { useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
+import { localizedSummary } from "../fields/item-summary";
+import {
+  resolveSizeStyle,
+  type SizeStyle,
+  sizeField,
+} from "../fields/size-field";
 import {
   localizedTextareaField,
   localizedTextField,
@@ -26,6 +32,7 @@ export const ImageBlock: ComponentConfig<{
   caption: LocalizedString;
   fit: string;
   borderRadius: string;
+  size?: SizeStyle;
 }> = {
   label: "Image",
   defaultProps: {
@@ -59,14 +66,16 @@ export const ImageBlock: ComponentConfig<{
         { label: "Full", value: "full" },
       ],
     },
+    size: sizeField,
   },
-  render: ({ src, alt, caption, fit, borderRadius }) => (
+  render: ({ src, alt, caption, fit, borderRadius, size }) => (
     <ImageBlockRender
       src={resolveMediaSrc(src)}
       alt={alt}
       caption={caption}
       fit={fit}
       borderRadius={borderRadius}
+      size={size}
     />
   ),
 };
@@ -77,12 +86,14 @@ function ImageBlockRender({
   caption,
   fit,
   borderRadius,
+  size,
 }: {
   src: string;
   alt: string;
   caption: LocalizedString;
   fit: string;
   borderRadius: string;
+  size?: SizeStyle;
 }) {
   const { locale } = useLocale();
   const captionText = t(caption, locale);
@@ -100,7 +111,7 @@ function ImageBlockRender({
           src={resolveMediaSrc(src)}
           alt={alt}
           className={`w-full ${radii[borderRadius] || "rounded-md"}`}
-          style={{ objectFit: (fit as any) || "cover" }}
+          style={{ objectFit: (fit as any) || "cover", ...resolveSizeStyle(size) }}
           loading="lazy"
           decoding="async"
         />
@@ -131,6 +142,8 @@ export const ImageGallery: ComponentConfig<{
     images: {
       type: "array",
       label: "Images",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.alt, `Ảnh ${(i ?? 0) + 1}`),
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
@@ -467,6 +480,8 @@ export const ImageSlider: ComponentConfig<{
     slides: {
       type: "array",
       label: "Slides",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.caption, item.alt || `Slide ${(i ?? 0) + 1}`),
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
@@ -580,6 +595,8 @@ export const LogoGrid: ComponentConfig<{
     logos: {
       type: "array",
       label: "Logos",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.alt, `Logo ${(i ?? 0) + 1}`),
       arrayFields: {
         src: mediaPickerField("Logo"),
         alt: { type: "text", label: "Name" },
@@ -674,6 +691,8 @@ export const LogoSlider: ComponentConfig<{
     logos: {
       type: "array",
       label: "Logos",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.alt, `Logo ${(i ?? 0) + 1}`),
       arrayFields: {
         src: mediaPickerField("Logo"),
         alt: { type: "text", label: "Name" },
@@ -865,7 +884,7 @@ function PartnerShowcaseClient({
                     tabIndex={isEditing ? -1 : undefined}
                     target={isEditing ? undefined : "_blank"}
                     rel="noopener noreferrer"
-                    className="shrink-0 flex items-center justify-center grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all"
+                    className="shrink-0 flex items-center justify-center opacity-100 transition-transform duration-200 hover:scale-110"
                     title={partner.name}
                   >
                     {partner.logoUrl ? (
@@ -1000,6 +1019,8 @@ export const PartnerShowcase: ComponentConfig<{
     partners: {
       type: "array",
       label: "Partners",
+      getItemSummary: (item, i) =>
+        localizedSummary(item.name, `Đối tác ${(i ?? 0) + 1}`),
       arrayFields: {
         name: { type: "text", label: "Name" },
         logoUrl: mediaPickerField("Logo"),

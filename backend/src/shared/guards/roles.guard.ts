@@ -32,7 +32,19 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
     const request = context.switchToHttp().getRequest();
     const user: AccessTokenPayload = request[REQUEST_USER_KEY];
-    if (!user || !requiredRoles.includes(user.roleName)) {
+    if (!user) throw new ForbiddenException('Insufficient permissions');
+    // The Khoa's super admin and the văn-phòng-khoa admin are one: a faculty-office
+    // admin (no department, or the faculty department) satisfies SUPER_ADMIN gates.
+    // Bộ-môn admins (a specific department) remain scoped to their own role.
+    const FACULTY_DEPT_ID = 'dept_legacy_1';
+    const isFacultyWide =
+      user.roleName === RoleName.SuperAdmin ||
+      !user.departmentId ||
+      user.departmentId === FACULTY_DEPT_ID;
+    const allowed =
+      requiredRoles.includes(user.roleName) ||
+      (isFacultyWide && requiredRoles.includes(RoleName.SuperAdmin));
+    if (!allowed) {
       throw new ForbiddenException('Insufficient permissions');
     }
     return true;

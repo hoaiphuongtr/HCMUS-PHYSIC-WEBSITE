@@ -20,6 +20,7 @@ import {
   authApi,
   resolveMediaUrl,
 } from "@/lib/api";
+import { isFacultyWide } from "@/lib/department";
 import { PortalMenu } from "@/views/admin/widgets-layout/portal-menu";
 import { ResetPasswordModal } from "./reset-password-modal";
 
@@ -76,7 +77,7 @@ export function AdminsListView() {
   });
 
   useEffect(() => {
-    if (profile && profile.role !== "SUPER_ADMIN") {
+    if (profile && !isFacultyWide(profile.role, profile.departmentId)) {
       router.replace("/admin");
     }
   }, [profile, router]);
@@ -84,7 +85,7 @@ export function AdminsListView() {
   const { data, isLoading } = useQuery({
     queryKey: ["ADMINS", { page, pageSize: PAGE_SIZE }],
     queryFn: () => adminApi.list({ page, pageSize: PAGE_SIZE }),
-    enabled: profile?.role === "SUPER_ADMIN",
+    enabled: isFacultyWide(profile?.role, profile?.departmentId),
   });
 
   const suspendMut = useMutation({
