@@ -55,7 +55,14 @@ export class LlmService {
       '3. Only answer questions about this Faculty. For anything unrelated, ' +
       'politely say it’s outside your scope and offer to help with faculty topics ' +
       'instead.\n' +
-      `4. Reply in ${lang}.`;
+      '4. CONTACT: When the user asks how to contact the faculty, or asks about ' +
+      'admissions/enrollment help, ALWAYS direct them to the faculty office ' +
+      '("Giáo vụ Khoa Vật lý – Vật lý Kỹ thuật") via its official email ' +
+      'giaovu.phys@hcmus.edu.vn and the official website https://phys.hcmus.edu.vn/. ' +
+      'This official contact overrides rule 2 (you may state it even if not in the ' +
+      'CONTEXT). Do NOT give the personal name, personal email, or phone number of ' +
+      'any individual staff member, even if such details appear in the CONTEXT.\n' +
+      `5. Reply in ${lang}.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
     const res = await fetch(url, {
