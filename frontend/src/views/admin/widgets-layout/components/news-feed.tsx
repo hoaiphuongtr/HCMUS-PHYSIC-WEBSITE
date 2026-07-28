@@ -65,19 +65,27 @@ function CoverImg({
 
 // Tag icon badges (e.g. SDG images) shown under a post card / title. Only tags
 // whose icon is an image (URL or /uploads path) are rendered.
-function TagIcons({
+export function TagIcons({
   tags,
   size,
+  align = "left",
 }: {
   tags?: { slug: string; name: string; icon: string | null }[];
   size: number;
+  align?: "left" | "center" | "right";
 }) {
   const imgTags = (tags ?? []).filter(
     (tg) => tg.icon && /^(https?:|\/uploads)/.test(tg.icon),
   );
   if (imgTags.length === 0) return null;
+  const justify =
+    align === "center"
+      ? "justify-center"
+      : align === "right"
+        ? "justify-end"
+        : "justify-start";
   return (
-    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+    <div className={`flex flex-wrap items-center gap-1.5 mt-2 ${justify}`}>
       {imgTags.map((tg) => (
         // biome-ignore lint/performance/noImgElement: tiny fixed-size badge
         <img
@@ -120,9 +128,18 @@ type NewsCardProps = {
   locale: string;
   prefix: string;
   showEventTime?: boolean;
+  tagSize?: number;
+  tagAlign?: "left" | "center" | "right";
 };
 
-function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
+function NewsCard({
+  post,
+  locale,
+  prefix,
+  showEventTime,
+  tagSize = 50,
+  tagAlign = "left",
+}: NewsCardProps) {
   const dateText = showEventTime
     ? formatDate(post.eventStartAt, locale)
     : formatDate(post.publishedAt, locale);
@@ -147,7 +164,7 @@ function NewsCard({ post, locale, prefix, showEventTime }: NewsCardProps) {
             {dateText}
           </p>
         )}
-        <TagIcons tags={post.tags} size={30} />
+        <TagIcons tags={post.tags} size={tagSize} align={tagAlign} />
       </div>
     </article>
   );
@@ -285,6 +302,8 @@ export const LatestNewsAuto: ComponentConfig<{
   accentColor: string;
   limit: number;
   posts: PostPublicCard[];
+  tagSize: number;
+  tagAlign: "left" | "center" | "right";
 }> = {
   label: "Latest News (auto)",
   defaultProps: {
@@ -294,6 +313,8 @@ export const LatestNewsAuto: ComponentConfig<{
     accentColor: "#1e40af",
     limit: 4,
     posts: [],
+    tagSize: 50,
+    tagAlign: "left",
   },
   fields: {
     title: localizedTextField("Section title"),
@@ -304,12 +325,31 @@ export const LatestNewsAuto: ComponentConfig<{
       type: "number",
       label: "Limit",
     },
+    tagSize: { type: "number", label: "Cỡ ảnh tag (px)", min: 16, max: 120 },
+    tagAlign: {
+      type: "select",
+      label: "Canh ảnh tag",
+      options: [
+        { label: "Trái", value: "left" },
+        { label: "Giữa", value: "center" },
+        { label: "Phải", value: "right" },
+      ],
+    },
     posts: {
       type: "text",
       label: "Posts (auto-synced — do not edit)",
     } as any,
   },
-  render: ({ title, viewAllLabel, viewAllUrl, accentColor, limit, posts }) => (
+  render: ({
+    title,
+    viewAllLabel,
+    viewAllUrl,
+    accentColor,
+    limit,
+    posts,
+    tagSize,
+    tagAlign,
+  }) => (
     <LatestNewsAutoRender
       title={title}
       viewAllLabel={viewAllLabel}
@@ -317,6 +357,8 @@ export const LatestNewsAuto: ComponentConfig<{
       accentColor={accentColor}
       limit={limit}
       posts={posts || []}
+      tagSize={tagSize}
+      tagAlign={tagAlign}
     />
   ),
 };
@@ -328,6 +370,8 @@ function LatestNewsAutoRender({
   accentColor,
   limit,
   posts,
+  tagSize = 50,
+  tagAlign = "left",
 }: {
   title: LocalizedString;
   viewAllLabel: LocalizedString;
@@ -335,6 +379,8 @@ function LatestNewsAutoRender({
   accentColor: string;
   limit: number;
   posts: PostPublicCard[];
+  tagSize?: number;
+  tagAlign?: "left" | "center" | "right";
 }) {
   const { locale, prefix } = useLocalePrefix();
   const safeLimit = Math.max(1, Math.min(limit || 4, 12));
@@ -362,6 +408,8 @@ function LatestNewsAutoRender({
               post={post}
               locale={locale}
               prefix={prefix}
+              tagSize={tagSize}
+              tagAlign={tagAlign}
             />
           ))}
         </div>
@@ -463,20 +511,36 @@ const PAGE_SIZE = 12;
 export const NewsListPaginated: ComponentConfig<{
   title: LocalizedString;
   accentColor: string;
+  tagSize: number;
+  tagAlign: "left" | "center" | "right";
 }> = {
   label: "News List Paginated",
   defaultProps: {
     title: { vi: "Tin tức", en: "News" },
     accentColor: "#1e40af",
+    tagSize: 50,
+    tagAlign: "left",
   },
   fields: {
     title: localizedTextField("Section title"),
     accentColor: colorField("Accent Color"),
+    tagSize: { type: "number", label: "Cỡ ảnh tag (px)", min: 16, max: 120 },
+    tagAlign: {
+      type: "select",
+      label: "Canh ảnh tag",
+      options: [
+        { label: "Trái", value: "left" },
+        { label: "Giữa", value: "center" },
+        { label: "Phải", value: "right" },
+      ],
+    },
   },
-  render: ({ title, accentColor, puck }) => (
+  render: ({ title, accentColor, tagSize, tagAlign, puck }) => (
     <NewsListPaginatedRender
       title={title}
       accentColor={accentColor}
+      tagSize={tagSize}
+      tagAlign={tagAlign}
       isEditing={!!puck?.isEditing}
     />
   ),
@@ -486,10 +550,14 @@ function NewsListPaginatedRender({
   title,
   accentColor,
   isEditing,
+  tagSize = 50,
+  tagAlign = "left",
 }: {
   title: LocalizedString;
   accentColor: string;
   isEditing: boolean;
+  tagSize?: number;
+  tagAlign?: "left" | "center" | "right";
 }) {
   const { locale, prefix } = useLocalePrefix();
   const router = useRouter();
@@ -785,6 +853,8 @@ function NewsListPaginatedRender({
               post={post}
               locale={locale}
               prefix={prefix}
+              tagSize={tagSize}
+              tagAlign={tagAlign}
             />
           ))}
         </div>

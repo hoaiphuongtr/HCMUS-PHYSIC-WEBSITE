@@ -999,13 +999,25 @@ function PostReaderToolsRender({
         ?.getAttribute("content") ||
       document.querySelector('link[rel="canonical"]')?.getAttribute("href") ||
       window.location.href;
+    // Dòng trạng thái (caption) MẶC ĐỊNH khi chia sẻ: tiêu đề bài + tên Khoa, kèm
+    // một hashtag thương hiệu. `quote`/`hashtag` chỉ điền sẵn CHẮC CHẮN khi share qua
+    // Share Dialog kèm app-id (đặt NEXT_PUBLIC_FB_APP_ID); với sharer.php thì Meta có
+    // thể bỏ qua (không chính thức) — nhưng vẫn gửi để "được thì tốt".
+    const pageTitle =
+      document
+        .querySelector('meta[property="og:title"]')
+        ?.getAttribute("content") || document.title;
+    const quote = encodeURIComponent(
+      `«${pageTitle}» — Khoa Vật lý – Vật lý Kỹ thuật, Trường ĐH KHTN (ĐHQG-HCM)`,
+    );
+    const hashtag = encodeURIComponent("#KhoaVatLyVatLyKyThuat");
     // Có app-id → dùng /dialog/share (đẹp hơn, hỗ trợ quote/hashtag); không có →
     // rơi về /sharer/sharer.php (không cần app-id). Cả hai chỉ là popup tới facebook.com.
     const appId = process.env.NEXT_PUBLIC_FB_APP_ID;
     const href = encodeURIComponent(canonical);
     const shareUrl = appId
-      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${href}`
-      : `https://www.facebook.com/sharer/sharer.php?u=${href}`;
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${href}&quote=${quote}&hashtag=${hashtag}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${href}&quote=${quote}`;
     window.open(
       shareUrl,
       "_blank",

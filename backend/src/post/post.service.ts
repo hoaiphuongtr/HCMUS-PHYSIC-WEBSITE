@@ -776,6 +776,7 @@ export class PostService {
     const layouts = await this.prisma.pageLayout.findMany({
       select: {
         id: true,
+        slug: true,
         departmentId: true,
         puckData: true,
         publishedPuckData: true,
@@ -840,6 +841,7 @@ export class PostService {
     };
 
     let changed = 0;
+    const changedSlugs: string[] = [];
     for (const layout of layouts) {
       const feed = await getFeed(layout.departmentId);
       const orig = JSON.stringify(layout.puckData);
@@ -860,10 +862,51 @@ export class PostService {
           },
         });
         changed++;
+        changedSlugs.push(layout.slug);
       }
     }
     if (changed) await this.cache.clear();
-    return { layoutsUpdated: changed };
+    return { layoutsUpdated: changed, slugs: changedSlugs };
+  }
+
+  /**
+   * Đồng bộ TRẠNG THÁI bài viết theo layout của nó — gọi khi một layout gắn
+   * `sourcePostId` được publish/unpublish. Nếu bài có ít nhất một layout đã xuất
+   * bản → đưa bài về PUBLISHED (giữ nguyên publishedAt gốc nếu có); nếu không còn
+   * layout published nào → hạ về DRAFT. Khi trạng thái đổi, dựng lại snapshot feed
+   * để bài hiện/ẩn NGAY trên trang chủ + trang mục, và trả về slug các layout đã
+   * đổi để revalidate đúng trang (một lần tải là thấy).
+   */
+  async syncStatusFromLayouts(postId: string): Promise<{ slugs: string[] }> {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        status: true,
+        publishedAt: true,
+        deletedAt: true,
+        layouts: { where: { deletedAt: null }, select: { isPublished: true } },
+      },
+    });
+    if (!post || post.deletedAt) return { slugs: [] };
+    const hasPublished = post.layouts.some((l) => l.isPublished);
+    let statusChanged = false;
+    if (hasPublished && post.status !== 'PUBLISHED') {
+      await this.prisma.post.update({
+        where: { id: postId },
+        data: { status: 'PUBLISHED', publishedAt: post.publishedAt ?? new Date() },
+      });
+      statusChanged = true;
+    } else if (!hasPublished && post.status === 'PUBLISHED') {
+      await this.prisma.post.update({
+        where: { id: postId },
+        data: { status: 'DRAFT' },
+      });
+      statusChanged = true;
+    }
+    if (!statusChanged) return { slugs: [] };
+    const { slugs } = await this.syncNewsFeedSnapshots();
+    return { slugs };
   }
 
   private async syncAttachedLayouts(postId: string): Promise<string[]> {

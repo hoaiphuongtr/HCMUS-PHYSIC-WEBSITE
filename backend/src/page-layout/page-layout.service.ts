@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import {
   canAccessDepartment,
   departmentScopeWhere,
@@ -10,6 +16,7 @@ import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
 import { NotificationService } from '../notification/notification.service';
+import { PostService } from '../post/post.service';
 import {
   CreatePageLayoutBodyType,
   UpdatePageLayoutBodyType,
@@ -43,6 +50,8 @@ export class PageLayoutService {
     private readonly publicRevalidate: PublicRevalidateService,
     private readonly notification: NotificationService,
     private readonly chatbot: ChatbotService,
+    @Inject(forwardRef(() => PostService))
+    private readonly postService: PostService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE, { name: 'publishDueLayouts' })
@@ -50,6 +59,7 @@ export class PageLayoutService {
     const due = await this.pageLayoutRepository.findDueForPublish(new Date());
     if (due.length === 0) return;
     const publishedSlugs: string[] = [];
+    const feedSlugs = new Set<string>();
     for (const dueLayout of due) {
       try {
         const layout = await this.pageLayoutRepository.findById(dueLayout.id);
@@ -72,6 +82,12 @@ export class PageLayoutService {
         );
         await this.chatbot.indexPage(layout.id).catch(() => undefined);
         publishedSlugs.push(layout.slug);
+        if (layout.sourcePostId) {
+          const { slugs } = await this.postService.syncStatusFromLayouts(
+            layout.sourcePostId,
+          );
+          slugs.forEach((s) => feedSlugs.add(s));
+        }
         await this.notification.notifyPublished({
           departmentId: layout.departmentId,
           actorId: layout.createdBy,
@@ -91,6 +107,7 @@ export class PageLayoutService {
       this.publicRevalidate.trigger([
         'sitemap',
         ...publishedSlugs.map((s) => `page:${s}`),
+        ...[...feedSlugs].map((s) => `page:${s}`),
       ]);
     }
   }
@@ -239,9 +256,20 @@ export class PageLayoutService {
     if (conflict) throw PageLayoutSlugExistsException;
     const result = await this.pageLayoutRepository.publish(id);
     await this.pageLayoutRepository.snapshotPublishedVersion(id, userId);
+    // Đồng bộ trạng thái bài viết gắn với layout (DRAFT/PENDING → PUBLISHED) rồi
+    // dựng lại snapshot feed để bài hiện NGAY trên trang chủ/mục — publish 1 phát
+    // là ăn ngay. Trả về slug các trang feed đã đổi để revalidate cùng lượt.
+    const feedSlugs = layout.sourcePostId
+      ? (await this.postService.syncStatusFromLayouts(layout.sourcePostId))
+          .slugs
+      : [];
     await this.cache.clear();
     await this.chatbot.indexPage(id).catch(() => undefined);
-    this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `page:${layout.slug}`,
+      ...feedSlugs.map((s) => `page:${s}`),
+    ]);
     // In-app notification to super-admins + this layout's department admins.
     await this.notification.notifyPublished({
       departmentId: layout.departmentId,
@@ -285,9 +313,19 @@ export class PageLayoutService {
     if (conflict) throw slugExistsInStatusException('draft', conflict.name);
     const result = await this.pageLayoutRepository.unpublish(id);
     await this.pageLayoutRepository.archiveCurrentVersions(id);
+    // Nếu bài không còn layout published nào → hạ trạng thái bài về DRAFT + dựng
+    // lại feed để bài biến mất khỏi trang chủ/mục ngay.
+    const feedSlugs = layout.sourcePostId
+      ? (await this.postService.syncStatusFromLayouts(layout.sourcePostId))
+          .slugs
+      : [];
     await this.cache.clear();
     await this.chatbot.removePage(id).catch(() => undefined);
-    this.publicRevalidate.trigger(['sitemap', `page:${layout.slug}`]);
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `page:${layout.slug}`,
+      ...feedSlugs.map((s) => `page:${s}`),
+    ]);
     return result;
   }
 

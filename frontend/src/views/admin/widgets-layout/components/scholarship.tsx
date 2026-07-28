@@ -7,6 +7,7 @@ import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { localizedTextField } from "../fields/localized-text-field";
 import { resolveMediaSrc } from "./media-src";
+import { TagIcons } from "./news-feed";
 import { readSubs, SUBS_EVENT, topicByKey, writeSubs } from "./notif-subs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -19,6 +20,7 @@ type ScholarshipPost = {
   coverUrl: string | null;
   publishedAt: string | null;
   updatedAt: string;
+  tags?: { slug: string; name: string; icon: string | null }[];
   layouts?: { slug: string; isPublished: boolean }[];
 };
 
@@ -253,6 +255,7 @@ function ScholarshipListRender({
                 <p className="mt-auto pt-3 text-xs text-slate-400">
                   {fmtDate(postDate(p), locale)}
                 </p>
+                <TagIcons tags={p.tags} size={50} />
               </div>
             </a>
           ))}
