@@ -1,0 +1,20 @@
+phys.hcmus.edu.vn {
+	encode gzip zstd
+	# API backend dưới tiền tố /be (KHÔNG dùng /api vì trang public có route /api/og, /api/revalidate riêng)
+	handle_path /be/* {
+		reverse_proxy backend:3001
+	}
+	# Ảnh/tệp tải lên (kể cả link /uploads thô trong nội dung legacy)
+	handle /uploads/* {
+		reverse_proxy backend:3001
+	}
+	# Còn lại → trang công khai (Next.js)
+	handle {
+		reverse_proxy public:3002
+	}
+}
+
+# Nâng admin lên HTTPS: thêm DNS admin.phys.hcmus.edu.vn → 103.88.121.212 rồi bỏ comment:
+# admin.phys.hcmus.edu.vn {
+# 	reverse_proxy admin:3000
+# }

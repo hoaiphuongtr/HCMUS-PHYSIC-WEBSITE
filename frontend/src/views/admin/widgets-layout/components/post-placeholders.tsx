@@ -241,6 +241,15 @@ function PostBodyRender({
           [data-post-body] *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6) {
             font-size: inherit !important;
           }
+          /* Chặn tràn ngang: nội dung dán từ Word thường có <span> định dạng cứng
+             (Verdana/line-height:115%…) rộng quá khổ và là inline nên max-width
+             không ghì được → cả trang cuộn ngang / thu nhỏ, ảnh trông "co lại".
+             Clip trong khung bài + ngắt từ dài để khoá bề rộng theo cột. */
+          [data-post-body] {
+            overflow-x: clip;
+            overflow-wrap: break-word;
+            word-break: break-word;
+          }
           [data-post-body] iframe,
           [data-post-body] embed,
           [data-post-body] object {

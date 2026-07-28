@@ -453,10 +453,15 @@ function NavbarClient({
             ))}
           </div>
           <div
-            className={`lg:hidden order-3 flex items-center gap-1 overflow-hidden transition-[max-width,opacity,transform,margin] duration-300 ease-out ${
+            className={`lg:hidden order-3 flex items-center gap-1 transition-[max-width,opacity,margin] duration-300 ease-out ${
               mobileMenuOpen
-                ? "max-w-0 opacity-0 translate-x-4 ml-0 pointer-events-none"
-                : "max-w-[120px] opacity-100 translate-x-0"
+                ? // đang thu gọn theo nút hamburger: cắt phần tràn cho gọn
+                  "max-w-0 opacity-0 ml-0 pointer-events-none overflow-hidden"
+                : // trạng thái thường: overflow-visible để dropdown globe/chuông KHÔNG
+                  // bị cắt. KHÔNG dùng translate-x-* (Tailwind v4 phát ra thuộc tính
+                  // `translate:` tạo containing-block khiến panel `fixed` của chuông
+                  // neo nhầm vào hàng icon thay vì viewport).
+                  "max-w-[120px] opacity-100 overflow-visible"
             }`}
           >
             {showSearch && (

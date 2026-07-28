@@ -173,7 +173,26 @@ services:
     depends_on:
       - backend
 
+  # Reverse proxy + HTTPS tự động (Let's Encrypt) cho phys.hcmus.edu.vn.
+  # Public ra cổng 80/443 (không cần gõ cổng); admin vẫn ở :3000.
+  caddy:
+    image: caddy:2
+    container_name: hcmus-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - public
+      - backend
+
 volumes:
   pgdata:
   redisdata:
+  caddy_data:
+  caddy_config:
   ollama_models:

@@ -156,7 +156,7 @@ export function NotificationBell({ color }: { color?: string }) {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-xl z-[9999]">
+        <div className="fixed right-2 top-16 left-2 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-80 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-xl z-[9999]">
           <div className="sticky top-0 z-10 bg-white dark:bg-[#1a2436] px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <p className="text-sm font-semibold text-[#0c2340] dark:text-slate-100">
               {locale === "en" ? "Notifications" : "Thông báo"}
