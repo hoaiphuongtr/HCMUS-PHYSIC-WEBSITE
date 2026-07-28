@@ -164,6 +164,7 @@ export class ChatbotService {
     title: string | null;
     slug: string | null;
     content: string;
+    sourceDate?: Date | null;
   }) {
     const vec = await this.embedding.embedDocument(
       [row.title, row.content].filter(Boolean).join('. '),
@@ -171,8 +172,8 @@ export class ChatbotService {
     const lit = this.embedding.toVectorLiteral(vec);
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO "ChatbotChunk"
-         ("id","sourceType","sourceId","language","title","slug","content","embedding","updatedAt")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::vector,CURRENT_TIMESTAMP)`,
+         ("id","sourceType","sourceId","language","title","slug","content","embedding","sourceDate","updatedAt")
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::vector,$9,CURRENT_TIMESTAMP)`,
       this.cuid(),
       row.sourceType,
       row.sourceId,
@@ -181,6 +182,7 @@ export class ChatbotService {
       row.slug,
       row.content,
       lit,
+      row.sourceDate ?? null,
     );
   }
 
@@ -199,6 +201,7 @@ export class ChatbotService {
     });
     if (!post || post.status !== 'PUBLISHED') return;
     const slug = post.layouts[0]?.slug ?? post.slug;
+    const sourceDate = post.publishedAt ?? post.createdAt ?? null;
 
     for (const lang of ['VI', 'EN'] as const) {
       const title = htmlToText(pickLang(post.title as Localized, lang));
@@ -218,6 +221,7 @@ export class ChatbotService {
           title,
           slug,
           content: c,
+          sourceDate,
         });
       }
     }
@@ -235,6 +239,7 @@ export class ChatbotService {
         isPublished: true,
         publishedPuckData: true,
         puckData: true,
+        updatedAt: true,
       },
     });
     if (!layout || !layout.isPublished) return;
@@ -250,6 +255,7 @@ export class ChatbotService {
         slug: layout.slug,
         title: layout.name,
         content: c,
+        sourceDate: layout.updatedAt ?? null,
       });
     }
   }
@@ -362,6 +368,7 @@ export class ChatbotService {
         slug: true,
         publishedPuckData: true,
         puckData: true,
+        updatedAt: true,
       },
     });
     for (const l of layouts) {
@@ -375,6 +382,7 @@ export class ChatbotService {
           slug: l.slug,
           title: l.name,
           content: c,
+          sourceDate: l.updatedAt ?? null,
         });
       }
     }
@@ -406,10 +414,11 @@ export class ChatbotService {
         slug: string | null;
         content: string;
         sourceType: string;
+        sourceDate: Date | string | null;
         dist: number;
       }[]
     >(
-      `SELECT "title","slug","content","sourceType",
+      `SELECT "title","slug","content","sourceType","sourceDate",
               ("embedding" <=> $1::vector) AS dist
          FROM "ChatbotChunk"
         ORDER BY "embedding" <=> $1::vector
@@ -432,8 +441,22 @@ export class ChatbotService {
       };
     }
 
+    // Prefix each item with its publish date so the LLM can reason about
+    // recency ("newest", "this year", upcoming events) instead of treating all
+    // content as equally current.
+    const fmtDate = (d: Date | string | null): string => {
+      if (!d) return '';
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return '';
+      const dd = String(dt.getDate()).padStart(2, '0');
+      const mm = String(dt.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${dt.getFullYear()}`;
+    };
     const context = rows
-      .map((r, i) => `[${i + 1}] ${r.title ?? ''}\n${r.content}`)
+      .map((r, i) => {
+        const d = fmtDate(r.sourceDate);
+        return `[${i + 1}]${d ? ` (${d})` : ''} ${r.title ?? ''}\n${r.content}`;
+      })
       .join('\n\n');
     const answer = await this.llm.answer({ question: q, context, language });
 

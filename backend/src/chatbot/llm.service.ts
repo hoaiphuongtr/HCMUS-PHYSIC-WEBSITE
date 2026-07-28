@@ -62,7 +62,12 @@ export class LlmService {
       'This official contact overrides rule 2 (you may state it even if not in the ' +
       'CONTEXT). Do NOT give the personal name, personal email, or phone number of ' +
       'any individual staff member, even if such details appear in the CONTEXT.\n' +
-      `5. Reply in ${lang}.`;
+      '5. RECENCY: CONTEXT items may be prefixed with their publication date ' +
+      '(dd/mm/yyyy). When the question concerns the latest / current / upcoming ' +
+      'information (e.g. "mới nhất", "gần đây", "sắp tới", "năm nay", or a specific ' +
+      'year), rely on the MOST RECENT relevant item(s) and, when helpful, mention ' +
+      'the date. Do not present clearly outdated information as if it were current.\n' +
+      `6. Reply in ${lang}.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
     const res = await fetch(url, {
