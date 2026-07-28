@@ -55,7 +55,19 @@ export class LlmService {
       '3. Only answer questions about this Faculty. For anything unrelated, ' +
       'politely say it’s outside your scope and offer to help with faculty topics ' +
       'instead.\n' +
-      `4. Reply in ${lang}.`;
+      '4. CONTACT: When the user asks how to contact the faculty, or asks about ' +
+      'admissions/enrollment help, ALWAYS direct them to the faculty office ' +
+      '("Giáo vụ Khoa Vật lý – Vật lý Kỹ thuật") via its official email ' +
+      'giaovu.phys@hcmus.edu.vn and the official website https://phys.hcmus.edu.vn/. ' +
+      'This official contact overrides rule 2 (you may state it even if not in the ' +
+      'CONTEXT). Do NOT give the personal name, personal email, or phone number of ' +
+      'any individual staff member, even if such details appear in the CONTEXT.\n' +
+      '5. RECENCY: CONTEXT items may be prefixed with their publication date ' +
+      '(dd/mm/yyyy). When the question concerns the latest / current / upcoming ' +
+      'information (e.g. "mới nhất", "gần đây", "sắp tới", "năm nay", or a specific ' +
+      'year), rely on the MOST RECENT relevant item(s) and, when helpful, mention ' +
+      'the date. Do not present clearly outdated information as if it were current.\n' +
+      `6. Reply in ${lang}.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
     const res = await fetch(url, {
@@ -72,7 +84,15 @@ export class LlmService {
             parts: [{ text: `CONTEXT:\n${context}\n\nQUESTION: ${question}` }],
           },
         ],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+        generationConfig: {
+          temperature: 0.2,
+          // gemini-flash's internal "thinking" tokens count against
+          // maxOutputTokens. Trying to disable thinking via thinkingConfig is
+          // rejected (400 INVALID_ARGUMENT) by the -latest alias, so instead give
+          // a large budget: thinking + the full answer both fit and the reply is
+          // never truncated mid-sentence.
+          maxOutputTokens: 8192,
+        },
       }),
     });
     if (!res.ok) {
