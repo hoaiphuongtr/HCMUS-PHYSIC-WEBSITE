@@ -74,12 +74,12 @@ export class LlmService {
         ],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 2048,
-          // gemini-flash's "thinking" tokens count against maxOutputTokens; left
-          // on, a long think eats the whole budget and truncates the visible
-          // answer mid-sentence. Grounded RAG answers don't need it — turn it off
-          // for full, fast replies.
-          thinkingConfig: { thinkingBudget: 0 },
+          // gemini-flash's internal "thinking" tokens count against
+          // maxOutputTokens. Trying to disable thinking via thinkingConfig is
+          // rejected (400 INVALID_ARGUMENT) by the -latest alias, so instead give
+          // a large budget: thinking + the full answer both fit and the reply is
+          // never truncated mid-sentence.
+          maxOutputTokens: 8192,
         },
       }),
     });
