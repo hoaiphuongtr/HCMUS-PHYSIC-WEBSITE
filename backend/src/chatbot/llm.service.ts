@@ -72,7 +72,15 @@ export class LlmService {
             parts: [{ text: `CONTEXT:\n${context}\n\nQUESTION: ${question}` }],
           },
         ],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+          // gemini-flash's "thinking" tokens count against maxOutputTokens; left
+          // on, a long think eats the whole budget and truncates the visible
+          // answer mid-sentence. Grounded RAG answers don't need it — turn it off
+          // for full, fast replies.
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     });
     if (!res.ok) {
