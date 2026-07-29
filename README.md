@@ -3,7 +3,7 @@
 Hệ thống quản trị nội dung (CMS) cho website Khoa Vật lý – Vật lý Kỹ thuật, Trường Đại học Khoa học Tự nhiên – ĐHQG TP.HCM.
 
 - **Trang công khai (người xem):** https://phys.hcmus.edu.vn  *(HTTPS, không cần gõ cổng)*
-- **Trang quản trị (admin):** https://phys.hcmus.edu.vn:8443/admin  *(HTTPS qua Caddy — xem mục 4.5)*
+- **Trang quản trị (admin):** https://phys.hcmus.edu.vn:3000  *(HTTPS qua Caddy — xem mục 4.5)*
 - **API (backend):** https://phys.hcmus.edu.vn/be  *(nội bộ, trang công khai tự gọi)*
 
 ---
@@ -26,7 +26,7 @@ Chi tiết mô-đun và luồng bài viết → bố cục → trang công khai:
 
 ## 2. Đăng nhập quản trị
 
-- **Địa chỉ:** https://phys.hcmus.edu.vn:8443/admin
+- **Địa chỉ:** https://phys.hcmus.edu.vn:3000
 - **Tài khoản Super Admin:** `admin@hcmus.edu.vn`
 - **Mật khẩu:** *(được bàn giao riêng — vui lòng đổi ngay sau lần đăng nhập đầu tiên)*
 
@@ -118,9 +118,9 @@ NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=http://backend:3001
 ```
 
 ### 4.5. Trang quản trị chạy HTTPS
-Admin được phục vụ qua Caddy ở **https://phys.hcmus.edu.vn:8443/admin** (cổng 8443, dùng chung chứng chỉ với trang chính). Bắt buộc dùng HTTPS vì trình duyệt tự nâng http→https nên cổng 3000 (không TLS) sẽ lỗi `ERR_SSL_PROTOCOL_ERROR`. Admin build với API `https://phys.hcmus.edu.vn/be` để tránh mixed-content.
+Admin được phục vụ qua Caddy ở **https://phys.hcmus.edu.vn:3000** (Caddy giữ cổng 3000 trên host — container admin KHÔNG map cổng 3000 nữa; Caddy proxy nội bộ tới `admin:3000`). App tự chuyển `/` → `/admin` nên chỉ cần gõ `:3000`. Có thêm `:8443` làm dự phòng. Bắt buộc HTTPS vì trình duyệt tự nâng http→https; admin build với API `https://phys.hcmus.edu.vn/be` để tránh mixed-content.
 
-*(Muốn URL đẹp không cần cổng: thêm DNS `admin.phys.hcmus.edu.vn → 103.88.121.212` rồi thêm khối `admin.phys.hcmus.edu.vn { reverse_proxy admin:3000 }` vào `deploy/Caddyfile`, và bỏ khối cổng 8443.)*
+*(Muốn URL không cần cổng: thêm DNS `admin.phys.hcmus.edu.vn → 103.88.121.212` rồi thêm khối `admin.phys.hcmus.edu.vn { reverse_proxy admin:3000 }` vào `deploy/Caddyfile`.)*
 
 ---
 

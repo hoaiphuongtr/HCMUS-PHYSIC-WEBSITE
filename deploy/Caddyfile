@@ -14,9 +14,13 @@ phys.hcmus.edu.vn {
 	}
 }
 
-# Trang quản trị qua HTTPS trên cổng 8443 (dùng chung chứng chỉ phys.hcmus.edu.vn).
-# Cần vì trình duyệt tự nâng http→https nên admin cổng 3000 (không TLS) bị lỗi
-# ERR_SSL_PROTOCOL_ERROR. Truy cập: https://phys.hcmus.edu.vn:8443/admin
+# Trang quản trị qua HTTPS trên cổng 3000 (app tự chuyển / → /admin). Container
+# admin KHÔNG map cổng 3000 trên host nữa — Caddy giữ cổng đó và proxy nội bộ.
+phys.hcmus.edu.vn:3000 {
+	reverse_proxy admin:3000
+}
+
+# Dự phòng: cổng 8443 cũng vào admin (phòng khi cần).
 phys.hcmus.edu.vn:8443 {
 	reverse_proxy admin:3000
 }

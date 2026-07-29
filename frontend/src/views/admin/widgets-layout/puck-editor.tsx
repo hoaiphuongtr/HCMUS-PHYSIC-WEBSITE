@@ -396,7 +396,12 @@ function PublishMenu({
   // này khi lên môi trường khác (sandbox IP, domain PROD) là View live trỏ đúng.
   const publicSiteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3002";
-  const publicLayoutUrl = `${publicSiteUrl}/${layout.slug}`;
+  // Layout trang chủ (slug "trang-chu") được phục vụ ở gốc "/", không phải
+  // "/trang-chu" → View live trỏ thẳng về gốc.
+  const publicLayoutUrl =
+    layout.slug === "trang-chu"
+      ? publicSiteUrl
+      : `${publicSiteUrl}/${layout.slug}`;
 
   return (
     <div className="inline-flex items-center gap-2">
