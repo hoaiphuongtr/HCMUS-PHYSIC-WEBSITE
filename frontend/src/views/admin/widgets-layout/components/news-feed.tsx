@@ -17,6 +17,7 @@ import { useLocale } from "@/lib/locale-context";
 import { categoryColor } from "@/lib/post-categories";
 import { colorField } from "../fields/color-field";
 import { localizedTextField } from "../fields/localized-text-field";
+import { resolveOptimizerSrc } from "./media-src";
 
 const formatDate = (iso: string | null, locale: string): string => {
   if (!iso) return "";
@@ -48,7 +49,15 @@ function CoverImg({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
-  const url = src && !failed ? resolveMediaUrl(src) : DEFAULT_COVER;
+  // Ảnh bìa card qua BỘ TỐI ƯU (WebP, w=640) thay vì tải file gốc 1–2MB — nhỏ hơn
+  // ~20 lần nên trang tin tức/danh sách load nhanh hơn hẳn. Chỉ tối ưu ảnh trong
+  // kho (/uploads); URL tuyệt đối lạ thì để nguyên. Lỗi → ảnh bìa mặc định.
+  let url = DEFAULT_COVER;
+  if (src && !failed) {
+    url = src.startsWith("/uploads")
+      ? `/_next/image?url=${encodeURIComponent(resolveOptimizerSrc(src))}&w=640&q=70`
+      : resolveMediaUrl(src);
+  }
   return (
     <img
       src={url}
