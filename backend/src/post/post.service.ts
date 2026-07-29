@@ -568,15 +568,26 @@ export class PostService {
       });
       await tx.post.update({ where: { id }, data: { deletedAt: now } });
     });
-    if (existing.status === 'PUBLISHED') {
-      await this.syncNewsFeedSnapshots();
-    }
     await this.cache.clear();
+    // Revalidate trang của bài + layout NGAY (nhanh).
     this.publicRevalidate.trigger([
       'sitemap',
       `post:${id}`,
       ...attached.map((l) => `page:${l.slug}`),
     ]);
+    if (existing.status === 'PUBLISHED') {
+      // Dựng lại snapshot feed duyệt ~1900 layout → CHẠY NỀN (không await) để phản
+      // hồi trả về ngay (toast hiện tức thì thay vì chờ vài giây); xong thì
+      // revalidate các trang feed (trang chủ/mục).
+      void this.syncNewsFeedSnapshots()
+        .then((r) =>
+          this.publicRevalidate.trigger([
+            'sitemap',
+            ...r.slugs.map((s) => `page:${s}`),
+          ]),
+        )
+        .catch(() => undefined);
+    }
     return { ok: true };
   }
 
@@ -607,15 +618,26 @@ export class PostService {
       });
       await tx.post.update({ where: { id }, data: { deletedAt: null } });
     });
-    if (existing.status === 'PUBLISHED') {
-      await this.syncNewsFeedSnapshots();
-    }
     await this.cache.clear();
+    // Revalidate trang của bài + layout NGAY (nhanh).
     this.publicRevalidate.trigger([
       'sitemap',
       `post:${id}`,
       ...attached.map((l) => `page:${l.slug}`),
     ]);
+    if (existing.status === 'PUBLISHED') {
+      // Dựng lại snapshot feed duyệt ~1900 layout → CHẠY NỀN (không await) để phản
+      // hồi trả về ngay (toast hiện tức thì thay vì chờ vài giây); xong thì
+      // revalidate các trang feed (trang chủ/mục).
+      void this.syncNewsFeedSnapshots()
+        .then((r) =>
+          this.publicRevalidate.trigger([
+            'sitemap',
+            ...r.slugs.map((s) => `page:${s}`),
+          ]),
+        )
+        .catch(() => undefined);
+    }
     return { ok: true };
   }
 
