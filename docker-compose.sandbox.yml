@@ -170,6 +170,11 @@ services:
       # on a NAT'd host cannot reach that IP. SSR fetches use this internal base instead;
       # see frontend-public/src/lib/api.ts (server picks INTERNAL_API_URL, browser doesn't).
       INTERNAL_API_URL: http://backend:3001
+    volumes:
+      # Giữ CACHE ẢNH ĐÃ TỐI ƯU của Next qua các lần redeploy (force-recreate xoá
+      # filesystem container → mất cache → ảnh phải tối ưu lại "nguội" ~1s/ảnh).
+      # Volume này giúp ảnh giữ ấm, load nhanh sau lần warm đầu.
+      - public_imgcache:/app/frontend-public/.next/cache/images
     depends_on:
       - backend
 
@@ -182,6 +187,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8443:8443" # admin HTTPS (https://phys.hcmus.edu.vn:8443/admin)
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -195,4 +201,5 @@ volumes:
   redisdata:
   caddy_data:
   caddy_config:
+  public_imgcache:
   ollama_models:

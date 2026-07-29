@@ -699,11 +699,18 @@ export class PostService {
     } else {
       layoutSlug = toSlugPath(`tin-tuc/${post.slug}`);
     }
-    const conflict = await this.pageLayoutRepo.findConflictBySlugAndStatus(
-      layoutSlug,
-      false,
-    );
-    if (conflict) throw slugExistsInStatusException('draft', conflict.name);
+    // Cùng MỘT bài có thể rót vào NHIỀU layout (mỗi layout một đường dẫn). Slug
+    // suy ra từ slug bài nên rót lần 2 sẽ trùng → tự thêm hậu tố -2, -3… cho tới
+    // khi slug chưa tồn tại, thay vì báo lỗi "trùng slug". Có thể đổi lại slug
+    // trong trình sửa layout sau.
+    const baseSlug = layoutSlug;
+    let suffix = 1;
+    while (
+      await this.pageLayoutRepo.findConflictBySlugAndStatus(layoutSlug, false)
+    ) {
+      suffix += 1;
+      layoutSlug = toSlugPath(`${baseSlug}-${suffix}`);
+    }
 
     const postCategory = await this.prisma.category.findUnique({
       where: { id: post.categoryId },
