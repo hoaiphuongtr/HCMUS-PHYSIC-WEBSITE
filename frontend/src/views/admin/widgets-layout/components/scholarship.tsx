@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { localizedTextField } from "../fields/localized-text-field";
-import { resolveMediaSrc } from "./media-src";
+import { resolveMediaSrc, resolveOptimizerSrc } from "./media-src";
 import { TagIcons } from "./news-feed";
 import { readSubs, SUBS_EVENT, topicByKey, writeSubs } from "./notif-subs";
 
@@ -236,7 +236,11 @@ function ScholarshipListRender({
                 {p.coverUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={resolveMediaSrc(p.coverUrl)}
+                    src={
+                      p.coverUrl.startsWith("/uploads")
+                        ? `/_next/image?url=${encodeURIComponent(resolveOptimizerSrc(p.coverUrl))}&w=640&q=70`
+                        : resolveMediaSrc(p.coverUrl)
+                    }
                     alt=""
                     loading="lazy"
                     decoding="async"

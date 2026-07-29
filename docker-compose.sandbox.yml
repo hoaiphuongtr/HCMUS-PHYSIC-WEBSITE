@@ -142,8 +142,8 @@ services:
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
-    ports:
-      - "3000:3000"
+    # KHÔNG map cổng 3000 trên host: Caddy giữ host:3000 và proxy tới admin:3000
+    # qua mạng nội bộ (admin phục vụ HTTPS tại https://phys.hcmus.edu.vn:3000).
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     depends_on:
@@ -187,7 +187,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8443:8443" # admin HTTPS (https://phys.hcmus.edu.vn:8443/admin)
+      - "3000:3000" # admin HTTPS (https://phys.hcmus.edu.vn:3000)
+      - "8443:8443" # admin HTTPS fallback
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
