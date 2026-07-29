@@ -170,6 +170,10 @@ services:
       # on a NAT'd host cannot reach that IP. SSR fetches use this internal base instead;
       # see frontend-public/src/lib/api.ts (server picks INTERNAL_API_URL, browser doesn't).
       INTERNAL_API_URL: http://backend:3001
+      # Phải KHỚP REVALIDATE_TOKEN của backend, nếu không route /api/revalidate
+      # từ chối webhook → sửa layout/bài KHÔNG áp lên public (phải chờ ISR/tự xoá
+      # cache). Backend gửi token này khi publish.
+      REVALIDATE_TOKEN: ${REVALIDATE_TOKEN:-dev-revalidate-token}
     volumes:
       # Giữ CACHE ẢNH ĐÃ TỐI ƯU của Next qua các lần redeploy (force-recreate xoá
       # filesystem container → mất cache → ảnh phải tối ưu lại "nguội" ~1s/ảnh).
