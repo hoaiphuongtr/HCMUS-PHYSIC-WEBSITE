@@ -319,7 +319,7 @@ export class ChatbotService {
       await this.indexTraining(row.id);
       indexed++;
     }
-    await this.cache.clear();
+    await this.cache.clear().catch(() => undefined);
     return { indexed };
   }
 
@@ -387,7 +387,9 @@ export class ChatbotService {
       }
     }
 
-    await this.cache.clear();
+    // Some redis cache stores don't implement clear(); don't let that turn a
+    // fully-successful reindex into a misleading 500.
+    await this.cache.clear().catch(() => undefined);
     return {
       posts: posts.length,
       faqs: faqs.length,
