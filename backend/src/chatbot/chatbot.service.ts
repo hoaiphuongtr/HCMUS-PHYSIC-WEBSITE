@@ -330,7 +330,18 @@ export class ChatbotService {
       where: { status: 'PUBLISHED' },
       select: { id: true },
     });
-    for (const p of posts) await this.indexPost(p.id);
+    // Resilient: a single post that fails (e.g. an embedding API error that
+    // survives all retries) must not abort the whole reindex and leave the site
+    // half-indexed. Skip it, log it, keep going.
+    let failed = 0;
+    for (const p of posts) {
+      try {
+        await this.indexPost(p.id);
+      } catch (e) {
+        failed++;
+        this.logger.error(`reindex: post ${p.id} failed`, e as Error);
+      }
+    }
 
     const faqs = await this.prisma.fAQ.findMany({ where: { isActive: true } });
     for (const f of faqs) {
@@ -372,18 +383,23 @@ export class ChatbotService {
       },
     });
     for (const l of layouts) {
-      const text = htmlToText(flattenBody(l.publishedPuckData ?? l.puckData));
-      if (!text) continue;
-      for (const c of chunk(text)) {
-        await this.insertChunk({
-          sourceType: 'page',
-          sourceId: l.id,
-          language: 'VI',
-          slug: l.slug,
-          title: l.name,
-          content: c,
-          sourceDate: l.updatedAt ?? null,
-        });
+      try {
+        const text = htmlToText(flattenBody(l.publishedPuckData ?? l.puckData));
+        if (!text) continue;
+        for (const c of chunk(text)) {
+          await this.insertChunk({
+            sourceType: 'page',
+            sourceId: l.id,
+            language: 'VI',
+            slug: l.slug,
+            title: l.name,
+            content: c,
+            sourceDate: l.updatedAt ?? null,
+          });
+        }
+      } catch (e) {
+        failed++;
+        this.logger.error(`reindex: page ${l.id} failed`, e as Error);
       }
     }
 
@@ -395,6 +411,7 @@ export class ChatbotService {
       faqs: faqs.length,
       training: training.length,
       pages: layouts.length,
+      failed,
     };
   }
 

@@ -41,9 +41,10 @@ export class EmbeddingService {
         },
         body,
       });
-      if (res.status === 429) {
-        // rate limited — back off and retry (important during a large reindex)
-        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      // Retry on rate limit (429) AND transient server errors (500/502/503/504 —
+      // Gemini overload during a large reindex), with increasing back-off.
+      if ((res.status === 429 || res.status >= 500) && attempt < 5) {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
         continue;
       }
       if (!res.ok) {
