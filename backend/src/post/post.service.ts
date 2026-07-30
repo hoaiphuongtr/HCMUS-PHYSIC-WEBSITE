@@ -406,13 +406,19 @@ export class PostService {
       where: {
         ...NOT_DELETED,
         status: 'PUBLISHED',
-        // bài di trú rỗng nội dung (nguồn cũ không có bài) không đưa ra trang công khai
-        body: { not: Prisma.DbNull },
         // chỉ công khai bài đã gắn vào một layout đã xuất bản (nếu không, URL bài lẻ 404)
         ...HAS_PUBLISHED_LAYOUT,
         AND: [
           deptWhere ?? this.feedDeptWhere(),
           { OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }] },
+          // Ẩn bài di trú RỖNG nội dung (nguồn cũ không có bài), NHƯNG cho phép
+          // bài SỰ KIỆN dù trống body (sự kiện chỉ cần thời gian/địa điểm).
+          {
+            OR: [
+              { body: { not: Prisma.DbNull } },
+              { eventStartAt: { not: null } },
+            ],
+          },
         ],
       },
       // Sắp theo NGÀY ĐĂNG GỐC (publishedAt) để tin mới viết gần đây luôn ở đầu;
@@ -469,10 +475,19 @@ export class PostService {
     const where: Record<string, unknown> = {
       ...NOT_DELETED,
       status: 'PUBLISHED',
-      body: { not: Prisma.DbNull },
       ...HAS_PUBLISHED_LAYOUT,
       // Faculty feed by default; a dept slug narrows to that department's posts.
-      AND: [this.feedDeptWhere(department)],
+      // Ẩn bài trống nội dung, NHƯNG cho phép bài SỰ KIỆN dù trống body → bài
+      // sự kiện vẫn hiện trong bộ lọc tin tức (vd category "Sự kiện").
+      AND: [
+        this.feedDeptWhere(department),
+        {
+          OR: [
+            { body: { not: Prisma.DbNull } },
+            { eventStartAt: { not: null } },
+          ],
+        },
+      ],
     };
     if (category) where.category = { slug: category };
     if (fromDate || toDate) {
