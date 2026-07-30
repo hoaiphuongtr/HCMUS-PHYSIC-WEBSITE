@@ -63,6 +63,27 @@ export async function getLayoutBySlug(slug: string): Promise<PageLayout> {
   return res.json();
 }
 
+// Standalone HTML pages (event microsites) served on the domain without the Puck
+// designer. The catch-all falls back to this when no layout matches the slug.
+export type PublicStaticPage = {
+  id: string;
+  slug: string;
+  title: string;
+  html: string;
+  renderMode: string;
+  isPublished: boolean;
+};
+
+export async function getStaticPageBySlug(
+  slug: string,
+): Promise<PublicStaticPage> {
+  const res = await fetch(`${API_URL}/static-pages/slug/${slug}`, {
+    next: { revalidate: 3600, tags: ["sitemap", `static-page:${slug}`] },
+  });
+  if (!res.ok) throw new Error(`Static page not found: ${slug}`);
+  return res.json();
+}
+
 export const subscriptionApi = {
   create(body: { email: string; tagSlugs: string[]; visitorId?: string }) {
     return apiFetch<Subscription>(`/subscription`, {

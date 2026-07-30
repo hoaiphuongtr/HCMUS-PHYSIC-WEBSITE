@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  Code2,
   FileText,
   FolderOpen,
   LayoutDashboard,
@@ -45,6 +46,7 @@ const SYSTEM_ITEMS: NavItem[] = [
 
 const SUPER_ADMIN_ITEMS: NavItem[] = [
   { name: "Category & Tag", href: "/admin/taxonomy", icon: Tags },
+  { name: "Trang HTML", href: "/admin/static-pages", icon: Code2 },
   { name: "Admin Management", href: "/admin/admins", icon: Users },
 ];
 

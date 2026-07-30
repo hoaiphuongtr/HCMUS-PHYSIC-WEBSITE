@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { breadcrumbListSchema, JsonLd } from "@/components/JsonLd";
 import { VisitorTracker } from "@/components/visitor-tracker";
-import { getLayoutBySlug } from "@/lib/api";
+import { getLayoutBySlug, getStaticPageBySlug } from "@/lib/api";
 import {
   buildCanonical,
   buildLanguageAlternates,
@@ -77,7 +77,17 @@ export async function generateMetadata({
       robots: { index: true, follow: true },
     };
   } catch {
-    return {};
+    // No layout → maybe a standalone StaticPage lives at this slug.
+    try {
+      const page = await getStaticPageBySlug(slugPath);
+      return {
+        title: { absolute: page.title },
+        alternates: { canonical: buildCanonical(`/${slugPath}`) },
+        robots: { index: true, follow: true },
+      };
+    } catch {
+      return {};
+    }
   }
 }
 
@@ -100,6 +110,36 @@ export default async function PublicLayoutPage({ params }: PageProps) {
       </>
     );
   } catch {
-    notFound();
+    // No published layout at this slug → fall back to a standalone StaticPage
+    // (event microsite like /iceba2023). 'iframe' isolates a full HTML document;
+    // 'embed' injects a fragment inside the site shell.
+    try {
+      const page = await getStaticPageBySlug(slugPath);
+      if (page.renderMode === "embed") {
+        return (
+          <>
+            <VisitorTracker slug={slugPath} />
+            <div dangerouslySetInnerHTML={{ __html: page.html }} />
+          </>
+        );
+      }
+      return (
+        <>
+          <VisitorTracker slug={slugPath} />
+          <iframe
+            srcDoc={page.html}
+            title={page.title}
+            style={{
+              width: "100%",
+              height: "100vh",
+              border: "0",
+              display: "block",
+            }}
+          />
+        </>
+      );
+    } catch {
+      notFound();
+    }
   }
 }

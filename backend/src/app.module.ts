@@ -17,6 +17,7 @@ import { CategoryModule } from './category/category.module';
 import { TagModule } from './tag/tag.module';
 import { NotificationModule } from './notification/notification.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { StaticPageModule } from './static-page/static-page.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -56,6 +57,7 @@ import envConfig from './shared/config/config';
     TagModule,
     NotificationModule,
     ChatbotModule,
+    StaticPageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

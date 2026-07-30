@@ -34,6 +34,7 @@ $Files = @(
   'backend/src',
   'backend/prisma',
   'backend/initialScript',
+  'frontend/src',
   'frontend-public/src'
 )
 

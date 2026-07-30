@@ -679,6 +679,28 @@ model ChatbotTraining {
   @@index([faqId])
 }
 
+// Standalone HTML pages served on the public domain WITHOUT the Puck layout
+// designer — e.g. one-off event microsites (/iceba2023). Completely separate from
+// PageLayout: the public catch-all falls back to this only when no layout matches,
+// so the existing layout flow is untouched. Raw table created via a manual
+// migration (see prisma/migrations/20260730_static_page) to avoid `prisma db push`
+// dropping the raw ChatbotChunk table on the restored DB.
+model StaticPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  html        String
+  // 'iframe' = render the full HTML document isolated in an iframe (default, safe
+  // for full microsites); 'embed' = inject as a fragment inside the site shell.
+  renderMode  String   @default("iframe")
+  isPublished Boolean  @default(false)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished])
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String?

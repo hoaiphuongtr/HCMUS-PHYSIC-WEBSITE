@@ -871,6 +871,45 @@ export const tagApi = {
     authFetch<{ ok: boolean }>(`/tags/${id}`, { method: "DELETE" }),
 };
 
+// Standalone HTML pages (event microsites) — separate from Puck page layouts.
+export type StaticPageListItem = {
+  id: string;
+  slug: string;
+  title: string;
+  renderMode: string;
+  isPublished: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StaticPage = StaticPageListItem & { html: string };
+
+export type UpsertStaticPageBody = {
+  slug?: string;
+  title?: string;
+  html?: string;
+  renderMode?: string;
+  isPublished?: boolean;
+};
+
+export const staticPageApi = {
+  list: () => authFetch<StaticPageListItem[]>(`/static-pages`),
+  getById: (id: string) => authFetch<StaticPage>(`/static-pages/${id}`),
+  create: (body: UpsertStaticPageBody) =>
+    authFetch<StaticPage>(`/static-pages`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: UpsertStaticPageBody) =>
+    authFetch<StaticPage>(`/static-pages/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    authFetch<{ ok: boolean }>(`/static-pages/${id}`, { method: "DELETE" }),
+};
+
 export type NotificationItem = {
   id: string;
   title: string;
