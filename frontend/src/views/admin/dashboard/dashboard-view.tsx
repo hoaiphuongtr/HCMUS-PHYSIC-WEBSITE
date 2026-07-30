@@ -122,7 +122,7 @@ export function AdminDashboardView() {
         (a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       )
-      .slice(0, 6);
+      .slice(0, 30);
   }, [posts, layouts]);
 
   const user = userQuery.data;
@@ -131,7 +131,7 @@ export function AdminDashboardView() {
     : "Welcome";
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100">
+    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#101622] text-slate-900 dark:text-slate-100">
       <div className="px-6 py-6 space-y-6">
         <section className="flex items-start justify-between gap-4 flex-wrap">
           <div>
