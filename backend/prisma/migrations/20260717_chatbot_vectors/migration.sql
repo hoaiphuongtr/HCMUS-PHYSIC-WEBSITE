@@ -2,6 +2,11 @@
 -- superset of postgres:16-alpine).
 CREATE EXTENSION IF NOT EXISTS vector;
 
+-- Enable unaccent so post search is accent- AND case-insensitive: "vien hang
+-- khong" / "viện hàng không" both match "Viện Hàng không" (see
+-- PostService.searchPostIdWhere). Contrib module, ships with the postgres image.
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- Chunked, embedded content the chatbot searches over.
 -- 768 dims = nomic-embed-text (served by Ollama). If you change EMBED_MODEL to a
 -- model with a different dimension, update vector(768) here to match and rebuild.

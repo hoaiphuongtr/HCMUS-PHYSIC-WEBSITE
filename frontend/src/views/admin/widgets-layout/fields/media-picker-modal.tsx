@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { XIcon } from "@/components/admin/icons";
+import { UploadZone } from "@/views/admin/media/upload-zone";
 import { mediaApi, resolveMediaUrl } from "@/lib/api";
 import { ModalPortal } from "../portal-menu";
 
@@ -52,7 +53,7 @@ export function MediaPickerModal({ onSelect, onClose }: MediaPickerModalProps) {
         >
           <header className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Chọn ảnh từ thư viện
+              Chọn hoặc tải ảnh lên
             </h2>
             <input
               value={search}
@@ -111,17 +112,27 @@ export function MediaPickerModal({ onSelect, onClose }: MediaPickerModalProps) {
           )}
 
           <div className="flex-1 overflow-y-auto p-5">
+            {/* Tải ảnh mới ngay trong bộ chọn: từ máy (kéo-thả/chọn file) hoặc
+                dán URL. Ảnh mới tự lưu vào Media rồi được chọn luôn. */}
+            <div className="mb-4">
+              <UploadZone
+                onUploaded={() => {
+                  setPage(1);
+                  listQuery.refetch();
+                }}
+                onUploadedItem={(item) => {
+                  onSelect(resolveMediaUrl(item.url));
+                  onClose();
+                }}
+              />
+            </div>
             {listQuery.isLoading ? (
               <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
                 Đang tải…
               </div>
             ) : items.length === 0 ? (
               <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
-                Không có ảnh. Hãy upload vào{" "}
-                <a href="/admin/media" className="text-blue-600 underline">
-                  Media Library
-                </a>
-                .
+                Chưa có ảnh nào trong thư viện — hãy tải lên ở khung phía trên.
               </div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">

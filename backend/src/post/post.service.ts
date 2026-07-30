@@ -300,6 +300,26 @@ export class PostService {
     return posts.map((p) => this.serializeListItem(p));
   }
 
+  // Tìm kiếm bài viết KHÔNG phân biệt hoa/thường VÀ không phân biệt dấu.
+  // `string_contains` của Prisma trên cột Json phân biệt cả hoa/thường lẫn dấu,
+  // nên "viện hàng không" không khớp "Viện Hàng không" (và "vien hang khong"
+  // càng không). Ở đây dùng unaccent(lower(...)) trên tiêu đề/tóm tắt/slug để
+  // gom id khớp, rồi ràng buộc theo id — cho phép gõ có dấu hoặc không dấu.
+  private async searchPostIdWhere(
+    q: string,
+  ): Promise<Record<string, unknown>> {
+    const like = `%${q.toLowerCase()}%`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Post"
+      WHERE unaccent(lower(coalesce("title"->>'vi', ''))) LIKE unaccent(${like})
+         OR unaccent(lower(coalesce("title"->>'en', ''))) LIKE unaccent(${like})
+         OR unaccent(lower(coalesce("excerpt"->>'vi', ''))) LIKE unaccent(${like})
+         OR unaccent(lower(coalesce("excerpt"->>'en', ''))) LIKE unaccent(${like})
+         OR unaccent(lower("slug")) LIKE unaccent(${like})
+    `;
+    return { id: { in: rows.map((r) => r.id) } };
+  }
+
   async listAdminPaged(params: {
     page: number;
     pageSize: number;
@@ -325,16 +345,7 @@ export class PostService {
     const scope = departmentScopeWhere(roleName, departmentId);
     if (scope) andClauses.push(scope);
     if (search && search.trim()) {
-      const q = search.trim();
-      andClauses.push({
-        OR: [
-          { title: { path: ['vi'], string_contains: q } },
-          { title: { path: ['en'], string_contains: q } },
-          { excerpt: { path: ['vi'], string_contains: q } },
-          { excerpt: { path: ['en'], string_contains: q } },
-          { slug: { contains: q, mode: 'insensitive' } },
-        ],
-      });
+      andClauses.push(await this.searchPostIdWhere(search.trim()));
     }
     const where: Record<string, unknown> = {};
     if (category) where.category = { slug: category };
@@ -471,14 +482,9 @@ export class PostService {
       where.publishedAt = range;
     }
     if (search && search.trim()) {
-      const q = search.trim();
-      where.OR = [
-        { title: { path: ['vi'], string_contains: q } },
-        { title: { path: ['en'], string_contains: q } },
-        { excerpt: { path: ['vi'], string_contains: q } },
-        { excerpt: { path: ['en'], string_contains: q } },
-        { slug: { contains: q, mode: 'insensitive' } },
-      ];
+      (where.AND as Record<string, unknown>[]).push(
+        await this.searchPostIdWhere(search.trim()),
+      );
     }
     const [total, posts] = await Promise.all([
       this.prisma.post.count({ where: where as any }),

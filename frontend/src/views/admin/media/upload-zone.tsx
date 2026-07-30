@@ -4,14 +4,21 @@ import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { UploadCloudIcon } from "@/components/admin/icons";
-import { mediaApi } from "@/lib/api";
+import { type MediaItem, mediaApi } from "@/lib/api";
 
 type UploadZoneProps = {
   tagSlugs?: string[];
   onUploaded: () => void;
+  // Fired with the created Media row after a successful upload or URL import.
+  // Lets a caller (e.g. the media picker) immediately use the new image.
+  onUploadedItem?: (item: MediaItem) => void;
 };
 
-export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
+export function UploadZone({
+  tagSlugs,
+  onUploaded,
+  onUploadedItem,
+}: UploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [pending, setPending] = useState(0);
@@ -26,11 +33,12 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
   const urlMutation = useMutation({
     mutationKey: ["MEDIA", "CREATE_FROM_URL"],
     mutationFn: (url: string) => mediaApi.createFromUrl({ url, tagSlugs }),
-    onSuccess: () => {
+    onSuccess: (item) => {
       toast.success("Đã lưu URL");
       setUrlValue("");
       setUrlMode(false);
       onUploaded();
+      onUploadedItem?.(item);
     },
     onError: (err: { message?: string }) => {
       toast.error(err.message || "Không lưu được URL");
@@ -48,9 +56,10 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
 
     setPending(valid.length);
     let success = 0;
+    let lastItem: MediaItem | null = null;
     for (const file of valid) {
       try {
-        await uploadMutation.mutateAsync(file);
+        lastItem = await uploadMutation.mutateAsync(file);
         success++;
       } catch (err) {
         const msg = (err as { message?: string })?.message ?? "Upload thất bại";
@@ -62,6 +71,7 @@ export function UploadZone({ tagSlugs, onUploaded }: UploadZoneProps) {
     if (success > 0) {
       toast.success(`Đã tải lên ${success} ảnh`);
       onUploaded();
+      if (lastItem) onUploadedItem?.(lastItem);
     }
     if (inputRef.current) inputRef.current.value = "";
   };
