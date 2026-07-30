@@ -231,9 +231,16 @@ function PostBodyRender({
           [data-post-body],
           [data-post-body] *:not(a):not(a *) {
             font-family: inherit !important;
-            color: inherit !important;
             background: transparent !important;
             line-height: inherit;
+          }
+          /* Màu chữ: KHÔNG ép !important để màu inline do người dùng chọn
+             (<span style="color:…"> từ trình soạn thảo) hiển thị đúng. Chỉ đặt
+             mặc định kế thừa cho phần tử KHÔNG có màu inline; thẻ <font color>
+             (định dạng cũ, độ ưu tiên thấp) vẫn bị chuẩn hoá về màu chủ đề. */
+          [data-post-body],
+          [data-post-body] *:not(a):not(a *) {
+            color: inherit;
           }
           /* Normalise font-size on EVERY non-heading element (incl. <b>/<strong>/
              <font>/<small> that legacy Word-export markup uses) so quoted/bold text

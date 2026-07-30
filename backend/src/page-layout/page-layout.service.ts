@@ -106,6 +106,7 @@ export class PageLayoutService {
     if (publishedSlugs.length > 0) {
       this.publicRevalidate.trigger([
         'sitemap',
+        'page:trang-chu',
         ...publishedSlugs.map((s) => `page:${s}`),
         ...[...feedSlugs].map((s) => `page:${s}`),
       ]);
@@ -267,6 +268,10 @@ export class PageLayoutService {
     await this.chatbot.indexPage(id).catch(() => undefined);
     this.publicRevalidate.trigger([
       'sitemap',
+      // LUÔN revalidate trang chủ: lưới "Tin tức" ở trang chủ là snapshot đã
+      // được dựng lại đồng bộ ở trên; nếu không revalidate trang-chu thì trang
+      // chủ vẫn phục vụ bản render cache cũ (bài mới không hiện tới khi hết ISR).
+      'page:trang-chu',
       `page:${layout.slug}`,
       ...feedSlugs.map((s) => `page:${s}`),
     ]);
@@ -323,6 +328,7 @@ export class PageLayoutService {
     await this.chatbot.removePage(id).catch(() => undefined);
     this.publicRevalidate.trigger([
       'sitemap',
+      'page:trang-chu',
       `page:${layout.slug}`,
       ...feedSlugs.map((s) => `page:${s}`),
     ]);

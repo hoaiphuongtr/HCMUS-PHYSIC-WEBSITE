@@ -933,21 +933,21 @@ export class PostService {
     });
     if (!post || post.deletedAt) return { slugs: [] };
     const hasPublished = post.layouts.some((l) => l.isPublished);
-    let statusChanged = false;
     if (hasPublished && post.status !== 'PUBLISHED') {
       await this.prisma.post.update({
         where: { id: postId },
         data: { status: 'PUBLISHED', publishedAt: post.publishedAt ?? new Date() },
       });
-      statusChanged = true;
     } else if (!hasPublished && post.status === 'PUBLISHED') {
       await this.prisma.post.update({
         where: { id: postId },
         data: { status: 'DRAFT' },
       });
-      statusChanged = true;
     }
-    if (!statusChanged) return { slugs: [] };
+    // LUÔN dựng lại snapshot feed, KỂ CẢ khi trạng thái bài không đổi: publish/xoá
+    // một layout của bài ĐÃ published (vd đổi bài sang layout sự kiện, thêm layout
+    // thứ 2) vẫn làm feed trang chủ/mục đổi. Trước đây bỏ qua khi status không đổi
+    // nên "Sự kiện sắp tới"/"Tin tức" ở trang chủ không cập nhật cho tới khi hết ISR.
     const { slugs } = await this.syncNewsFeedSnapshots();
     return { slugs };
   }

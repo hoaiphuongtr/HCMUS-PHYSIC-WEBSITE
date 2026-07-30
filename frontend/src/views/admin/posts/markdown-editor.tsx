@@ -912,6 +912,15 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             </div>
           ) : null}
 
+          {/* Cho nội dung trong trình soạn thảo hiển thị gần giống trang công
+              khai (đồng nhất editor↔preview): bảng có đường kẻ, ảnh co vừa
+              khung, link có gạch chân. Màu chữ inline (TextStyle/Color) tự hiện. */}
+          <style>{`
+            .ProseMirror table { border-collapse: collapse; max-width: 100%; border: 1px solid #94a3b8; }
+            .ProseMirror table td, .ProseMirror table th { border: 1px solid #94a3b8; padding: 6px 10px; vertical-align: top; }
+            .ProseMirror img { max-width: 100%; height: auto; }
+            .ProseMirror a { color: #1d4ed8; text-decoration: underline; }
+          `}</style>
           <EditorContent editor={editor} />
 
           {imageLayout ? (
