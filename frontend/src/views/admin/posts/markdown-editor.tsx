@@ -1,10 +1,12 @@
 "use client";
 
+import { Color } from "@tiptap/extension-color";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
@@ -377,6 +379,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     immediatelyRender: false,
     extensions: [
       StarterKit,
+      // Đổi màu chữ: TextStyle giữ <span style="color:…">, Color cung cấp
+      // setColor/unsetColor cho nút chọn màu trên thanh công cụ.
+      TextStyle,
+      Color,
       TextAlign.configure({
         types: ["heading", "paragraph"],
         alignments: ["left", "center", "right"],
@@ -664,6 +670,45 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               title="Strike"
             >
               <span className="line-through">S</span>
+            </ToolbarButton>
+
+            {/* Màu chữ: ô chọn màu (native) + nút xoá màu. */}
+            <label
+              title="Màu chữ"
+              className="w-8 h-8 rounded-md flex items-center justify-center cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202c44] relative"
+            >
+              <span className="text-[13px] font-bold leading-none">A</span>
+              <span
+                className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 rounded-sm"
+                style={{
+                  background:
+                    (editor.getAttributes("textStyle").color as string) ||
+                    "#111827",
+                }}
+              />
+              <input
+                type="color"
+                value={
+                  (editor.getAttributes("textStyle").color as string) ||
+                  "#111827"
+                }
+                onInput={(e) =>
+                  editor
+                    .chain()
+                    .focus()
+                    .setColor((e.target as HTMLInputElement).value)
+                    .run()
+                }
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </label>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().unsetColor().run()}
+              title="Xoá màu chữ"
+            >
+              <span className="text-[13px] font-bold leading-none text-slate-400">
+                A
+              </span>
             </ToolbarButton>
 
             <ToolbarDivider />
