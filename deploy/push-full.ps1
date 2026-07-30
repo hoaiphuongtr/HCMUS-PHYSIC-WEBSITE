@@ -33,6 +33,7 @@ $Files = @(
   'backend/prisma.config.ts',
   'backend/src',
   'backend/prisma',
+  'backend/initialScript',
   'frontend-public/src'
 )
 
@@ -45,7 +46,9 @@ if ($missing) { throw "These paths don't exist:`n  $($missing -join "`n  ")" }
 
 $Bundle = 'full-bundle.tgz'
 Write-Host "Bundling $($Files.Count) paths -> $Bundle ..." -ForegroundColor Cyan
-tar -czf $Bundle $Files
+# Exclude the 69MB legacy SQL dump (and any node_modules) — never needed on the
+# server and would bloat every push.
+tar -czf $Bundle --exclude='backend/initialScript/migrate-legacy/dump' --exclude='node_modules' $Files
 if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
 
 try {
