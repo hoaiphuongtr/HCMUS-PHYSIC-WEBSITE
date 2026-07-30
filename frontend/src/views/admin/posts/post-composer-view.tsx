@@ -167,12 +167,18 @@ export function PostComposerView() {
     setScheduledAt(toLocalInput(data.scheduledAt));
   }, [postQuery.data]);
 
-  // Show ALL news (category-tagged) template layouts — not just the post's own
-  // category — since one post can be turned into several different layouts.
   const layoutsQuery = useQuery({
     queryKey: ["POST_TEMPLATES", "all"],
     queryFn: () => pageLayoutApi.postTemplates(),
   });
+
+  // Bài có ngày giờ sự kiện → chỉ chọn layout mẫu SỰ KIỆN (đường dẫn /su-kien);
+  // bài thường → các layout mẫu TIN TỨC. Nhờ vậy tin tức và sự kiện có layout
+  // riêng, không lẫn lộn.
+  const isEventPost = eventStartAt.trim().length > 0;
+  const visibleTemplates = (layoutsQuery.data ?? []).filter((l) =>
+    isEventPost ? l.category?.slug === "event" : l.category?.slug !== "event",
+  );
 
   const commitTagDraft = () => {
     const parsed = parseTagInput(tagDraft);
@@ -720,7 +726,7 @@ export function PostComposerView() {
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
               Layout mẫu
               <span className="ml-1 font-normal text-slate-400">
-                (tất cả layout tin tức — chọn được nhiều)
+                {isEventPost ? "(layout Sự kiện)" : "(layout Tin tức)"}
               </span>
             </label>
             <div className="relative">
@@ -754,7 +760,7 @@ export function PostComposerView() {
                       />
                     </div>
                     <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                      {(layoutsQuery.data ?? [])
+                      {visibleTemplates
                         .filter((l) => {
                           const q = templateSearch.trim().toLowerCase();
                           return (
@@ -790,9 +796,11 @@ export function PostComposerView() {
                             </label>
                           );
                         })}
-                      {(layoutsQuery.data ?? []).length === 0 ? (
+                      {visibleTemplates.length === 0 ? (
                         <p className="px-3 py-4 text-xs text-center text-slate-400">
-                          Chưa có layout mẫu nào.
+                          {isEventPost
+                            ? "Chưa có layout mẫu Sự kiện."
+                            : "Chưa có layout mẫu Tin tức."}
                         </p>
                       ) : null}
                     </div>

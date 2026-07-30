@@ -442,7 +442,8 @@ export class PostService {
       where: {
         status: 'PUBLISHED',
         ...NOT_DELETED,
-        body: { not: Prisma.DbNull },
+        // KHÔNG buộc có body: sự kiện có thể chỉ gồm thông tin thời gian/địa điểm
+        // (không có nội dung bài) mà vẫn phải hiện ở "Sự kiện sắp tới".
         ...HAS_PUBLISHED_LAYOUT,
         AND: [deptWhere ?? this.feedDeptWhere()],
         eventStartAt: { gte: now },
@@ -723,9 +724,16 @@ export class PostService {
         layoutSlug = toSlugPath(`${deptSlug}/${layoutSlug}`);
       }
     } else if (deptSlug) {
-      layoutSlug = toSlugPath(`${deptSlug}/${post.slug}`);
+      // Bài sự kiện của bộ môn: <deptSlug>/su-kien/<slug>; còn lại giữ nguyên.
+      layoutSlug = post.eventStartAt
+        ? toSlugPath(`${deptSlug}/su-kien/${post.slug}`)
+        : toSlugPath(`${deptSlug}/${post.slug}`);
     } else {
-      layoutSlug = toSlugPath(`tin-tuc/${post.slug}`);
+      // Bài có ngày giờ sự kiện → đường dẫn /su-kien/<slug>; tin tức thường →
+      // /tin-tuc/<slug>. Nhờ vậy sự kiện có URL riêng, tách khỏi luồng tin tức.
+      layoutSlug = post.eventStartAt
+        ? toSlugPath(`su-kien/${post.slug}`)
+        : toSlugPath(`tin-tuc/${post.slug}`);
     }
     // Cùng MỘT bài có thể rót vào NHIỀU layout (mỗi layout một đường dẫn). Slug
     // suy ra từ slug bài nên rót lần 2 sẽ trùng → tự thêm hậu tố -2, -3… cho tới
