@@ -271,6 +271,9 @@ function PostBodyRender({
             display: block;
             overflow-x: auto;
             max-width: 100%;
+            /* overflow-x:auto cũng cắt 1px theo chiều dọc → đường kẻ dưới cùng
+               của hàng cuối bị mất. Chừa 1px để gridline không bị khung cuộn cắt. */
+            padding-bottom: 1px;
           }
           @media (max-width: 768px) {
             [data-post-body] p,
@@ -336,6 +339,11 @@ export function LegacyHtmlRender({
           max-width: 100%; width: 100%; min-height: 500px; border: 0;
         }
         .legacy-content table { max-width: 100%; border-collapse: collapse; }
+        /* Viền cả trên phần tử <table> để đường kẻ ngoài cùng (dòng/cột cuối)
+           không bị cắt khi bảng nằm trong khung cuộn ngang (overflow). */
+        .legacy-content table[border], .legacy-content table.MsoTableGrid {
+          border: 1px solid #111827;
+        }
         .legacy-content table[border] td, .legacy-content table[border] th,
         .legacy-content table.MsoTableGrid td, .legacy-content table.MsoTableGrid th {
           border: 1px solid #111827; padding: 6px 10px;
@@ -348,8 +356,11 @@ export function LegacyHtmlRender({
         .legacy-content h1, .legacy-content h2, .legacy-content h3,
         .legacy-content h4, .legacy-content h5 { font-weight: 700; margin: 1rem 0 0.5rem; line-height: 1.3; }
         .legacy-content > * { max-width: 100%; }
+        /* KHÔNG dùng display:block cho bảng ở mobile — nó tách border-collapse làm
+           mất đường kẻ ngoài. Bảng rộng đã được cuộn ngang bởi khung <main
+           overflow-x-auto> bao ngoài, nên chỉ cần cho phép tràn để cuộn. */
         @media (max-width: 768px) {
-          .legacy-content table { display: block; overflow-x: auto; white-space: nowrap; }
+          .legacy-content table { white-space: nowrap; }
         }
       `}</style>
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: migrated legacy rich text */}

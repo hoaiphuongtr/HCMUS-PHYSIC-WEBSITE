@@ -1,18 +1,16 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { Bell, BellRing, Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { localizedTextField } from "../fields/localized-text-field";
 import { resolveMediaSrc, resolveOptimizerSrc } from "./media-src";
 import { TagIcons } from "./news-feed";
-import { readSubs, SUBS_EVENT, topicByKey, writeSubs } from "./notif-subs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const PAGE_SIZE = 9;
-const TOPIC_KEY = "hoc-bong"; // đồng bộ với chuông trên header
 
 type ScholarshipPost = {
   slug: string;
@@ -55,16 +53,7 @@ function ScholarshipListRender({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [subscribed, setSubscribed] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const sync = () => setSubscribed(readSubs()[TOPIC_KEY] !== undefined);
-    sync();
-    window.addEventListener(SUBS_EVENT, sync);
-    return () => window.removeEventListener(SUBS_EVENT, sync);
-  }, []);
 
   const load = useCallback(
     (pageToLoad: number, replace: boolean) => {
@@ -122,38 +111,6 @@ function ScholarshipListRender({
     return () => ob.disconnect();
   }, [hasMore, loading, page, load, isEditing]);
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2600);
-  };
-
-  const toggleSubscribe = () => {
-    if (isEditing) return;
-    const subs = readSubs();
-    if (subs[TOPIC_KEY] !== undefined) {
-      delete subs[TOPIC_KEY];
-      writeSubs(subs);
-      setSubscribed(false);
-      flash(
-        locale === "en"
-          ? "Scholarship notifications turned off."
-          : "Đã tắt thông báo học bổng.",
-      );
-    } else {
-      subs[TOPIC_KEY] = items[0]
-        ? postDate(items[0])
-        : new Date().toISOString();
-      writeSubs(subs);
-      setSubscribed(true);
-      const label = t(topicByKey(TOPIC_KEY)?.label, locale) || "học bổng";
-      flash(
-        locale === "en"
-          ? `Notifications on for "${label}" — we'll remind you of new rounds.`
-          : `Đã cài đặt nhận thông báo của "${label}" — sẽ nhắc bạn khi có đợt mới.`,
-      );
-    }
-  };
-
   const postHref = (p: ScholarshipPost) => {
     const layoutSlug = p.layouts?.find((l) => l.isPublished)?.slug;
     return `/${locale}/${layoutSlug ?? `tin-tuc/${p.slug}`}`;
@@ -168,13 +125,10 @@ function ScholarshipListRender({
               (locale === "en" ? "Scholarships" : "Các chương trình học bổng")}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {locale === "en"
-              ? `${total} scholarship announcements`
-              : `${total} thông báo học bổng`}
+            {locale === "en" ? `${total} articles` : `${total} bài viết`}
           </p>
         </div>
-        {/* Góc trên phải: ô tìm kiếm + chuông theo dõi (list là infinite scroll,
-            không có chân trang phân trang để neo nút này). */}
+        {/* Góc trên phải: ô tìm kiếm (list là infinite scroll). */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative w-full md:w-72">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -184,44 +138,19 @@ function ScholarshipListRender({
               onChange={(e) => setQuery(e.target.value)}
               disabled={isEditing}
               placeholder={
-                locale === "en" ? "Search scholarships…" : "Tìm học bổng…"
+                locale === "en" ? "Search articles…" : "Tìm bài viết…"
               }
               className="w-full pl-9 pr-3 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 transition-colors"
             />
           </div>
-          <button
-            type="button"
-            onClick={toggleSubscribe}
-            aria-pressed={subscribed}
-            title={
-              subscribed
-                ? locale === "en"
-                  ? "Turn off notifications"
-                  : "Tắt thông báo"
-                : locale === "en"
-                  ? "Get notified of new scholarships"
-                  : "Nhận thông báo học bổng mới"
-            }
-            className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center border transition-colors ${
-              subscribed
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white dark:bg-[#1a2436] text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-blue-500"
-            }`}
-          >
-            {subscribed ? (
-              <BellRing className="w-5 h-5" />
-            ) : (
-              <Bell className="w-5 h-5" />
-            )}
-          </button>
         </div>
       </div>
 
       {items.length === 0 && !loading ? (
         <p className="text-center text-slate-500 dark:text-slate-400 py-16">
           {locale === "en"
-            ? "No scholarships match your search."
-            : "Không tìm thấy học bổng phù hợp."}
+            ? "No articles match your search."
+            : "Không tìm thấy bài viết phù hợp."}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -248,7 +177,7 @@ function ScholarshipListRender({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl text-slate-300 dark:text-slate-600">
-                    🎓
+                    📰
                   </div>
                 )}
               </div>
@@ -278,13 +207,6 @@ function ScholarshipListRender({
       )}
       {/* mốc kích hoạt nạp thêm cho infinite scroll */}
       <div ref={sentinel} className="h-px w-full" />
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-3 rounded-lg bg-[#0c2340] text-white text-sm shadow-xl animate-[fadeInUp_0.25s_ease]">
-          <BellRing className="w-4 h-4 shrink-0" />
-          {toast}
-        </div>
-      )}
     </section>
   );
 }
