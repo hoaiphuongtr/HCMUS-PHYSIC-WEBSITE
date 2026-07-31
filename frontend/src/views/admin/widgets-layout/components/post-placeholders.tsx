@@ -513,6 +513,12 @@ export function LegacyHtmlRender({
           display: block;
           margin: 0 auto 0 0 !important;
         }
+        /* Trang cần ảnh CĂN GIỮA ô (vd cơ hữu) → đánh dấu data-photo="center" trên
+           thẻ <table> trong puckData; override lại margin để ảnh nằm giữa. */
+        .legacy-content table[data-grid="img"][data-photo="center"] img {
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }
