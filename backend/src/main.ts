@@ -1,6 +1,7 @@
 import './sentry/instrument';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import type { Request, Response, NextFunction } from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './sentry/sentry.filter';
@@ -38,6 +39,18 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
   });
+  // Admin-uploaded microsites (/uploads/static-sites/**) are self-contained pages
+  // with their own inline scripts/styles, shown in an iframe. The app's strict
+  // helmet CSP + X-Frame-Options would blank them out. They're trusted content
+  // (SuperAdmin upload only), so drop those two headers for that path prefix.
+  app.use(
+    '/uploads/static-sites',
+    (_req: Request, res: Response, next: NextFunction) => {
+      res.removeHeader('Content-Security-Policy');
+      res.removeHeader('X-Frame-Options');
+      next();
+    },
+  );
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
