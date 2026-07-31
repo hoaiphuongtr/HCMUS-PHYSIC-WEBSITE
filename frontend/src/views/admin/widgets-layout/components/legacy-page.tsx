@@ -223,7 +223,9 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
         {/* overflow-x-auto: bảng legacy có bề rộng cố định (vd bảng chỉ tiêu tuyển
             sinh) rộng hơn cột nội dung — cho cuộn ngang trong cột thay vì tràn đè
             lên sidebar. */}
-        <main className="min-w-0 overflow-x-auto">
+        {/* pb-0.5: overflow-x-auto cũng cắt 1px theo chiều dọc → đường kẻ dưới
+            cùng của bảng bị mất; chừa 2px để gridline không bị khung cuộn cắt. */}
+        <main className="min-w-0 overflow-x-auto pb-0.5">
           <LegacyHtmlRender html={html} injected={false} />
         </main>
         <aside className="space-y-8">

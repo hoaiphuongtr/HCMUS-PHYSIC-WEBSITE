@@ -341,7 +341,11 @@ export function LegacyHtmlRender({
     <div className="legacy-content my-4">
       <style>{`
         .legacy-content { max-width: 100%; overflow-wrap: break-word; line-height: 1.65; color: #1f2937; }
-        .legacy-content img { max-width: 100%; height: auto; }
+        /* height:auto !important ĐÈ chiều cao cố định trong inline style (vd ảnh
+           nhân sự "width:120px;height:150px"): khi ô bảng co hẹp lúc zoom 125/200%,
+           max-width kéo bề rộng nhỏ lại — nếu chiều cao vẫn cố định thì ảnh bị
+           DÃN DỌC. Ép height:auto để luôn giữ đúng tỉ lệ. */
+        .legacy-content img { max-width: 100%; height: auto !important; }
         .legacy-content iframe, .legacy-content embed, .legacy-content object {
           max-width: 100%; width: 100%; min-height: 500px; border: 0;
         }
