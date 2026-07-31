@@ -12,10 +12,19 @@ import {
   CreateStaticPageBodyType,
   UpdateStaticPageBodyType,
 } from './static-page.model';
-import { toSlug } from '../shared/helpers';
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads');
 const SITES_SUBDIR = 'static-sites';
+
+// Case-PRESERVING slug: event slugs like "ICEBA2026" should stay uppercase, so
+// (unlike the site-wide toSlug) we keep letter case. Strip diacritics + replace
+// anything that isn't a letter/digit with a hyphen. Matching is case-insensitive.
+const normSlug = (s: string): string =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 
 @Injectable()
 export class StaticPageService {
@@ -58,22 +67,27 @@ export class StaticPageService {
 
   // Public: resolve a published page by slug (used by the site catch-all).
   async findPublishedBySlug(slug: string) {
-    const page = await this.prisma.staticPage.findUnique({ where: { slug } });
-    if (!page || !page.isPublished)
-      throw new NotFoundException('Static page not found');
+    // Case-insensitive so /ICEBA2026 and /iceba2026 resolve to the same page.
+    const page = await this.prisma.staticPage.findFirst({
+      where: { slug: { equals: slug, mode: 'insensitive' }, isPublished: true },
+    });
+    if (!page) throw new NotFoundException('Static page not found');
     return page;
   }
 
   private async assertSlugFree(slug: string, exceptId?: string) {
     const other = await this.prisma.staticPage.findFirst({
-      where: { slug, ...(exceptId ? { id: { not: exceptId } } : {}) },
+      where: {
+        slug: { equals: slug, mode: 'insensitive' },
+        ...(exceptId ? { id: { not: exceptId } } : {}),
+      },
       select: { id: true },
     });
     if (other) throw new ConflictException('Slug đã tồn tại');
   }
 
   async create(body: CreateStaticPageBodyType, createdBy?: string | null) {
-    const slug = toSlug(body.slug || body.title);
+    const slug = normSlug(body.slug || body.title);
     if (!slug) throw new ConflictException('Slug không hợp lệ');
     await this.assertSlugFree(slug);
     return this.prisma.staticPage.create({
@@ -98,7 +112,7 @@ export class StaticPageService {
       isPublished?: boolean;
     } = {};
     if (body.slug !== undefined) {
-      const slug = toSlug(body.slug);
+      const slug = normSlug(body.slug);
       if (!slug) throw new ConflictException('Slug không hợp lệ');
       await this.assertSlugFree(slug, id);
       data.slug = slug;

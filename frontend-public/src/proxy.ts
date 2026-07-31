@@ -24,7 +24,11 @@ async function staticSlugs(): Promise<Set<string>> {
     });
     if (res.ok) {
       const slugs = (await res.json()) as string[];
-      slugCache = { slugs: new Set(slugs), at: Date.now() };
+      // lower-cased so the match below is case-insensitive (/ICEBA2026 works)
+      slugCache = {
+        slugs: new Set(slugs.map((s) => s.toLowerCase())),
+        at: Date.now(),
+      };
     }
   } catch {
     // keep any previous cache on a transient backend hiccup
@@ -58,7 +62,7 @@ export async function proxy(request: NextRequest) {
   // the default redirect to /vi. Everything else keeps the redirect below.
   if (bare && !bare.includes("/")) {
     const slugs = await staticSlugs();
-    if (slugs.has(bare)) {
+    if (slugs.has(bare.toLowerCase())) {
       const url = request.nextUrl.clone();
       url.pathname = `/${DEFAULT_LOCALE}/${bare}`;
       return NextResponse.rewrite(url);
