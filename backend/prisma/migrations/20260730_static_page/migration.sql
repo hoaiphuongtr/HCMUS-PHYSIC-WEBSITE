@@ -19,3 +19,7 @@ CREATE TABLE IF NOT EXISTS "StaticPage" (
 -- @unique on slug in the Prisma model → index name Prisma expects.
 CREATE UNIQUE INDEX IF NOT EXISTS "StaticPage_slug_key" ON "StaticPage" ("slug");
 CREATE INDEX IF NOT EXISTS "StaticPage_isPublished_idx" ON "StaticPage" ("isPublished");
+
+-- Folder microsites uploaded as .zip are extracted under uploads/; bundlePath is
+-- the served entry file. Idempotent add for DBs created before this column.
+ALTER TABLE "StaticPage" ADD COLUMN IF NOT EXISTS "bundlePath" TEXT;

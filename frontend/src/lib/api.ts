@@ -877,6 +877,7 @@ export type StaticPageListItem = {
   slug: string;
   title: string;
   renderMode: string;
+  bundlePath: string | null;
   isPublished: boolean;
   createdBy: string | null;
   createdAt: string;
@@ -908,6 +909,29 @@ export const staticPageApi = {
     }),
   remove: (id: string) =>
     authFetch<{ ok: boolean }>(`/static-pages/${id}`, { method: "DELETE" }),
+  // Multipart upload of a folder microsite .zip. Uses fetch directly so the
+  // browser sets the multipart boundary (authFetch forces application/json).
+  uploadBundle: (id: string, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+    return fetch(`${API_URL}/static-pages/${id}/bundle`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: fd,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res
+          .json()
+          .catch(() => ({ message: res.statusText }));
+        throw err;
+      }
+      return res.json() as Promise<StaticPage>;
+    });
+  },
 };
 
 export type NotificationItem = {

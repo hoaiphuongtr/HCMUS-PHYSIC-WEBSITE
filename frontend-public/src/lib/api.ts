@@ -71,6 +71,9 @@ export type PublicStaticPage = {
   title: string;
   html: string;
   renderMode: string;
+  // Set when a folder microsite was uploaded as a .zip; served entry (index.html)
+  // under /uploads/... — takes precedence over html.
+  bundlePath: string | null;
   isPublished: boolean;
 };
 

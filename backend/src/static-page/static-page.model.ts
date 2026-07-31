@@ -8,6 +8,7 @@ export const StaticPageResSchema = z.object({
   title: z.string(),
   html: z.string(),
   renderMode: z.string(),
+  bundlePath: z.string().nullable(),
   isPublished: z.boolean(),
   createdBy: z.string().nullable(),
   createdAt: z.date(),
@@ -24,7 +25,9 @@ export const StaticPageListResSchema = z.array(StaticPageListItemSchema);
 export const CreateStaticPageBodySchema = z.object({
   slug: z.string().min(1).max(200).optional(),
   title: z.string().min(1).max(300),
-  html: z.string().min(1),
+  // Optional: a page can instead be a folder microsite uploaded as a .zip
+  // (bundlePath). Defaults to empty so a bundle-only page can be created first.
+  html: z.string().default(''),
   renderMode: RenderModeSchema.default('iframe'),
   isPublished: z.boolean().default(false),
 });

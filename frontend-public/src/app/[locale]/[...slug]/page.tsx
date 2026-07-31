@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { breadcrumbListSchema, JsonLd } from "@/components/JsonLd";
 import { VisitorTracker } from "@/components/visitor-tracker";
-import { getLayoutBySlug, getStaticPageBySlug } from "@/lib/api";
+import {
+  getLayoutBySlug,
+  getStaticPageBySlug,
+  resolveMediaUrl,
+} from "@/lib/api";
 import {
   buildCanonical,
   buildLanguageAlternates,
@@ -115,6 +119,25 @@ export default async function PublicLayoutPage({ params }: PageProps) {
     // 'embed' injects a fragment inside the site shell.
     try {
       const page = await getStaticPageBySlug(slugPath);
+      // Folder microsite uploaded as a .zip → iframe the served entry so its
+      // relative assets (css/js/images) resolve against the extracted folder.
+      if (page.bundlePath) {
+        return (
+          <>
+            <VisitorTracker slug={slugPath} />
+            <iframe
+              src={resolveMediaUrl(page.bundlePath)}
+              title={page.title}
+              style={{
+                width: "100%",
+                height: "100vh",
+                border: "0",
+                display: "block",
+              }}
+            />
+          </>
+        );
+      }
       if (page.renderMode === "embed") {
         return (
           <>

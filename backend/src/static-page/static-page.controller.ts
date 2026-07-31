@@ -6,7 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { StaticPageService } from './static-page.service';
 import {
@@ -65,6 +69,24 @@ export class StaticPageController {
   @ZodSerializerDto(StaticPageResDTO)
   update(@Param('id') id: string, @Body() body: UpdateStaticPageBodyDTO) {
     return this.service.update(id, body);
+  }
+
+  // Upload a .zip of a folder microsite (index.html + assets); extracted under
+  // the persistent uploads volume and served with relative links intact.
+  @Post(':id/bundle')
+  @Roles(RoleName.SuperAdmin)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
+  @ZodSerializerDto(StaticPageResDTO)
+  uploadBundle(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    return this.service.uploadBundle(id, file);
   }
 
   @Delete(':id')

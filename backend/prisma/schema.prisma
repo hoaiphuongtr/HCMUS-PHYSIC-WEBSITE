@@ -693,6 +693,10 @@ model StaticPage {
   // 'iframe' = render the full HTML document isolated in an iframe (default, safe
   // for full microsites); 'embed' = inject as a fragment inside the site shell.
   renderMode  String   @default("iframe")
+  // When a folder microsite is uploaded as a .zip it is extracted under the
+  // persistent uploads volume; bundlePath is the served entry (e.g.
+  // /uploads/static-sites/<id>/index.html) and takes precedence over html.
+  bundlePath  String?
   isPublished Boolean  @default(false)
   createdBy   String?
   createdAt   DateTime @default(now())
