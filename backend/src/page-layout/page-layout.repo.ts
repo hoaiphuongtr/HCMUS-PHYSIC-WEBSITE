@@ -186,6 +186,35 @@ export class PageLayoutRepository {
     return this.prisma.pageLayout.update({ where: { id }, data });
   }
 
+  // Khi một trang đổi slug, các LINK nội bộ trỏ tới slug cũ (vd link ở Navbar/
+  // Header trang chủ, sidebar…) nằm cứng trong puckData của những layout khác →
+  // đổi chúng sang slug mới để không 404. Chỉ thay các URL có RANH GIỚI trọn vẹn:
+  // "/old" (trọn giá trị) và "/old/" (đường dẫn con) — tránh dính "/old-foo".
+  // Trả về slug các layout đã bị sửa để revalidate đúng những trang đó.
+  async rewriteSlugReferences(
+    oldSlug: string,
+    newSlug: string,
+  ): Promise<string[]> {
+    const oq = `"/${oldSlug}"`;
+    const nq = `"/${newSlug}"`;
+    const os = `"/${oldSlug}/`;
+    const ns = `"/${newSlug}/`;
+    const likeQ = `%"/${oldSlug}"%`;
+    const likeS = `%"/${oldSlug}/%`;
+    const rows = await this.prisma.$queryRaw<Array<{ slug: string }>>`
+      UPDATE "PageLayout"
+      SET "puckData" = replace(replace("puckData"::text, ${oq}, ${nq}), ${os}, ${ns})::jsonb,
+          "publishedPuckData" = CASE WHEN "publishedPuckData" IS NOT NULL
+            THEN replace(replace("publishedPuckData"::text, ${oq}, ${nq}), ${os}, ${ns})::jsonb
+            ELSE NULL END
+      WHERE "deletedAt" IS NULL
+        AND ("puckData"::text LIKE ${likeQ} OR "puckData"::text LIKE ${likeS}
+          OR "publishedPuckData"::text LIKE ${likeQ} OR "publishedPuckData"::text LIKE ${likeS})
+      RETURNING slug;
+    `;
+    return rows.map((r) => r.slug);
+  }
+
   // Soft delete: hidden from every query but restorable for 30 days
   // (post.service.purgeExpiredTrash hard-deletes it after the window).
   delete(id: string) {

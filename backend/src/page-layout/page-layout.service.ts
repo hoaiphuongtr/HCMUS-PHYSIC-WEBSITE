@@ -212,10 +212,11 @@ export class PageLayoutService {
     roleName: string,
   ) {
     const current = await this.assertOwnership(id, userId, roleName);
-    if (body.slug && body.slug !== current.slug) {
+    const slugChanged = !!body.slug && body.slug !== current.slug;
+    if (slugChanged) {
       const conflict =
         await this.pageLayoutRepository.findConflictBySlugAndStatus(
-          body.slug,
+          body.slug as string,
           current.isPublished,
           id,
         );
@@ -227,6 +228,20 @@ export class PageLayoutService {
     }
     const updated = await this.pageLayoutRepository.update(id, body);
     await this.cache.clear();
+    // Revalidate NGAY để chỉnh sửa (kể cả đổi slug) hiện liền, không chờ TTL.
+    const tags = new Set<string>(['sitemap', `page:${updated.slug}`]);
+    if (slugChanged) {
+      tags.add(`page:${current.slug}`); // đường dẫn cũ (để 404/không kẹt cache)
+      // Đổi luôn các link nội bộ trỏ slug cũ (Navbar/Header trang chủ, sidebar…)
+      // rồi revalidate đúng những trang chứa link đó.
+      const affected = await this.pageLayoutRepository.rewriteSlugReferences(
+        current.slug,
+        updated.slug,
+      );
+      affected.forEach((s) => tags.add(`page:${s}`));
+      tags.add('page:trang-chu'); // header/nav sống ở trang chủ
+    }
+    this.publicRevalidate.trigger([...tags]);
     return updated;
   }
 
