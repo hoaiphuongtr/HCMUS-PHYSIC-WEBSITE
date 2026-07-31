@@ -494,8 +494,15 @@ export function LegacyHtmlRender({
           overflow-wrap: anywhere;
           word-break: break-word;
         }
-        /* Link (email/CV) trong bảng ảnh: cho phép bẻ trong chuỗi dài. */
-        .legacy-content table[data-grid="img"] a { overflow-wrap: anywhere; word-break: break-word; }
+        /* Nội dung trong bảng ảnh (span/a từ Word/Joomla) hay dính inline
+           white-space:nowrap → chữ KHÔNG xuống dòng, tràn ra ngoài ô rồi bị cắt khi
+           zoom. Ép normal + cho bẻ chuỗi dài để mọi thứ luôn xuống dòng vừa ô. */
+        .legacy-content table[data-grid="img"] td *,
+        .legacy-content table[data-grid="img"] th * {
+          white-space: normal !important;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
         /* Ảnh nhân sự có inline min-width:120px (đè max-width:100% → TRÀN ra khỏi ô
            khi zoom) và float:right (đẩy ảnh sang phải). Ép: bỏ min-width, cap theo
            ô, bỏ float + block để ảnh SÁT MÉP TRÁI và luôn co vừa ô (không tràn). */
