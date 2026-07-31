@@ -359,6 +359,16 @@ export function LegacyHtmlRender({
         .legacy-content table.MsoTableGrid td, .legacy-content table.MsoTableGrid th {
           border: 1px solid #111827; padding: 6px 10px;
         }
+        /* Bảng Joomla/TinyMCE (vd trang tuyển sinh) đặt inline chỉ "border-color"
+           trên ô mà KHÔNG có border-style/width — dựa vào CSS "td{border:1px solid}"
+           của site cũ. Thiếu nó thì ô không có viền thật: các "đường kẻ" chỉ là khe
+           cellspacing nên đường kẻ DƯỚI CÙNG (không có khe bên dưới) biến mất. Cấp
+           lại width+style, GIỮ màu inline (dùng border-width/style, không dùng
+           shorthand để không ghi đè border-color inline). */
+        .legacy-content td[style*="border-color"],
+        .legacy-content th[style*="border-color"] {
+          border-width: 1px; border-style: solid; padding: 6px 10px;
+        }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }

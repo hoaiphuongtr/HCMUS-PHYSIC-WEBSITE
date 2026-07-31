@@ -70,6 +70,9 @@ export class PageLayoutRepository {
           orderBy: [{ row: 'asc' }, { order: 'asc' }],
           where: { widget: { isActive: true } },
         },
+        // Ảnh bìa bài viết nguồn → dùng làm og:image khi share Facebook (thay ảnh
+        // thẻ OG generic bằng đúng ảnh bìa bài).
+        sourcePost: { select: { coverUrl: true, coverAlt: true } },
       },
     });
   }

@@ -104,6 +104,15 @@ export const PageLayoutResSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   widgets: z.array(WidgetInstanceResSchema).optional(),
+  // Ảnh bìa của bài viết nguồn (nếu layout được clone từ một Post) → frontend
+  // dùng làm og:image khi share Facebook. Chỉ có ở endpoint chi tiết theo slug.
+  sourcePost: z
+    .object({
+      coverUrl: z.string().nullable(),
+      coverAlt: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export type PageLayoutResType = z.infer<typeof PageLayoutResSchema>;

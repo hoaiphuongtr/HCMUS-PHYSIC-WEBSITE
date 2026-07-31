@@ -40,6 +40,26 @@ export async function generateMetadata({
         ? `${layout.name} - Faculty of Physics & Engineering Physics, VNUHCM-University of Science`
         : `${layout.name} - Khoa Vật lý, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM`);
     const canonical = buildCanonical(`/${slugPath}`);
+    // FB/Twitter thumbnail: prefer the post's own cover image (nếu trang này
+    // gắn với một bài viết có ảnh bìa) để share ra đúng ảnh + tên bài, thay vì
+    // tấm card chung "Khoa Vật lý". Fallback về card tạo động khi không có cover.
+    const coverUrl = layout.sourcePost?.coverUrl
+      ? resolveMediaUrl(layout.sourcePost.coverUrl)
+      : "";
+    const ogImages = coverUrl
+      ? [{ url: coverUrl, alt: layout.sourcePost?.coverAlt || titleText }]
+      : [
+          {
+            url: buildOgImage({
+              slug: slugPath,
+              title: layout.name,
+              subtitle: description,
+            }),
+            width: 1200,
+            height: 630,
+            alt: titleText,
+          },
+        ];
     return {
       title: { absolute: titleText },
       description,
@@ -53,30 +73,13 @@ export async function generateMetadata({
         type: "article",
         url: canonical,
         locale: isEn ? "en_US" : "vi_VN",
-        images: [
-          {
-            url: buildOgImage({
-              slug: slugPath,
-              title: layout.name,
-              subtitle: description,
-            }),
-            width: 1200,
-            height: 630,
-            alt: titleText,
-          },
-        ],
+        images: ogImages,
       },
       twitter: {
         card: "summary_large_image",
         title: titleText,
         description,
-        images: [
-          buildOgImage({
-            slug: slugPath,
-            title: layout.name,
-            subtitle: description,
-          }),
-        ],
+        images: ogImages.map((i) => i.url),
       },
       robots: { index: true, follow: true },
     };

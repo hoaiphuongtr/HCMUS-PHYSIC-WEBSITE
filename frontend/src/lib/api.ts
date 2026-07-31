@@ -284,6 +284,8 @@ export type PageLayout = {
   updatedAt: string;
   deletedAt?: string | null;
   widgets?: WidgetInstance[];
+  // Ảnh bìa của bài viết nguồn (nếu layout gắn với một bài) — dùng cho og:image.
+  sourcePost?: { coverUrl: string | null; coverAlt: string | null } | null;
 };
 
 export const widgetApi = {
