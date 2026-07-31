@@ -268,6 +268,15 @@ function PostBodyRender({
                 : noW.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
             });
             processed = inner.replace(firstTr, newTr);
+          } else {
+            // Hàng đầu KHÔNG quy đổi được (vd 1 ô colspan có width:1000px như header
+            // bảng "THÔNG TIN HỘI NGHỊ") → table-layout:fixed sẽ kế thừa 1000px làm
+            // bảng rộng quá → tràn/cắt. Bỏ width px của hàng đầu để fixed về cột đều
+            // theo width:100% (vừa cột).
+            const newTr = firstTr
+              .replace(/width:\s*\d+(?:\.\d+)?px;?/gi, "")
+              .replace(/\swidth=["']?\d+["']?/gi, "");
+            if (newTr !== firstTr) processed = inner.replace(firstTr, newTr);
           }
         }
         return `<table${attrs} data-grid="text">${processed}</table>`;
@@ -432,6 +441,15 @@ export function LegacyHtmlRender({
                 : noW.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
             });
             processed = inner.replace(firstTr, newTr);
+          } else {
+            // Hàng đầu KHÔNG quy đổi được (vd 1 ô colspan có width:1000px như header
+            // bảng "THÔNG TIN HỘI NGHỊ") → table-layout:fixed sẽ kế thừa 1000px làm
+            // bảng rộng quá → tràn/cắt. Bỏ width px của hàng đầu để fixed về cột đều
+            // theo width:100% (vừa cột).
+            const newTr = firstTr
+              .replace(/width:\s*\d+(?:\.\d+)?px;?/gi, "")
+              .replace(/\swidth=["']?\d+["']?/gi, "");
+            if (newTr !== firstTr) processed = inner.replace(firstTr, newTr);
           }
         }
         return `<table${attrs} data-grid="text">${processed}</table>`;
