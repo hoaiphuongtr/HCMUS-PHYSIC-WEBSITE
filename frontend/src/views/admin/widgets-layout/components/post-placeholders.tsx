@@ -230,12 +230,18 @@ function PostBodyRender({
     // ở màn hình hẹp hay khi zoom (100%/150%). Non-greedy: bảng lồng nhau hiếm gặp.
     .replace(
       /<table\b([^>]*)>([\s\S]*?)<\/table>/gi,
-      (m: string, attrs: string, inner: string) =>
-        /\bborder\s*=/.test(attrs) ||
-        /MsoTableGrid/.test(attrs) ||
-        /border-color/i.test(inner)
-          ? `<table${attrs} data-grid="1">${inner}</table>`
-          : m,
+      (m: string, attrs: string, inner: string) => {
+        const isGrid =
+          /\bborder\s*=/.test(attrs) ||
+          /MsoTableGrid/.test(attrs) ||
+          /border-color/i.test(inner);
+        if (!isGrid) return m;
+        // Bảng ảnh (nhân sự) cần table-layout:fixed để ảnh co vừa cột; bảng chữ
+        // (tuyển sinh) cần BỎ width cứng để cột co theo nội dung — hai cách ngược
+        // nhau, nên phân loại theo có <img> hay không.
+        const kind = /<img/i.test(inner) ? "img" : "text";
+        return `<table${attrs} data-grid="${kind}">${inner}</table>`;
+      },
     );
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
   if (looksLikeHtml) {
@@ -358,12 +364,18 @@ export function LegacyHtmlRender({
     // ở màn hình hẹp hay khi zoom (100%/150%). Non-greedy: bảng lồng nhau hiếm gặp.
     .replace(
       /<table\b([^>]*)>([\s\S]*?)<\/table>/gi,
-      (m: string, attrs: string, inner: string) =>
-        /\bborder\s*=/.test(attrs) ||
-        /MsoTableGrid/.test(attrs) ||
-        /border-color/i.test(inner)
-          ? `<table${attrs} data-grid="1">${inner}</table>`
-          : m,
+      (m: string, attrs: string, inner: string) => {
+        const isGrid =
+          /\bborder\s*=/.test(attrs) ||
+          /MsoTableGrid/.test(attrs) ||
+          /border-color/i.test(inner);
+        if (!isGrid) return m;
+        // Bảng ảnh (nhân sự) cần table-layout:fixed để ảnh co vừa cột; bảng chữ
+        // (tuyển sinh) cần BỎ width cứng để cột co theo nội dung — hai cách ngược
+        // nhau, nên phân loại theo có <img> hay không.
+        const kind = /<img/i.test(inner) ? "img" : "text";
+        return `<table${attrs} data-grid="${kind}">${inner}</table>`;
+      },
     );
   return (
     <div className="legacy-content my-4">
@@ -403,10 +415,13 @@ export function LegacyHtmlRender({
            ngắt từ khi cần (overflow-wrap:anywhere) để min-content nhỏ lại, bảng co
            vừa cột → không tràn, không cuộn, mọi đường kẻ (kể cả cột cuối) đều hiện. */
         .legacy-content td, .legacy-content th { overflow-wrap: anywhere; }
-        /* Bảng dữ liệu: fixed + width:100% để LUÔN vừa cột (ảnh co theo
-           max-width:100%, chữ ngắt dòng) → không bao giờ tràn/cuộn/cắt nội dung dù
-           màn hình hẹp hay zoom. Chỉ áp cho bảng đã đánh dấu data-grid. */
-        .legacy-content table[data-grid] { table-layout: fixed; width: 100%; }
+        /* Bảng CHỮ: bỏ width cứng trên ô (vd width:90px) để cột co theo nội dung
+           (kết hợp overflow-wrap) → bảng vừa cột, giữ tỉ lệ tự nhiên, không tràn. */
+        .legacy-content table[data-grid="text"] td,
+        .legacy-content table[data-grid="text"] th { width: auto !important; }
+        /* Bảng ẢNH (nhân sự): fixed + 100% để ảnh (max-width:100%) co vừa cột,
+           không đẩy bảng rộng quá cột → không cắt cột/nội dung khi zoom. */
+        .legacy-content table[data-grid="img"] { table-layout: fixed; width: 100%; }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }
