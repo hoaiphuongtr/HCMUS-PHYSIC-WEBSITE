@@ -25,6 +25,8 @@ $RemoteDir = '~/hcmus-cms'
 $Files = @(
   'docker-compose.yml',
   'docker-compose.sandbox.yml',
+  'package.json',
+  'pnpm-workspace.yaml',
   'pnpm-lock.yaml',
   'backend/package.json',
   'backend/nest-cli.json',
@@ -34,7 +36,9 @@ $Files = @(
   'backend/src',
   'backend/prisma',
   'backend/initialScript',
+  'frontend/package.json',
   'frontend/src',
+  'frontend-public/package.json',
   'frontend-public/src'
 )
 
