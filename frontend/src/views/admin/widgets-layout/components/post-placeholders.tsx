@@ -414,11 +414,11 @@ export function LegacyHtmlRender({
            và khung cuộn ngang cắt mất viền/đường kẻ ngoài cùng bên phải. Cho phép ô
            ngắt từ khi cần (overflow-wrap:anywhere) để min-content nhỏ lại, bảng co
            vừa cột → không tràn, không cuộn, mọi đường kẻ (kể cả cột cuối) đều hiện. */
-        .legacy-content td, .legacy-content th { overflow-wrap: anywhere; }
-        /* Bảng CHỮ: bỏ width cứng trên ô (vd width:90px) để cột co theo nội dung
-           (kết hợp overflow-wrap) → bảng vừa cột, giữ tỉ lệ tự nhiên, không tràn. */
-        .legacy-content table[data-grid="text"] td,
-        .legacy-content table[data-grid="text"] th { width: auto !important; }
+        /* Bảng CHỮ dùng auto-layout (mặc định): width px trên ô chỉ là "ưu tiên",
+           overflow-wrap cho phép cột co dưới mức đó khi cột hẹp → bảng co vừa cột
+           mà GIỮ tỉ lệ cột gốc (không về đều nhau). break-word (không "anywhere")
+           để chỉ ngắt khi TỪ dài hơn cột, tránh vỡ chữ kiểu "VID EO CLI P". */
+        .legacy-content td, .legacy-content th { overflow-wrap: break-word; }
         /* Bảng ẢNH (nhân sự): fixed + 100% để ảnh (max-width:100%) co vừa cột,
            không đẩy bảng rộng quá cột → không cắt cột/nội dung khi zoom. */
         .legacy-content table[data-grid="img"] { table-layout: fixed; width: 100%; }
