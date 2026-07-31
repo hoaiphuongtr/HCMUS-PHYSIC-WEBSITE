@@ -446,6 +446,11 @@ export function LegacyHtmlRender({
            max-width kéo bề rộng nhỏ lại — nếu chiều cao vẫn cố định thì ảnh bị
            DÃN DỌC. Ép height:auto để luôn giữ đúng tỉ lệ. */
         .legacy-content img { max-width: 100%; height: auto !important; }
+        /* Ảnh chèn từ editor bọc trong <div><div><img></div></div>. Editor giờ để
+           ảnh BLOCK (xếp dọc); ép wrapper block ở cả web để đồng nhất editor↔web
+           kể cả ảnh cũ lưu display:inline-block. */
+        .legacy-content div:has(> div > img),
+        [data-post-body] div:has(> div > img) { display: block !important; }
         .legacy-content iframe, .legacy-content embed, .legacy-content object {
           max-width: 100%; width: 100%; min-height: 500px; border: 0;
         }

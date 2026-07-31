@@ -395,10 +395,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         renderHTML({ node, HTMLAttributes }) {
           const wrapperStyle =
             (node.attrs.wrapperStyle as string | null) ??
-            "display: inline-block; max-width: 100%;";
+            "display: block; max-width: 100%;";
           const containerStyle =
             (node.attrs.containerStyle as string | null) ??
-            "max-width: 100%; height: auto; display: inline-block;";
+            "max-width: 100%; height: auto; display: block;";
           const {
             containerStyle: _c,
             wrapperStyle: _w,
@@ -415,7 +415,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           ];
         },
       }).configure({
-        inline: true,
+        // Block-level (không inline): ảnh là KHỐI riêng, chữ trước/sau nằm ở đoạn
+        // khác → căn giữa/trái một dòng KHÔNG lan sang dòng khác (fix #61), và ảnh
+        // xếp DỌC (không kẹp cạnh chữ) đồng nhất editor ↔ preview ↔ web (#63).
+        inline: false,
         allowBase64: false,
       }),
       Table.configure({
@@ -534,8 +537,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           src: url.startsWith("/uploads/") ? `${MEDIA_ORIGIN}${url}` : url,
           alt: "",
           containerStyle:
-            "width: 480px; max-width: 100%; height: auto; display: inline-block; cursor: pointer;",
-          wrapperStyle: "display: inline-block; max-width: 100%;",
+            "width: 480px; max-width: 100%; height: auto; display: block; cursor: pointer;",
+          wrapperStyle: "display: block; max-width: 100%;",
         },
       })
       .run();
