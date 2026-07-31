@@ -484,6 +484,18 @@ export function LegacyHtmlRender({
            viền hay nội dung ở mọi mức zoom, vẫn giữ tỉ lệ cột gốc. */
         .legacy-content table[data-grid="img"],
         .legacy-content table[data-grid="text"] { table-layout: fixed; width: 100%; }
+        /* Ô bảng ẢNH (nhân sự): (1) căn TRÁI để ảnh sát mép trái ô — bản gốc để
+           text-align:right đẩy ảnh sang phải chừa khoảng trắng; (2) overflow-wrap
+           anywhere để email/link dài LUÔN xuống dòng thay vì tràn ra ngoài ô rồi
+           bị cắt khi zoom 150/200%. */
+        .legacy-content table[data-grid="img"] td,
+        .legacy-content table[data-grid="img"] th {
+          text-align: left;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        /* Link (email/CV) trong bảng ảnh: cho phép bẻ trong chuỗi dài. */
+        .legacy-content table[data-grid="img"] a { overflow-wrap: anywhere; word-break: break-word; }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }
