@@ -10,7 +10,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { diskStorage } from 'multer';
+import { mkdirSync } from 'fs';
+import { join } from 'path';
+import { randomUUID } from 'crypto';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { StaticPageService } from './static-page.service';
 import {
@@ -22,6 +25,11 @@ import {
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
 import { RoleName } from '../shared/constants/role.constants';
+
+// Uploaded zips land here on disk (not buffered in RAM) before extraction; the
+// service deletes the temp file afterwards.
+const TMP_DIR = join(process.cwd(), 'uploads', 'tmp');
+mkdirSync(TMP_DIR, { recursive: true });
 
 @Controller('static-pages')
 export class StaticPageController {
@@ -77,8 +85,11 @@ export class StaticPageController {
   @Roles(RoleName.SuperAdmin)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: memoryStorage(),
-      limits: { fileSize: 50 * 1024 * 1024 },
+      storage: diskStorage({
+        destination: TMP_DIR,
+        filename: (_req, _file, cb) => cb(null, `${randomUUID()}.zip`),
+      }),
+      limits: { fileSize: 200 * 1024 * 1024 },
     }),
   )
   @ZodSerializerDto(StaticPageResDTO)

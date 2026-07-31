@@ -128,47 +128,52 @@ export class StaticPageService {
    */
   async uploadBundle(id: string, file?: Express.Multer.File) {
     await this.findById(id);
-    if (!file?.buffer?.length) throw new BadRequestException('Thiếu file .zip');
+    if (!file?.path) throw new BadRequestException('Thiếu file .zip');
 
-    const destAbs = join(UPLOADS_DIR, SITES_SUBDIR, id);
-    rmSync(destAbs, { recursive: true, force: true });
-    mkdirSync(destAbs, { recursive: true });
-
-    let zip: AdmZip;
     try {
-      zip = new AdmZip(file.buffer);
-    } catch {
-      throw new BadRequestException('File .zip không hợp lệ');
-    }
-
-    let indexEntry: string | null = null;
-    for (const entry of zip.getEntries()) {
-      if (entry.isDirectory) continue;
-      // strip leading ../ and reject anything escaping the destination (zip-slip)
-      const rel = normalize(entry.entryName).replace(/^(\.\.[/\\])+/, '');
-      const target = join(destAbs, rel);
-      if (target !== destAbs && !target.startsWith(destAbs + sep)) continue;
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, entry.getData());
-      const posix = rel.split(sep).join('/');
-      if (/(^|\/)index\.html$/i.test(posix)) {
-        // prefer the shallowest index.html
-        if (indexEntry === null || posix.length < indexEntry.length)
-          indexEntry = posix;
-      }
-    }
-
-    if (!indexEntry) {
+      const destAbs = join(UPLOADS_DIR, SITES_SUBDIR, id);
       rmSync(destAbs, { recursive: true, force: true });
-      throw new BadRequestException(
-        'Không tìm thấy index.html trong file .zip',
-      );
-    }
+      mkdirSync(destAbs, { recursive: true });
 
-    const bundlePath = `/uploads/${SITES_SUBDIR}/${id}/${indexEntry}`;
-    return this.prisma.staticPage.update({
-      where: { id },
-      data: { bundlePath },
-    });
+      let zip: AdmZip;
+      try {
+        zip = new AdmZip(file.path);
+      } catch {
+        throw new BadRequestException('File .zip không hợp lệ');
+      }
+
+      let indexEntry: string | null = null;
+      for (const entry of zip.getEntries()) {
+        if (entry.isDirectory) continue;
+        // strip leading ../ and reject anything escaping the destination (zip-slip)
+        const rel = normalize(entry.entryName).replace(/^(\.\.[/\\])+/, '');
+        const target = join(destAbs, rel);
+        if (target !== destAbs && !target.startsWith(destAbs + sep)) continue;
+        mkdirSync(dirname(target), { recursive: true });
+        writeFileSync(target, entry.getData());
+        const posix = rel.split(sep).join('/');
+        if (/(^|\/)index\.html$/i.test(posix)) {
+          // prefer the shallowest index.html
+          if (indexEntry === null || posix.length < indexEntry.length)
+            indexEntry = posix;
+        }
+      }
+
+      if (!indexEntry) {
+        rmSync(destAbs, { recursive: true, force: true });
+        throw new BadRequestException(
+          'Không tìm thấy index.html trong file .zip',
+        );
+      }
+
+      const bundlePath = `/uploads/${SITES_SUBDIR}/${id}/${indexEntry}`;
+      return await this.prisma.staticPage.update({
+        where: { id },
+        data: { bundlePath },
+      });
+    } finally {
+      // always remove the temp upload, whether extraction succeeded or not
+      rmSync(file.path, { force: true });
+    }
   }
 }
