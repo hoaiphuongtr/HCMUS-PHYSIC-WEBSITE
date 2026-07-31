@@ -236,11 +236,41 @@ function PostBodyRender({
           /MsoTableGrid/.test(attrs) ||
           /border-color/i.test(inner);
         if (!isGrid) return m;
-        // Bảng ảnh (nhân sự) cần table-layout:fixed để ảnh co vừa cột; bảng chữ
-        // (tuyển sinh) cần BỎ width cứng để cột co theo nội dung — hai cách ngược
-        // nhau, nên phân loại theo có <img> hay không.
-        const kind = /<img/i.test(inner) ? "img" : "text";
-        return `<table${attrs} data-grid="${kind}">${inner}</table>`;
+        // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
+        if (/<img/i.test(inner))
+          return `<table${attrs} data-grid="img">${inner}</table>`;
+        // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
+        // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
+        // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
+        // khi mọi ô hàng đầu đều có width; nếu không, giữ nguyên (auto-layout).
+        let processed = inner;
+        const trM = inner.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/i);
+        if (trM) {
+          const firstTr = trM[0];
+          const cells = firstTr.match(/<t[dh]\b[^>]*>/gi) || [];
+          const widths = cells.map((cel) => {
+            const s =
+              /width:\s*(\d+(?:\.\d+)?)px/i.exec(cel) ||
+              /\bwidth=["']?(\d+)/i.exec(cel);
+            return s ? Number.parseFloat(s[1]) : 0;
+          });
+          const total = widths.reduce((a, b) => a + b, 0);
+          if (cells.length > 1 && total > 0 && widths.every((w) => w > 0)) {
+            let i = 0;
+            const newTr = firstTr.replace(/<t[dh]\b[^>]*>/gi, (cel) => {
+              const pct = ((widths[i] / total) * 100).toFixed(3);
+              i += 1;
+              const noW = cel
+                .replace(/width:\s*\d+(?:\.\d+)?px;?/i, "")
+                .replace(/\swidth=["']?\d+["']?/i, "");
+              return /style="/i.test(noW)
+                ? noW.replace(/style="/i, `style="width:${pct}%;`)
+                : noW.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
+            });
+            processed = inner.replace(firstTr, newTr);
+          }
+        }
+        return `<table${attrs} data-grid="text">${processed}</table>`;
       },
     );
   const looksLikeHtml = /<\w+[^>]*>/.test(source.trim());
@@ -370,11 +400,41 @@ export function LegacyHtmlRender({
           /MsoTableGrid/.test(attrs) ||
           /border-color/i.test(inner);
         if (!isGrid) return m;
-        // Bảng ảnh (nhân sự) cần table-layout:fixed để ảnh co vừa cột; bảng chữ
-        // (tuyển sinh) cần BỎ width cứng để cột co theo nội dung — hai cách ngược
-        // nhau, nên phân loại theo có <img> hay không.
-        const kind = /<img/i.test(inner) ? "img" : "text";
-        return `<table${attrs} data-grid="${kind}">${inner}</table>`;
+        // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
+        if (/<img/i.test(inner))
+          return `<table${attrs} data-grid="img">${inner}</table>`;
+        // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
+        // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
+        // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
+        // khi mọi ô hàng đầu đều có width; nếu không, giữ nguyên (auto-layout).
+        let processed = inner;
+        const trM = inner.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/i);
+        if (trM) {
+          const firstTr = trM[0];
+          const cells = firstTr.match(/<t[dh]\b[^>]*>/gi) || [];
+          const widths = cells.map((cel) => {
+            const s =
+              /width:\s*(\d+(?:\.\d+)?)px/i.exec(cel) ||
+              /\bwidth=["']?(\d+)/i.exec(cel);
+            return s ? Number.parseFloat(s[1]) : 0;
+          });
+          const total = widths.reduce((a, b) => a + b, 0);
+          if (cells.length > 1 && total > 0 && widths.every((w) => w > 0)) {
+            let i = 0;
+            const newTr = firstTr.replace(/<t[dh]\b[^>]*>/gi, (cel) => {
+              const pct = ((widths[i] / total) * 100).toFixed(3);
+              i += 1;
+              const noW = cel
+                .replace(/width:\s*\d+(?:\.\d+)?px;?/i, "")
+                .replace(/\swidth=["']?\d+["']?/i, "");
+              return /style="/i.test(noW)
+                ? noW.replace(/style="/i, `style="width:${pct}%;`)
+                : noW.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
+            });
+            processed = inner.replace(firstTr, newTr);
+          }
+        }
+        return `<table${attrs} data-grid="text">${processed}</table>`;
       },
     );
   return (
@@ -419,9 +479,11 @@ export function LegacyHtmlRender({
            mà GIỮ tỉ lệ cột gốc (không về đều nhau). break-word (không "anywhere")
            để chỉ ngắt khi TỪ dài hơn cột, tránh vỡ chữ kiểu "VID EO CLI P". */
         .legacy-content td, .legacy-content th { overflow-wrap: break-word; }
-        /* Bảng ẢNH (nhân sự): fixed + 100% để ảnh (max-width:100%) co vừa cột,
-           không đẩy bảng rộng quá cột → không cắt cột/nội dung khi zoom. */
-        .legacy-content table[data-grid="img"] { table-layout: fixed; width: 100%; }
+        /* Bảng dữ liệu (ảnh nhân sự & bảng chữ đã quy width→%): fixed + 100% để
+           LUÔN co vừa cột (ảnh theo max-width, chữ theo % cột) → không tràn/cắt
+           viền hay nội dung ở mọi mức zoom, vẫn giữ tỉ lệ cột gốc. */
+        .legacy-content table[data-grid="img"],
+        .legacy-content table[data-grid="text"] { table-layout: fixed; width: 100%; }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }
