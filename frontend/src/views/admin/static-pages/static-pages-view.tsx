@@ -102,8 +102,7 @@ export function StaticPagesView() {
   const input =
     "w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 bg-white dark:bg-[#1a2436]";
 
-  const publicUrl = (slug: string) =>
-    `${SITE_URL.replace(/\/$/, "")}/vi/${slug}`;
+  const publicUrl = (slug: string) => `${SITE_URL.replace(/\/$/, "")}/${slug}`;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">

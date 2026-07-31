@@ -37,6 +37,17 @@ export class StaticPageService {
     return page;
   }
 
+  // Public: slugs of all published pages — the site middleware uses this to
+  // rewrite ONLY real static pages to a clean top-level URL (leaving every other
+  // route untouched).
+  async publishedSlugs() {
+    const rows = await this.prisma.staticPage.findMany({
+      where: { isPublished: true },
+      select: { slug: true },
+    });
+    return rows.map((r) => r.slug);
+  }
+
   // Public: resolve a published page by slug (used by the site catch-all).
   async findPublishedBySlug(slug: string) {
     const page = await this.prisma.staticPage.findUnique({ where: { slug } });

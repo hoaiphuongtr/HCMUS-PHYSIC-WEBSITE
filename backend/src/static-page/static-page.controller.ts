@@ -31,6 +31,14 @@ export class StaticPageController {
     return this.service.findPublishedBySlug(slug);
   }
 
+  // Public: published slugs for the site middleware (clean top-level URLs).
+  // Declared before ':id' so "slugs" isn't captured as an id.
+  @Get('slugs')
+  @IsPublic()
+  slugs() {
+    return this.service.publishedSlugs();
+  }
+
   @Get()
   @Roles(RoleName.SuperAdmin)
   @ZodSerializerDto(StaticPageListResDTO)
