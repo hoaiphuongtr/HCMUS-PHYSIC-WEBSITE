@@ -496,6 +496,16 @@ export function LegacyHtmlRender({
         }
         /* Link (email/CV) trong bảng ảnh: cho phép bẻ trong chuỗi dài. */
         .legacy-content table[data-grid="img"] a { overflow-wrap: anywhere; word-break: break-word; }
+        /* Ảnh nhân sự có inline min-width:120px (đè max-width:100% → TRÀN ra khỏi ô
+           khi zoom) và float:right (đẩy ảnh sang phải). Ép: bỏ min-width, cap theo
+           ô, bỏ float + block để ảnh SÁT MÉP TRÁI và luôn co vừa ô (không tràn). */
+        .legacy-content table[data-grid="img"] img {
+          min-width: 0 !important;
+          max-width: 100% !important;
+          float: none !important;
+          display: block;
+          margin: 0 auto 0 0 !important;
+        }
         .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
         .legacy-content li { margin: 0.25rem 0; }
