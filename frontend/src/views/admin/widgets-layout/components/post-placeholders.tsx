@@ -464,6 +464,15 @@ export function LegacyHtmlRender({
            max-width kéo bề rộng nhỏ lại — nếu chiều cao vẫn cố định thì ảnh bị
            DÃN DỌC. Ép height:auto để luôn giữ đúng tỉ lệ. */
         .legacy-content img { max-width: 100%; height: auto !important; }
+        /* Ảnh legacy có margin-left/right cứng (vd width:800px + margin 50px = 900px)
+           vượt cột → tràn + thanh cuộn ngang + lệch. Ảnh CÓ margin inline: chuyển
+           block + margin auto (căn giữa, bỏ margin cứng) → vừa cột, không tràn. */
+        .legacy-content img[style*="margin-left"],
+        .legacy-content img[style*="margin-right"] {
+          display: block;
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
         /* Ảnh chèn từ editor bọc trong <div><div><img></div></div>. Editor giờ để
            ảnh BLOCK (xếp dọc); ép wrapper block ở cả web để đồng nhất editor↔web
            kể cả ảnh cũ lưu display:inline-block. */
@@ -507,6 +516,13 @@ export function LegacyHtmlRender({
            viền hay nội dung ở mọi mức zoom, vẫn giữ tỉ lệ cột gốc. */
         .legacy-content table[data-grid="img"],
         .legacy-content table[data-grid="text"] { table-layout: fixed; width: 100%; }
+        /* Trên màn hình HẸP (mobile/zoom cao) ép bảng dữ liệu có min-width để CỘT
+           đủ rộng đọc được → khung <main> cuộn ngang thay vì bẻ chữ nát (vd
+           "A00:2/6.75"). Desktop rộng hơn min-width nên vẫn vừa khít, không cuộn. */
+        @media (max-width: 680px) {
+          .legacy-content table[data-grid="img"],
+          .legacy-content table[data-grid="text"] { min-width: 560px; }
+        }
         /* Ô bảng ẢNH (nhân sự): (1) căn TRÁI để ảnh sát mép trái ô — bản gốc để
            text-align:right đẩy ảnh sang phải chừa khoảng trắng; (2) overflow-wrap
            anywhere để email/link dài LUÔN xuống dòng thay vì tràn ra ngoài ô rồi
