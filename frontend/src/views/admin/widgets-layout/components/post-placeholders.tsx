@@ -509,9 +509,12 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid="img"] img {
           min-width: 0 !important;
           max-width: 100% !important;
+          /* width theo % ô (không cố định 120px) để ảnh CO CÙNG cột chữ ở mọi mức
+             zoom → tỉ lệ ảnh/chữ luôn cân xứng (100/150/175/200%), không lệch. */
+          width: 100% !important;
           float: none !important;
           display: block;
-          margin: 0 auto 0 0 !important;
+          margin: 0 !important;
         }
         /* Trang cần ảnh CĂN GIỮA ô (vd cơ hữu) → đánh dấu data-photo="center" trên
            thẻ <table> trong puckData; override lại margin để ảnh nằm giữa. */
