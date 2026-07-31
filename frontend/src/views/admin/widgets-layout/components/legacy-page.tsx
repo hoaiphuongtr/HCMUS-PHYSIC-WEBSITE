@@ -225,7 +225,7 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
             lên sidebar. */}
         {/* pb-0.5: overflow-x-auto cũng cắt 1px theo chiều dọc → đường kẻ dưới
             cùng của bảng bị mất; chừa 2px để gridline không bị khung cuộn cắt. */}
-        <main className="min-w-0 overflow-x-auto pb-0.5">
+        <main className="min-w-0 overflow-x-auto pb-2">
           <LegacyHtmlRender html={html} injected={false} />
         </main>
         <aside className="space-y-8">

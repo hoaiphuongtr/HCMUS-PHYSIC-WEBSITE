@@ -6,6 +6,7 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableRow } from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
+import { FontFamily } from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -383,6 +384,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       // setColor/unsetColor cho nút chọn màu trên thanh công cụ.
       TextStyle,
       Color,
+      // Cho phép chọn font chữ (span style="font-family:…") — nút chọn font trên
+      // thanh công cụ. Types mặc định gồm textStyle.
+      FontFamily,
       TextAlign.configure({
         types: ["heading", "paragraph"],
         alignments: ["left", "center", "right"],
@@ -711,6 +715,28 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               </span>
             </ToolbarButton>
 
+            {/* Chọn font chữ cho đoạn/đoạn bôi chọn. */}
+            <select
+              title="Font chữ"
+              value={
+                (editor.getAttributes("textStyle").fontFamily as string) || ""
+              }
+              onChange={(e) => {
+                const f = e.target.value;
+                if (f) editor.chain().focus().setFontFamily(f).run();
+                else editor.chain().focus().unsetFontFamily().run();
+              }}
+              className="h-8 px-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-[#1a2436] text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+            >
+              <option value="">Font mặc định</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="Verdana, sans-serif">Verdana</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="Tahoma, sans-serif">Tahoma</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+
             <ToolbarDivider />
 
             <ToolbarButton
@@ -916,6 +942,17 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               khai (đồng nhất editor↔preview): bảng có đường kẻ, ảnh co vừa
               khung, link có gạch chân. Màu chữ inline (TextStyle/Color) tự hiện. */}
           <style>{`
+            /* Vùng soạn thảo LUÔN nền sáng + font/màu như trang công khai, kể cả
+               khi admin ở dark mode — nếu không, chữ đen inline (định dạng legacy)
+               nằm trên nền tối sẽ không đọc được. Đồng nhất editor ↔ preview. */
+            .ProseMirror {
+              background: #ffffff;
+              color: #1f2937;
+              font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+              font-size: 15px;
+              line-height: 1.65;
+              border-radius: 0 0 0.5rem 0.5rem;
+            }
             .ProseMirror table { border-collapse: collapse; max-width: 100%; border: 1px solid #94a3b8; }
             .ProseMirror table td, .ProseMirror table th { border: 1px solid #94a3b8; padding: 6px 10px; vertical-align: top; }
             .ProseMirror img { max-width: 100%; height: auto; }
