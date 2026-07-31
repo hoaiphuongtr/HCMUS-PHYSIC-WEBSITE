@@ -231,10 +231,21 @@ function PostBodyRender({
     .replace(
       /<table\b([^>]*)>([\s\S]*?)<\/table>/gi,
       (m: string, attrs: string, inner: string) => {
+        // Bảng DỮ LIỆU: có viền / border-color / MsoTableGrid, HOẶC bảng không
+        // viền nhưng rõ ràng là bảng dữ liệu (≥2 hàng, ≥3 cột, không chứa ảnh) →
+        // các bảng danh sách (khóa luận, du học, chương trình đào tạo…) cũng được
+        // chuẩn hoá đường kẻ + co vừa cột. Bảng bố cục (ảnh+chú thích) bị loại vì
+        // có <img> hoặc chỉ 1-2 cột.
+        const gridRows = inner.match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
+        const gridCols = gridRows.reduce(
+          (mx, r) => Math.max(mx, (r.match(/<t[dh]\b/gi) || []).length),
+          0,
+        );
         const isGrid =
           /\bborder\s*=/.test(attrs) ||
           /MsoTableGrid/.test(attrs) ||
-          /border-color/i.test(inner);
+          /border-color/i.test(inner) ||
+          (gridRows.length >= 2 && gridCols >= 3 && !/<img/i.test(inner));
         if (!isGrid) return m;
         // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
         if (/<img/i.test(inner))
@@ -404,10 +415,21 @@ export function LegacyHtmlRender({
     .replace(
       /<table\b([^>]*)>([\s\S]*?)<\/table>/gi,
       (m: string, attrs: string, inner: string) => {
+        // Bảng DỮ LIỆU: có viền / border-color / MsoTableGrid, HOẶC bảng không
+        // viền nhưng rõ ràng là bảng dữ liệu (≥2 hàng, ≥3 cột, không chứa ảnh) →
+        // các bảng danh sách (khóa luận, du học, chương trình đào tạo…) cũng được
+        // chuẩn hoá đường kẻ + co vừa cột. Bảng bố cục (ảnh+chú thích) bị loại vì
+        // có <img> hoặc chỉ 1-2 cột.
+        const gridRows = inner.match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
+        const gridCols = gridRows.reduce(
+          (mx, r) => Math.max(mx, (r.match(/<t[dh]\b/gi) || []).length),
+          0,
+        );
         const isGrid =
           /\bborder\s*=/.test(attrs) ||
           /MsoTableGrid/.test(attrs) ||
-          /border-color/i.test(inner);
+          /border-color/i.test(inner) ||
+          (gridRows.length >= 2 && gridCols >= 3 && !/<img/i.test(inner));
         if (!isGrid) return m;
         // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
         if (/<img/i.test(inner))
@@ -516,6 +538,14 @@ export function LegacyHtmlRender({
            viền hay nội dung ở mọi mức zoom, vẫn giữ tỉ lệ cột gốc. */
         .legacy-content table[data-grid="img"],
         .legacy-content table[data-grid="text"] { table-layout: fixed; width: 100%; }
+        /* Đường kẻ MẶC ĐỊNH cho mọi bảng dữ liệu chữ — kể cả bảng KHÔNG VIỀN (danh
+           sách khóa luận / du học / chương trình đào tạo) hay bảng thiếu vài ô kẻ ở
+           header. Ô có border-color inline vẫn giữ màu riêng (inline thắng màu). */
+        .legacy-content table[data-grid="text"] { border: 1px solid #cbd5e1; }
+        .legacy-content table[data-grid="text"] td,
+        .legacy-content table[data-grid="text"] th {
+          border: 1px solid #cbd5e1; padding: 6px 10px;
+        }
         /* Trên màn hình HẸP (mobile/zoom cao) ép bảng dữ liệu có min-width để CỘT
            đủ rộng đọc được → khung <main> cuộn ngang thay vì bẻ chữ nát (vd
            "A00:2/6.75"). Desktop rộng hơn min-width nên vẫn vừa khít, không cuộn. */
