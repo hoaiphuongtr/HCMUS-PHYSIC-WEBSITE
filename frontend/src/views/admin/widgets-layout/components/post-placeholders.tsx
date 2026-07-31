@@ -472,7 +472,11 @@ function PostCoverImageRender({
   injected: boolean;
 }) {
   const { locale } = useLocale();
-  if (injected && !src) return null;
+  // Trang chi tiết bài (injected=true) KHÔNG hiển thị ảnh bìa nữa: ảnh bìa chỉ
+  // dùng làm thumbnail (trang chủ/danh sách) + og:image khi share, tránh lặp lại
+  // to đùng ở đầu bài. Editor template (injected=false) vẫn hiện placeholder để
+  // người soạn thấy bố cục.
+  if (injected) return null;
   // Ảnh bìa cũng qua bộ tối ưu: gốc legacy có thể là PNG hàng trăm KB và
   // chính nó là ứng viên LCP nên hưởng lợi nhiều nhất từ WebP thu gọn.
   const finalSrc = optimizedBodyImageUrl(src || defaultSrc);

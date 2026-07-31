@@ -976,7 +976,10 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             <article
               className="prose prose-slate max-w-none prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
               // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored content
-              dangerouslySetInnerHTML={{ __html: value }}
+              // value giữ src ẢNH TƯƠNG ĐỐI (/uploads/…) như trong DB; tab Editor đã
+              // absolutize ở content nhưng Preview render thẳng value → phải absolutize
+              // tại đây, nếu không trình duyệt admin (:3000) không phân giải được ảnh.
+              dangerouslySetInnerHTML={{ __html: absolutizeUploads(value) }}
             />
           ) : (
             <p className="text-xs text-slate-400 dark:text-slate-500">
