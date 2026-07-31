@@ -553,25 +553,24 @@ export function LegacyHtmlRender({
           .legacy-content table[data-grid="img"],
           .legacy-content table[data-grid="text"] { min-width: 560px; }
         }
-        /* Ô bảng ẢNH (nhân sự): (1) căn TRÁI để ảnh sát mép trái ô — bản gốc để
-           text-align:right đẩy ảnh sang phải chừa khoảng trắng; (2) overflow-wrap
-           anywhere để email/link dài LUÔN xuống dòng thay vì tràn ra ngoài ô rồi
-           bị cắt khi zoom 150/200%. */
-        .legacy-content table[data-grid="img"] td,
-        .legacy-content table[data-grid="img"] th {
-          text-align: left;
-          overflow-wrap: anywhere;
-          word-break: break-word;
-        }
-        /* Nội dung trong bảng ảnh (span/a từ Word/Joomla) hay dính inline
-           white-space:nowrap → chữ KHÔNG xuống dòng, tràn ra ngoài ô rồi bị cắt khi
-           zoom. Ép normal + cho bẻ chuỗi dài để mọi thứ luôn xuống dòng vừa ô. */
-        .legacy-content table[data-grid="img"] td *,
-        .legacy-content table[data-grid="img"] th * {
+        /* MỌI ô bảng dữ liệu (chữ & ảnh) + con của nó: BỎ white-space:nowrap (từ
+           Word/Joomla) và cho xuống dòng. Nếu không, dưới table-layout:fixed nội
+           dung (tên đề tài, HỌ TÊN in hoa, email…) KHÔNG wrap → tràn/ĐÈ sang cột
+           kế bên. break-word: chỉ bẻ trong từ khi từ dài hơn cột (nhẹ, không nát). */
+        .legacy-content table[data-grid] td,
+        .legacy-content table[data-grid] th,
+        .legacy-content table[data-grid] td *,
+        .legacy-content table[data-grid] th * {
           white-space: normal !important;
-          overflow-wrap: anywhere;
-          word-break: break-word;
+          overflow-wrap: break-word;
         }
+        /* Bảng ẢNH (nhân sự): căn TRÁI để ảnh sát mép trái; email/link dài bẻ mạnh
+           hơn (anywhere) để không tràn khi zoom. */
+        .legacy-content table[data-grid="img"] td,
+        .legacy-content table[data-grid="img"] th { text-align: left; }
+        .legacy-content table[data-grid="img"] a,
+        .legacy-content table[data-grid="img"] td *,
+        .legacy-content table[data-grid="img"] th * { overflow-wrap: anywhere; }
         /* Ảnh nhân sự có inline min-width:120px (đè max-width:100% → TRÀN ra khỏi ô
            khi zoom) và float:right (đẩy ảnh sang phải). Ép: bỏ min-width, cap theo
            ô, bỏ float + block để ảnh SÁT MÉP TRÁI và luôn co vừa ô (không tràn). */
