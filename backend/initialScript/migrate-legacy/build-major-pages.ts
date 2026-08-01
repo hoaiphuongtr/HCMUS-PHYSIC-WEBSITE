@@ -92,10 +92,17 @@ const buildBody = (row: MajorLangRow | undefined, locale: 'vi' | 'en'): string =
 };
 
 async function main(): Promise<void> {
+  // PageLayout.createdBy là NOT NULL — mượn chủ sở hữu của layout mẫu, nếu không
+  // có thì lấy layout bất kỳ đang tồn tại.
   const template = await prisma.pageLayout.findUnique({
     where: { id: TEMPLATE_ID },
     select: { createdBy: true },
   });
+  const owner =
+    template?.createdBy ??
+    (await prisma.pageLayout.findFirst({ select: { createdBy: true } }))
+      ?.createdBy;
+  if (!owner) throw new Error('Không tìm được người tạo để gán cho layout mới');
 
   const legacy = await mysql.createConnection(LEGACY);
   const [majorRows] = await legacy.query<mysql.RowDataPacket[]>(
@@ -187,7 +194,7 @@ async function main(): Promise<void> {
             publishedPuckData: tree as unknown as Prisma.InputJsonValue,
             isPublished: true,
             publishedAt: now,
-            createdBy: template?.createdBy ?? null,
+            createdBy: owner,
           },
         });
         existingBySlug.set(slug, row.id);
