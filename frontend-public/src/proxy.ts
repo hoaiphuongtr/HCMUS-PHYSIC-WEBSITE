@@ -10,93 +10,43 @@ const API =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:3001";
 
-// Published static pages, cached ≤60s:
-//  - slugs: html-only pages → rewritten to the [locale] catch-all (iframe render).
-//  - bundles: folder microsites (.zip) → slug ⇒ served base dir; the middleware
-//    proxies /<slug>/* straight to the extracted files so absolute-path exports
-//    (Next.js etc.) work dynamically at a clean top-level URL, no per-site config.
-type Caches = {
-  slugs: Set<string>;
-  bundles: Map<string, string>;
-  at: number;
-};
-let cache: Caches | null = null;
+// Published html static-page slugs, cached ≤60s, so a bare /<slug> is rewritten
+// to the [locale] catch-all (iframe render) at a clean top-level URL. Bundle
+// microsites (.zip) are served via the iframe in [...slug] too — the middleware
+// stays narrow (excludes assets) so it never sits in the hot path for every file.
+let slugCache: { slugs: Set<string>; at: number } | null = null;
 const TTL = 60_000;
 
-async function loadCaches(): Promise<Caches> {
-  if (cache && Date.now() - cache.at < TTL) return cache;
-  const next: Caches = { slugs: new Set(), bundles: new Map(), at: Date.now() };
+async function staticSlugs(): Promise<Set<string>> {
+  if (slugCache && Date.now() - slugCache.at < TTL) return slugCache.slugs;
   try {
-    const [slugsRes, bundlesRes] = await Promise.all([
-      fetch(`${API}/static-pages/slugs`, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(2000),
-      }),
-      fetch(`${API}/static-pages/bundles`, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(2000),
-      }),
-    ]);
-    if (slugsRes.ok) {
-      const slugs = (await slugsRes.json()) as string[];
-      slugs.forEach((s) => next.slugs.add(s.toLowerCase()));
+    const res = await fetch(`${API}/static-pages/slugs`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2000),
+    });
+    if (res.ok) {
+      const slugs = (await res.json()) as string[];
+      slugCache = {
+        slugs: new Set(slugs.map((s) => s.toLowerCase())),
+        at: Date.now(),
+      };
     }
-    if (bundlesRes.ok) {
-      const rows = (await bundlesRes.json()) as {
-        slug: string;
-        bundlePath: string | null;
-      }[];
-      for (const r of rows) {
-        if (r.bundlePath) {
-          // strip the trailing entry filename → served base dir
-          next.bundles.set(
-            r.slug.toLowerCase(),
-            r.bundlePath.replace(/\/[^/]+$/, ""),
-          );
-        }
-      }
-    }
-    cache = next;
   } catch {
     // transient backend hiccup — keep serving from the previous cache if any
   }
-  return cache ?? next;
+  return slugCache?.slugs ?? new Set();
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const firstSeg = (pathname.split("/")[1] || "").toLowerCase();
-
-  const { slugs, bundles } = await loadCaches();
-
-  // 1) Folder microsite: serve /<slug>/* straight from the extracted bundle —
-  //    index.html for the bare path, plus every asset (incl. absolute /<slug>/…
-  //    paths a Next export bakes in). Proxied to the backend static server, which
-  //    drops CSP/X-Frame for these files so the microsite's own scripts run.
-  const base = bundles.get(firstSeg);
-  if (base) {
-    const rest = pathname.slice(firstSeg.length + 1); // "" | "/" | "/logos/x.svg"
-    // Bare /slug with no trailing slash → redirect to /slug/ so a microsite's
-    // RELATIVE asset paths (./static/…, common in CRA/Vite builds) resolve under
-    // /slug/ instead of the site root. Absolute-path builds (Next) are unaffected.
-    if (rest === "") {
-      const url = request.nextUrl.clone();
-      url.pathname = `${pathname}/`;
-      return NextResponse.redirect(url, 308);
-    }
-    const entry = rest === "/" ? "/index.html" : rest;
-    const target = new URL(`${API}${base}${entry}`);
-    target.search = request.nextUrl.search;
-    return NextResponse.rewrite(target);
-  }
-
   const localePrefix = LOCALE_PREFIXES.find(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
+
   if (localePrefix) {
     // Department re-slug redirects: old flat tin-tuc/… → <dept-slug>/tin-tuc/…
-    const restPath = pathname.slice(localePrefix.length + 1);
-    const moved = REDIRECTS[restPath];
+    const rest = pathname.slice(localePrefix.length + 1);
+    const moved = REDIRECTS[rest];
     if (moved) {
       const url = request.nextUrl.clone();
       url.pathname = `${localePrefix}/${moved}`;
@@ -108,17 +58,16 @@ export async function proxy(request: NextRequest) {
   // No locale prefix.
   const bare = pathname === "/" ? "" : pathname.replace(/^\//, "");
 
-  // 2) Html static page (no bundle) → rewrite to the catch-all so it renders at
-  //    the clean top-level URL (iframe render), case-insensitively.
-  if (bare && !bare.includes("/") && slugs.has(firstSeg)) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${DEFAULT_LOCALE}/${bare}`;
-    return NextResponse.rewrite(url);
+  // Published static page → rewrite to the catch-all so it renders at the clean
+  // top-level URL (case-insensitive).
+  if (bare && !bare.includes("/")) {
+    const slugs = await staticSlugs();
+    if (slugs.has(bare.toLowerCase())) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${DEFAULT_LOCALE}/${bare}`;
+      return NextResponse.rewrite(url);
+    }
   }
-
-  // 3) Real files (public assets, favicon, sitemap, robots…) pass through
-  //    untouched — only bare paths fall through to the default-locale redirect.
-  if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
 
   const moved = bare ? REDIRECTS[bare] : undefined;
   const url = request.nextUrl.clone();
@@ -127,8 +76,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything except framework internals; the middleware itself decides
-  // what to proxy (bundles), rewrite (static pages), pass through (files), or
-  // redirect (bare paths → default locale).
-  matcher: ["/((?!_next/|api/).*)"],
+  matcher: [
+    "/((?!_next|api|fonts|favicon|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)).*)",
+  ],
 };
