@@ -51,6 +51,13 @@ export class StaticPageController {
     return this.service.publishedSlugs();
   }
 
+  // Public: slug → bundlePath for folder microsites (middleware proxies them).
+  @Get('bundles')
+  @IsPublic()
+  bundles() {
+    return this.service.publishedBundles();
+  }
+
   @Get()
   @Roles(RoleName.SuperAdmin)
   @ZodSerializerDto(StaticPageListResDTO)

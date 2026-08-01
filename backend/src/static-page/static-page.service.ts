@@ -65,6 +65,16 @@ export class StaticPageService {
     return rows.map((r) => r.slug);
   }
 
+  // Public: published folder-microsite pages → { slug, bundlePath }. The site
+  // middleware proxies /<slug>/* straight to the extracted files so absolute-path
+  // exports (Next.js etc.) work dynamically at a clean URL — no per-site config.
+  async publishedBundles() {
+    return this.prisma.staticPage.findMany({
+      where: { isPublished: true, NOT: { bundlePath: null } },
+      select: { slug: true, bundlePath: true },
+    });
+  }
+
   // Public: resolve a published page by slug (used by the site catch-all).
   async findPublishedBySlug(slug: string) {
     // Case-insensitive so /ICEBA2026 and /iceba2026 resolve to the same page.

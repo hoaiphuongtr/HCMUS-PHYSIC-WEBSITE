@@ -10,45 +10,87 @@ const API =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:3001";
 
-// Cache published static-page slugs so we only REWRITE real static pages to a
-// clean top-level URL — every other non-locale path keeps its existing
-// redirect-to-default-locale behaviour. Refreshed at most once per minute.
-let slugCache: { slugs: Set<string>; at: number } | null = null;
-const SLUG_TTL = 60_000;
-async function staticSlugs(): Promise<Set<string>> {
-  if (slugCache && Date.now() - slugCache.at < SLUG_TTL) return slugCache.slugs;
+// Published static pages, cached ≤60s:
+//  - slugs: html-only pages → rewritten to the [locale] catch-all (iframe render).
+//  - bundles: folder microsites (.zip) → slug ⇒ served base dir; the middleware
+//    proxies /<slug>/* straight to the extracted files so absolute-path exports
+//    (Next.js etc.) work dynamically at a clean top-level URL, no per-site config.
+type Caches = {
+  slugs: Set<string>;
+  bundles: Map<string, string>;
+  at: number;
+};
+let cache: Caches | null = null;
+const TTL = 60_000;
+
+async function loadCaches(): Promise<Caches> {
+  if (cache && Date.now() - cache.at < TTL) return cache;
+  const next: Caches = { slugs: new Set(), bundles: new Map(), at: Date.now() };
   try {
-    const res = await fetch(`${API}/static-pages/slugs`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(2000),
-    });
-    if (res.ok) {
-      const slugs = (await res.json()) as string[];
-      // lower-cased so the match below is case-insensitive (/ICEBA2026 works)
-      slugCache = {
-        slugs: new Set(slugs.map((s) => s.toLowerCase())),
-        at: Date.now(),
-      };
+    const [slugsRes, bundlesRes] = await Promise.all([
+      fetch(`${API}/static-pages/slugs`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(2000),
+      }),
+      fetch(`${API}/static-pages/bundles`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(2000),
+      }),
+    ]);
+    if (slugsRes.ok) {
+      const slugs = (await slugsRes.json()) as string[];
+      slugs.forEach((s) => next.slugs.add(s.toLowerCase()));
     }
+    if (bundlesRes.ok) {
+      const rows = (await bundlesRes.json()) as {
+        slug: string;
+        bundlePath: string | null;
+      }[];
+      for (const r of rows) {
+        if (r.bundlePath) {
+          // strip the trailing entry filename → served base dir
+          next.bundles.set(
+            r.slug.toLowerCase(),
+            r.bundlePath.replace(/\/[^/]+$/, ""),
+          );
+        }
+      }
+    }
+    cache = next;
   } catch {
-    // keep any previous cache on a transient backend hiccup
+    // transient backend hiccup — keep serving from the previous cache if any
   }
-  return slugCache?.slugs ?? new Set();
+  return cache ?? next;
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const firstSeg = (pathname.split("/")[1] || "").toLowerCase();
+
+  const { slugs, bundles } = await loadCaches();
+
+  // 1) Folder microsite: serve /<slug>/* straight from the extracted bundle —
+  //    index.html for the bare path, plus every asset (incl. absolute /<slug>/…
+  //    paths a Next export bakes in). Proxied to the backend static server, which
+  //    drops CSP/X-Frame for these files so the microsite's own scripts run.
+  const base = bundles.get(firstSeg);
+  if (base) {
+    const rest = pathname.slice(firstSeg.length + 1); // "" or "/logos/x.svg"
+    const target = new URL(`${API}${base}${rest || "/index.html"}`);
+    target.search = request.nextUrl.search;
+    return NextResponse.rewrite(target);
+  }
+
   const localePrefix = LOCALE_PREFIXES.find(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
-
   if (localePrefix) {
     // Department re-slug redirects: old flat tin-tuc/… → <dept-slug>/tin-tuc/…
-    const rest = pathname.slice(localePrefix.length + 1);
-    const target = REDIRECTS[rest];
-    if (target) {
+    const restPath = pathname.slice(localePrefix.length + 1);
+    const moved = REDIRECTS[restPath];
+    if (moved) {
       const url = request.nextUrl.clone();
-      url.pathname = `${localePrefix}/${target}`;
+      url.pathname = `${localePrefix}/${moved}`;
       return NextResponse.redirect(url, 308);
     }
     return NextResponse.next();
@@ -57,20 +99,18 @@ export async function proxy(request: NextRequest) {
   // No locale prefix.
   const bare = pathname === "/" ? "" : pathname.replace(/^\//, "");
 
-  // A published standalone static page (single-segment slug) is served at its
-  // clean top-level URL via an internal REWRITE (URL stays /iceba2023) instead of
-  // the default redirect to /vi. Everything else keeps the redirect below.
-  if (bare && !bare.includes("/")) {
-    const slugs = await staticSlugs();
-    if (slugs.has(bare.toLowerCase())) {
-      const url = request.nextUrl.clone();
-      url.pathname = `/${DEFAULT_LOCALE}/${bare}`;
-      return NextResponse.rewrite(url);
-    }
+  // 2) Html static page (no bundle) → rewrite to the catch-all so it renders at
+  //    the clean top-level URL (iframe render), case-insensitively.
+  if (bare && !bare.includes("/") && slugs.has(firstSeg)) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LOCALE}/${bare}`;
+    return NextResponse.rewrite(url);
   }
 
-  // No locale prefix → send to the default locale (also apply a redirect if the
-  // bare path matches a moved slug).
+  // 3) Real files (public assets, favicon, sitemap, robots…) pass through
+  //    untouched — only bare paths fall through to the default-locale redirect.
+  if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
+
   const moved = bare ? REDIRECTS[bare] : undefined;
   const url = request.nextUrl.clone();
   url.pathname = `/${DEFAULT_LOCALE}${bare ? `/${moved ?? bare}` : ""}`;
@@ -78,7 +118,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next|api|fonts|favicon|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)).*)",
-  ],
+  // Run on everything except framework internals; the middleware itself decides
+  // what to proxy (bundles), rewrite (static pages), pass through (files), or
+  // redirect (bare paths → default locale).
+  matcher: ["/((?!_next/|api/).*)"],
 };
