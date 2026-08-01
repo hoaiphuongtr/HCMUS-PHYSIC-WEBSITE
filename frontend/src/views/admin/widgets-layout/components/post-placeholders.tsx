@@ -138,7 +138,9 @@ const balanceColumnWidths = (inner: string): string => {
   // độ dài nội dung (căn bậc hai để một cột rất dài không nuốt hết phần của cột
   // khác). Nếu gộp chung một công thức thì cột chữ dài sẽ bóp các cột tiêu đề
   // xuống dưới mức tối thiểu và chữ lại tràn.
-  const RESERVED = 62;
+  // 75% chia theo từ dài nhất (đo thực tế: tổng bề rộng tối thiểu của bảng ngành
+  // chỉ ~621px trong 792px nên hoàn toàn đủ chỗ, vấn đề nằm ở cách chia).
+  const RESERVED = 75;
   const wordTotal = wordLen.reduce((a, b) => a + b, 0);
   const contentW = bodyLen.map((len) =>
     Math.sqrt(Math.min(Math.max(len, 3), 200)),
@@ -791,6 +793,13 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid][data-wide] th * {
           overflow-wrap: break-word;
           word-break: normal;
+        }
+        /* Đệm ô 10px mỗi bên ăn mất 20px/cột — với 9 cột là 180px trong tổng 792px,
+           đủ để đẩy "CHƯƠNG" (58px) ra khỏi cột 67px chỉ còn 47px dùng được. Bảng
+           nhiều cột thì thu đệm lại để trả chỗ cho chữ. */
+        .legacy-content table[data-grid][data-wide] td,
+        .legacy-content table[data-grid][data-wide] th {
+          padding: 6px 4px !important;
         }
         /* Tiêu đề bảng nhiều cột thường là chữ hoa cỡ 13pt in đậm (CHƯƠNG TRÌNH
            ĐÀO TẠO…) — quá to so với cột hẹp. Ép về cỡ vừa phải để cả từ lọt vào
