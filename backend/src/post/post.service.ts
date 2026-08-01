@@ -124,6 +124,18 @@ const HAS_PUBLIC_CONTENT: Prisma.PostWhereInput = {
     { legacyId: null },
   ],
 };
+// Bộ lọc theo danh mục đi qua LAYOUT: danh mục thuộc về layout mà bài được rót
+// vào, nên một bài rót vào nhiều layout sẽ hiện dưới nhiều danh mục. Bản công
+// khai chỉ tính layout đã xuất bản và chưa bị xoá.
+const categoryWhere = (slug: string, publicOnly: boolean) => ({
+  layouts: {
+    some: {
+      category: { slug },
+      ...(publicOnly ? { isPublished: true, deletedAt: null } : {}),
+    },
+  },
+});
+
 // Items in the trash are permanently purged this long after deletion.
 const TRASH_RETENTION_DAYS = 30;
 
@@ -361,7 +373,7 @@ export class PostService {
       andClauses.push(await this.searchPostIdWhere(search.trim()));
     }
     const where: Record<string, unknown> = {};
-    if (category) where.category = { slug: category };
+    if (category) Object.assign(where, categoryWhere(category, false));
     if (status) where.status = status;
     if (deleted) {
       // Trash view: only rows soft-deleted within the retention window (older ones
@@ -485,7 +497,7 @@ export class PostService {
       // Faculty feed by default; a dept slug narrows to that department's posts.
       AND: [this.feedDeptWhere(department), HAS_PUBLIC_CONTENT],
     };
-    if (category) where.category = { slug: category };
+    if (category) Object.assign(where, categoryWhere(category, true));
     if (fromDate || toDate) {
       const range: Record<string, Date> = {};
       if (fromDate) range.gte = fromDate;
@@ -740,7 +752,13 @@ export class PostService {
     }
     const template = await this.prisma.pageLayout.findUnique({
       where: { id: body.templateLayoutId },
-      select: { id: true, slug: true, puckData: true },
+      select: {
+        id: true,
+        slug: true,
+        puckData: true,
+        categoryId: true,
+        category: { select: { slug: true, name: true } },
+      },
     });
     if (!template) throw TemplateLayoutNotFoundException;
 
@@ -792,10 +810,11 @@ export class PostService {
       layoutSlug = toSlugPath(`${baseSlug}-${suffix}`);
     }
 
-    const postCategory = await this.prisma.category.findUnique({
-      where: { id: post.categoryId },
-      select: { slug: true, name: true },
-    });
+    // Danh mục đi theo LAYOUT chứ không theo bài: cùng một bài rót vào "Layout
+    // mẫu — Câu lạc bộ" và "Layout mẫu — Tin khoa học" thì mỗi trang mang danh
+    // mục của layout đó, và bài hiện dưới CẢ HAI bộ lọc. Trước đây luôn bơm danh
+    // mục của bài nên trang câu lạc bộ vẫn hiện breadcrumb "Tin học vụ".
+    const layoutCategory = template.category;
     const titleVi = viOf(post.title);
     const injectPayload: PostInjectPayload = {
       title: titleVi,
@@ -809,8 +828,8 @@ export class PostService {
         name: pt.tag.name,
         icon: pt.tag.icon,
       })),
-      category: postCategory?.slug ?? '',
-      categoryLabel: viOf(postCategory?.name),
+      category: layoutCategory?.slug ?? '',
+      categoryLabel: viOf(layoutCategory?.name),
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
@@ -860,7 +879,20 @@ export class PostService {
   }
 
   async syncNewsFeedSnapshots() {
+    // Chỉ layout CÓ widget feed mới cần dựng lại snapshot. Trước đây hàm này nạp
+    // TOÀN BỘ ~2000 layout kèm nguyên cây puckData (JSON rất nặng) trên mỗi lần
+    // lưu bài, khiến mỗi thao tác đăng/sửa mất ~6,5s. Lọc trước bằng một truy vấn
+    // text nhẹ: thực tế chỉ khoảng chục layout có LatestNewsAuto/UpcomingEventsAuto.
+    const candidates = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "PageLayout"
+      WHERE "puckData"::text LIKE '%LatestNewsAuto%'
+         OR "puckData"::text LIKE '%UpcomingEventsAuto%'
+         OR "publishedPuckData"::text LIKE '%LatestNewsAuto%'
+         OR "publishedPuckData"::text LIKE '%UpcomingEventsAuto%'
+    `;
+    if (candidates.length === 0) return { changed: 0, slugs: [] as string[] };
     const layouts = await this.prisma.pageLayout.findMany({
+      where: { id: { in: candidates.map((c) => c.id) } },
       select: {
         id: true,
         slug: true,
@@ -1005,14 +1037,14 @@ export class PostService {
         slug: true,
         puckData: true,
         publishedPuckData: true,
+        category: { select: { slug: true, name: true } },
       },
     });
     if (!layouts.length) return [];
-    const postCategory = await this.prisma.category.findUnique({
-      where: { id: post.categoryId },
-      select: { slug: true, name: true },
-    });
-    const payload: PostInjectPayload = {
+    // Danh mục thuộc về TỪNG layout, nên phần dùng chung được dựng một lần rồi
+    // mỗi layout tự chèn danh mục của mình (bài rót vào layout câu lạc bộ và
+    // layout tin khoa học phải hiện đúng danh mục ở mỗi trang).
+    const sharedPayload: Omit<PostInjectPayload, 'category' | 'categoryLabel'> = {
       title: viOf(post.title),
       body: viOf(post.body),
       excerpt: viOf(post.excerpt) || null,
@@ -1024,8 +1056,6 @@ export class PostService {
         name: pt.tag.name,
         icon: pt.tag.icon,
       })),
-      category: postCategory?.slug ?? '',
-      categoryLabel: viOf(postCategory?.name),
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
@@ -1033,6 +1063,11 @@ export class PostService {
     };
     await Promise.all(
       layouts.map((layout) => {
+        const payload: PostInjectPayload = {
+          ...sharedPayload,
+          category: layout.category?.slug ?? '',
+          categoryLabel: viOf(layout.category?.name),
+        };
         const data: {
           puckData?: InputJsonValue;
           publishedPuckData?: InputJsonValue;

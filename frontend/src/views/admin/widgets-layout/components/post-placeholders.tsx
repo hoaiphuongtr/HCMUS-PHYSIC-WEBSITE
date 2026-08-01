@@ -97,6 +97,63 @@ const markNumericCells = (html: string): string =>
     },
   );
 
+// Bảng nhiều cột: chia lại bề rộng cột theo NỘI DUNG thay vì theo width gốc, để
+// bảng vừa khung mà không phải cuộn ngang và tiêu đề không bị bẻ vụn. Cột chỉ
+// chứa chữ ngắn (cột "Link", cột số) được thu hẹp, nhường chỗ cho cột chữ dài.
+// Bề rộng tối thiểu của một cột phải chứa được TỪ DÀI NHẤT của nó (kể cả ở dòng
+// tiêu đề) — nếu không thì đúng chỗ đó lại vỡ chữ.
+const stripTags = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const balanceColumnWidths = (inner: string): string => {
+  const rows = inner.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi) || [];
+  const headerRow = rows[0];
+  if (rows.length < 2 || !headerRow) return inner;
+  const cellsOf = (r: string) =>
+    r.match(/<t[dh]\b[^>]*>[\s\S]*?<\/t[dh]>/gi) || [];
+  const nCols = cellsOf(headerRow).length;
+  if (nCols < 2) return inner;
+
+  const longestWord = (t: string) =>
+    t.split(" ").reduce((mx, w) => Math.max(mx, w.length), 0);
+  const bodyLen = new Array<number>(nCols).fill(0);
+  const wordLen = new Array<number>(nCols).fill(0);
+  for (const [rowIdx, row] of rows.entries()) {
+    const cells = cellsOf(row);
+    if (cells.length !== nCols) continue;
+    cells.forEach((cell, i) => {
+      const text = stripTags(cell);
+      wordLen[i] = Math.max(wordLen[i] ?? 0, longestWord(text));
+      // dòng tiêu đề không tính vào độ dài nội dung, chỉ tính từ dài nhất
+      if (rowIdx > 0) bodyLen[i] = Math.max(bodyLen[i] ?? 0, text.length);
+    });
+  }
+  // Căn bậc hai để một cột rất dài không nuốt hết bề rộng của các cột khác.
+  const weights = bodyLen.map((len, i) =>
+    Math.sqrt(Math.min(Math.max(len, (wordLen[i] ?? 0) * 2, 3), 200)),
+  );
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (!total) return inner;
+
+  let i = 0;
+  const newHeader = headerRow.replace(/<t[dh]\b[^>]*>/gi, (tag) => {
+    const pct = (((weights[i] ?? 0) / total) * 100).toFixed(3);
+    i += 1;
+    const noWidth = tag
+      .replace(/width:\s*[\d.]+(?:px|pt|%)?;?/i, "")
+      .replace(/\swidth=["\']?[\d.]+%?["\']?/i, "");
+    return /style="/i.test(noWidth)
+      ? noWidth.replace(/style="/i, `style="width:${pct}%;`)
+      : noWidth.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
+  });
+  return inner.replace(headerRow, newHeader);
+};
+
 const INLINE_TAGS = "span|strong|em|b|i|u|font";
 const LEADING_NBSP_RE = new RegExp(
   `(<p\\b[^>]*>(?:\\s*<(?:${INLINE_TAGS})\\b[^>]*>)*)` +
@@ -299,11 +356,16 @@ function PostBodyRender({
       (_m, pre: string, src: string, post: string) =>
         `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
     )
-    .replace(/<img(?![^>]*\bloading=)/gi, (() => {
-      let imgIdx = 0;
-      return () =>
-        ++imgIdx <= 1 ? '<img decoding="async" ' : '<img loading="lazy" decoding="async" ';
-    })())
+    .replace(
+      /<img(?![^>]*\bloading=)/gi,
+      (() => {
+        let imgIdx = 0;
+        return () =>
+          ++imgIdx <= 1
+            ? '<img decoding="async" '
+            : '<img loading="lazy" decoding="async" ';
+      })(),
+    )
     // Đánh dấu BẢNG DỮ LIỆU (có viền / border-color trên ô / MsoTableGrid) bằng
     // data-grid để CSS ép table-layout:fixed;width:100% CHỈ cho các bảng này —
     // bảng bố cục không viền (vd ảnh + chú thích cạnh nhau) giữ nguyên auto. Mục
@@ -335,7 +397,7 @@ function PostBodyRender({
         // mỗi cột chỉ còn ~10% bề rộng nên tiêu đề bị bẻ GIỮA TỪ ("CHƯƠ NG TRÌN H").
         // Giữ bề rộng gốc, cho cuộn ngang như site cũ và không bẻ giữa từ.
         if (gridCols >= 7)
-          return `<table${attrs} data-grid="text" data-wide>${inner}</table>`;
+          return `<table${attrs} data-grid="text" data-wide>${balanceColumnWidths(inner)}</table>`;
         // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
         // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
         // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
@@ -508,21 +570,23 @@ export function LegacyHtmlRender({
   const source = markNumericCells(replaceBrokenMathImages(raw))
     // Gộp CHUỖI đoạn rỗng "<p>&nbsp;</p>" (rác Word/Joomla) — nhiều trang legacy
     // có 20-30 đoạn nbsp liên tiếp giữa 2 bảng → khoảng trống khổng lồ. Gộp về 1.
-    .replace(
-      /(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi,
-      "<p>&nbsp;</p>",
-    )
+    .replace(/(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi, "<p>&nbsp;</p>")
     .replace(LEADING_NBSP_RE, "$1")
     .replace(
       /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
       (_m, pre: string, src: string, post: string) =>
         `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
     )
-    .replace(/<img(?![^>]*\bloading=)/gi, (() => {
-      let imgIdx = 0;
-      return () =>
-        ++imgIdx <= 1 ? '<img decoding="async" ' : '<img loading="lazy" decoding="async" ';
-    })())
+    .replace(
+      /<img(?![^>]*\bloading=)/gi,
+      (() => {
+        let imgIdx = 0;
+        return () =>
+          ++imgIdx <= 1
+            ? '<img decoding="async" '
+            : '<img loading="lazy" decoding="async" ';
+      })(),
+    )
     // Đánh dấu BẢNG DỮ LIỆU (có viền / border-color trên ô / MsoTableGrid) bằng
     // data-grid để CSS ép table-layout:fixed;width:100% CHỈ cho các bảng này —
     // bảng bố cục không viền (vd ảnh + chú thích cạnh nhau) giữ nguyên auto. Mục
@@ -554,7 +618,7 @@ export function LegacyHtmlRender({
         // mỗi cột chỉ còn ~10% bề rộng nên tiêu đề bị bẻ GIỮA TỪ ("CHƯƠ NG TRÌN H").
         // Giữ bề rộng gốc, cho cuộn ngang như site cũ và không bẻ giữa từ.
         if (gridCols >= 7)
-          return `<table${attrs} data-grid="text" data-wide>${inner}</table>`;
+          return `<table${attrs} data-grid="text" data-wide>${balanceColumnWidths(inner)}</table>`;
         // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
         // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
         // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
@@ -702,16 +766,9 @@ export function LegacyHtmlRender({
           white-space: normal !important;
           overflow-wrap: break-word;
         }
-        /* Bảng NHIỀU CỘT (data-wide): KHÔNG ép fixed+100% nữa. Giữ bề rộng cột gốc
-           và tự cuộn ngang bên trong khung bài — ép vừa màn hình sẽ bẻ tiêu đề giữa
-           từ. max-width:100% ghì khối lại trong cột dù inline style ghi width lớn. */
-        .legacy-content table[data-grid][data-wide] {
-          display: block;
-          overflow-x: auto;
-          max-width: 100%;
-          /* overflow-x cắt 1px chiều dọc → chừa chỗ cho đường kẻ hàng cuối */
-          padding-bottom: 1px;
-        }
+        /* Bảng NHIỀU CỘT (data-wide) vẫn vừa khung (fixed + 100%, KHÔNG cuộn ngang):
+           bề rộng từng cột đã được chia lại theo nội dung ở balanceColumnWidths, nên
+           chỉ cần chặn bẻ giữa từ là tiêu đề hết vỡ. */
         .legacy-content table[data-grid][data-wide] td,
         .legacy-content table[data-grid][data-wide] th,
         .legacy-content table[data-grid][data-wide] td *,
@@ -959,7 +1016,11 @@ function PostTagListRender({
   // Once a post is injected, trust its tags verbatim — even an empty array
   // (post had its tags removed) must render nothing, not fall back to the
   // template's sample tags. defaultTags are only for the un-injected preview.
-  const list = injected ? tags || [] : tags && tags.length ? tags : defaultTags || [];
+  const list = injected
+    ? tags || []
+    : tags && tags.length
+      ? tags
+      : defaultTags || [];
   if (!list.length) {
     return <div className="hidden" aria-hidden="true" />;
   }
@@ -1436,11 +1497,7 @@ function PostReaderToolsRender({
     const shareUrl = appId
       ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${href}&quote=${quote}&hashtag=${hashtag}`
       : `https://www.facebook.com/sharer/sharer.php?u=${href}&quote=${quote}`;
-    window.open(
-      shareUrl,
-      "_blank",
-      "noopener,noreferrer,width=600,height=650",
-    );
+    window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=650");
   };
 
   return (

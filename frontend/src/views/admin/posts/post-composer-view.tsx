@@ -131,6 +131,9 @@ export function PostComposerView() {
     );
   });
 
+  // categoryId của BÀI không còn quyết định gì ở trang công khai (bộ lọc và
+  // breadcrumb đều đọc danh mục của LAYOUT). Cột vẫn còn NOT NULL trong DB nên
+  // tạm điền giá trị đầu tiên để hợp lệ; sẽ bỏ hẳn khi cột được gỡ.
   useEffect(() => {
     if (!categoryId && categoryOptions.length > 0) {
       setCategoryId(categoryOptions[0].value);
@@ -289,10 +292,6 @@ export function PostComposerView() {
       toast.warn("Nhập tiêu đề tiếng Việt trước khi lưu");
       return;
     }
-    if (!categoryId) {
-      toast.warn("Chọn danh mục cho bài đăng");
-      return;
-    }
     if (canSchedule) {
       setScheduleModalOpen(true);
       return;
@@ -421,7 +420,8 @@ export function PostComposerView() {
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
               Nháp: đang soạn nội dung. Gắn bài vào một layout sẽ tự chuyển sang
-              “Chờ xuất bản”. Chọn Lên lịch hoặc Công khai khi trang đã sẵn sàng.
+              “Chờ xuất bản”. Chọn Lên lịch hoặc Công khai khi trang đã sẵn
+              sàng.
             </p>
           </div>
         </section>
@@ -445,21 +445,10 @@ export function PostComposerView() {
               placeholder="tin-tuc-thong-bao-..."
             />
           </div>
-          <div>
-            <label
-              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-              htmlFor="post-category"
-            >
-              Danh mục
-            </label>
-            <AdminSelect
-              id="post-category"
-              value={categoryId}
-              onChange={setCategoryId}
-              placeholder="— Chọn danh mục —"
-              options={categoryOptions}
-            />
-          </div>
+          {/* Không còn chọn Danh mục ở đây: danh mục đi theo LAYOUT mà bài được
+              rót vào (chọn "Layout mẫu — Câu lạc bộ" thì bài nằm ở danh mục Câu
+              lạc bộ). Nhờ vậy một bài rót vào nhiều layout sẽ hiện dưới nhiều
+              danh mục, thay vì bị ép về đúng một danh mục như trước. */}
         </section>
 
         <section>
@@ -475,8 +464,8 @@ export function PostComposerView() {
                 key={tag}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium"
               >
-                <TagIcon icon={tagBySlug(tag)?.icon} />
-                #{tagBySlug(tag)?.name ?? tag}
+                <TagIcon icon={tagBySlug(tag)?.icon} />#
+                {tagBySlug(tag)?.name ?? tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
@@ -561,7 +550,9 @@ export function PostComposerView() {
                             >
                               <TagIcon icon={tg.icon} />
                               <span className="flex-1 truncate">{tg.name}</span>
-                              {active && <span className="text-blue-600">✓</span>}
+                              {active && (
+                                <span className="text-blue-600">✓</span>
+                              )}
                             </button>
                           );
                         })
@@ -750,60 +741,60 @@ export function PostComposerView() {
               </button>
               {layoutPickerOpen ? (
                 <div className="relative z-20 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
-                    <div className="p-2">
-                      <input
-                        type="search"
-                        value={templateSearch}
-                        onChange={(e) => setTemplateSearch(e.target.value)}
-                        placeholder="Tìm layout mẫu…"
-                        className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
-                      />
-                    </div>
-                    <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                      {visibleTemplates
-                        .filter((l) => {
-                          const q = templateSearch.trim().toLowerCase();
-                          return (
-                            !q ||
-                            l.name.toLowerCase().includes(q) ||
-                            l.slug.toLowerCase().includes(q)
-                          );
-                        })
-                        .map((layout) => {
-                          const checked = templateLayoutIds.includes(layout.id);
-                          return (
-                            <label
-                              key={layout.id}
-                              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() =>
-                                  setTemplateLayoutIds((prev) =>
-                                    checked
-                                      ? prev.filter((id) => id !== layout.id)
-                                      : [...prev, layout.id],
-                                  )
-                                }
-                              />
-                              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
-                                {layout.name}{" "}
-                                <span className="text-[11px] text-slate-400 font-mono">
-                                  /{layout.slug}
-                                </span>
+                  <div className="p-2">
+                    <input
+                      type="search"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Tìm layout mẫu…"
+                      className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
+                    />
+                  </div>
+                  <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                    {visibleTemplates
+                      .filter((l) => {
+                        const q = templateSearch.trim().toLowerCase();
+                        return (
+                          !q ||
+                          l.name.toLowerCase().includes(q) ||
+                          l.slug.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((layout) => {
+                        const checked = templateLayoutIds.includes(layout.id);
+                        return (
+                          <label
+                            key={layout.id}
+                            className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                setTemplateLayoutIds((prev) =>
+                                  checked
+                                    ? prev.filter((id) => id !== layout.id)
+                                    : [...prev, layout.id],
+                                )
+                              }
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                              {layout.name}{" "}
+                              <span className="text-[11px] text-slate-400 font-mono">
+                                /{layout.slug}
                               </span>
-                            </label>
-                          );
-                        })}
-                      {visibleTemplates.length === 0 ? (
-                        <p className="px-3 py-4 text-xs text-center text-slate-400">
-                          {isEventPost
-                            ? "Chưa có layout mẫu Sự kiện."
-                            : "Chưa có layout mẫu Tin tức."}
-                        </p>
-                      ) : null}
-                    </div>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    {visibleTemplates.length === 0 ? (
+                      <p className="px-3 py-4 text-xs text-center text-slate-400">
+                        {isEventPost
+                          ? "Chưa có layout mẫu Sự kiện."
+                          : "Chưa có layout mẫu Tin tức."}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </div>
