@@ -846,6 +846,9 @@ export class PostService {
         // Scope the layout to the post's department so dept-scoped public feeds
         // (syncNewsFeedSnapshots) place it correctly and never on the homepage.
         departmentId: post.departmentId,
+        // Danh mục kế thừa từ LAYOUT MẪU — đây là nguồn sự thật cho bộ lọc danh
+        // mục ở trang công khai và cho breadcrumb của chính trang này.
+        categoryId: template.categoryId,
       },
       select: { id: true, slug: true },
     });
