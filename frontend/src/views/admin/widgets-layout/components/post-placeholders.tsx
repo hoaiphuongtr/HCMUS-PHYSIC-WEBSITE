@@ -206,6 +206,7 @@ function PostBodyRender({
   }
   const rawSource = markdown || t(defaultMarkdown, locale) || "";
   const source = rawSource
+    .replace(/(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi, "<p>&nbsp;</p>")
     .replace(
       /<iframe[^>]*src=["']https?:\/\/phys\.hcmus\.edu\.vn[^"']*["'][^>]*><\/iframe>/gi,
       "",
@@ -397,11 +398,18 @@ export function LegacyHtmlRender({
   const { locale } = useLocale();
   const raw = t(html, locale) || "";
   if (injected && !raw.trim()) return null;
-  const source = raw.replace(
-    /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
-    (_m, pre: string, src: string, post: string) =>
-      `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
-  )
+  const source = raw
+    // Gộp CHUỖI đoạn rỗng "<p>&nbsp;</p>" (rác Word/Joomla) — nhiều trang legacy
+    // có 20-30 đoạn nbsp liên tiếp giữa 2 bảng → khoảng trống khổng lồ. Gộp về 1.
+    .replace(
+      /(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi,
+      "<p>&nbsp;</p>",
+    )
+    .replace(
+      /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
+      (_m, pre: string, src: string, post: string) =>
+        `${pre}${pre.startsWith("<img") ? optimizedBodyImageUrl(src) : resolveMediaUrl(src)}${post}`,
+    )
     .replace(/<img(?![^>]*\bloading=)/gi, (() => {
       let imgIdx = 0;
       return () =>
