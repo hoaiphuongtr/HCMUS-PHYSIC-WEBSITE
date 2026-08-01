@@ -133,9 +133,22 @@ const balanceColumnWidths = (inner: string): string => {
       if (rowIdx > 0) bodyLen[i] = Math.max(bodyLen[i] ?? 0, text.length);
     });
   }
-  // Căn bậc hai để một cột rất dài không nuốt hết bề rộng của các cột khác.
-  const weights = bodyLen.map((len, i) =>
-    Math.sqrt(Math.min(Math.max(len, (wordLen[i] ?? 0) * 2, 3), 200)),
+  // Chia hai bước. Bước 1 dành sẵn RESERVED% chia theo TỪ DÀI NHẤT của mỗi cột —
+  // đây là bề rộng tối thiểu để từ đó không bị bẻ. Bước 2 chia phần còn lại theo
+  // độ dài nội dung (căn bậc hai để một cột rất dài không nuốt hết phần của cột
+  // khác). Nếu gộp chung một công thức thì cột chữ dài sẽ bóp các cột tiêu đề
+  // xuống dưới mức tối thiểu và chữ lại tràn.
+  const RESERVED = 62;
+  const wordTotal = wordLen.reduce((a, b) => a + b, 0);
+  const contentW = bodyLen.map((len) =>
+    Math.sqrt(Math.min(Math.max(len, 3), 200)),
+  );
+  const contentTotal = contentW.reduce((a, b) => a + b, 0);
+  if (!wordTotal || !contentTotal) return inner;
+  const weights = wordLen.map(
+    (w, i) =>
+      (w / wordTotal) * RESERVED +
+      ((contentW[i] ?? 0) / contentTotal) * (100 - RESERVED),
   );
   const total = weights.reduce((a, b) => a + b, 0);
   if (!total) return inner;
@@ -769,12 +782,25 @@ export function LegacyHtmlRender({
         /* Bảng NHIỀU CỘT (data-wide) vẫn vừa khung (fixed + 100%, KHÔNG cuộn ngang):
            bề rộng từng cột đã được chia lại theo nội dung ở balanceColumnWidths, nên
            chỉ cần chặn bẻ giữa từ là tiêu đề hết vỡ. */
+        /* KHÔNG bao giờ để chữ tràn đè sang ô bên cạnh: giữ bẻ-khi-quá-dài làm
+           lưới an toàn. word-break:normal nên chỉ từ DÀI HƠN CẢ CỘT mới bị bẻ,
+           không bẻ vụn mọi từ như trước. */
         .legacy-content table[data-grid][data-wide] td,
         .legacy-content table[data-grid][data-wide] th,
         .legacy-content table[data-grid][data-wide] td *,
         .legacy-content table[data-grid][data-wide] th * {
-          overflow-wrap: normal;
+          overflow-wrap: break-word;
           word-break: normal;
+        }
+        /* Tiêu đề bảng nhiều cột thường là chữ hoa cỡ 13pt in đậm (CHƯƠNG TRÌNH
+           ĐÀO TẠO…) — quá to so với cột hẹp. Ép về cỡ vừa phải để cả từ lọt vào
+           cột, khỏi phải bẻ. */
+        .legacy-content table[data-grid][data-wide] tr:first-child td,
+        .legacy-content table[data-grid][data-wide] tr:first-child th,
+        .legacy-content table[data-grid][data-wide] tr:first-child td *,
+        .legacy-content table[data-grid][data-wide] tr:first-child th * {
+          font-size: 13px !important;
+          line-height: 1.35 !important;
         }
         /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
         .legacy-content table[data-grid] td[data-num],
