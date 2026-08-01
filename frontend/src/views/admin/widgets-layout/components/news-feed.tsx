@@ -203,7 +203,7 @@ function EventCard({
   const cat = post.category;
   const catLabel = cat
     ? t(cat.name as LocalizedString, locale)
-    : (post.categoryId ?? "");
+    : "";
   const catColor = categoryColor(cat?.slug);
   const dateText = formatDate(post.eventStartAt, locale);
   const title = localizeWithFallback(post.title, locale);

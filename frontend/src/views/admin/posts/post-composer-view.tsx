@@ -10,7 +10,6 @@ import { AdminSelect } from "@/components/admin/admin-select";
 import { DynamicIcon } from "@/components/admin/icons";
 import {
   type ContentStatusValue,
-  categoryApi,
   type LocalizedText,
   pageLayoutApi,
   postApi,
@@ -19,7 +18,6 @@ import {
   type UpsertPostBody,
 } from "@/lib/api";
 import { emptyLocalized, type Locale, toLocalized } from "@/lib/localized";
-import { buildCategoryOptions } from "@/lib/post-categories";
 import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
@@ -82,7 +80,6 @@ export function PostComposerView() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [excerpt, setExcerpt] = useState<LocalizedText>(emptyLocalized());
   const [body, setBody] = useState<LocalizedText>(emptyLocalized());
-  const [categoryId, setCategoryId] = useState<string>("");
   const [status, setStatus] = useState<ContentStatusValue>("DRAFT");
   const [tagSlugs, setTagSlugs] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState("");
@@ -98,12 +95,6 @@ export function PostComposerView() {
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-
-  const categoriesQuery = useQuery({
-    queryKey: ["CATEGORIES"],
-    queryFn: categoryApi.list,
-  });
-  const categoryOptions = buildCategoryOptions(categoriesQuery.data, "vi");
 
   // Existing tags (with icons) so the author can pick instead of typing slugs.
   const tagsQuery = useQuery({ queryKey: ["TAGS"], queryFn: tagApi.list });
@@ -131,15 +122,6 @@ export function PostComposerView() {
     );
   });
 
-  // categoryId của BÀI không còn quyết định gì ở trang công khai (bộ lọc và
-  // breadcrumb đều đọc danh mục của LAYOUT). Cột vẫn còn NOT NULL trong DB nên
-  // tạm điền giá trị đầu tiên để hợp lệ; sẽ bỏ hẳn khi cột được gỡ.
-  useEffect(() => {
-    if (!categoryId && categoryOptions.length > 0) {
-      setCategoryId(categoryOptions[0].value);
-    }
-  }, [categoryId, categoryOptions]);
-
   useEffect(() => {
     setPostId(idParam);
   }, [idParam]);
@@ -158,7 +140,6 @@ export function PostComposerView() {
     setSlugTouched(true);
     setExcerpt(toLocalized(data.excerpt));
     setBody(toLocalized(data.body));
-    setCategoryId(data.categoryId);
     setStatus(data.status);
     setTagSlugs(data.tags.map((t) => t.slug));
     setCoverMediaId(data.coverMediaId);
@@ -224,7 +205,6 @@ export function PostComposerView() {
       slug: toSlug(slug || trimmed.vi),
       body: isLocalizedEmpty(body) ? null : body,
       excerpt: isLocalizedEmpty(excerpt) ? null : excerpt,
-      categoryId,
       status,
       scheduledAt:
         status === "SCHEDULED" && scheduledAt

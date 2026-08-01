@@ -65,7 +65,6 @@ async function main() {
     include: {
       coverMedia: { select: { url: true } },
       postTags: { include: { tag: true } },
-      category: { select: { slug: true, name: true } },
     },
   });
   console.log(`  ${posts.length} posts to attach`);
@@ -88,8 +87,10 @@ async function main() {
       coverUrl: post.coverUrl ?? post.coverMedia?.url ?? null,
       coverAlt: post.coverAlt ?? null,
       tags: post.postTags.map((pt) => ({ slug: pt.tag.slug, name: pt.tag.name })),
-      category: post.category?.slug ?? '',
-      categoryLabel: viOf(post.category?.name),
+      // Danh mục nay thuộc về LAYOUT (xem PostService.cloneIntoLayout), không
+      // còn nằm ở bài, nên script cũ này để trống và layout tự mang danh mục.
+      category: '',
+      categoryLabel: '',
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,

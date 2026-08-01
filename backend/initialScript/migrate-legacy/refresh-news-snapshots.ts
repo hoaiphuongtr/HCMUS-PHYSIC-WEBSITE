@@ -22,8 +22,6 @@ type PublicCard = {
   title: { vi: string; en?: string } | null;
   slug: string;
   excerpt: { vi: string; en?: string } | null;
-  categoryId: string;
-  category: { id: string; slug: string; name: { vi: string; en?: string } | null } | null;
   coverUrl: string | null;
   coverAlt: string | null;
   eventStartAt: string | null;
@@ -42,7 +40,6 @@ async function loadLatest(limit: number): Promise<PublicCard[]> {
     },
     orderBy: { updatedAt: 'desc' },
     include: {
-      category: { select: { id: true, slug: true, name: true } },
       layouts: { select: { id: true, slug: true, isPublished: true } },
     },
     take: limit,
@@ -56,7 +53,6 @@ async function loadEvents(limit: number): Promise<PublicCard[]> {
     where: { status: 'PUBLISHED', eventStartAt: { gte: now } },
     orderBy: { eventStartAt: 'asc' },
     include: {
-      category: { select: { id: true, slug: true, name: true } },
       layouts: { select: { id: true, slug: true, isPublished: true } },
     },
     take: limit,
@@ -69,14 +65,12 @@ const serialize = (r: {
   title: Prisma.JsonValue;
   slug: string;
   excerpt: Prisma.JsonValue | null;
-  categoryId: string;
   coverUrl: string | null;
   coverAlt: string | null;
   eventStartAt: Date | null;
   eventEndAt: Date | null;
   eventLocation: string | null;
   updatedAt: Date;
-  category: { id: string; slug: string; name: Prisma.JsonValue } | null;
   layouts: Array<{ id: string; slug: string; isPublished: boolean }>;
 }): PublicCard => {
   const layout = r.layouts.find((l) => l.isPublished) ?? null;
@@ -85,10 +79,6 @@ const serialize = (r: {
     title: asLocalized(r.title),
     slug: r.slug,
     excerpt: asLocalized(r.excerpt),
-    categoryId: r.categoryId,
-    category: r.category
-      ? { id: r.category.id, slug: r.category.slug, name: asLocalized(r.category.name) }
-      : null,
     coverUrl: r.coverUrl,
     coverAlt: r.coverAlt,
     eventStartAt: r.eventStartAt ? r.eventStartAt.toISOString() : null,

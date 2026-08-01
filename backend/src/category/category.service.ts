@@ -106,12 +106,14 @@ export class CategoryService {
 
   async remove(id: string) {
     await this.findById(id);
-    const postCount = await this.prisma.post.count({
-      where: { categoryId: id },
+    // Danh mục nay gắn với LAYOUT chứ không gắn với bài, nên đếm layout đang dùng
+    // (bỏ qua layout đã ở thùng rác) thay vì đếm bài.
+    const layoutCount = await this.prisma.pageLayout.count({
+      where: { categoryId: id, deletedAt: null },
     });
-    if (postCount > 0) {
+    if (layoutCount > 0) {
       throw new ConflictException(
-        `Không xoá được — còn ${postCount} bài đăng trong category`,
+        `Không xoá được — còn ${layoutCount} layout đang dùng danh mục này`,
       );
     }
     return this.prisma.category.delete({ where: { id } });

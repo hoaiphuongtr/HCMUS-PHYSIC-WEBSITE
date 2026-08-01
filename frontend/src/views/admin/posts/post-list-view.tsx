@@ -110,15 +110,6 @@ export function PostListView() {
     () => buildCategoryOptions(categoriesQuery.data, "vi"),
     [categoriesQuery.data],
   );
-  const categoryMap = useMemo(() => {
-    const m = new Map<
-      string,
-      { id: string; name: { vi: string; en?: string } }
-    >();
-    for (const c of categoriesQuery.data ?? []) m.set(c.id, c);
-    return m;
-  }, [categoriesQuery.data]);
-
   // Status param sent to BE differs per tab.
   // - Published tab: always status=PUBLISHED.
   // - Mine tab: pass through whatever the picker chose; BE default returns
@@ -441,10 +432,7 @@ export function PostListView() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                        {categoryLabel(
-                          post.category ?? categoryMap.get(post.categoryId),
-                          "vi",
-                        )}
+                        {categoryLabel(post.category, "vi")}
                       </td>
                       <td className="px-4 py-3">
                         <span

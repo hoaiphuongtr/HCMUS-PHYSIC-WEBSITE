@@ -238,7 +238,6 @@ model Post {
   slug            String        @unique
   body            Json?
   excerpt         Json?
-  categoryId      String
   departmentId    String?
   legacyId        Int?          @unique
   status          ContentStatus @default(DRAFT)
@@ -265,7 +264,6 @@ model Post {
   approvedByUser User?             @relation("PostApprovedBy", fields: [approvedBy], references: [id], onDelete: SetNull)
   template       Template?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
   coverMedia     Media?            @relation("PostCoverMedia", fields: [coverMediaId], references: [id], onDelete: SetNull)
-  category       Category          @relation(fields: [categoryId], references: [id])
   department     Department?       @relation("PostDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   contentBlocks  ContentBlock[]
   translations   PostTranslation[]
@@ -277,7 +275,6 @@ model Post {
   layouts        PageLayout[]      @relation("PageLayoutSourcePost")
 
   @@index([status])
-  @@index([categoryId])
   @@index([departmentId])
   @@index([createdBy])
   @@index([publishedAt])
@@ -299,7 +296,6 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  posts   Post[]
   layouts PageLayout[] @relation("PageLayoutCategory")
 
   @@index([slug])

@@ -682,7 +682,6 @@ export type PostRecord = {
   slug: string;
   body: LocalizedText | null;
   excerpt: LocalizedText | null;
-  categoryId: string;
   departmentId: string | null;
   category?: CategoryRef;
   status: ContentStatusValue;
@@ -708,7 +707,6 @@ export type UpsertPostBody = {
   slug: string;
   body?: LocalizedText | null;
   excerpt?: LocalizedText | null;
-  categoryId: string;
   status?: ContentStatusValue;
   scheduledAt?: string | null;
   coverMediaId?: string | null;
@@ -725,7 +723,6 @@ export type PostPublicCard = {
   title: LocalizedText | string;
   slug: string;
   excerpt: LocalizedText | string | null;
-  categoryId: string;
   category?: CategoryRef;
   coverUrl: string | null;
   coverAlt: string | null;

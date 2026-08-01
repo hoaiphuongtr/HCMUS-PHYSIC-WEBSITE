@@ -68,7 +68,6 @@ export function ScheduledModal({
           slug: existing.slug,
           body: existing.body,
           excerpt: existing.excerpt,
-          categoryId: existing.categoryId,
           status: "SCHEDULED",
           scheduledAt: iso,
           coverMediaId: existing.coverMediaId,
