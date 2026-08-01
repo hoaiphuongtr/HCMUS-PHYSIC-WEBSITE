@@ -331,6 +331,11 @@ function PostBodyRender({
         // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
         if (/<img/i.test(inner))
           return `<table${attrs} data-grid="img">${inner}</table>`;
+        // Bảng QUÁ NHIỀU CỘT (vd bảng ngành tuyển sinh: 10 cột): ép fixed+100% thì
+        // mỗi cột chỉ còn ~10% bề rộng nên tiêu đề bị bẻ GIỮA TỪ ("CHƯƠ NG TRÌN H").
+        // Giữ bề rộng gốc, cho cuộn ngang như site cũ và không bẻ giữa từ.
+        if (gridCols >= 7)
+          return `<table${attrs} data-grid="text" data-wide>${inner}</table>`;
         // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
         // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
         // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
@@ -424,6 +429,15 @@ function PostBodyRender({
                khi tải nguội). max-width:100% vẫn co ảnh vừa cột trên mobile. */
             height: auto !important;
             display: inline-block;
+          }
+          /* Bảng NHIỀU CỘT: giữ bề rộng cột gốc + cuộn ngang, không bẻ giữa từ
+             (xem chú thích ở khối .legacy-content). */
+          [data-post-body] table[data-wide] td,
+          [data-post-body] table[data-wide] th,
+          [data-post-body] table[data-wide] td *,
+          [data-post-body] table[data-wide] th * {
+            overflow-wrap: normal;
+            word-break: normal;
           }
           /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
           [data-post-body] td[data-num],
@@ -536,6 +550,11 @@ export function LegacyHtmlRender({
         // Bảng ảnh (nhân sự): table-layout:fixed để ảnh co vừa cột.
         if (/<img/i.test(inner))
           return `<table${attrs} data-grid="img">${inner}</table>`;
+        // Bảng QUÁ NHIỀU CỘT (vd bảng ngành tuyển sinh: 10 cột): ép fixed+100% thì
+        // mỗi cột chỉ còn ~10% bề rộng nên tiêu đề bị bẻ GIỮA TỪ ("CHƯƠ NG TRÌN H").
+        // Giữ bề rộng gốc, cho cuộn ngang như site cũ và không bẻ giữa từ.
+        if (gridCols >= 7)
+          return `<table${attrs} data-grid="text" data-wide>${inner}</table>`;
         // Bảng chữ (tuyển sinh…): quy đổi width px của HÀNG ĐẦU sang % rồi dùng
         // fixed+100% → bảng LUÔN co vừa cột mà GIỮ TỈ LỆ cột gốc (không về đều
         // nhau, không tràn 1-vài px làm mất viền/nội dung khi zoom). Chỉ quy đổi
@@ -682,6 +701,23 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid] th * {
           white-space: normal !important;
           overflow-wrap: break-word;
+        }
+        /* Bảng NHIỀU CỘT (data-wide): KHÔNG ép fixed+100% nữa. Giữ bề rộng cột gốc
+           và tự cuộn ngang bên trong khung bài — ép vừa màn hình sẽ bẻ tiêu đề giữa
+           từ. max-width:100% ghì khối lại trong cột dù inline style ghi width lớn. */
+        .legacy-content table[data-grid][data-wide] {
+          display: block;
+          overflow-x: auto;
+          max-width: 100%;
+          /* overflow-x cắt 1px chiều dọc → chừa chỗ cho đường kẻ hàng cuối */
+          padding-bottom: 1px;
+        }
+        .legacy-content table[data-grid][data-wide] td,
+        .legacy-content table[data-grid][data-wide] th,
+        .legacy-content table[data-grid][data-wide] td *,
+        .legacy-content table[data-grid][data-wide] th * {
+          overflow-wrap: normal;
+          word-break: normal;
         }
         /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
         .legacy-content table[data-grid] td[data-num],

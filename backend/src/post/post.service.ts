@@ -111,6 +111,19 @@ const HAS_PUBLISHED_LAYOUT = {
 } as const;
 // Soft-delete: exclude trashed rows from every normal (non-trash) query.
 const NOT_DELETED = { deletedAt: null } as const;
+
+// Bài rỗng nội dung chỉ bị ẩn khỏi feed công khai khi nó là bài DI TRÚ (nguồn cũ
+// vốn không có nội dung) — nhận biết bằng legacyId. Bài SOẠN TRÊN CMS luôn hiện:
+// trước đây luật này ẩn luôn cả chúng nên biên tập viên đăng bài xong không thấy
+// bài đâu mà cũng không được báo gì. Bài SỰ KIỆN vẫn được miễn vì chỉ cần thời
+// gian/địa điểm.
+const HAS_PUBLIC_CONTENT: Prisma.PostWhereInput = {
+  OR: [
+    { body: { not: Prisma.DbNull } },
+    { eventStartAt: { not: null } },
+    { legacyId: null },
+  ],
+};
 // Items in the trash are permanently purged this long after deletion.
 const TRASH_RETENTION_DAYS = 30;
 
@@ -411,14 +424,7 @@ export class PostService {
         AND: [
           deptWhere ?? this.feedDeptWhere(),
           { OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }] },
-          // Ẩn bài di trú RỖNG nội dung (nguồn cũ không có bài), NHƯNG cho phép
-          // bài SỰ KIỆN dù trống body (sự kiện chỉ cần thời gian/địa điểm).
-          {
-            OR: [
-              { body: { not: Prisma.DbNull } },
-              { eventStartAt: { not: null } },
-            ],
-          },
+          HAS_PUBLIC_CONTENT,
         ],
       },
       // Sắp theo NGÀY ĐĂNG GỐC (publishedAt) để tin mới viết gần đây luôn ở đầu;
@@ -477,17 +483,7 @@ export class PostService {
       status: 'PUBLISHED',
       ...HAS_PUBLISHED_LAYOUT,
       // Faculty feed by default; a dept slug narrows to that department's posts.
-      // Ẩn bài trống nội dung, NHƯNG cho phép bài SỰ KIỆN dù trống body → bài
-      // sự kiện vẫn hiện trong bộ lọc tin tức (vd category "Sự kiện").
-      AND: [
-        this.feedDeptWhere(department),
-        {
-          OR: [
-            { body: { not: Prisma.DbNull } },
-            { eventStartAt: { not: null } },
-          ],
-        },
-      ],
+      AND: [this.feedDeptWhere(department), HAS_PUBLIC_CONTENT],
     };
     if (category) where.category = { slug: category };
     if (fromDate || toDate) {

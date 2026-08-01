@@ -38,9 +38,15 @@ $Files = @(
   'backend/initialScript',
   'frontend/package.json',
   'frontend/src',
+  # public/ holds static assets served straight off the origin (default-cover.png,
+  # logos, self-hosted fonts). Leaving it out let the server keep a July copy, so
+  # every news card without a cover 404'd on /default-cover.png and showed a broken
+  # image. Static assets are part of "full source" — keep them in the bundle.
+  'frontend/public',
   'frontend-public/package.json',
   'frontend-public/next.config.ts',
-  'frontend-public/src'
+  'frontend-public/src',
+  'frontend-public/public'
 )
 
 $RepoRoot = Split-Path $PSScriptRoot -Parent
