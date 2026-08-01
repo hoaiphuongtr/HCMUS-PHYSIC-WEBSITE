@@ -542,14 +542,18 @@ export function LegacyHtmlRender({
            sách khóa luận / du học / chương trình đào tạo) hay bảng thiếu vài ô kẻ ở
            header. Ô có border-color inline vẫn giữ màu riêng (inline thắng màu). */
         /* float:none — bảng legacy hay dính inline float:left (từ Word) làm tiêu đề
-           bảng SAU "bay" lên nằm cạnh bảng trước. Ép bỏ float cho mọi bảng dữ liệu. */
-        .legacy-content table[data-grid] { float: none !important; }
-        /* Đường kẻ ĐỒNG MÀU (xám nhạt) cho toàn bộ bảng chữ — !important để ghi đè
-           border-color inline lẫn lộn (chỗ navy chỗ không) → nhất quán. */
-        .legacy-content table[data-grid="text"] { border: 1px solid #cbd5e1 !important; }
+           bảng SAU "bay" lên cạnh bảng trước. Bỏ float + ép margin nhỏ (ghi đè
+           margin cứng khổng lồ từ Word tạo khoảng trống lớn giữa các bảng). */
+        .legacy-content table[data-grid] {
+          float: none !important; clear: both;
+          margin: 0.75rem 0 !important;
+        }
+        /* Đường kẻ ĐỒNG MÀU, ĐẬM VỪA (xám slate #94a3b8 — rõ khi zoom xa) cho toàn
+           bộ bảng chữ; !important để ghi đè border-color inline lẫn lộn. */
+        .legacy-content table[data-grid="text"] { border: 1px solid #94a3b8 !important; }
         .legacy-content table[data-grid="text"] td,
         .legacy-content table[data-grid="text"] th {
-          border: 1px solid #cbd5e1 !important; padding: 6px 10px;
+          border: 1px solid #94a3b8 !important; padding: 6px 10px;
         }
         /* Trên màn hình HẸP (mobile/zoom cao) ép bảng dữ liệu có min-width để CỘT
            đủ rộng đọc được → khung <main> cuộn ngang thay vì bẻ chữ nát (vd
