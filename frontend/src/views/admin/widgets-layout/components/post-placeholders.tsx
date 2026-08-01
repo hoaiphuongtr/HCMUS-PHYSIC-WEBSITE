@@ -489,6 +489,12 @@ function PostBodyRender({
             overflow-x: clip;
             overflow-wrap: break-word;
             word-break: break-word;
+            /* Ảnh chèn từ trình soạn thảo nằm trong <div style="float:left"> bọc bởi
+               <div style="display:inline">: phần tử float không cộng chiều cao cho
+               cha, mà cha inline lại không tạo ngữ cảnh định dạng khối, nên khung
+               thân bài co lại chỉ còn dòng chữ và ẢNH TRÀN ĐÈ LÊN FOOTER.
+               flow-root tạo ngữ cảnh khối để bao trọn float. */
+            display: flow-root;
           }
           [data-post-body] iframe,
           [data-post-body] embed,
@@ -681,6 +687,8 @@ export function LegacyHtmlRender({
     <div className="legacy-content my-4">
       <style>{`
         .legacy-content { max-width: 100%; overflow-wrap: break-word; line-height: 1.65; color: #1f2937;
+          /* Bao trọn ảnh float (xem chú thích ở [data-post-body]). */
+          display: flow-root;
           /* Làm container query: cỡ chữ tiêu đề bảng phải bám BỀ RỘNG KHUNG
              chứa, không phải bề rộng màn hình — cùng một màn 1024px, có
              sidebar thì bảng chỉ còn 616px, xếp dọc thì được 844px. */
