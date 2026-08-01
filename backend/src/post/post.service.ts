@@ -663,6 +663,39 @@ export class PostService {
     return { ok: true };
   }
 
+  // Permanently remove a single trashed post on demand ("Xóa vĩnh viễn"), instead of
+  // waiting for the retention window to expire. Nothing here is recoverable.
+  async purge(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+  ) {
+    const existing = await this.prisma.post.findUnique({ where: { id } });
+    // Only posts already in the trash can be purged — a live post must be deleted
+    // (soft) first, so the destructive step always goes through the trash tab.
+    if (!existing || !existing.deletedAt) throw PostNotFoundException;
+    if (!canAccessDepartment(roleName, departmentId, existing.departmentId)) {
+      throw PostNotFoundException;
+    }
+    const attached = await this.prisma.pageLayout.findMany({
+      where: { sourcePostId: id },
+      select: { slug: true },
+    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.pageLayout.deleteMany({ where: { sourcePostId: id } });
+      await tx.postTag.deleteMany({ where: { postId: id } });
+      await tx.post.deleteMany({ where: { id } });
+    });
+    await this.cache.clear();
+    this.publicRevalidate.trigger([
+      'sitemap',
+      `post:${id}`,
+      ...attached.map((l) => `page:${l.slug}`),
+    ]);
+    return { ok: true };
+  }
+
   // Permanently remove posts + layouts that have been in the trash longer than the
   // retention window. Runs daily; nothing here is recoverable afterwards.
   @Cron(CronExpression.EVERY_DAY_AT_3AM, { name: 'purgeExpiredTrash' })

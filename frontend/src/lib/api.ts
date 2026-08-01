@@ -802,6 +802,8 @@ export const postApi = {
     authFetch<{ ok: boolean }>(`/posts/${id}`, { method: "DELETE" }),
   restore: (id: string) =>
     authFetch<{ ok: boolean }>(`/posts/${id}/restore`, { method: "POST" }),
+  purge: (id: string) =>
+    authFetch<{ ok: boolean }>(`/posts/${id}/purge`, { method: "DELETE" }),
   cloneIntoLayout: (
     id: string,
     body: {

@@ -860,6 +860,11 @@ function ProfileCardRender({
   const nameText = t(name, locale);
   const roleText = t(role, locale);
   const descriptionText = t(description, locale);
+  // Ảnh di trú từ site cũ có thể đã mất (404) → rơi về ô placeholder thay vì
+  // để lại một khung trắng lớn. Nhớ ĐÚNG url đã hỏng (không phải cờ boolean) để
+  // khi đổi ảnh khác trong trình soạn thảo thì tự thử lại, khỏi cần effect reset.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const showImage = !!imageUrl && failedUrl !== imageUrl;
   // Nếu có link hồ sơ riêng thì cả card là link; nếu không, dùng <div> để
   // ô mailto bên trong không bị lồng trong thẻ <a> (invalid HTML).
   const hasLink = !!linkUrl && linkUrl !== "#";
@@ -872,13 +877,20 @@ function ProfileCardRender({
       style={resolveSizeStyle(size)}
     >
       <div className="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm mb-3">
-        {imageUrl ? (
+        {showImage ? (
           <img
+            // Trang public render sẵn ở máy chủ: ảnh có thể hỏng XONG trước khi
+            // React hydrate, khi đó onError không bao giờ chạy. Kiểm tra lại
+            // ngay lúc gắn ref để bắt cả trường hợp đã hỏng từ trước.
+            ref={(el) => {
+              if (el?.complete && el.naturalWidth === 0) setFailedUrl(imageUrl);
+            }}
             src={resolveMediaSrc(imageUrl)}
             alt={nameText}
             className="w-full aspect-[3/4] object-cover"
             loading="lazy"
             decoding="async"
+            onError={() => setFailedUrl(imageUrl)}
           />
         ) : (
           <div className="w-full aspect-[3/4] bg-slate-100 dark:bg-[#1a2436] flex items-center justify-center">

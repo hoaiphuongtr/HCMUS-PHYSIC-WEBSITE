@@ -89,8 +89,8 @@
         "feat-007",
         "feat-008"
       ],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Di trú legacy hoàn tất qua nhiều phiên; phiên 01/08/2026 đóng nốt danh sách còn lại (HANDOFF-remaining-fixes.md, commit eed89d7). Tình trạng asset: 3247 tham chiếu /uploads/* trong PageLayout, 34 mất thật (98,9% còn nguyên) — site cũ cũng không còn, đã liệt kê trong progress.md để bàn giao khoa. Microsite ICEBA2023/ICEBA2024 khôi phục từ site cũ (CRA SPA, mirror theo asset-manifest.json: 141+174 file, 0 thiếu) và publish qua đúng API static-pages; verify /ICEBA2023 và /ICEBA2024 trả 200 đúng title, bundle (index.html/main.js/main.css/media) đều 200. Sửa render nội dung legacy: bỏ thụt đầu dòng &nbsp; cho khớp editor (#70), dựng lại công thức từ alt LaTeX khi ảnh phương trình ngoài chết vĩnh viễn (#74, mathworks.com 403 cứng), ô MSSV không bị bẻ đôi (#111), ProfileCard rơi về placeholder khi ảnh 404. Còn lại là việc dữ liệu phải do khoa xử lý (#110: 2 ảnh VLĐT in sẵn tên; 34 asset mất) — xem progress.md."
     },
     {
       "id": "feat-012",

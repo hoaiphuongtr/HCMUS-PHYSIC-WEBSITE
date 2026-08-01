@@ -195,6 +195,18 @@ export function PostListView() {
     },
   });
 
+  const purgeMutation = useMutation({
+    mutationKey: ["POSTS", "PURGE"],
+    mutationFn: (id: string) => postApi.purge(id),
+    onSuccess: () => {
+      toast.success("Đã xóa vĩnh viễn bài đăng");
+      queryClient.invalidateQueries({ queryKey: ["POSTS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Không thể xóa vĩnh viễn");
+    },
+  });
+
   const confirmDelete = async (id: string, title: string) => {
     const ok = await confirm({
       title: `Xóa bài "${title}"?`,
@@ -204,6 +216,17 @@ export function PostListView() {
       destructive: true,
     });
     if (ok) deleteMutation.mutate(id);
+  };
+
+  const confirmPurge = async (id: string, title: string) => {
+    const ok = await confirm({
+      title: `Xóa vĩnh viễn bài "${title}"?`,
+      description:
+        "Bài đăng và các layout gắn với nó sẽ bị xoá khỏi hệ thống. Thao tác này KHÔNG thể hoàn tác.",
+      confirmLabel: "Xóa vĩnh viễn",
+      destructive: true,
+    });
+    if (ok) purgeMutation.mutate(id);
   };
 
   const data = listQuery.data;
@@ -477,6 +500,19 @@ export function PostListView() {
                               className="px-2 py-1 text-xs text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-50 disabled:opacity-50"
                             >
                               Khôi phục
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                confirmPurge(
+                                  post.id,
+                                  localize(post.title, "vi"),
+                                )
+                              }
+                              disabled={purgeMutation.isPending}
+                              className="px-2 py-1 text-xs text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50 disabled:opacity-50"
+                            >
+                              Xóa vĩnh viễn
                             </button>
                           </div>
                         ) : (

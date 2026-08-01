@@ -162,6 +162,16 @@ export class PostController {
     return this.postService.delete(id, userId, roleName, departmentId);
   }
 
+  @Delete(':id/purge')
+  purge(
+    @Param('id') id: string,
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
+  ) {
+    return this.postService.purge(id, userId, roleName, departmentId);
+  }
+
   @Post(':id/restore')
   restore(
     @Param('id') id: string,
