@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { dirname, join, normalize, sep } from 'path';
 import AdmZip from 'adm-zip';
 import { PrismaService } from '../prisma/prisma.service';
@@ -151,7 +151,7 @@ export class StaticPageService {
    * The served folder keeps relative asset links working. Guards against zip-slip.
    */
   async uploadBundle(id: string, file?: Express.Multer.File) {
-    await this.findById(id);
+    const page = await this.findById(id);
     if (!file?.path) throw new BadRequestException('Thiếu file .zip');
 
     try {
@@ -188,6 +188,24 @@ export class StaticPageService {
         throw new BadRequestException(
           'Không tìm thấy index.html trong file .zip',
         );
+      }
+
+      // Inject <base href="/<slug>/"> so RELATIVE-path builds (CRA homepage:'.',
+      // Vite base:'./', Astro, plain HTML) resolve their assets under /<slug>/
+      // no matter the trailing slash — no redirect needed, no loop. Absolute-path
+      // builds (Next basePath) ignore <base>, so they keep working too.
+      try {
+        const indexAbs = join(destAbs, ...indexEntry.split('/'));
+        let html = readFileSync(indexAbs, 'utf8');
+        if (!/<base\s/i.test(html)) {
+          html = html.replace(
+            /<head(\s[^>]*)?>/i,
+            (m) => `${m}<base href="/${page.slug}/">`,
+          );
+          writeFileSync(indexAbs, html);
+        }
+      } catch {
+        // non-fatal: absolute-path builds don't need the base tag
       }
 
       const bundlePath = `/uploads/${SITES_SUBDIR}/${id}/${indexEntry}`;
