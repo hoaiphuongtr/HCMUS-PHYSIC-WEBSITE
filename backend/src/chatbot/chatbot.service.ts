@@ -186,6 +186,22 @@ export class ChatbotService {
     );
   }
 
+  /**
+   * Nhúng + ghi nhiều đoạn ĐỒNG THỜI thay vì tuần tự. Mỗi đoạn là một lượt gọi
+   * Gemini qua mạng (~0,5s), nên chạy nối đuôi khiến thời gian publish tỉ lệ
+   * thuận với độ dài bài: đo được bài 21 đoạn mất 12,9s so với 3,6s của bài 1
+   * đoạn. Giới hạn số lượt chạy song song để không tự đâm vào hạn mức 429 của
+   * Gemini (đã có retry back-off nhưng gọi ít lại vẫn hơn).
+   */
+  private async insertChunks(
+    rows: Parameters<ChatbotService['insertChunk']>[0][],
+  ) {
+    const LIMIT = 5;
+    for (let i = 0; i < rows.length; i += LIMIT) {
+      await Promise.all(rows.slice(i, i + LIMIT).map((r) => this.insertChunk(r)));
+    }
+  }
+
   /** Re-index one post (both languages). Call from the post publish flow. */
   async indexPost(postId: string) {
     await this.prisma.$executeRawUnsafe(
@@ -203,6 +219,7 @@ export class ChatbotService {
     const slug = post.layouts[0]?.slug ?? post.slug;
     const sourceDate = post.publishedAt ?? post.createdAt ?? null;
 
+    const rows: Parameters<ChatbotService['insertChunk']>[0][] = [];
     for (const lang of ['VI', 'EN'] as const) {
       const title = htmlToText(pickLang(post.title as Localized, lang));
       const excerpt = htmlToText(pickLang(post.excerpt as Localized, lang));
@@ -214,7 +231,7 @@ export class ChatbotService {
       const full = [excerpt, bodyText].filter(Boolean).join('\n');
       if (!title && !full) continue;
       for (const c of chunk(full || title)) {
-        await this.insertChunk({
+        rows.push({
           sourceType: 'post',
           sourceId: post.id,
           language: lang,
@@ -225,6 +242,7 @@ export class ChatbotService {
         });
       }
     }
+    await this.insertChunks(rows);
   }
 
   /** Re-index one layout page. Call from the page-layout publish flow. */
@@ -247,17 +265,17 @@ export class ChatbotService {
       flattenBody(layout.publishedPuckData ?? layout.puckData),
     );
     if (!text) return;
-    for (const c of chunk(text)) {
-      await this.insertChunk({
+    await this.insertChunks(
+      chunk(text).map((c) => ({
         sourceType: 'page',
         sourceId: layout.id,
-        language: 'VI',
+        language: 'VI' as const,
         slug: layout.slug,
         title: layout.name,
         content: c,
         sourceDate: layout.updatedAt ?? null,
-      });
-    }
+      })),
+    );
   }
 
   /** Drop a layout's chunks (e.g. on unpublish/delete). */
