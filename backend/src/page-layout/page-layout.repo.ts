@@ -170,9 +170,19 @@ export class PageLayoutRepository {
   }
 
   // Layouts tagged with a category = selectable "post templates" in the composer.
+  // Layout MẪU = có danh mục VÀ không sinh ra từ bài nào (sourcePostId null).
+  // Trước đây chỉ cần "có danh mục" là đủ, vì lúc ấy duy nhất 6 layout mẫu mang
+  // categoryId. Từ khi danh mục chuyển về layout, mọi layout bài viết cũng có
+  // categoryId — thiếu điều kiện sourcePostId thì ô "Chọn layout mẫu" liệt kê
+  // luôn cả nghìn trang bài viết.
   findPostTemplates(where: Record<string, unknown>) {
     return this.prisma.pageLayout.findMany({
-      where: { categoryId: { not: null }, deletedAt: null, ...where } as never,
+      where: {
+        categoryId: { not: null },
+        sourcePostId: null,
+        deletedAt: null,
+        ...where,
+      } as never,
       orderBy: { updatedAt: 'desc' },
       select: {
         ...listSelect,

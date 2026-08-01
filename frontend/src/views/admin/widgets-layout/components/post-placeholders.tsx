@@ -680,7 +680,11 @@ export function LegacyHtmlRender({
   return (
     <div className="legacy-content my-4">
       <style>{`
-        .legacy-content { max-width: 100%; overflow-wrap: break-word; line-height: 1.65; color: #1f2937; }
+        .legacy-content { max-width: 100%; overflow-wrap: break-word; line-height: 1.65; color: #1f2937;
+          /* Làm container query: cỡ chữ tiêu đề bảng phải bám BỀ RỘNG KHUNG
+             chứa, không phải bề rộng màn hình — cùng một màn 1024px, có
+             sidebar thì bảng chỉ còn 616px, xếp dọc thì được 844px. */
+          container-type: inline-size; }
         /* height:auto !important ĐÈ chiều cao cố định trong inline style (vd ảnh
            nhân sự "width:120px;height:150px"): khi ô bảng co hẹp lúc zoom 125/200%,
            max-width kéo bề rộng nhỏ lại — nếu chiều cao vẫn cố định thì ảnh bị
@@ -808,7 +812,13 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid][data-wide] tr:first-child th,
         .legacy-content table[data-grid][data-wide] tr:first-child td *,
         .legacy-content table[data-grid][data-wide] tr:first-child th * {
+          /* Bề rộng mỗi cột là PHẦN TRĂM bề rộng bảng, nên muốn từ dài nhất luôn
+             lọt vào cột thì cỡ chữ phải tỉ lệ với chính bề rộng đó. 1.6cqi cho
+             13px khi bảng rộng 792px và tự nhỏ lại khi bảng hẹp (616px → 9,9px),
+             đúng ngưỡng đo được là ≤10,5px. Dòng 13px phía trên là bản dự phòng
+             cho trình duyệt chưa hỗ trợ container query. */
           font-size: 13px !important;
+          font-size: clamp(9px, 1.6cqi, 13px) !important;
           line-height: 1.35 !important;
         }
         /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
