@@ -514,3 +514,57 @@ Sau khi chạy 1–3: flush Redis (docker exec hcmus-cms-redis-1 redis-cli FLUSH
 ## 26/07/2026 — Slide bảo vệ v3 + sửa spec phân quyền
 - Slide bảo vệ 17 trang (Downloads/KLTN_SLIDES_TRANHOAIPHUONG.pptx) theo góp ý cô: thêm ảnh minh họa (web cũ, staff accounts), screenshot test thật, TLTK, viết gọn, framing "vì sao thay hệ cũ đang chạy".
 - `backend/src/shared/helpers.spec.ts`: cập nhật 3 kỳ vọng theo hành vi mới isFacultyWide (gộp vai trò văn phòng khoa vào faculty-wide) → vitest 40/40 pass. Thay đổi nằm trên branch wip/feat-013-legacy-migration, chưa commit.
+
+## 01/08/2026 — Dứt điểm handoff còn lại (#65, #69, #70, #74, #110, #111, ProfileCard)
+
+Làm theo `HANDOFF-remaining-fixes.md` (đã xoá sau phiên này); commit `eed89d7`.
+
+- **#65 — Xóa vĩnh viễn**: thêm `DELETE /posts/:id/purge` (`post.controller.ts`) →
+  `PostService.purge()` chỉ nhận bài ĐÃ ở thùng rác (`deletedAt != null`), scope theo
+  phòng ban giống `restore`, xoá cứng post + pageLayout + postTag trong 1 transaction
+  (theo mẫu `purgeExpiredTrash`), rồi `cache.clear()` + revalidate. FE: `postApi.purge`
+  và nút đỏ có xác nhận trong tab thùng rác (`post-list-view.tsx`).
+- **#69 — ICEBA 2023/2024**: handoff ghi sai đường dẫn — `/vi/iceba2023` trả 200 nhưng
+  đó là **soft-404 của Joomla** (giống hệt `/vi/khong-ton-tai-abcxyz`). Trang thật nằm ở
+  `/ICEBA2023/` và `/ICEBA2024/` (viết HOA, top-level), là **SPA Create React App**.
+  Mirror qua `asset-manifest.json` (liệt kê đủ mọi asset): 141 + 174 file, **0 thiếu**.
+  Đóng gói rồi tạo StaticPage qua đúng API (`POST /static-pages` → `/:id/bundle` →
+  publish). Đã verify: `/ICEBA2023`, `/ICEBA2024` trả 200 đúng title, và index.html +
+  main.js + main.css + media trong bundle đều 200. `/ICEBA2025/` trên site cũ là 404 thật
+  → giữ nguyên như quyết định trước đó (2025 & 2026 để nguyên).
+- **#74 — ảnh LaTeX vỡ**: 3 ảnh phương trình hotlink từ mathworks.com. Đã kiểm chứng
+  **403 cứng** cả từ box lẫn từ máy local → không load được và cũng **không mirror được**.
+  Alt còn giữ LaTeX gốc nên `replaceBrokenMathImages()` dựng lại tại chỗ bằng chữ nghiêng
+  + dấu phụ Unicode (`$\widehat{d}(n)$` → *d̂(n)*), không thêm thư viện toán. Chỉ áp dụng
+  cho `<img>` vừa trỏ host NGOÀI vừa có alt dạng `$…$`. Toàn DB chỉ 1 trang dính.
+- **#70 — thụt đầu dòng**: nguyên nhân là chuỗi `&nbsp;` ngay sau `<p>` (có khi trong span
+  lồng). Trình duyệt vẽ ra khoảng thụt, Tiptap thì bỏ → web ≠ editor, **và chỉ cần ai đó
+  mở trang bằng chế độ trực quan rồi lưu là thụt biến mất vĩnh viễn**. Theo quyết định của
+  Phương: bỏ thụt ở web cho khớp editor (`LEADING_NBSP_RE`). Lookahead chừa đoạn đệm
+  `<p>&nbsp;</p>` để không mất khoảng cách dọc.
+- **#111 — MSSV xuống 2 dòng**: `markNumericCells()` đánh dấu `data-num` cho ô CHỈ chứa
+  dãy 4-12 chữ số; CSS cho ô đó `overflow-wrap: normal` (thà tràn nhẹ còn hơn bẻ đôi số).
+  Ô chữ (tên đề tài, họ tên) vẫn wrap như cũ.
+- **ProfileCard**: `onError` → nhớ ĐÚNG url hỏng (không dùng cờ boolean) nên đổi ảnh khác
+  là tự thử lại, khỏi cần effect reset. Ảnh 404 rơi về ô placeholder thay vì khung trắng to.
+
+### Punch-list bàn giao cho khoa (không sửa bằng mã được)
+- **#110 — 2 ảnh có tên in sẵn** (Phương quyết định để khoa gửi ảnh mới, KHÔNG tự cắt):
+  `/uploads/vat-ly-dien-tu/Nhân Sự/thayHuy.png` ("TS. Hồ Thanh Huy") và
+  `/uploads/vat-ly-dien-tu/Nhân Sự/thayHien.png` ("ThS. Phạm Xuân Hiển").
+  11 ảnh VLĐT còn lại đã soát: sạch. (Nếu đổi ý, cắt 60px dưới là hết trùng tên.)
+- **34 asset mất thật** trên tổng 3247 tham chiếu (98,9% còn nguyên) — site cũ cũng không
+  còn. Danh sách đầy đủ: chạy lại `missing_assets.sh` hoặc xem tóm tắt: 13 ảnh
+  `CTSV/SHCD cuoi khoa`, 5 ảnh `Tan sinh vien 2020`, 11 ảnh vat-ly-tin-hoc
+  (Hội thảo/Nghề nghiệp/Tin giáo vụ/PPT bảng điểm), 2 PDF (Viettel tuyển dụng 05/2025,
+  Danh_sach_khoa_luan_K18_HĐ_SV), 3 ảnh lẻ.
+
+### Lưu ý môi trường
+- `pnpm run lint` (backend eslint) **OOM ở heap 2GB mặc định** khi stack docker boompay-api
+  đang chạy (~4,2GB). Chạy được với `NODE_OPTIONS=--max-old-space-size=5120`. Các lỗi
+  prettier còn lại nằm trong mã CŨ (`cloneIntoLayout`, `purgeExpiredTrash`…), không phải
+  mã mới; `tsc --noEmit` của frontend sạch.
+- Box **không hairpin được domain của chính nó** — test public phải gọi `localhost:3002`,
+  không gọi `https://phys.hcmus.edu.vn` từ trong box (curl treo/trả 000).
+- Box chỉ có python2 và **không có `zip`**; đóng gói bundle bằng `adm-zip` trong container
+  backend (`docker cp` vào/ra).

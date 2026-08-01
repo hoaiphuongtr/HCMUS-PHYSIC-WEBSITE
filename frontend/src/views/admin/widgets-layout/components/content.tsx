@@ -879,6 +879,12 @@ function ProfileCardRender({
       <div className="relative border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm mb-3">
         {showImage ? (
           <img
+            // Trang public render sẵn ở máy chủ: ảnh có thể hỏng XONG trước khi
+            // React hydrate, khi đó onError không bao giờ chạy. Kiểm tra lại
+            // ngay lúc gắn ref để bắt cả trường hợp đã hỏng từ trước.
+            ref={(el) => {
+              if (el?.complete && el.naturalWidth === 0) setFailedUrl(imageUrl);
+            }}
             src={resolveMediaSrc(imageUrl)}
             alt={nameText}
             className="w-full aspect-[3/4] object-cover"
