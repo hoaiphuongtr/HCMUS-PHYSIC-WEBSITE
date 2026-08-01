@@ -26,6 +26,85 @@ const optimizedBodyImageUrl = (src: string): string => {
   return `/_next/image?url=${encodeURIComponent(fetchUrl)}&w=1080&q=70`;
 };
 
+// Vài trang di trú nhúng công thức toán bằng ẢNH đặt trên máy chủ ngoài (các PNG
+// phương trình của mathworks.com, chép lại từ tài liệu MATLAB). Máy chủ đó nay
+// chặn hotlink (trả 403 cho mọi request ngoài trình duyệt của họ) nên ảnh luôn vỡ
+// và KHÔNG thể mirror về. May là thuộc tính alt còn giữ nguyên LaTeX gốc
+// ($d(n)$, $\widehat{d}(n)$…) — đủ để dựng lại công thức tại chỗ bằng chữ nghiêng
+// + dấu phụ Unicode, không phải kéo thêm thư viện toán (KaTeX/MathJax) vào bundle.
+const LATEX_ACCENTS: Record<string, string> = {
+  widehat: "̂",
+  hat: "̂",
+  widetilde: "̃",
+  tilde: "̃",
+  overline: "̄",
+  bar: "̄",
+  vec: "⃗",
+  dot: "̇",
+};
+
+const latexToPlainText = (tex: string): string =>
+  tex
+    .replace(/^\$+|\$+$/g, "")
+    // \widehat{d} → d + dấu mũ tổ hợp (đặt SAU ký tự theo chuẩn Unicode)
+    .replace(
+      /\\(widehat|hat|widetilde|tilde|overline|bar|vec|dot)\s*\{([^{}]*)\}/g,
+      (_m, accent: string, body: string) => body + LATEX_ACCENTS[accent],
+    )
+    // Lệnh LaTeX còn lại không dựng được bằng ký tự thường → bỏ, giữ phần chữ.
+    .replace(/\\[a-zA-Z]+/g, "")
+    .replace(/[{}]/g, "")
+    .trim();
+
+// Chỉ thay thế <img> vừa trỏ ra HOST NGOÀI vừa có alt là LaTeX ($…$) — ảnh nội
+// bộ và ảnh ngoài bình thường giữ nguyên.
+const replaceBrokenMathImages = (html: string): string =>
+  html.replace(/<img\b[^>]*>/gi, (tag) => {
+    const src = /\bsrc=["']([^"']*)["']/i.exec(tag)?.[1] ?? "";
+    if (!/^https?:\/\//i.test(src)) return tag;
+    const alt = (/\balt=["']([^"']*)["']/i.exec(tag)?.[1] ?? "").trim();
+    if (!/^\$[\s\S]+\$$/.test(alt)) return tag;
+    const text = latexToPlainText(alt);
+    if (!text) return tag;
+    // Chỉ thoát < và > — alt lấy thẳng từ HTML nguồn nên các thực thể (&amp;…)
+    // đã được thoát sẵn, thoát & lần nữa sẽ hỏng.
+    const safe = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return `<span class="legacy-math">${safe}</span>`;
+  });
+
+// Nội dung Joomla/Word cũ thụt đầu dòng bằng CHUỖI `&nbsp;` ngay sau <p> (có khi
+// nằm trong vài thẻ inline lồng nhau). Trình duyệt vẽ ra khoảng thụt, còn Tiptap
+// gộp/bỏ khoảng trắng đầu khối nên trình soạn thảo hiện phẳng → web và editor lệch
+// nhau, và chỉ cần biên tập viên mở trang bằng chế độ trực quan rồi lưu là các
+// `&nbsp;` đó biến mất luôn. Bỏ chúng khi render để web khớp editor ngay.
+// Lookahead loại đoạn RỖNG (`<p>&nbsp;</p>`) — đó là đoạn đệm cố ý, xoá đi sẽ
+// làm mất khoảng cách dọc.
+// Ô chỉ chứa MỘT dãy số (MSSV 7-8 chữ số, năm…) không nên bị bẻ giữa chừng: dưới
+// table-layout:fixed + overflow-wrap:break-word, "1613081" rớt xuống 2 dòng rất
+// khó đọc. Đánh dấu để CSS cho phép tràn nhẹ thay vì bẻ đôi con số; các ô chữ
+// (tên đề tài, họ tên…) vẫn wrap như cũ.
+const markNumericCells = (html: string): string =>
+  html.replace(
+    /<td\b([^>]*)>([\s\S]*?)<\/td>/gi,
+    (whole: string, attrs: string, inner: string) => {
+      const text = inner
+        .replace(/<[^>]*>/g, "")
+        .replace(/&nbsp;|&#160;/gi, " ")
+        .trim();
+      return /^\d{4,12}$/.test(text)
+        ? `<td${attrs} data-num>${inner}</td>`
+        : whole;
+    },
+  );
+
+const INLINE_TAGS = "span|strong|em|b|i|u|font";
+const LEADING_NBSP_RE = new RegExp(
+  `(<p\\b[^>]*>(?:\\s*<(?:${INLINE_TAGS})\\b[^>]*>)*)` +
+    `(?:&nbsp;|&#160;|\\u00a0|\\s)+` +
+    `(?!(?:<\\/(?:${INLINE_TAGS})>|\\s)*<\\/p>)`,
+  "gi",
+);
+
 import { DynamicIcon } from "@/components/admin/icons";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
@@ -205,8 +284,9 @@ function PostBodyRender({
     );
   }
   const rawSource = markdown || t(defaultMarkdown, locale) || "";
-  const source = rawSource
+  const source = markNumericCells(replaceBrokenMathImages(rawSource))
     .replace(/(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi, "<p>&nbsp;</p>")
+    .replace(LEADING_NBSP_RE, "$1")
     .replace(
       /<iframe[^>]*src=["']https?:\/\/phys\.hcmus\.edu\.vn[^"']*["'][^>]*><\/iframe>/gi,
       "",
@@ -345,6 +425,19 @@ function PostBodyRender({
             height: auto !important;
             display: inline-block;
           }
+          /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
+          [data-post-body] td[data-num],
+          [data-post-body] td[data-num] * {
+            overflow-wrap: normal;
+            word-break: normal;
+          }
+          /* Công thức toán dựng thay cho ảnh phương trình ngoài đã chết
+             (xem replaceBrokenMathImages). */
+          [data-post-body] .legacy-math {
+            font-style: italic;
+            font-family: "Cambria Math", "Latin Modern Math", "Times New Roman", serif;
+            white-space: nowrap;
+          }
           [data-post-body] table {
             display: block;
             overflow-x: auto;
@@ -398,13 +491,14 @@ export function LegacyHtmlRender({
   const { locale } = useLocale();
   const raw = t(html, locale) || "";
   if (injected && !raw.trim()) return null;
-  const source = raw
+  const source = markNumericCells(replaceBrokenMathImages(raw))
     // Gộp CHUỖI đoạn rỗng "<p>&nbsp;</p>" (rác Word/Joomla) — nhiều trang legacy
     // có 20-30 đoạn nbsp liên tiếp giữa 2 bảng → khoảng trống khổng lồ. Gộp về 1.
     .replace(
       /(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi,
       "<p>&nbsp;</p>",
     )
+    .replace(LEADING_NBSP_RE, "$1")
     .replace(
       /(<(?:img|iframe)[^>]+src=["'])(\/uploads\/[^"']+)(["'])/gi,
       (_m, pre: string, src: string, post: string) =>
@@ -494,6 +588,14 @@ export function LegacyHtmlRender({
            max-width kéo bề rộng nhỏ lại — nếu chiều cao vẫn cố định thì ảnh bị
            DÃN DỌC. Ép height:auto để luôn giữ đúng tỉ lệ. */
         .legacy-content img { max-width: 100%; height: auto !important; }
+        /* Công thức toán dựng thay cho ảnh phương trình ngoài đã chết (xem
+           replaceBrokenMathImages): chữ nghiêng kiểu toán, không xuống dòng giữa
+           công thức. */
+        .legacy-content .legacy-math {
+          font-style: italic;
+          font-family: "Cambria Math", "Latin Modern Math", "Times New Roman", serif;
+          white-space: nowrap;
+        }
         /* Ảnh legacy có margin-left/right cứng (vd width:800px + margin 50px = 900px)
            vượt cột → tràn + thanh cuộn ngang + lệch. Ảnh CÓ margin inline: chuyển
            block + margin auto (căn giữa, bỏ margin cứng) → vừa cột, không tràn. */
@@ -580,6 +682,12 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid] th * {
           white-space: normal !important;
           overflow-wrap: break-word;
+        }
+        /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
+        .legacy-content table[data-grid] td[data-num],
+        .legacy-content table[data-grid] td[data-num] * {
+          overflow-wrap: normal;
+          word-break: normal;
         }
         /* Bảng ẢNH (nhân sự): căn TRÁI để ảnh sát mép trái; email/link dài bẻ mạnh
            hơn (anywhere) để không tràn khi zoom. */
