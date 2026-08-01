@@ -39,6 +39,7 @@ $Files = @(
   'frontend/package.json',
   'frontend/src',
   'frontend-public/package.json',
+  'frontend-public/next.config.ts',
   'frontend-public/src'
 )
 

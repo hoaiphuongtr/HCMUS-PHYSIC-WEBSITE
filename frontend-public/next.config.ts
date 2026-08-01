@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // The proxy middleware adds a trailing slash to bare microsite paths
+  // (/iceba2023 → /iceba2023/) so relative asset paths resolve. Next's default
+  // trailing-slash normalization would strip it right back → redirect loop.
+  // Let the middleware own trailing slashes.
+  skipTrailingSlashRedirect: true,
   turbopack: {
     resolveAlias: {
       "@admin": path.resolve(__dirname, "../frontend/src"),
