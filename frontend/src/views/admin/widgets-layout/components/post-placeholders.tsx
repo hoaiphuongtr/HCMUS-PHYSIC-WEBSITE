@@ -813,12 +813,12 @@ export function LegacyHtmlRender({
         .legacy-content table[data-grid][data-wide] tr:first-child td *,
         .legacy-content table[data-grid][data-wide] tr:first-child th * {
           /* Bề rộng mỗi cột là PHẦN TRĂM bề rộng bảng, nên muốn từ dài nhất luôn
-             lọt vào cột thì cỡ chữ phải tỉ lệ với chính bề rộng đó. 1.6cqi cho
+             lọt vào cột thì cỡ chữ phải tỉ lệ với chính bề rộng đó. 1.5cqi cho
              13px khi bảng rộng 792px và tự nhỏ lại khi bảng hẹp (616px → 9,9px),
              đúng ngưỡng đo được là ≤10,5px. Dòng 13px phía trên là bản dự phòng
              cho trình duyệt chưa hỗ trợ container query. */
           font-size: 13px !important;
-          font-size: clamp(9px, 1.6cqi, 13px) !important;
+          font-size: clamp(9px, 1.5cqi, 13px) !important;
           line-height: 1.35 !important;
         }
         /* Ngoại lệ: ô CHỈ chứa dãy số (MSSV) — thà tràn nhẹ còn hơn bẻ đôi con số. */
