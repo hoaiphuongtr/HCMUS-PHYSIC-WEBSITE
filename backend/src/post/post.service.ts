@@ -752,7 +752,8 @@ export class PostService {
         id: true,
         slug: true,
         puckData: true,
-              category: { select: { slug: true, name: true } },
+        categoryId: true,
+        category: { select: { slug: true, name: true } },
       },
     });
     if (!template) throw TemplateLayoutNotFoundException;
