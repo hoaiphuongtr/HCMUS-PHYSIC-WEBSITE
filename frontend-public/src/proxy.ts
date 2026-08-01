@@ -75,8 +75,17 @@ export async function proxy(request: NextRequest) {
   //    drops CSP/X-Frame for these files so the microsite's own scripts run.
   const base = bundles.get(firstSeg);
   if (base) {
-    const rest = pathname.slice(firstSeg.length + 1); // "" or "/logos/x.svg"
-    const target = new URL(`${API}${base}${rest || "/index.html"}`);
+    const rest = pathname.slice(firstSeg.length + 1); // "" | "/" | "/logos/x.svg"
+    // Bare /slug with no trailing slash → redirect to /slug/ so a microsite's
+    // RELATIVE asset paths (./static/…, common in CRA/Vite builds) resolve under
+    // /slug/ instead of the site root. Absolute-path builds (Next) are unaffected.
+    if (rest === "") {
+      const url = request.nextUrl.clone();
+      url.pathname = `${pathname}/`;
+      return NextResponse.redirect(url, 308);
+    }
+    const entry = rest === "/" ? "/index.html" : rest;
+    const target = new URL(`${API}${base}${entry}`);
     target.search = request.nextUrl.search;
     return NextResponse.rewrite(target);
   }
