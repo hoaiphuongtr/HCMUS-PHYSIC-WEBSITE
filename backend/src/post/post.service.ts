@@ -746,6 +746,14 @@ export class PostService {
     if (!canAccessDepartment(roleName, departmentId, post.departmentId)) {
       throw PostNotFoundException;
     }
+    // MỘT bài = MỘT trang. Bài đã có trang rồi thì chỉ cập nhật danh mục cho nó,
+    // không đẻ thêm layout thứ hai — trước đây mỗi danh mục một layout nên cùng
+    // nội dung nằm ở nhiều URL khác nhau.
+    const existingLayout = await this.prisma.pageLayout.findFirst({
+      where: { sourcePostId: post.id, deletedAt: null },
+      select: { id: true, slug: true },
+      orderBy: { createdAt: 'asc' },
+    });
     const template = await this.prisma.pageLayout.findUnique({
       where: { id: body.templateLayoutId },
       select: {
@@ -849,6 +857,29 @@ export class PostService {
       template.puckData,
       injectPayload,
     );
+
+    if (existingLayout) {
+      await this.prisma.$transaction([
+        this.prisma.pageLayout.update({
+          where: { id: existingLayout.id },
+          data: { categoryId: primaryCategoryId },
+        }),
+        this.prisma.pageLayoutCategoryLink.deleteMany({
+          where: { pageLayoutId: existingLayout.id },
+        }),
+        this.prisma.pageLayoutCategoryLink.createMany({
+          data: categoryIds.map((categoryId) => ({
+            pageLayoutId: existingLayout.id,
+            categoryId,
+          })),
+          skipDuplicates: true,
+        }),
+      ]);
+      // Bơm lại nội dung + breadcrumb theo danh mục mới.
+      await this.syncAttachedLayouts(post.id);
+      await this.cache.clear();
+      return existingLayout;
+    }
 
     const layout = await this.prisma.pageLayout.create({
       data: {

@@ -257,18 +257,18 @@ export function PostComposerView() {
   const cloneMutation = useMutation({
     mutationKey: ["POSTS", postId ?? "NEW", "CLONE_INTO_LAYOUT"],
     mutationFn: async (body: {
+      postId: string;
       templateLayoutId: string;
       categoryIds?: string[];
     }) => {
-      if (!postId) throw new Error("Hãy lưu bài trước khi tạo trang");
-      return [await postApi.cloneIntoLayout(postId, body)];
+      const { postId: id, ...rest } = body;
+      return [await postApi.cloneIntoLayout(id, rest)];
     },
-    onSuccess: (results) => {
-      toast.success("Đã tạo trang public từ bài đăng");
+    onSuccess: () => {
+      // KHÔNG đá người dùng sang trình sửa layout nữa: giờ họ xuất bản ngay được
+      // từ đây, nhảy trang giữa chừng chỉ làm mất mạch soạn bài.
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
-      const first = results[0];
-      if (first) router.push(`/admin/widgets-layout?edit=${first.id}`);
     },
     onError: (err: { message?: string }) => {
       toast.error(err.message || "Không thể tạo layout");
@@ -311,18 +311,38 @@ export function PostComposerView() {
     return false;
   };
 
-  // Lưu (giữ Nháp) → chỉ ghi nội dung.
-  const saveDraft = async () => {
-    if (!requireTitle()) return;
-    await saveMutation.mutateAsync(buildPayload("DRAFT"));
+  // Cả ba nút lưu đều tự lo trang public: người dùng không phải bấm thêm một nút
+  // "tạo layout" nữa — chọn danh mục xong bấm lưu là đủ. Bài đã có trang thì chỉ
+  // cập nhật danh mục cho trang đó chứ không tạo thêm trang mới.
+  const ensureLayout = async (id: string) => {
+    if (kind === "news" && categoryIds.length === 0) {
+      toast.warn("Chọn ít nhất một danh mục");
+      return false;
+    }
+    await cloneMutation.mutateAsync({
+      postId: id,
+      templateLayoutId: KIND_TEMPLATE[kind ?? "news"],
+      categoryIds: kind === "news" ? categoryIds : undefined,
+    });
+    return true;
   };
 
-  // Lưu và xuất bản ngay → ghi nội dung rồi publish luôn layout của bài.
+  // Lưu (giữ Nháp) → ghi nội dung + tạo/cập nhật trang nhưng CHƯA xuất bản.
+  const saveDraft = async () => {
+    if (!requireTitle()) return;
+    const saved = await saveMutation.mutateAsync(buildPayload("DRAFT"));
+    const id = postId ?? saved?.id;
+    if (id) await ensureLayout(id);
+  };
+
+  // Lưu và xuất bản ngay → ghi nội dung, đảm bảo có trang, rồi publish trang đó.
   const savePublishNow = async () => {
     if (!requireTitle()) return;
     const saved = await saveMutation.mutateAsync(buildPayload());
     const id = postId ?? saved?.id;
-    if (id) publishMutation.mutate({ id });
+    if (!id) return;
+    if (!(await ensureLayout(id))) return;
+    publishMutation.mutate({ id });
   };
 
   // Lưu và lên lịch → mở hộp chọn thời gian, xác nhận ở confirmSchedule.
@@ -345,30 +365,10 @@ export function PostComposerView() {
     void (async () => {
       const saved = await saveMutation.mutateAsync(buildPayload("SCHEDULED"));
       const id = postId ?? saved?.id;
-      if (id) publishMutation.mutate({ id, scheduledAt: at.toISOString() });
+      if (!id) return;
+      if (!(await ensureLayout(id))) return;
+      publishMutation.mutate({ id, scheduledAt: at.toISOString() });
     })();
-  };
-
-  const createLayoutFromPost = async () => {
-    if (!postId) {
-      toast.warn("Lưu draft trước khi tạo layout mới");
-      return;
-    }
-    if (kind === "news" && categoryIds.length === 0) {
-      toast.warn("Chọn ít nhất một danh mục");
-      return;
-    }
-    try {
-      await saveMutation.mutateAsync(buildPayload());
-    } catch {
-      return;
-    }
-    // MỘT layout duy nhất, mang nhiều danh mục — thay vì mỗi danh mục một layout
-    // (cách cũ khiến cùng nội dung nằm ở 2 URL vì slug không được trùng).
-    cloneMutation.mutate({
-      templateLayoutId: KIND_TEMPLATE[kind ?? "news"],
-      categoryIds: kind === "news" ? categoryIds : undefined,
-    });
   };
 
   const busy = saveMutation.isPending || publishMutation.isPending;
@@ -863,27 +863,6 @@ export function PostComposerView() {
               Bài sự kiện luôn thuộc danh mục <b>Sự kiện</b>.
             </p>
           )}
-          <button
-            type="button"
-            onClick={() => void createLayoutFromPost()}
-            disabled={
-              !postId ||
-              cloneMutation.isPending ||
-              (kind === "news" && categoryIds.length === 0)
-            }
-            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {cloneMutation.isPending
-              ? "Đang tạo trang…"
-              : attachedLayouts.length
-                ? "Tạo thêm trang từ bài đăng"
-                : "Tạo trang public từ bài đăng"}
-          </button>
-          {!postId ? (
-            <p className="text-[11px] text-amber-600 mt-2">
-              Lưu draft trước khi tạo layout.
-            </p>
-          ) : null}
         </section>
       </div>
 
