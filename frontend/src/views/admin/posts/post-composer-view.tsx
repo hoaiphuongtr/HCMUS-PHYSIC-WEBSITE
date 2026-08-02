@@ -6,12 +6,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { AdminSelect } from "@/components/admin/admin-select";
 import { DynamicIcon } from "@/components/admin/icons";
 import {
+  categoryApi,
   type ContentStatusValue,
   type LocalizedText,
-  pageLayoutApi,
   postApi,
   resolveMediaUrl,
   tagApi,
@@ -22,15 +21,27 @@ import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
 
-// PENDING không phải lựa chọn tay: nó được đặt tự động khi bài được gắn vào layout
-// (xem cloneIntoLayout ở backend). Nó chỉ xuất hiện trong dropdown nếu bài đang ở
-// trạng thái đó, để hiển thị đúng nhãn.
-const STATUS_OPTIONS: { value: ContentStatusValue; label: string }[] = [
-  { value: "DRAFT", label: "Nháp" },
-  { value: "PENDING", label: "Chờ xuất bản" },
-  { value: "SCHEDULED", label: "Lên lịch" },
-  { value: "PUBLISHED", label: "Công khai" },
-];
+// Bài mới luôn gắn sẵn 2 tag SDG này. Bám theo SLUG chứ không phải tên hiển thị,
+// nên đổi tên tag trong quản trị vẫn gắn đúng tag (và đúng ảnh icon của nó).
+const STATUS_LABELS: Record<ContentStatusValue, string> = {
+  DRAFT: "Nháp",
+  PENDING: "Chờ xuất bản",
+  SCHEDULED: "Lên lịch",
+  PUBLISHED: "Công khai",
+};
+
+const localizeCategory = (name: { vi?: string; en?: string } | string) =>
+  typeof name === "string" ? name : (name.vi ?? name.en ?? "");
+
+const DEFAULT_TAG_SLUGS = ["sdg4", "sdg17"];
+
+// Chỉ còn HAI loại bài: tin tức và sự kiện. Mỗi loại ứng với một layout mẫu; các
+// layout mẫu theo danh mục (câu lạc bộ, học bổng…) không còn cần nữa vì danh mục
+// giờ chọn được nhiều trên cùng một trang.
+const KIND_TEMPLATE: Record<"news" | "event", string> = {
+  news: "cat_tmpl_scientific-information",
+  event: "cat_tmpl_event",
+};
 
 const parseTagInput = (value: string): string[] => {
   const tokens = value
@@ -81,7 +92,7 @@ export function PostComposerView() {
   const [excerpt, setExcerpt] = useState<LocalizedText>(emptyLocalized());
   const [body, setBody] = useState<LocalizedText>(emptyLocalized());
   const [status, setStatus] = useState<ContentStatusValue>("DRAFT");
-  const [tagSlugs, setTagSlugs] = useState<string[]>([]);
+  const [tagSlugs, setTagSlugs] = useState<string[]>(DEFAULT_TAG_SLUGS);
   const [tagDraft, setTagDraft] = useState("");
   const [coverMediaId, setCoverMediaId] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState("");
@@ -90,11 +101,21 @@ export function PostComposerView() {
   const [eventEndAt, setEventEndAt] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [templateLayoutIds, setTemplateLayoutIds] = useState<string[]>([]);
-  const [templateSearch, setTemplateSearch] = useState("");
-  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  // Loại bài chốt ngay ở modal trước khi vào soạn — từ đó suy ra layout mẫu.
+  const [kind, setKind] = useState<"news" | "event" | null>(null);
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+
+  const categoriesQuery = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: categoryApi.list,
+  });
+  // Bài SỰ KIỆN luôn thuộc danh mục "Sự kiện", không cho chọn; bài TIN TỨC thì
+  // tick được nhiều danh mục còn lại.
+  const newsCategories = (categoriesQuery.data ?? []).filter(
+    (c) => c.slug !== "event",
+  );
 
   // Existing tags (with icons) so the author can pick instead of typing slugs.
   const tagsQuery = useQuery({ queryKey: ["TAGS"], queryFn: tagApi.list });
@@ -149,20 +170,8 @@ export function PostComposerView() {
     setEventEndAt(toLocalInput(data.eventEndAt));
     setEventLocation(data.eventLocation ?? "");
     setScheduledAt(toLocalInput(data.scheduledAt));
+    setKind(data.eventStartAt ? "event" : "news");
   }, [postQuery.data]);
-
-  const layoutsQuery = useQuery({
-    queryKey: ["POST_TEMPLATES", "all"],
-    queryFn: () => pageLayoutApi.postTemplates(),
-  });
-
-  // Bài có ngày giờ sự kiện → chỉ chọn layout mẫu SỰ KIỆN (đường dẫn /su-kien);
-  // bài thường → các layout mẫu TIN TỨC. Nhờ vậy tin tức và sự kiện có layout
-  // riêng, không lẫn lộn.
-  const isEventPost = eventStartAt.trim().length > 0;
-  const visibleTemplates = (layoutsQuery.data ?? []).filter((l) =>
-    isEventPost ? l.category?.slug === "event" : l.category?.slug !== "event",
-  );
 
   const commitTagDraft = () => {
     const parsed = parseTagInput(tagDraft);
@@ -193,21 +202,25 @@ export function PostComposerView() {
 
   const isLocalizedEmpty = (l: LocalizedText) => !l.vi && !l.en;
 
-  const buildPayload = (): UpsertPostBody => {
+  // nextStatus: trạng thái do NÚT lưu quyết định. Không truyền thì giữ nguyên
+  // trạng thái hiện tại (dùng cho "xuất bản ngay" — backend sẽ tự kéo bài sang
+  // PUBLISHED khi layout được publish).
+  const buildPayload = (nextStatus?: ContentStatusValue): UpsertPostBody => {
     const pendingDraft = parseTagInput(tagDraft);
     const finalTagSlugs = pendingDraft.reduce(addUnique, tagSlugs);
     const trimmed: LocalizedText = {
       vi: (title.vi ?? "").trim(),
       en: (title.en ?? "").trim() || undefined,
     };
+    const effectiveStatus = nextStatus ?? status;
     return {
       title: trimmed,
       slug: toSlug(slug || trimmed.vi),
       body: isLocalizedEmpty(body) ? null : body,
       excerpt: isLocalizedEmpty(excerpt) ? null : excerpt,
-      status,
+      status: effectiveStatus,
       scheduledAt:
-        status === "SCHEDULED" && scheduledAt
+        effectiveStatus === "SCHEDULED" && scheduledAt
           ? new Date(scheduledAt).toISOString()
           : null,
       coverMediaId: coverMediaId ?? null,
@@ -243,20 +256,15 @@ export function PostComposerView() {
 
   const cloneMutation = useMutation({
     mutationKey: ["POSTS", postId ?? "NEW", "CLONE_INTO_LAYOUT"],
-    mutationFn: async (body: { templateLayoutIds: string[] }) => {
-      if (!postId) throw new Error("Hãy lưu draft trước khi tạo layout");
-      // Inject the post into each chosen category template → one layout per
-      // category, each under its own slug prefix.
-      const results = [];
-      for (const templateLayoutId of body.templateLayoutIds) {
-        results.push(
-          await postApi.cloneIntoLayout(postId, { templateLayoutId }),
-        );
-      }
-      return results;
+    mutationFn: async (body: {
+      templateLayoutId: string;
+      categoryIds?: string[];
+    }) => {
+      if (!postId) throw new Error("Hãy lưu bài trước khi tạo trang");
+      return [await postApi.cloneIntoLayout(postId, body)];
     },
     onSuccess: (results) => {
-      toast.success(`Đã tạo ${results.length} layout từ bài đăng`);
+      toast.success("Đã tạo trang public từ bài đăng");
       queryClient.invalidateQueries({ queryKey: ["POSTS"] });
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
       const first = results[0];
@@ -267,16 +275,60 @@ export function PostComposerView() {
     },
   });
 
-  const saveDraft = () => {
-    if (!title.vi.trim()) {
-      toast.warn("Nhập tiêu đề tiếng Việt trước khi lưu");
-      return;
-    }
-    if (canSchedule) {
-      setScheduleModalOpen(true);
-      return;
-    }
-    saveMutation.mutate(buildPayload());
+  // Ba hành động lưu, thay cho việc phải sang trình sửa layout mới publish được.
+  // Trạng thái bài do NÚT quyết định, không còn ô chọn tay.
+  const publishMutation = useMutation({
+    mutationKey: ["POSTS", "PUBLISH_LAYOUTS"],
+    mutationFn: (input: { id: string; scheduledAt?: string | null }) =>
+      postApi.publishLayouts(input.id, input.scheduledAt ?? null),
+    onSuccess: (res) => {
+      if (!res.ok && res.reason === "no-layout") {
+        toast.warn("Bài chưa có trang public — tạo layout trước đã");
+        return;
+      }
+      if (res.skipped?.length) {
+        toast.warn(
+          `Đã xuất bản, nhưng bỏ qua ${res.skipped.length} trang vì trùng đường dẫn`,
+        );
+      } else {
+        toast.success(
+          res.scheduled
+            ? "Đã lên lịch xuất bản"
+            : "Đã xuất bản lên trang công khai",
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ["POSTS"] });
+      queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Không thể xuất bản");
+    },
+  });
+
+  const requireTitle = () => {
+    if (title.vi.trim()) return true;
+    toast.warn("Nhập tiêu đề tiếng Việt trước khi lưu");
+    return false;
+  };
+
+  // Lưu (giữ Nháp) → chỉ ghi nội dung.
+  const saveDraft = async () => {
+    if (!requireTitle()) return;
+    await saveMutation.mutateAsync(buildPayload("DRAFT"));
+  };
+
+  // Lưu và xuất bản ngay → ghi nội dung rồi publish luôn layout của bài.
+  const savePublishNow = async () => {
+    if (!requireTitle()) return;
+    const saved = await saveMutation.mutateAsync(buildPayload());
+    const id = postId ?? saved?.id;
+    if (id) publishMutation.mutate({ id });
+  };
+
+  // Lưu và lên lịch → mở hộp chọn thời gian, xác nhận ở confirmSchedule.
+  const saveAndSchedule = () => {
+    if (!requireTitle()) return;
+    setScheduleModalOpen(true);
   };
 
   const confirmSchedule = () => {
@@ -290,7 +342,11 @@ export function PostComposerView() {
       return;
     }
     setScheduleModalOpen(false);
-    saveMutation.mutate(buildPayload());
+    void (async () => {
+      const saved = await saveMutation.mutateAsync(buildPayload("SCHEDULED"));
+      const id = postId ?? saved?.id;
+      if (id) publishMutation.mutate({ id, scheduledAt: at.toISOString() });
+    })();
   };
 
   const createLayoutFromPost = async () => {
@@ -298,8 +354,8 @@ export function PostComposerView() {
       toast.warn("Lưu draft trước khi tạo layout mới");
       return;
     }
-    if (templateLayoutIds.length === 0) {
-      toast.warn("Chọn ít nhất một layout mẫu");
+    if (kind === "news" && categoryIds.length === 0) {
+      toast.warn("Chọn ít nhất một danh mục");
       return;
     }
     try {
@@ -307,17 +363,17 @@ export function PostComposerView() {
     } catch {
       return;
     }
-    cloneMutation.mutate({ templateLayoutIds });
+    // MỘT layout duy nhất, mang nhiều danh mục — thay vì mỗi danh mục một layout
+    // (cách cũ khiến cùng nội dung nằm ở 2 URL vì slug không được trùng).
+    cloneMutation.mutate({
+      templateLayoutId: KIND_TEMPLATE[kind ?? "news"],
+      categoryIds: kind === "news" ? categoryIds : undefined,
+    });
   };
 
+  const busy = saveMutation.isPending || publishMutation.isPending;
   const previewCover = resolveMediaUrl(coverUrl);
   const attachedLayouts = postQuery.data?.layouts ?? [];
-  const hasPublishedLayout = attachedLayouts.some((l) => l.isPublished);
-  const canSchedule = status === "SCHEDULED" && hasPublishedLayout;
-  // Ẩn "Chờ xuất bản" khỏi lựa chọn tay; chỉ giữ nếu bài đang ở trạng thái đó.
-  const statusOptions = STATUS_OPTIONS.filter(
-    (o) => o.value !== "PENDING" || status === "PENDING",
-  );
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -386,22 +442,29 @@ export function PostComposerView() {
             />
           </div>
           <div>
-            <label
-              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-              htmlFor="post-status"
-            >
+            {/* Trạng thái KHÔNG còn chọn tay: nó do nút lưu quyết định (Lưu = Nháp,
+                Lưu và lên lịch = Lên lịch, Lưu và xuất bản ngay = Công khai). Bày
+                ra ô chọn chỉ khiến người dùng đặt một trạng thái mà hệ thống lại
+                ghi đè theo trạng thái layout. */}
+            <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
               Trạng thái bài đăng
-            </label>
-            <AdminSelect
-              id="post-status"
-              value={status}
-              onChange={(next) => setStatus(next as ContentStatusValue)}
-              options={statusOptions}
-            />
+            </span>
+            <span
+              className={
+                "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium " +
+                (status === "PUBLISHED"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : status === "SCHEDULED"
+                    ? "bg-amber-100 text-amber-700"
+                    : status === "PENDING"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-slate-100 text-slate-700")
+              }
+            >
+              {STATUS_LABELS[status]}
+            </span>
             <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-              Nháp: đang soạn nội dung. Gắn bài vào một layout sẽ tự chuyển sang
-              “Chờ xuất bản”. Chọn Lên lịch hoặc Công khai khi trang đã sẵn
-              sàng.
+              Trạng thái tự đặt theo nút bạn bấm ở dưới cùng.
             </p>
           </div>
         </section>
@@ -693,122 +756,70 @@ export function PostComposerView() {
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
-              Layout mẫu
-              <span className="ml-1 font-normal text-slate-400">
-                {isEventPost ? "(layout Sự kiện)" : "(layout Tin tức)"}
-              </span>
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setLayoutPickerOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a2436]"
-              >
-                <span
-                  className={
-                    templateLayoutIds.length
-                      ? "text-slate-700 dark:text-slate-200"
-                      : "text-slate-400"
-                  }
-                >
-                  {templateLayoutIds.length
-                    ? `Đã chọn ${templateLayoutIds.length} layout mẫu`
-                    : "Chọn layout mẫu…"}
+          {/* Không còn chọn "layout mẫu" nữa: loại bài (tin tức / sự kiện) đã chốt
+              ở modal đầu vào và quyết định luôn layout. Người dùng chỉ còn chọn
+              DANH MỤC, và chọn được nhiều — một bài, một URL, nhiều bộ lọc. */}
+          {kind === "news" ? (
+            <div className="space-y-2">
+              <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
+                Danh mục{" "}
+                <span className="font-normal text-slate-400">
+                  (chọn được nhiều)
                 </span>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </button>
-              {layoutPickerOpen ? (
-                <div className="relative z-20 mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
-                  <div className="p-2">
-                    <input
-                      type="search"
-                      value={templateSearch}
-                      onChange={(e) => setTemplateSearch(e.target.value)}
-                      placeholder="Tìm layout mẫu…"
-                      className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
-                    />
-                  </div>
-                  <div className="max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                    {visibleTemplates
-                      .filter((l) => {
-                        const q = templateSearch.trim().toLowerCase();
-                        return (
-                          !q ||
-                          l.name.toLowerCase().includes(q) ||
-                          l.slug.toLowerCase().includes(q)
-                        );
-                      })
-                      .map((layout) => {
-                        const checked = templateLayoutIds.includes(layout.id);
-                        return (
-                          <label
-                            key={layout.id}
-                            className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() =>
-                                setTemplateLayoutIds((prev) =>
-                                  checked
-                                    ? prev.filter((id) => id !== layout.id)
-                                    : [...prev, layout.id],
-                                )
-                              }
-                            />
-                            <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
-                              {layout.name}{" "}
-                              <span className="text-[11px] text-slate-400 font-mono">
-                                /{layout.slug}
-                              </span>
-                            </span>
-                          </label>
-                        );
-                      })}
-                    {visibleTemplates.length === 0 ? (
-                      <p className="px-3 py-4 text-xs text-center text-slate-400">
-                        {isEventPost
-                          ? "Chưa có layout mẫu Sự kiện."
-                          : "Chưa có layout mẫu Tin tức."}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {newsCategories.map((c) => {
+                  const on = categoryIds.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() =>
+                        setCategoryIds((prev) =>
+                          prev.includes(c.id)
+                            ? prev.filter((x) => x !== c.id)
+                            : [...prev, c.id],
+                        )
+                      }
+                      className={
+                        "px-2.5 py-1 text-xs font-medium rounded-md border " +
+                        (on
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white dark:bg-[#1a2436] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#202c44]")
+                      }
+                    >
+                      {localizeCategory(c.name)}
+                    </button>
+                  );
+                })}
+              </div>
+              {categoryIds.length === 0 ? (
+                <p className="text-[11px] text-amber-600">
+                  Chọn ít nhất một danh mục để bài hiện đúng chỗ.
+                </p>
               ) : null}
             </div>
-            <button
-              type="button"
-              onClick={createLayoutFromPost}
-              disabled={
-                !postId ||
-                templateLayoutIds.length === 0 ||
-                cloneMutation.isPending
-              }
-              className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {cloneMutation.isPending
-                ? "Đang tạo layout…"
-                : `Tạo ${templateLayoutIds.length || ""} layout từ bài đăng`}
-            </button>
-          </div>
-          {templateLayoutIds.length > 0 && slug ? (
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 space-y-0.5">
-              URL public:
-              {templateLayoutIds.map((id) => {
-                const l = layoutsQuery.data?.find((x) => x.id === id);
-                return l ? (
-                  <div
-                    key={id}
-                    className="font-mono text-slate-700 dark:text-slate-200"
-                  >
-                    /{[l.slug, slug].filter(Boolean).join("/")}
-                  </div>
-                ) : null;
-              })}
-            </div>
-          ) : null}
+          ) : (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Bài sự kiện luôn thuộc danh mục <b>Sự kiện</b>.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => void createLayoutFromPost()}
+            disabled={
+              !postId ||
+              cloneMutation.isPending ||
+              (kind === "news" && categoryIds.length === 0)
+            }
+            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {cloneMutation.isPending
+              ? "Đang tạo trang…"
+              : attachedLayouts.length
+                ? "Tạo thêm trang từ bài đăng"
+                : "Tạo trang public từ bài đăng"}
+          </button>
           {!postId ? (
             <p className="text-[11px] text-amber-600 mt-2">
               Lưu draft trước khi tạo layout.
@@ -818,23 +829,94 @@ export function PostComposerView() {
       </div>
 
       {/* Save/publish action moved to a sticky bottom bar (was in the top header). */}
-      <div className="sticky bottom-0 z-10 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#1a2436]/95 backdrop-blur px-6 py-3 flex justify-end">
+      <div className="sticky bottom-0 z-10 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#1a2436]/95 backdrop-blur px-6 py-3 flex justify-end gap-2 flex-wrap">
+        {/* Ba hành động thay cho một nút "Lưu draft": trước đây muốn bài lên web
+            phải lưu ở đây rồi chuyển sang trình sửa layout mới bấm publish được. */}
         <button
           type="button"
-          onClick={saveDraft}
-          disabled={saveMutation.isPending}
+          onClick={() => void saveDraft()}
+          disabled={busy}
           data-tour="post-save"
+          className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-50"
+        >
+          {saveMutation.isPending ? "Đang lưu…" : "Lưu"}
+        </button>
+        <button
+          type="button"
+          onClick={saveAndSchedule}
+          disabled={busy}
+          className="px-4 py-2 text-sm font-semibold text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 disabled:opacity-50"
+        >
+          Lưu và lên lịch
+        </button>
+        <button
+          type="button"
+          onClick={() => void savePublishNow()}
+          disabled={busy}
           className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {saveMutation.isPending
-            ? "Đang lưu…"
-            : canSchedule
-              ? "Lên lịch xuất bản"
-              : postId
-                ? "Cập nhật bài đăng"
-                : "Lưu draft"}
+          {publishMutation.isPending
+            ? "Đang xuất bản…"
+            : "Lưu và xuất bản ngay"}
         </button>
       </div>
+
+      {/* Bài MỚI: chốt loại bài trước khi vào soạn. Loại bài quyết định layout mẫu
+          và nơi bài xuất hiện ở trang công khai, nên hỏi ngay từ đầu sẽ gọn hơn là
+          để người dùng soạn xong mới đi tìm layout. */}
+      {!postId && !kind ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white dark:bg-[#1a2436] rounded-xl shadow-xl w-full max-w-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+              Bạn muốn đăng gì?
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              Chọn loại bài để hệ thống dùng đúng layout và đưa bài vào đúng
+              chỗ.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setKind("news")}
+                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+              >
+                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                  Tin tức
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  Bài sẽ xuất hiện ở mục Tin tức trên trang chủ và trang
+                  /tin-tuc. Bạn chọn được nhiều danh mục cho cùng một bài.
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setKind("event")}
+                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+              >
+                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                  Sự kiện
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  Bài sẽ xuất hiện ở mục Sự kiện sắp tới và có đường dẫn
+                  /su-kien. Cần điền thời gian và địa điểm diễn ra.
+                </span>
+              </button>
+            </div>
+            <div className="mt-5 flex justify-end">
+              <Link
+                href="/admin/posts/list"
+                className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:underline"
+              >
+                Huỷ
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {pickerOpen ? (
         <MediaPickerModal

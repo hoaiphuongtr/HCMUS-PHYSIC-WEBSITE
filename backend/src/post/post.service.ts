@@ -129,7 +129,7 @@ const HAS_PUBLIC_CONTENT: Prisma.PostWhereInput = {
 const categoryWhere = (slug: string, publicOnly: boolean) => ({
   layouts: {
     some: {
-      category: { slug },
+      categoryLinks: { some: { category: { slug } } },
       ...(publicOnly ? { isPublished: true, deletedAt: null } : {}),
     },
   },
@@ -810,7 +810,21 @@ export class PostService {
     // mẫu — Câu lạc bộ" và "Layout mẫu — Tin khoa học" thì mỗi trang mang danh
     // mục của layout đó, và bài hiện dưới CẢ HAI bộ lọc. Trước đây luôn bơm danh
     // mục của bài nên trang câu lạc bộ vẫn hiện breadcrumb "Tin học vụ".
-    const layoutCategory = template.category;
+    // Người dùng chọn danh mục ở trình soạn bài; không chọn thì dùng của layout
+    // mẫu (vd bài sự kiện luôn là danh mục Sự kiện).
+    const requested = Array.from(new Set(body.categoryIds ?? [])).filter(Boolean);
+    const categoryIds = requested.length
+      ? requested
+      : template.categoryId
+        ? [template.categoryId]
+        : [];
+    const primaryCategoryId = categoryIds[0] ?? template.categoryId ?? null;
+    const layoutCategory = primaryCategoryId
+      ? await this.prisma.category.findUnique({
+          where: { id: primaryCategoryId },
+          select: { slug: true, name: true },
+        })
+      : null;
     const titleVi = viOf(post.title);
     const injectPayload: PostInjectPayload = {
       title: titleVi,
@@ -847,12 +861,23 @@ export class PostService {
         // Scope the layout to the post's department so dept-scoped public feeds
         // (syncNewsFeedSnapshots) place it correctly and never on the homepage.
         departmentId: post.departmentId,
-        // Danh mục kế thừa từ LAYOUT MẪU — đây là nguồn sự thật cho bộ lọc danh
-        // mục ở trang công khai và cho breadcrumb của chính trang này.
-        categoryId: template.categoryId,
+        // Danh mục CHÍNH (breadcrumb): danh mục đầu tiên người dùng chọn, không
+        // có thì lấy của layout mẫu.
+        categoryId: primaryCategoryId,
       },
       select: { id: true, slug: true },
     });
+    // Bảng nối mới là nguồn cho bộ lọc: một trang có thể nằm dưới nhiều danh mục
+    // mà vẫn chỉ có một URL.
+    if (categoryIds.length) {
+      await this.prisma.pageLayoutCategoryLink.createMany({
+        data: categoryIds.map((categoryId) => ({
+          pageLayoutId: layout.id,
+          categoryId,
+        })),
+        skipDuplicates: true,
+      });
+    }
     // Gắn bài vào một layout = nội dung đã sẵn sàng có trang: đưa bài đang ở
     // nháp sang "chờ xuất bản" (PENDING). Không đụng bài đã SCHEDULED/PUBLISHED.
     if (post.status === 'DRAFT') {
@@ -863,6 +888,77 @@ export class PostService {
     }
     await this.cache.clear();
     return layout;
+  }
+
+  /**
+   * Xuất bản (hoặc lên lịch) các layout của bài, gọi thẳng từ trình soạn bài.
+   *
+   * Trang công khai lấy LAYOUT làm nguồn sự thật, nên trước đây muốn bài lên web
+   * phải rời trình soạn bài sang trình sửa layout rồi mới bấm publish. Đây vẫn là
+   * hành động CÓ CHỦ Ý của người dùng (nút "Lưu và xuất bản ngay"), không phải tự
+   * động publish sau lưng họ.
+   */
+  async publishAttachedLayouts(
+    id: string,
+    userId: string,
+    roleName: string,
+    departmentId: string | null,
+    scheduledAt?: Date | null,
+  ) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post || post.deletedAt) throw PostNotFoundException;
+    if (!canAccessDepartment(roleName, departmentId, post.departmentId)) {
+      throw PostNotFoundException;
+    }
+    const layouts = await this.prisma.pageLayout.findMany({
+      where: { sourcePostId: id, deletedAt: null },
+      select: { id: true, slug: true, isPublished: true },
+    });
+    if (!layouts.length) {
+      return { ok: false, reason: 'no-layout' as const, published: 0 };
+    }
+
+    if (scheduledAt) {
+      await this.pageLayoutRepo.scheduleManyPublish(
+        layouts.map((l) => l.id),
+        scheduledAt,
+      );
+      await this.prisma.post.update({
+        where: { id },
+        data: { status: 'SCHEDULED', scheduledAt },
+      });
+      await this.cache.clear();
+      return { ok: true, scheduled: layouts.length };
+    }
+
+    let published = 0;
+    const skipped: string[] = [];
+    for (const layout of layouts) {
+      if (layout.isPublished) continue;
+      // Không cướp đường dẫn của một trang khác đang xuất bản.
+      const conflict = await this.pageLayoutRepo.findAnyPublishedWithSlug(
+        layout.slug,
+        layout.id,
+      );
+      if (conflict) {
+        skipped.push(layout.slug);
+        continue;
+      }
+      await this.pageLayoutRepo.publish(layout.id);
+      await this.pageLayoutRepo.snapshotPublishedVersion(layout.id, userId);
+      published += 1;
+    }
+    // Kéo trạng thái bài theo layout + dựng lại snapshot feed + revalidate.
+    const { slugs } = await this.syncStatusFromLayouts(id);
+    await this.cache.clear();
+    this.publicRevalidate.trigger([
+      'sitemap',
+      'page:trang-chu',
+      `post:${id}`,
+      ...layouts.map((l) => `page:${l.slug}`),
+      ...slugs.map((sl) => `page:${sl}`),
+    ]);
+    return { ok: true, published, skipped };
   }
 
   private async findByIdOrThrow(id: string) {

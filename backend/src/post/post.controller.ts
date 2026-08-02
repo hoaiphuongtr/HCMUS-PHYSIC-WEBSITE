@@ -182,6 +182,25 @@ export class PostController {
     return this.postService.restore(id, userId, roleName, departmentId);
   }
 
+  // Xuất bản / lên lịch các layout của bài ngay từ trình soạn bài, khỏi phải
+  // chuyển sang trình sửa layout chỉ để bấm publish.
+  @Post(':id/publish-layouts')
+  publishLayouts(
+    @Param('id') id: string,
+    @Body() body: { scheduledAt?: string | null },
+    @ActiveUser('userId') userId: string,
+    @ActiveUser('roleName') roleName: string,
+    @ActiveUser('departmentId') departmentId: string | null,
+  ) {
+    return this.postService.publishAttachedLayouts(
+      id,
+      userId,
+      roleName,
+      departmentId,
+      body?.scheduledAt ? new Date(body.scheduledAt) : null,
+    );
+  }
+
   @Post(':id/clone-into-layout')
   @ZodSerializerDto(PostDraftResDTO)
   cloneIntoLayout(

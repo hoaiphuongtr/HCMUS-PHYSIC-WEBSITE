@@ -801,10 +801,24 @@ export const postApi = {
     authFetch<{ ok: boolean }>(`/posts/${id}/restore`, { method: "POST" }),
   purge: (id: string) =>
     authFetch<{ ok: boolean }>(`/posts/${id}/purge`, { method: "DELETE" }),
+  // Xuất bản / lên lịch các layout của bài ngay từ trình soạn bài (khỏi phải sang
+  // trình sửa layout chỉ để bấm publish). scheduledAt null = xuất bản ngay.
+  publishLayouts: (id: string, scheduledAt?: string | null) =>
+    authFetch<{
+      ok: boolean;
+      published?: number;
+      scheduled?: number;
+      skipped?: string[];
+      reason?: string;
+    }>(`/posts/${id}/publish-layouts`, {
+      method: "POST",
+      body: JSON.stringify({ scheduledAt: scheduledAt ?? null }),
+    }),
   cloneIntoLayout: (
     id: string,
     body: {
       templateLayoutId: string;
+      categoryIds?: string[];
       layoutName?: string;
       layoutSlug?: string;
     },

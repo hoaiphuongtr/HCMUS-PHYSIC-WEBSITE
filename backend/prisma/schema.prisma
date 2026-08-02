@@ -297,6 +297,7 @@ model Category {
   updatedAt DateTime @updatedAt
 
   layouts PageLayout[] @relation("PageLayoutCategory")
+  layoutLinks PageLayoutCategoryLink[]
 
   @@index([slug])
 }
@@ -436,6 +437,10 @@ model PageLayout {
   sourcePost    Post?               @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
   department    Department?         @relation("PageLayoutDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   category      Category?           @relation("PageLayoutCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  // Một trang tin có thể nằm dưới NHIỀU danh mục (vd vừa Câu lạc bộ vừa Tin
+  // học vụ) mà vẫn chỉ có MỘT URL. categoryId ở trên là danh mục CHÍNH, dùng
+  // cho breadcrumb; bảng nối này mới là nguồn cho bộ lọc danh mục.
+  categoryLinks PageLayoutCategoryLink[]
   widgets       WidgetInstance[]
   seoMetadata   SEOMetadata?
   versions      PageLayoutVersion[]
@@ -448,6 +453,17 @@ model PageLayout {
   @@index([scheduledAt])
   @@index([sourcePostId])
   @@index([deletedAt])
+}
+
+model PageLayoutCategoryLink {
+  pageLayoutId String
+  categoryId   String
+
+  pageLayout PageLayout @relation(fields: [pageLayoutId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([pageLayoutId, categoryId])
+  @@index([categoryId])
 }
 
 enum PageLayoutVersionStatus {

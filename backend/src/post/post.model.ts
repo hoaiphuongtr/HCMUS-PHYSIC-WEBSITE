@@ -29,6 +29,9 @@ export type UpsertPostBodyType = z.infer<typeof UpsertPostBodySchema>;
 
 export const CloneIntoLayoutBodySchema = z.object({
   templateLayoutId: z.string().min(1),
+  // Danh mục của TRANG. Bỏ trống thì lấy danh mục của layout mẫu. Nhiều danh mục
+  // cho một trang là cách để bài hiện dưới nhiều bộ lọc mà vẫn chỉ có một URL.
+  categoryIds: z.array(z.string().min(1)).optional(),
   layoutName: z.string().min(1).max(300).optional(),
   layoutSlug: z.string().min(1).max(300).optional(),
 });
