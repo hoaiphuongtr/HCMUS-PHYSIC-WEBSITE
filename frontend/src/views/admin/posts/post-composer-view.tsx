@@ -375,6 +375,59 @@ export function PostComposerView() {
   const previewCover = resolveMediaUrl(coverUrl);
   const attachedLayouts = postQuery.data?.layouts ?? [];
 
+  // Bài MỚI chưa chọn loại: chỉ hiện hộp thoại, KHÔNG dựng trình soạn phía sau.
+  // Để editor hiện mờ sau lớp phủ dễ khiến người dùng tưởng đã vào soạn được rồi.
+  if (!postId && !kind) {
+    return (
+      <div className="flex items-center justify-center h-full px-4 bg-slate-50 dark:bg-[#111827]">
+        <div className="bg-white dark:bg-[#1a2436] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            Bạn muốn đăng gì?
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+            Chọn loại bài để hệ thống dùng đúng layout và đưa bài vào đúng chỗ.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setKind("news")}
+              className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+            >
+              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Tin tức
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Bài sẽ xuất hiện ở mục Tin tức trên trang chủ và trang /tin-tuc.
+                Bạn chọn được nhiều danh mục cho cùng một bài.
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setKind("event")}
+              className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+            >
+              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Sự kiện
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Bài sẽ xuất hiện ở mục Sự kiện sắp tới và có đường dẫn /su-kien.
+                Cần điền thời gian và địa điểm diễn ra.
+              </span>
+            </button>
+          </div>
+          <div className="mt-5 flex justify-end">
+            <Link
+              href="/admin/posts/list"
+              className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:underline"
+            >
+              Huỷ
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full overflow-auto">
       <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] flex items-center justify-between flex-wrap gap-3">
@@ -400,26 +453,54 @@ export function PostComposerView() {
       </header>
 
       <div className="flex-1 px-6 py-5 space-y-6">
-        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] p-1 text-xs font-medium">
-          {(["vi", "en"] as Locale[]).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
+        {/* Trạng thái nằm ngang hàng với tab ngôn ngữ để nhường trọn hàng dưới
+            cho tiêu đề — trước đây nó chiếm 1/3 hàng tiêu đề khá phí chỗ. */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] p-1 text-xs font-medium">
+            {(["vi", "en"] as Locale[]).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                className={
+                  "px-3 py-1.5 rounded-md transition-colors " +
+                  (lang === l
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202c44]")
+                }
+              >
+                {l === "vi" ? "Tiếng Việt" : "English"}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Trạng thái KHÔNG còn chọn tay: nó do nút lưu quyết định (Lưu = Nháp,
+                Lưu và lên lịch = Lên lịch, Lưu và xuất bản ngay = Công khai). Bày
+                ra ô chọn chỉ khiến người dùng đặt một trạng thái mà hệ thống lại
+                ghi đè theo trạng thái layout. */}
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              Trạng thái bài đăng
+            </span>
+            <span
               className={
-                "px-3 py-1.5 rounded-md transition-colors " +
-                (lang === l
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#202c44]")
+                "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium " +
+                (status === "PUBLISHED"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : status === "SCHEDULED"
+                    ? "bg-amber-100 text-amber-700"
+                    : status === "PENDING"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-slate-100 text-slate-700")
               }
+              title="Trạng thái tự đặt theo nút bạn bấm ở dưới cùng"
             >
-              {l === "vi" ? "Tiếng Việt" : "English"}
-            </button>
-          ))}
+              {STATUS_LABELS[status]}
+            </span>
+          </div>
         </div>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
+        <section>
+          <div>
             <label
               className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
               htmlFor="post-title"
@@ -440,32 +521,6 @@ export function PostComposerView() {
                   : "e.g. HK2 course registration announcement"
               }
             />
-          </div>
-          <div>
-            {/* Trạng thái KHÔNG còn chọn tay: nó do nút lưu quyết định (Lưu = Nháp,
-                Lưu và lên lịch = Lên lịch, Lưu và xuất bản ngay = Công khai). Bày
-                ra ô chọn chỉ khiến người dùng đặt một trạng thái mà hệ thống lại
-                ghi đè theo trạng thái layout. */}
-            <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-              Trạng thái bài đăng
-            </span>
-            <span
-              className={
-                "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium " +
-                (status === "PUBLISHED"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : status === "SCHEDULED"
-                    ? "bg-amber-100 text-amber-700"
-                    : status === "PENDING"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-slate-100 text-slate-700")
-              }
-            >
-              {STATUS_LABELS[status]}
-            </span>
-            <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
-              Trạng thái tự đặt theo nút bạn bấm ở dưới cùng.
-            </p>
           </div>
         </section>
 
@@ -679,58 +734,62 @@ export function PostComposerView() {
           />
         </section>
 
-        <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
-          <h2 className="text-sm font-semibold text-content-1000 dark:text-slate-100 mb-3">
-            Thông tin sự kiện (tuỳ chọn)
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                htmlFor="event-start"
-              >
-                Bắt đầu
-              </label>
-              <input
-                id="event-start"
-                type="datetime-local"
-                value={eventStartAt}
-                onChange={(e) => setEventStartAt(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
-              />
+        {/* Chỉ bài SỰ KIỆN mới cần thời gian/địa điểm. Trước đây khối này luôn
+            hiện nên chọn "Tin tức" xong vẫn thấy ô nhập sự kiện, rất khó hiểu. */}
+        {kind === "event" ? (
+          <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
+            <h2 className="text-sm font-semibold text-content-1000 dark:text-slate-100 mb-3">
+              Thông tin sự kiện
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  htmlFor="event-start"
+                >
+                  Bắt đầu
+                </label>
+                <input
+                  id="event-start"
+                  type="datetime-local"
+                  value={eventStartAt}
+                  onChange={(e) => setEventStartAt(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <div>
+                <label
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  htmlFor="event-end"
+                >
+                  Kết thúc
+                </label>
+                <input
+                  id="event-end"
+                  type="datetime-local"
+                  value={eventEndAt}
+                  onChange={(e) => setEventEndAt(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <div>
+                <label
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  htmlFor="event-location"
+                >
+                  Địa điểm
+                </label>
+                <input
+                  id="event-location"
+                  value={eventLocation}
+                  onChange={(e) => setEventLocation(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Ví dụ: Cơ sở Nguyễn Văn Cừ"
+                />
+              </div>
             </div>
-            <div>
-              <label
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                htmlFor="event-end"
-              >
-                Kết thúc
-              </label>
-              <input
-                id="event-end"
-                type="datetime-local"
-                value={eventEndAt}
-                onChange={(e) => setEventEndAt(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-            <div>
-              <label
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-                htmlFor="event-location"
-              >
-                Địa điểm
-              </label>
-              <input
-                id="event-location"
-                value={eventLocation}
-                onChange={(e) => setEventLocation(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
-                placeholder="Ví dụ: Cơ sở Nguyễn Văn Cừ"
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
           <h2 className="text-sm font-semibold text-content-1000 dark:text-slate-100 mb-3">
@@ -860,63 +919,6 @@ export function PostComposerView() {
             : "Lưu và xuất bản ngay"}
         </button>
       </div>
-
-      {/* Bài MỚI: chốt loại bài trước khi vào soạn. Loại bài quyết định layout mẫu
-          và nơi bài xuất hiện ở trang công khai, nên hỏi ngay từ đầu sẽ gọn hơn là
-          để người dùng soạn xong mới đi tìm layout. */}
-      {!postId && !kind ? (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-white dark:bg-[#1a2436] rounded-xl shadow-xl w-full max-w-lg p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-              Bạn muốn đăng gì?
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-              Chọn loại bài để hệ thống dùng đúng layout và đưa bài vào đúng
-              chỗ.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setKind("news")}
-                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
-              >
-                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                  Tin tức
-                </span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">
-                  Bài sẽ xuất hiện ở mục Tin tức trên trang chủ và trang
-                  /tin-tuc. Bạn chọn được nhiều danh mục cho cùng một bài.
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setKind("event")}
-                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
-              >
-                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                  Sự kiện
-                </span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">
-                  Bài sẽ xuất hiện ở mục Sự kiện sắp tới và có đường dẫn
-                  /su-kien. Cần điền thời gian và địa điểm diễn ra.
-                </span>
-              </button>
-            </div>
-            <div className="mt-5 flex justify-end">
-              <Link
-                href="/admin/posts/list"
-                className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:underline"
-              >
-                Huỷ
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {pickerOpen ? (
         <MediaPickerModal
