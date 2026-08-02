@@ -97,6 +97,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # Trần bộ nhớ: Node THOÁT khi cạn heap (rồi restart) thay vì quay vòng GC.
+    mem_limit: 1g
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/categories').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
@@ -112,6 +121,7 @@ services:
       # redeploy and anything copied in with `docker cp` is silently lost with them.
       - ./backend/uploads:/app/uploads
     environment:
+      NODE_OPTIONS: --max-old-space-size=640
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
       REDIS_URL: redis://redis:6379
       # Both LLM answers and embeddings now go through Gemini (GEMINI_API_KEY /
@@ -139,12 +149,22 @@ services:
         # (same as the public site). Without this, injected post-body images 404 in
         # the preview.
         NEXT_PUBLIC_IMAGE_FETCH_ORIGIN: ${NEXT_PUBLIC_IMAGE_FETCH_ORIGIN:-http://backend:3001}
+    # Trần bộ nhớ: Node THOÁT khi cạn heap (rồi restart) thay vì quay vòng GC.
+    mem_limit: 768m
+    memswap_limit: 768m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://admin:3000/login').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
     # KHÔNG map cổng 3000 trên host: Caddy giữ host:3000 và proxy tới admin:3000
     # qua mạng nội bộ (admin phục vụ HTTPS tại https://phys.hcmus.edu.vn:3000).
     environment:
+      NODE_OPTIONS: --max-old-space-size=448
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     depends_on:
       - backend
@@ -159,12 +179,22 @@ services:
         # The image optimizer runs in-container and cannot hairpin to the host's
         # public IP, so it fetches media from the backend service directly.
         NEXT_PUBLIC_IMAGE_FETCH_ORIGIN: ${NEXT_PUBLIC_IMAGE_FETCH_ORIGIN:-http://backend:3001}
+    # Trần bộ nhớ: Node THOÁT khi cạn heap (rồi restart) thay vì quay vòng GC.
+    mem_limit: 1g
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/vi').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
     security_opt:
       - seccomp:unconfined
     ports:
       - "3002:3002"
     environment:
+      NODE_OPTIONS: --max-old-space-size=640
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
       # NEXT_PUBLIC_API_URL (the public IP) is baked in for the browser, but a container
       # on a NAT'd host cannot reach that IP. SSR fetches use this internal base instead;
