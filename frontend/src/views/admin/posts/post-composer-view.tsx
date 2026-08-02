@@ -445,8 +445,9 @@ export function PostComposerView() {
               {postId ? "Chỉnh sửa bài đăng" : "Tạo bài đăng mới"}
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Lưu draft để soạn nội dung. Tạo layout để có trang public — một
-              bài có thể được gắn vào nhiều layout khác nhau.
+              {kind === "event"
+                ? "Bài sự kiện — hiện ở mục Sự kiện sắp tới, đường dẫn /su-kien."
+                : "Bài tin tức — chọn danh mục rồi lưu; trang public tạo và cập nhật tự động."}
             </p>
           </div>
         </div>
