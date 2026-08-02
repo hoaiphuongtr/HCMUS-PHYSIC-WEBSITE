@@ -19,6 +19,10 @@ import { buildCategoryOptions, categoryLabel } from "@/lib/post-categories";
 
 type TabKey = "mine" | "published" | "trash";
 
+// Tập rỗng dùng chung: tạo Set mới mỗi lần render sẽ làm mọi thứ so sánh
+// tham chiếu tưởng là đã đổi.
+const EMPTY_SELECTION: ReadonlySet<string> = new Set<string>();
+
 const PAGE_SIZE = 12;
 
 const STATUS_STYLES: Record<ContentStatusValue, string> = {
@@ -198,6 +202,101 @@ export function PostListView() {
     },
   });
 
+  // ── Chọn nhiều ────────────────────────────────────────────────────────────
+  // Bỏ chọn khi đổi tab/trang/bộ lọc: id ở danh sách cũ không còn nghĩa gì, giữ
+  // lại thì dễ bấm nhầm "xóa tất cả" lên những bài đang không nhìn thấy.
+  const viewKey = `${tab}|${page}|${category}|${statusInTab}|${search}`;
+  const [selection, setSelection] = useState<{
+    key: string;
+    ids: ReadonlySet<string>;
+  }>({ key: viewKey, ids: EMPTY_SELECTION });
+  // Suy ra theo khóa khung nhìn thay vì dùng useEffect để reset: không có nhịp
+  // render trung gian còn sót lựa chọn của khung nhìn cũ.
+  const selected = selection.key === viewKey ? selection.ids : EMPTY_SELECTION;
+
+  const setSelected = (
+    update: Set<string> | ((prev: ReadonlySet<string>) => Set<string>),
+  ) =>
+    setSelection((prev) => ({
+      key: viewKey,
+      ids:
+        typeof update === "function"
+          ? update(prev.key === viewKey ? prev.ids : EMPTY_SELECTION)
+          : update,
+    }));
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // Chạy tuần tự chứ không Promise.all: mỗi thao tác đều kéo theo dựng lại
+  // snapshot feed ở backend, bắn song song hàng chục cái sẽ dí chết server.
+  const runBulk = async (
+    ids: string[],
+    fn: (id: string) => Promise<unknown>,
+  ) => {
+    let ok = 0;
+    const failed: string[] = [];
+    for (const id of ids) {
+      try {
+        await fn(id);
+        ok += 1;
+      } catch {
+        failed.push(id);
+      }
+    }
+    return { ok, failed };
+  };
+
+  const bulkMutation = useMutation({
+    mutationKey: ["POSTS", "BULK"],
+    mutationFn: async (input: {
+      ids: string[];
+      action: "delete" | "restore" | "purge";
+    }) => {
+      const fn =
+        input.action === "delete"
+          ? postApi.remove
+          : input.action === "restore"
+            ? postApi.restore
+            : postApi.purge;
+      return runBulk(input.ids, fn);
+    },
+    onSuccess: ({ ok, failed }) => {
+      if (failed.length) {
+        toast.warn(`Xong ${ok} bài, ${failed.length} bài lỗi`);
+      } else {
+        toast.success(`Đã xử lý ${ok} bài`);
+      }
+      setSelected(new Set());
+      queryClient.invalidateQueries({ queryKey: ["POSTS"] });
+    },
+    onError: (err: { message?: string }) => {
+      toast.error(err.message || "Không thể thực hiện hàng loạt");
+    },
+  });
+
+  const confirmBulk = async (
+    action: "delete" | "restore" | "purge",
+    label: string,
+    description: string,
+    destructive: boolean,
+  ) => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    const ok = await confirm({
+      title: `${label} ${ids.length} bài đã chọn?`,
+      description,
+      confirmLabel: label,
+      destructive,
+    });
+    if (ok) bulkMutation.mutate({ ids, action });
+  };
+
   const confirmDelete = async (id: string, title: string) => {
     const ok = await confirm({
       title: `Xóa bài "${title}"?`,
@@ -239,6 +338,23 @@ export function PostListView() {
 
   const serverPaged = tab === "published" || tab === "trash";
   const items = tab === "mine" ? mineSlice : rawItems;
+
+  // Ô chọn ở đầu bảng chỉ thao tác trên các bài ĐANG HIỂN THỊ, không đụng tới
+  // những trang khác — người dùng chỉ thấy được từng này bài.
+  const allOnPageSelected =
+    items.length > 0 && items.every((p) => selected.has(p.id));
+  const someOnPageSelected =
+    !allOnPageSelected && items.some((p) => selected.has(p.id));
+  const toggleAllOnPage = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (items.every((p) => next.has(p.id))) {
+        for (const p of items) next.delete(p.id);
+      } else {
+        for (const p of items) next.add(p.id);
+      }
+      return next;
+    });
   const total = serverPaged ? (data?.total ?? 0) : mineTotal;
   const totalPages = serverPaged ? (data?.totalPages ?? 1) : mineTotalPages;
   const hasFilters = Boolean(category || statusInTab || search);
@@ -392,6 +508,20 @@ export function PostListView() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-[#121a2b] border-b border-slate-200 dark:border-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
                   <tr>
+                    <th className="pl-4 pr-1 py-3 text-left font-semibold w-8">
+                      <input
+                        type="checkbox"
+                        aria-label="Chọn tất cả bài trên trang"
+                        className="w-4 h-4 accent-blue-600 cursor-pointer align-middle"
+                        checked={allOnPageSelected}
+                        ref={(el) => {
+                          // Trạng thái "gạch ngang" khi chọn một phần — chỉ đặt được
+                          // bằng JS, không có thuộc tính HTML tương ứng.
+                          if (el) el.indeterminate = someOnPageSelected;
+                        }}
+                        onChange={toggleAllOnPage}
+                      />
+                    </th>
                     <th className="px-4 py-3 text-left font-semibold">
                       Bài đăng
                     </th>
@@ -416,8 +546,22 @@ export function PostListView() {
                   {items.map((post) => (
                     <tr
                       key={post.id}
-                      className="hover:bg-slate-50 dark:hover:bg-[#202c44]"
+                      className={
+                        "hover:bg-slate-50 dark:hover:bg-[#202c44] " +
+                        (selected.has(post.id)
+                          ? "bg-blue-50/60 dark:bg-[#1c2942]"
+                          : "")
+                      }
                     >
+                      <td className="pl-4 pr-1 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`Chọn ${localize(post.title, "vi")}`}
+                          className="w-4 h-4 accent-blue-600 cursor-pointer align-middle"
+                          checked={selected.has(post.id)}
+                          onChange={() => toggleOne(post.id)}
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <Link
@@ -542,6 +686,75 @@ export function PostListView() {
           </>
         )}
       </div>
+
+      {/* Thanh hành động hàng loạt: chỉ hiện khi có bài được chọn. Đặt cố định
+          đáy màn hình để cuộn tới đâu vẫn thao tác được, và luôn cho biết đang
+          chọn bao nhiêu bài trước khi bấm một nút không hoàn tác được. */}
+      {selected.size > 0 ? (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-[#1a2436] border border-slate-200 dark:border-slate-700 shadow-xl">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
+            Đã chọn {selected.size} bài
+          </span>
+          <span className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
+          {tab === "trash" ? (
+            <>
+              <button
+                type="button"
+                disabled={bulkMutation.isPending}
+                onClick={() =>
+                  confirmBulk(
+                    "restore",
+                    "Khôi phục tất cả",
+                    "Các bài đã chọn sẽ được đưa khỏi thùng rác về trạng thái trước khi xoá.",
+                    false,
+                  )
+                }
+                className="px-3 py-1.5 text-xs font-medium text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-50 disabled:opacity-50"
+              >
+                Khôi phục tất cả
+              </button>
+              <button
+                type="button"
+                disabled={bulkMutation.isPending}
+                onClick={() =>
+                  confirmBulk(
+                    "purge",
+                    "Xóa vĩnh viễn tất cả",
+                    "Các bài đã chọn và layout gắn với chúng sẽ bị xoá khỏi hệ thống. Thao tác này KHÔNG thể hoàn tác.",
+                    true,
+                  )
+                }
+                className="px-3 py-1.5 text-xs font-medium text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50 disabled:opacity-50"
+              >
+                Xóa vĩnh viễn tất cả
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={bulkMutation.isPending}
+              onClick={() =>
+                confirmBulk(
+                  "delete",
+                  "Xóa tất cả",
+                  "Các bài đã chọn sẽ được chuyển vào thùng rác và khôi phục được trong 30 ngày.",
+                  true,
+                )
+              }
+              className="px-3 py-1.5 text-xs font-medium text-rose-700 border border-rose-200 rounded-md hover:bg-rose-50 disabled:opacity-50"
+            >
+              Xóa tất cả
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:underline"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
