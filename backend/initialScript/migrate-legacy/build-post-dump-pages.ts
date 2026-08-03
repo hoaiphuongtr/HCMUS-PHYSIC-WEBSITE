@@ -37,6 +37,10 @@ const TARGETS: Record<string, string> = {
   'bai-baohoi-nghi-trong-nuoc-2026.html': 'bai-baohoi-nghi-trong-nuoc-2026',
   'bai-baohoi-nghi-thuoc-danh-muc-scopusisi-nam-2026.html':
     'bai-baohoi-nghi-thuoc-danh-muc-scopusisi-nam-2026',
+  // Dump ghi deleted=1 nhưng site cũ vẫn phục vụ bài này và trang tin bộ môn vẫn
+  // trỏ tới, nên lấy từ origin để giữ đúng hiện trạng công khai.
+  'vat-ly-dia-cau/tin-tuc/thong-tin-tuyen-dung-thang-032021':
+    'vat-ly-dia-cau/tin-tuc/thong-tin-tuyen-dung-thang-032021',
 };
 
 function fetchLegacy(path: string): Promise<string> {
@@ -71,9 +75,17 @@ function fetchLegacy(path: string): Promise<string> {
   });
 }
 
-/** Bóc nội dung `div.main.col-md-9` bằng cách đếm thẻ div lồng nhau. */
-function extractMain(html: string): string | null {
-  const open = /<div[^>]*class="main col-md-9"[^>]*>/.exec(html);
+/**
+ * Bóc phần nội dung bằng cách đếm thẻ div lồng nhau.
+ *
+ * Trang tĩnh dùng `div.main.col-md-9`, còn trang bài viết dùng
+ * `div.blogpost-content` (nằm trong `div.main.col-lg-9`) — thử lần lượt và lấy
+ * lớp hẹp nhất trước để không kéo theo tiêu đề/ngày đăng của khung blog.
+ */
+const CONTENT_CLASSES = ['blogpost-content', 'main col-md-9', 'main col-lg-9'];
+
+function extractByClass(html: string, cls: string): string | null {
+  const open = new RegExp(`<div[^>]*class="${cls}"[^>]*>`).exec(html);
   if (!open) return null;
   const from = open.index + open[0].length;
   let depth = 1;
@@ -83,6 +95,14 @@ function extractMain(html: string): string | null {
   while ((m = tag.exec(html))) {
     depth += m[0] === '<div' ? 1 : -1;
     if (depth === 0) return html.slice(from, m.index);
+  }
+  return null;
+}
+
+function extractMain(html: string): string | null {
+  for (const cls of CONTENT_CLASSES) {
+    const found = extractByClass(html, cls);
+    if (found && found.trim().length > 0) return found;
   }
   return null;
 }
