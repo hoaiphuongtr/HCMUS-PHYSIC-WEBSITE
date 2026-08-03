@@ -49,6 +49,8 @@ export const PostLayoutRefSchema = z.object({
   isPublished: z.boolean(),
   scheduledAt: z.date().nullable(),
   publishedAt: z.date().nullable(),
+  // Danh mục của trang, để trình soạn bài tick lại đúng khi mở bài cũ ra sửa.
+  categoryLinks: z.array(z.object({ categoryId: z.string() })).optional(),
 });
 
 export const CategoryRefSchema = z.object({

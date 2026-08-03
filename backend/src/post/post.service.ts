@@ -59,6 +59,9 @@ const postInclude = {
       isPublished: true,
       scheduledAt: true,
       publishedAt: true,
+      // Trình soạn bài cần biết trang đang thuộc danh mục nào để tick lại đúng
+      // khi mở bài cũ ra sửa.
+      categoryLinks: { select: { categoryId: true } },
     },
   },
 } as const;
@@ -95,6 +98,9 @@ const postListSelect = {
       isPublished: true,
       scheduledAt: true,
       publishedAt: true,
+      // Trình soạn bài cần biết trang đang thuộc danh mục nào để tick lại đúng
+      // khi mở bài cũ ra sửa.
+      categoryLinks: { select: { categoryId: true } },
     },
   },
 } as const;

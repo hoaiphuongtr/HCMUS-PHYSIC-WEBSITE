@@ -21,8 +21,6 @@ import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { MarkdownEditor } from "./markdown-editor";
 
-// Bài mới luôn gắn sẵn 2 tag SDG này. Bám theo SLUG chứ không phải tên hiển thị,
-// nên đổi tên tag trong quản trị vẫn gắn đúng tag (và đúng ảnh icon của nó).
 const STATUS_LABELS: Record<ContentStatusValue, string> = {
   DRAFT: "Nháp",
   PENDING: "Chờ xuất bản",
@@ -33,6 +31,8 @@ const STATUS_LABELS: Record<ContentStatusValue, string> = {
 const localizeCategory = (name: { vi?: string; en?: string } | string) =>
   typeof name === "string" ? name : (name.vi ?? name.en ?? "");
 
+// Bài mới luôn gắn sẵn 2 tag SDG này. Bám theo SLUG chứ không phải tên hiển thị,
+// nên đổi tên tag trong quản trị vẫn gắn đúng tag (và đúng ảnh icon của nó).
 const DEFAULT_TAG_SLUGS = ["sdg4", "sdg17"];
 
 // Chỉ còn HAI loại bài: tin tức và sự kiện. Mỗi loại ứng với một layout mẫu; các
@@ -171,6 +171,10 @@ export function PostComposerView() {
     setEventLocation(data.eventLocation ?? "");
     setScheduledAt(toLocalInput(data.scheduledAt));
     setKind(data.eventStartAt ? "event" : "news");
+    // Điền sẵn danh mục của trang đang gắn, để mở bài cũ ra sửa không phải chọn
+    // lại từ đầu (bấm vào một danh mục vẫn là bỏ nó khỏi bài như bình thường).
+    const linked = data.layouts?.[0]?.categoryLinks;
+    if (linked?.length) setCategoryIds(linked.map((l) => l.categoryId));
   }, [postQuery.data]);
 
   const commitTagDraft = () => {
@@ -797,10 +801,10 @@ export function PostComposerView() {
             Layout public
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Bạn có thể để trống — bài đăng sẽ là draft trong hệ thống. Khi muốn
-            xuất hiện ở public, chọn 1 layout mẫu và bấm "Tạo layout từ bài
-            đăng". Mỗi layout độc lập: bạn có thể tạo nhiều layout khác nhau từ
-            cùng bài đăng.
+            Chọn danh mục rồi bấm một trong ba nút lưu ở dưới cùng — trang
+            public được tạo và cập nhật tự động, không cần thao tác riêng. Một
+            bài chỉ có MỘT trang (một đường dẫn), nhưng nằm được dưới nhiều danh
+            mục.
           </p>
 
           {attachedLayouts.length ? (
@@ -853,7 +857,9 @@ export function PostComposerView() {
                   );
                 })}
               </div>
-              {categoryIds.length === 0 ? (
+              {/* Chỉ nhắc khi TẠO MỚI. Lúc sửa bài, bỏ hết danh mục là hành động
+                  có ý thức, không phải quên chọn — nhắc lại chỉ gây nhiễu. */}
+              {!postId && categoryIds.length === 0 ? (
                 <p className="text-[11px] text-amber-600">
                   Chọn ít nhất một danh mục để bài hiện đúng chỗ.
                 </p>

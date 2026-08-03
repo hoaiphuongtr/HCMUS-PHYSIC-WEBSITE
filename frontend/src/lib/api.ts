@@ -674,6 +674,7 @@ export type PostLayoutRef = {
   isPublished: boolean;
   scheduledAt: string | null;
   publishedAt: string | null;
+  categoryLinks?: { categoryId: string }[];
 };
 
 export type PostRecord = {
