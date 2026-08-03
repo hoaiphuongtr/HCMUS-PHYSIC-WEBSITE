@@ -479,5 +479,13 @@
   "mon-hoc/ham-phuc": "mon-hoc/phy10001-ham-phuc",
   "mon-hoc/thuc-hanh-vat-ly-co-so": "mon-hoc/phy10002-thuc-hanh-vat-ly-co-so",
   "mon-hoc/vat-ly-chat-ran": "mon-hoc/phy10010vat-ly-chat-ran",
-  "mon-hoc/vat-ly-thong-ke": "mon-hoc/phy10011-vat-ly-thong-ke"
+  "mon-hoc/vat-ly-thong-ke": "mon-hoc/phy10011-vat-ly-thong-ke",
+  "tin-tuc/ngay-truyen-thong-khoa-vat-ly--vat-ly-ky-thuat-nam-2023": "tin-tuc/ngay-truyen-thong-khoa-vat-ly-vat-ly-ky-thuat-nam-2023",
+  "vat-ly-dia-cau/tin-tuc/starship-va-sn10--cot-moc-thu-nghiem-bung-no-va-vi-dai": "vat-ly-dia-cau/tin-tuc/starship-va-sn10-cot-moc-thu-nghiem-bung-no-va-vi-dai",
+  "vat-ly-dia-cau/tin-tuc/thuc-hien-thi-nghiem-do-dia-vat-ly-thuoc-du-an-nha-may-loc-dau-long-son--goi-d": "vat-ly-dia-cau/tin-tuc/thuc-hien-thi-nghiem-do-dia-vat-ly-thuoc-du-an-nha-may-loc-dau-long-son-goi-d",
+  "vat-ly-tin-hoc/mon-hoc/mang-may-tinh": "mon-hoc/mang-may-tinh",
+  "vat-ly-tin-hoc/research/mang-may-tinh": "mon-hoc/mang-may-tinh",
+  "vat-ly-dia-cau/category/kien-thuc-thien-van-vu-tru-hoc": "vat-ly-dia-cau/tin-tuc",
+  "vat-ly-dia-cau/category/hoat-dong-clb-thien-van-usac": "vat-ly-dia-cau/tin-tuc",
+  "vat-ly-dia-cau/category/tin-tuc-thien-van-vu-tru-hoc": "vat-ly-dia-cau/tin-tuc"
 }
