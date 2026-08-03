@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
+import { localizedSummary } from "../fields/item-summary";
 import { localizedTextField } from "../fields/localized-text-field";
 import { localizedRichTextField } from "../fields/localized-rich-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
@@ -195,8 +196,22 @@ function fetchLatestNews(): Promise<LatestPost[]> {
   return newsInflight;
 }
 
-function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
+type LegacySection = { title: LocalizedString; html: LocalizedString };
+
+function LegacyPageBodyRender({
+  html,
+  sections,
+}: {
+  html: LocalizedString;
+  sections?: LegacySection[];
+}) {
   const { locale } = useLocale();
+  // Trang ngành gồm 9 mục (giới thiệu, chuẩn đầu ra, chương trình đào tạo…). Ghép
+  // hết vào một trang thì dài tới mức không ai cuộn hết, nên chia tab như site cũ.
+  // Chỉ những mục có nội dung thật mới thành tab.
+  const tabs = (sections ?? []).filter((sec) => t(sec.html, locale)?.trim());
+  const [active, setActive] = useState(0);
+  const activeIdx = Math.min(active, Math.max(0, tabs.length - 1));
   const prefix = `/${locale}`;
   const [news, setNews] = useState<LatestPost[]>([]);
   const [cats, setCats] = useState<SidebarCategory[]>([]);
@@ -230,7 +245,42 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
             không sinh thanh cuộn thừa); bảng rộng vẫn tràn min-content → cuộn ngang
             như cũ. */}
         <main className="min-w-0 overflow-x-auto pb-2 pr-2">
-          <LegacyHtmlRender html={html} injected={false} />
+          {tabs.length > 1 ? (
+            <>
+              <div
+                role="tablist"
+                aria-label={locale === "en" ? "Sections" : "Các mục"}
+                className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800 mb-5"
+              >
+                {tabs.map((sec, i) => (
+                  <button
+                    key={t(sec.title, locale) || i}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === activeIdx}
+                    onClick={() => setActive(i)}
+                    className={
+                      "px-3 py-2 text-sm font-semibold -mb-px border-b-2 transition-colors " +
+                      (i === activeIdx
+                        ? "border-blue-700 text-blue-700 dark:text-blue-300 dark:border-blue-400"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200")
+                    }
+                  >
+                    {t(sec.title, locale)}
+                  </button>
+                ))}
+              </div>
+              <LegacyHtmlRender
+                html={tabs[activeIdx]?.html ?? html}
+                injected={false}
+              />
+            </>
+          ) : (
+            <LegacyHtmlRender
+              html={tabs.length === 1 ? (tabs[0]?.html ?? html) : html}
+              injected={false}
+            />
+          )}
         </main>
         <aside className="space-y-8">
           <section>
@@ -307,9 +357,27 @@ function LegacyPageBodyRender({ html }: { html: LocalizedString }) {
 
 export const LegacyPageBody: ComponentConfig<{
   html: LocalizedString;
+  sections?: LegacySection[];
 }> = {
   label: "Legacy Page Body",
   defaultProps: { html: { vi: "", en: "" } },
-  fields: { html: localizedRichTextField("Nội dung trang") },
-  render: ({ html }) => <LegacyPageBodyRender html={html} />,
+  fields: {
+    html: localizedRichTextField("Nội dung trang"),
+    // Có mục thì trang hiện dạng TAB và bỏ qua "Nội dung trang"; để trống thì
+    // trang hiện một mạch như cũ. Nhờ vậy không phải thêm component mới và các
+    // trang legacy đang dùng vẫn chạy y nguyên.
+    sections: {
+      type: "array",
+      label: "Các mục (để trống = trang một mạch)",
+      getItemSummary: (item, i) =>
+        localizedSummary(item?.title, `Mục ${(i ?? 0) + 1}`),
+      arrayFields: {
+        title: localizedTextField("Tên mục"),
+        html: localizedRichTextField("Nội dung mục"),
+      },
+    },
+  },
+  render: ({ html, sections }) => (
+    <LegacyPageBodyRender html={html} sections={sections} />
+  ),
 };

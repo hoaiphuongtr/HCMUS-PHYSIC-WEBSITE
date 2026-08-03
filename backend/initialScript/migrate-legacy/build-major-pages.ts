@@ -7,8 +7,8 @@
  * pass missed them) and every one of those links 404s on the new site.
  *
  * Unlike a legacy `page`, a major is stored as NINE separate HTML columns — one
- * per tab of the old programme page. They are stitched into a single body under
- * the same headings the old site used, so the new page reads top-to-bottom.
+ * per tab of the old programme page. They stay as TABS (LegacyPageBody.sections):
+ * stitching them into one document made a page far too long to read.
  *
  * Same frame as the other migrated section pages: SiteHeader → PageHero →
  * LegacyPageBody → SiteFooter. Idempotent: re-running refreshes content in place.
@@ -77,18 +77,33 @@ type MajorLangRow = {
   title: string | null;
 } & Record<string, string | null | number>;
 
-/** Stitch the nine tabs into one document, skipping tabs with no real text. */
-const buildBody = (row: MajorLangRow | undefined, locale: 'vi' | 'en'): string => {
-  if (!row) return '';
-  const parts: string[] = [];
+/**
+ * Mỗi tab của trang ngành cũ là một cột HTML riêng, nên giữ nguyên dạng TAB thay vì
+ * ghép hết vào một trang: ghép lại thì trang dài tới mức không ai cuộn hết.
+ * Bỏ qua tab chỉ có markup rỗng ("<p>&nbsp;</p>") để không sinh tab trống.
+ */
+const buildSections = (
+  vi: MajorLangRow | undefined,
+  en: MajorLangRow | undefined,
+): { title: { vi: string; en: string }; html: { vi: string; en: string } }[] => {
+  const out: {
+    title: { vi: string; en: string };
+    html: { vi: string; en: string };
+  }[] = [];
   for (const section of SECTIONS) {
-    const html = transformLegacyHtml(row[section.col] as string | null);
-    // A tab that is only empty markup ("<p>&nbsp;</p>") must not leave a bare
-    // heading behind on the page.
-    if (html.replace(/<[^>]+>/g, '').trim().length < 10) continue;
-    parts.push(`<h2>${section[locale]}</h2>`, html);
+    const htmlVi = transformLegacyHtml(
+      (vi ?? en)?.[section.col] as string | null,
+    );
+    const htmlEn = transformLegacyHtml(en?.[section.col] as string | null);
+    const hasVi = htmlVi.replace(/<[^>]+>/g, '').trim().length >= 10;
+    const hasEn = htmlEn.replace(/<[^>]+>/g, '').trim().length >= 10;
+    if (!hasVi && !hasEn) continue;
+    out.push({
+      title: { vi: section.vi, en: section.en },
+      html: { vi: hasVi ? htmlVi : htmlEn, en: hasEn ? htmlEn : htmlVi },
+    });
   }
-  return parts.join('\n');
+  return out;
 };
 
 async function main(): Promise<void> {
@@ -140,8 +155,7 @@ async function main(): Promise<void> {
     const en = langs.find((l) => l.langid === 2);
     const titleVi = decodeEntities((vi?.title ?? en?.title ?? major.slug).trim());
     const titleEn = decodeEntities((en?.title ?? vi?.title ?? major.slug).trim());
-    const bodyVi = buildBody(vi ?? en, 'vi');
-    const bodyEn = buildBody(en, 'en') || bodyVi;
+    const sections = buildSections(vi, en);
     const heroBg =
       rewriteImagePath(major.bgimage) ?? rewriteImagePath(major.image) ?? '';
 
@@ -162,7 +176,9 @@ async function main(): Promise<void> {
           type: 'LegacyPageBody',
           props: {
             id: `body-${major.slug}`,
-            html: { vi: bodyVi, en: bodyEn },
+            // html để trống: khi có sections thì trang render dạng tab.
+            html: { vi: '', en: '' },
+            sections,
           },
         },
         { type: 'SiteFooter', props: { id: `ftr-${major.slug}` } },
@@ -184,7 +200,7 @@ async function main(): Promise<void> {
           },
         });
         updated++;
-        console.log(`  ~ ${slug}  (${bodyVi.length}b vi / ${bodyEn.length}b en)`);
+        console.log(`  ~ ${slug}  (${sections.length} muc)`);
       } else {
         const row = await prisma.pageLayout.create({
           data: {
@@ -199,7 +215,7 @@ async function main(): Promise<void> {
         });
         existingBySlug.set(slug, row.id);
         created++;
-        console.log(`  + ${slug}  (${bodyVi.length}b vi / ${bodyEn.length}b en)`);
+        console.log(`  + ${slug}  (${sections.length} muc)`);
       }
     } catch (err) {
       failed++;
