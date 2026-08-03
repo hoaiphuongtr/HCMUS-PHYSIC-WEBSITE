@@ -157,6 +157,17 @@
       ],
       "status": "done",
       "evidence": "P0 merge-departments.ts (canonical dept slugs incl. vat-ly-tin-hoc; faculty=dept_legacy_1). P1 departmentId on Post/Media/PageLayout (db push) + JWT payload; backfill-content-departments.ts (1587 posts + 1540 layouts stamped from legacy posts.deptid). P2 shared/helpers.ts departmentScopeWhere/mediaScopeWhere/canAccessDepartment threaded through post+media+page-layout services/controllers; 40 backend unit tests pass. P3 departmentId exposed in responses + client types + media modal gating. Verified via API: vlud_admin /posts=32 (all dept_legacy_6), own post 200 / cross-dept 404, /media shows shared assets. REMAINING: Phase 4 URL re-slug + landing pages + redirects. NOTE: department admins must re-login to get departmentId in their JWT. P4 DONE: re-slug-department-layouts.ts (388 bộ-môn layouts → <dept-slug>/tin-tuc/…; faculty-wide keep tin-tuc/), seed-department-landing-pages.ts (9 /<dept-slug> landing pages cloned from homepage), proxy.ts + legacy-redirects.json (397 redirects). Verified: /vi/tin-tuc/<x> → 308 → /vi/vat-ly-ung-dung/tin-tuc/<x>; new URL 200; /vi/vat-ly-ung-dung landing 200."
+    },
+    {
+      "id": "feat-016",
+      "name": "Legacy dead-link audit to exhaustion",
+      "description": "Replace hand-checking migrated URLs with a repeatable audit: extract every internal link out of the puckData of all published layouts, request each one following redirects, and report what is still dead grouped by content family. Then close the gap — migrate whatever the audit turns up that has real legacy content, redirect what moved, and prove the rest is dead on the legacy site itself rather than inventing pages to cover it.",
+      "dependencies": [
+        "feat-013",
+        "feat-015"
+      ],
+      "status": "done",
+      "evidence": "deploy/audit-dead-links.sh + deploy/build-deploy.sh (fe|be|all, refuses to build when behind remote). Audit follows redirects (curl -L): an earlier pass treated 307 as alive and so missed the whole 407-subject family. 646 internal paths → 21 dead, down from 585. Closed by: build-major-pages.ts (11 majors, tabbed sections), build-subject-pages.ts (407 subjects), build-class-staff-pages.ts (classes + leftover staffs under their dept), build-missing-dept-pages.ts (14 dept sub-pages the hardcoded-ID first pass never looked at), build-post-dump-pages.ts (3 pages created on the legacy site AFTER the 14/06/2026 dump, fetched from origin 112.78.11.146 with a Host header since the domain now points at the new site). legacy-redirects.json 397 → 517, incl. 13 subject links mapped by subjects.code rather than by name (curriculum tables link with English slugs or wrong codes). proxy.ts fix: consult the redirect map BEFORE bailing out on paths with a file extension — 51 .html redirects were silently dead. All 21 remaining links verified 404 on the legacy site itself by comparing <title> (Joomla soft-404s return HTTP 200 with a full-size page, so neither status code nor byte size is conclusive): scholarship/student-list indexes, 2 staff pages, and dept .html pages absent from every table of the dump."
     }
   ]
 }

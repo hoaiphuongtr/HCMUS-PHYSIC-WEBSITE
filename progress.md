@@ -1,5 +1,34 @@
 # Session Progress Log
 
+## Session 2026-08-03/04 — Soát link chết tới cạn (585 → 21)
+
+Tự động hoá thay cho kiểm tay: `deploy/audit-dead-links.sh` bóc link nội bộ từ
+`puckData` của mọi layout đã xuất bản rồi gọi từng đường dẫn **theo redirect**
+(`curl -L`), vì bản trước coi 307 là sống nên bỏ sót cả họ 407 môn học.
+
+Đợt này 646 đường dẫn → 21 chết, và cả 21 đều **404 trên chính site cũ** (kiểm bằng
+`<title>` qua origin cũ `112.78.11.146` + header Host, do tên miền đã trỏ site mới;
+soft-404 của Joomla trả 200 nên phải so tiêu đề chứ không tin mã HTTP hay kích thước).
+
+- Di trú 14 trang bộ môn còn thiếu: `build-missing-dept-pages.ts` (bản đầu chạy theo
+  danh sách ID cứng nên chưa bao giờ nhìn tới chúng).
+- 13 link môn học map theo `subjects.code` thay vì đoán theo tên — bảng CTĐT trỏ bằng
+  slug tiếng Anh hoặc sai mã (vd PHY10613 `digital-logic-design` → `thiet-ke-vi-mach`).
+  Link trần không mã thuộc họ PHY100xx đại cương.
+- `build-post-dump-pages.ts`: lấy HTML thẳng từ origin cũ cho trang tạo **sau** mốc
+  dump 14/06/2026 (2 trang danh mục công bố 2026 + 1 bài tuyển dụng 03/2021 mà dump
+  ghi `deleted=1` nhưng site cũ vẫn phục vụ — nên khôi phục để đúng hiện trạng).
+- `proxy.ts`: tra bảng redirect **trước** khi bỏ qua đường dẫn có phần mở rộng — 51
+  redirect `.html` trước đó im lặng không chạy.
+- `legacy-redirects.json`: 397 → 517. Ba redirect `vat-ly-dia-cau/category/*` từng
+  trỏ vào `vat-ly-dia-cau/tin-tuc` (trang không tồn tại) → đổi về trang bộ môn.
+
+21 link còn lại là link chết sẵn trong nội dung cũ (danh sách học bổng HB-20xx,
+danh sách sinh viên, hai trang nhân sự, vài trang bộ môn `.html` không có trong bất kỳ
+bảng nào của dump). Không tạo trang giả để "chữa" chúng.
+
+Commits: `58712ec`, `44a5601`, `3599aff`, `73ed069`, `e118508`.
+
 ## Session 2026-07-09 — KLTN full draft (thesis/, theo email GVHD)
 
 Viết trọn bộ bản thảo KLTN vào `thesis/*.md` theo góp ý GVHD: Mở đầu, C1–C4, Kết luận,
