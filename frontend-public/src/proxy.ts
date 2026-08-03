@@ -105,6 +105,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // URL kiểu Joomla cũ có đuôi .html (vd /viec-lam-nganh-vat-ly.html) — phải tra
+  // bản đồ redirect TRƯỚC khi bỏ qua theo phần mở rộng, nếu không 51 mục .html
+  // trong legacy-redirects.json không bao giờ chạy.
+  if (bare.endsWith(".html") && REDIRECTS[bare]) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LOCALE}/${REDIRECTS[bare]}`;
+    return NextResponse.redirect(url);
+  }
+
   // Real files (public assets, favicon, sitemap, robots…) pass through as-is;
   // only bare paths fall through to the default-locale redirect.
   if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
