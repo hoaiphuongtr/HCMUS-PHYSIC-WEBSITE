@@ -161,7 +161,7 @@ const balanceColumnWidths = (inner: string): string => {
     i += 1;
     const noWidth = tag
       .replace(/width:\s*[\d.]+(?:px|pt|%)?;?/i, "")
-      .replace(/\swidth=["\']?[\d.]+%?["\']?/i, "");
+      .replace(/\swidth=["']?[\d.]+%?["']?/i, "");
     return /style="/i.test(noWidth)
       ? noWidth.replace(/style="/i, `style="width:${pct}%;`)
       : noWidth.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
@@ -861,8 +861,8 @@ export function LegacyHtmlRender({
           margin-left: auto !important;
           margin-right: auto !important;
         }
-        .legacy-content ul { list-style: disc outside; padding-left: 1.5rem; margin: 0.5rem 0; }
-        .legacy-content ol { list-style: decimal outside; padding-left: 1.5rem; margin: 0.5rem 0; }
+        /* ul/ol: xem khối "Danh sách trong nội dung soạn thảo" ở shared.css —
+           dùng chung với trình soạn thảo và thân bài đăng. */
         .legacy-content li { margin: 0.25rem 0; }
         .legacy-content p { margin: 0.6rem 0; }
         .legacy-content a { color: #1d4ed8; text-decoration: underline; }

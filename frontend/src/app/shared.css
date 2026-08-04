@@ -435,3 +435,69 @@
 .prose p:has(div[style*="float: right"]) ~ p {
   margin-top: 0 !important;
 }
+
+/* Danh sách trong nội dung soạn thảo.
+   Preflight của Tailwind đặt `ol, ul { list-style: none }` và xoá padding của
+   MỌI phần tử, mà @tailwindcss/typography thì KHÔNG được cài — nên các lớp
+   `prose*` rải trong mã là utility rỗng, không phục hồi gì. Kết quả: gõ "1. "
+   trong trình soạn thảo sinh ra <ol><li> không số, không thụt lề, trông như chữ
+   vừa nhập bị mất; danh sách trong thân bài đăng ở trang công khai cũng mất
+   dấu đầu dòng.
+   Không cài typography ở giai đoạn này: nó sẽ áp một bảng kiểu lớn lên ~1600
+   trang bài đã di trú và đụng với các quy tắc !important đã tinh chỉnh tay. */
+.ProseMirror ul,
+[data-post-body] ul,
+.prose ul,
+.legacy-content ul {
+  list-style: disc outside;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror ol,
+[data-post-body] ol,
+.prose ol,
+.legacy-content ol {
+  list-style: decimal outside;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+/* Cấp lồng nhau đổi ký hiệu như mặc định của trình duyệt, để danh sách nhiều
+   tầng còn phân biệt được cấp. */
+.ProseMirror ul ul,
+[data-post-body] ul ul,
+.prose ul ul,
+.legacy-content ul ul {
+  list-style-type: circle;
+}
+
+.ProseMirror ul ul ul,
+[data-post-body] ul ul ul,
+.prose ul ul ul,
+.legacy-content ul ul ul {
+  list-style-type: square;
+}
+
+.ProseMirror ol ol,
+[data-post-body] ol ol,
+.prose ol ol,
+.legacy-content ol ol {
+  list-style-type: lower-alpha;
+}
+
+.ProseMirror ol ol ol,
+[data-post-body] ol ol ol,
+.prose ol ol ol,
+.legacy-content ol ol ol {
+  list-style-type: lower-roman;
+}
+
+/* StarterKit bọc nội dung mỗi mục trong <p>; margin đoạn sẽ tách rời các mục
+   khỏi dấu đầu dòng của chúng. */
+.ProseMirror li > p,
+[data-post-body] li > p,
+.prose li > p,
+.legacy-content li > p {
+  margin: 0;
+}
