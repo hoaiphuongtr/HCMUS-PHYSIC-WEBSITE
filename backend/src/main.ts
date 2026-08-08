@@ -11,6 +11,13 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Cây puckData của một trang di trú dễ vượt xa 100kb — mức mặc định của
+  // body-parser trong Express. Trang dài nhất hiện nay 3,1MB và 72 trang vượt
+  // 100kb, nên lưu trong trình sửa layout trả 413 "request entity too large"
+  // mà giao diện chỉ hiện một dòng đỏ khó hiểu. Nới lên 25MB: đủ chỗ cho trang
+  // dài nhất cộng biên, vẫn là chặn trên rõ ràng chứ không bỏ ngỏ.
+  app.useBodyParser('json', { limit: '25mb' });
+  app.useBodyParser('urlencoded', { limit: '25mb', extended: true });
   // Behind the sandbox reverse-proxy: trust the first proxy hop so req.ip
   // reflects the real client IP (X-Forwarded-For) — required for per-client
   // rate limiting to work instead of bucketing everyone under the proxy IP.
