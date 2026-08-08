@@ -85,6 +85,22 @@ const ToolbarButton = ({
   </button>
 );
 
+// Thao tác trên bảng. Trước đây thanh công cụ chỉ có nút CHÈN bảng, nên đã chèn
+// rồi thì không thêm/bớt được hàng cột — phải xoá cả bảng làm lại. Nhóm nút này
+// chỉ hiện khi con trỏ đang nằm trong bảng để không làm rối thanh công cụ.
+const TABLE_ACTIONS = [
+  { key: "addColumnBefore", label: "+Cột ←", title: "Thêm cột bên trái" },
+  { key: "addColumnAfter", label: "+Cột →", title: "Thêm cột bên phải" },
+  { key: "deleteColumn", label: "−Cột", title: "Xoá cột hiện tại" },
+  { key: "addRowBefore", label: "+Hàng ↑", title: "Thêm hàng phía trên" },
+  { key: "addRowAfter", label: "+Hàng ↓", title: "Thêm hàng phía dưới" },
+  { key: "deleteRow", label: "−Hàng", title: "Xoá hàng hiện tại" },
+  { key: "mergeOrSplit", label: "Gộp/Tách", title: "Gộp các ô đang chọn / tách ô" },
+  { key: "toggleHeaderRow", label: "Hàng TĐ", title: "Bật/tắt hàng tiêu đề" },
+  { key: "toggleHeaderColumn", label: "Cột TĐ", title: "Bật/tắt cột tiêu đề" },
+  { key: "deleteTable", label: "Xoá bảng", title: "Xoá cả bảng" },
+] as const;
+
 const ToolbarDivider = () => (
   <span
     aria-hidden="true"
@@ -812,10 +828,29 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 setTableSize({ rows: "3", cols: "3" });
                 setTableOpen(true);
               }}
-              title="Table"
+              title="Chèn bảng"
             >
               <TableIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
+
+            {editor.isActive("table") && (
+              <>
+                <ToolbarDivider />
+                {TABLE_ACTIONS.map((action) => (
+                  <ToolbarButton
+                    key={action.key}
+                    onClick={() => {
+                      const chain = editor.chain().focus();
+                      // mergeOrSplit gộp khi đang chọn nhiều ô, tách khi ô đã gộp.
+                      (chain[action.key] as () => typeof chain)().run();
+                    }}
+                    title={action.title}
+                  >
+                    <span className="whitespace-nowrap">{action.label}</span>
+                  </ToolbarButton>
+                ))}
+              </>
+            )}
 
             <ToolbarButton
               onClick={() => editor.chain().focus().setHorizontalRule().run()}

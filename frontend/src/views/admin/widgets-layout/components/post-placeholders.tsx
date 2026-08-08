@@ -110,23 +110,66 @@ const stripTags = (html: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const cellsOf = (r: string) =>
+  r.match(/<t[dh]\b[^>]*>[\s\S]*?<\/t[dh]>/gi) || [];
+const spanOf = (cell: string, attr: "colspan" | "rowspan") => {
+  const m = new RegExp(`${attr}=["']?(\\d+)`, "i").exec(cell);
+  return Math.max(1, Number(m?.[1] ?? 1));
+};
+const colsIn = (row: string) =>
+  cellsOf(row).reduce((sum, c) => sum + spanOf(c, "colspan"), 0);
+
+const colgroup = (widths: number[]): string => {
+  const total = widths.reduce((a, b) => a + b, 0);
+  if (!total) return "";
+  const cols = widths
+    .map((w) => `<col style="width:${((w / total) * 100).toFixed(3)}%">`)
+    .join("");
+  return `<colgroup>${cols}</colgroup>`;
+};
+
+// Bề rộng do người soạn tự kéo trong trình soạn thảo: Tiptap ghi vào thuộc tính
+// `colwidth` của ô. Có nó thì tôn trọng, KHÔNG chia lại — người dùng đã quyết.
+const authoredWidths = (rows: string[]): number[] | null => {
+  for (const row of rows) {
+    const cells = cellsOf(row);
+    if (cells.some((c) => spanOf(c, "colspan") > 1)) continue;
+    const widths = cells.map((c) => {
+      const m = /colwidth=["']?([\d,]+)/i.exec(c);
+      return m ? Number(m[1]?.split(",")[0] ?? 0) : 0;
+    });
+    if (widths.length >= 2 && widths.every((w) => w > 0)) return widths;
+  }
+  return null;
+};
+
 const balanceColumnWidths = (inner: string): string => {
   const rows = inner.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi) || [];
-  const headerRow = rows[0];
-  if (rows.length < 2 || !headerRow) return inner;
-  const cellsOf = (r: string) =>
-    r.match(/<t[dh]\b[^>]*>[\s\S]*?<\/t[dh]>/gi) || [];
-  const nCols = cellsOf(headerRow).length;
+  if (rows.length < 2) return inner;
+
+  const authored = authoredWidths(rows);
+  if (authored) return colgroup(authored) + inner;
+
+  // Số cột THẬT = tổng colspan lớn nhất qua các hàng. Trước đây chỉ đếm số ô của
+  // hàng đầu, nên bảng có tiêu đề gộp (vd "Số tiết" trùm 3 cột Lý thuyết / Thực
+  // hành / Bài tập) bị đếm thiếu cột và bề rộng gán lệch hẳn — đúng chỗ đó chữ
+  // vỡ thành "Thự c hàn h".
+  const nCols = rows.reduce((mx, r) => Math.max(mx, colsIn(r)), 0);
   if (nCols < 2) return inner;
+  // Chỉ đo trên hàng KHÔNG có ô gộp, vì ô gộp không thuộc về một cột nào.
+  const plainRows = rows.filter(
+    (r) =>
+      cellsOf(r).length === nCols &&
+      cellsOf(r).every((c) => spanOf(c, "colspan") === 1),
+  );
+  if (plainRows.length < 1) return inner;
 
   const longestWord = (t: string) =>
     t.split(" ").reduce((mx, w) => Math.max(mx, w.length), 0);
   const bodyLen = new Array<number>(nCols).fill(0);
   const wordLen = new Array<number>(nCols).fill(0);
-  for (const [rowIdx, row] of rows.entries()) {
-    const cells = cellsOf(row);
-    if (cells.length !== nCols) continue;
-    cells.forEach((cell, i) => {
+  for (const [rowIdx, row] of plainRows.entries()) {
+    cellsOf(row).forEach((cell, i) => {
       const text = stripTags(cell);
       wordLen[i] = Math.max(wordLen[i] ?? 0, longestWord(text));
       // dòng tiêu đề không tính vào độ dài nội dung, chỉ tính từ dài nhất
@@ -155,18 +198,10 @@ const balanceColumnWidths = (inner: string): string => {
   const total = weights.reduce((a, b) => a + b, 0);
   if (!total) return inner;
 
-  let i = 0;
-  const newHeader = headerRow.replace(/<t[dh]\b[^>]*>/gi, (tag) => {
-    const pct = (((weights[i] ?? 0) / total) * 100).toFixed(3);
-    i += 1;
-    const noWidth = tag
-      .replace(/width:\s*[\d.]+(?:px|pt|%)?;?/i, "")
-      .replace(/\swidth=["']?[\d.]+%?["']?/i, "");
-    return /style="/i.test(noWidth)
-      ? noWidth.replace(/style="/i, `style="width:${pct}%;`)
-      : noWidth.replace(/<(t[dh])\b/i, `<$1 style="width:${pct}%"`);
-  });
-  return inner.replace(headerRow, newHeader);
+  // Ghi bề rộng vào <colgroup> chứ không vào hàng đầu: dưới table-layout:fixed
+  // chỉ hàng ĐẦU quyết định bề rộng, mà hàng đầu lại chính là chỗ hay có ô gộp.
+  // colgroup gán thẳng theo cột nên không phụ thuộc cấu trúc hàng tiêu đề.
+  return colgroup(weights) + inner;
 };
 
 const INLINE_TAGS = "span|strong|em|b|i|u|font";

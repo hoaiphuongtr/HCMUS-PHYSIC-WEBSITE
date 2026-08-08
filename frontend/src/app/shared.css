@@ -493,6 +493,47 @@
   list-style-type: lower-roman;
 }
 
+/* Kéo giãn cột trong trình soạn thảo. prosemirror-tables đã bật sẵn tính năng
+   (Table.configure resizable) nhưng không kèm CSS, nên tay kéo vô hình — người
+   soạn không biết là kéo được. Bề rộng kéo xong lưu vào thuộc tính `colwidth`
+   của ô và được trang công khai tôn trọng (xem balanceColumnWidths). */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  position: relative;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  position: relative;
+}
+
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #3b82f6;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Con trỏ đổi thành mũi tên ngang khi rê tới mép cột. */
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* Ô đang chọn (để gộp ô hoặc xoá hàng/cột) phải thấy rõ. */
+.ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.18);
+  pointer-events: none;
+}
+
 /* StarterKit bọc nội dung mỗi mục trong <p>; margin đoạn sẽ tách rời các mục
    khỏi dấu đầu dòng của chúng. */
 .ProseMirror li > p,
