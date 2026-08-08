@@ -26,6 +26,11 @@ tập" nay 8.873% mỗi cột thay vì bị bóp vỡ chữ.
 **Icon.** `phone`, `call`, `chat`, `edit_note` không có trong `IconMap` nên rơi
 về icon lưới mặc định. Đã bổ sung (kèm facebook/instagram/youtube).
 
+**413 khi lưu layout dài.** Backend chưa từng đặt giới hạn body nên dùng mặc
+định 100kb của Express, trong khi 72 layout vượt mức đó (dài nhất 3,1MB) — lưu
+trong trình sửa layout trả 413. Nới `useBodyParser` lên 25MB. Kiểm trực tiếp:
+trang cử nhân tài năng (426KB) và trang dài nhất (3,0MB) đều PUT trả 200.
+
 **Giảng viên cơ hữu.** Đối chiếu với site cũ: cả hai đúng 122 người, tập email
 trùng khít — không ai mất khi di trú. Lệch 7 dòng học hàm/chức danh do Khoa sửa
 sau mốc dump; đã lấy lại trang từ origin cũ.
