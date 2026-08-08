@@ -33,6 +33,13 @@ còn 31 (31 tệp đó site cũ cũng 403). Hai bẫy: site cũ trả 200 kèm s
 phải kiểm nội dung; tên tệp legacy có dấu ngoặc nên regex trích không được cắt
 ở `)`.
 
+**Bảng có sẵn colgroup của Tiptap.** Bảng nào đã từng sửa trong trình soạn thảo
+mang sẵn `<colgroup>` (min-width: 25px). Bộ chia cột chèn thêm colgroup của mình
+lên trước → bảng 8 cột hoá ra khai báo **16 cột**, trình duyệt chia bề rộng cho
+cả 16 nên mọi cột co lại và tiêu đề vẫn rớt chữ trên web dù bề rộng tính đã
+đúng. Nay gỡ colgroup cũ rồi mới ghi cái mới; colgroup cũ có `width` thật thì
+tôn trọng luôn. Kiểm trên trang 2022: 8/8 bảng còn đúng 1 colgroup.
+
 **Preview khác trang thật.** Khung Preview đổ thẳng HTML ra thẻ `prose`, bỏ qua
 khâu chuẩn hoá bảng → hai bên hiện khác hẳn. Nay gọi đúng `LegacyHtmlRender`.
 Kèm theo: tiêu đề cột rớt chữ vì bộ chia cột chỉ đo hàng thường, mà tiêu đề lại
