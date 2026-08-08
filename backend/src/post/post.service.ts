@@ -114,6 +114,15 @@ type PostListRecord = Prisma.PostGetPayload<{ select: typeof postListSelect }>;
 const HAS_PUBLISHED_LAYOUT = {
   layouts: { some: { isPublished: true, deletedAt: null } },
 } as const;
+// Bài CÒN HIỆN công khai. Cố tình KHÔNG khoá theo `status === 'PUBLISHED'`: hẹn
+// giờ một bản CẬP NHẬT cho bài đang sống sẽ đưa status về SCHEDULED, mà bài đó
+// vẫn phải nằm trong danh sách/feed — chỉ NỘI DUNG MỚI là chờ tới giờ, còn bản
+// đang xuất bản không được biến mất khỏi trang chủ trong lúc chờ.
+// `publishedAt` là mốc phân biệt: bài chưa từng xuất bản thì nó null.
+const PUBLICLY_VISIBLE: Prisma.PostWhereInput = {
+  publishedAt: { not: null },
+  ...HAS_PUBLISHED_LAYOUT,
+};
 // Soft-delete: exclude trashed rows from every normal (non-trash) query.
 const NOT_DELETED = { deletedAt: null } as const;
 
@@ -165,7 +174,7 @@ export class PostService {
         scheduledAt: { lte: now },
         ...NOT_DELETED,
       },
-      select: { id: true },
+      select: { id: true, publishedAt: true },
     });
     if (due.length === 0) return;
     for (const row of due) {
@@ -174,11 +183,14 @@ export class PostService {
           where: { id: row.id },
           data: {
             status: 'PUBLISHED',
-            publishedAt: now,
+            // Hẹn giờ một bản CẬP NHẬT cho bài đã xuất bản thì giữ ngày đăng
+            // gốc, không dời sang thời điểm cập nhật.
+            publishedAt: row.publishedAt ?? now,
             scheduledAt: null,
           },
         });
-        await this.syncAttachedLayouts(row.id);
+        // Đúng thời điểm lên sóng → bản công khai được thay ở đây.
+        await this.syncAttachedLayouts(row.id, { publishLive: true });
         await this.chatbot.indexPost(row.id).catch((e) =>
           this.logger.error(`Chatbot index failed for ${row.id}`, e as Error),
         );
@@ -264,8 +276,13 @@ export class PostService {
     const nextStatus = body.status ?? existing.status;
     const becamePublished =
       nextStatus === 'PUBLISHED' && existing.status !== 'PUBLISHED';
+    // Hẹn giờ cho bài ĐANG xuất bản là hẹn một bản CẬP NHẬT, không phải rút bài
+    // xuống: giữ nguyên publishedAt để bài vẫn còn công khai (PUBLICLY_VISIBLE)
+    // và không mất ngày đăng gốc. Chỉ khi về nháp/lưu trữ mới xoá mốc đó.
     const leftPublished =
-      nextStatus !== 'PUBLISHED' && existing.status === 'PUBLISHED';
+      existing.status === 'PUBLISHED' &&
+      nextStatus !== 'PUBLISHED' &&
+      nextStatus !== 'SCHEDULED';
     const publishedAtPatch = becamePublished
       ? { publishedAt: new Date() }
       : leftPublished
@@ -275,6 +292,11 @@ export class PostService {
       nextStatus === 'SCHEDULED' && body.scheduledAt
         ? new Date(body.scheduledAt)
         : null;
+    // Đang hẹn giờ ở tương lai → giữ nguyên bản công khai, nội dung mới chỉ nằm
+    // ở bản nháp cho tới khi cron tới giờ.
+    const holdLive = Boolean(
+      scheduledAtValue && scheduledAtValue.getTime() > Date.now(),
+    );
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.postTag.deleteMany({ where: { postId: id } });
       return tx.post.update({
@@ -300,7 +322,9 @@ export class PostService {
         include: postInclude,
       });
     });
-    const affectedSlugs = await this.syncAttachedLayouts(id);
+    const affectedSlugs = await this.syncAttachedLayouts(id, {
+      publishLive: !holdLive,
+    });
     if (updated.status === 'PUBLISHED' || existing.status === 'PUBLISHED') {
       await this.syncNewsFeedSnapshots();
     }
@@ -433,9 +457,8 @@ export class PostService {
     const posts = await this.prisma.post.findMany({
       where: {
         ...NOT_DELETED,
-        status: 'PUBLISHED',
         // chỉ công khai bài đã gắn vào một layout đã xuất bản (nếu không, URL bài lẻ 404)
-        ...HAS_PUBLISHED_LAYOUT,
+        ...PUBLICLY_VISIBLE,
         AND: [
           deptWhere ?? this.feedDeptWhere(),
           { OR: [{ eventStartAt: null }, { eventStartAt: { lt: now } }] },
@@ -467,11 +490,10 @@ export class PostService {
     const now = new Date();
     const posts = await this.prisma.post.findMany({
       where: {
-        status: 'PUBLISHED',
         ...NOT_DELETED,
         // KHÔNG buộc có body: sự kiện có thể chỉ gồm thông tin thời gian/địa điểm
         // (không có nội dung bài) mà vẫn phải hiện ở "Sự kiện sắp tới".
-        ...HAS_PUBLISHED_LAYOUT,
+        ...PUBLICLY_VISIBLE,
         AND: [deptWhere ?? this.feedDeptWhere()],
         eventStartAt: { gte: now },
       },
@@ -495,8 +517,7 @@ export class PostService {
       params;
     const where: Record<string, unknown> = {
       ...NOT_DELETED,
-      status: 'PUBLISHED',
-      ...HAS_PUBLISHED_LAYOUT,
+      ...PUBLICLY_VISIBLE,
       // Faculty feed by default; a dept slug narrows to that department's posts.
       AND: [this.feedDeptWhere(department), HAS_PUBLIC_CONTENT],
     };
@@ -881,8 +902,9 @@ export class PostService {
           skipDuplicates: true,
         }),
       ]);
-      // Bơm lại nội dung + breadcrumb theo danh mục mới.
-      await this.syncAttachedLayouts(post.id);
+      // Bơm lại nội dung + breadcrumb theo danh mục mới. Chỉ vào bản nháp: hàm
+      // này chạy ở MỌI lần lưu (ensureLayout), không phải lệnh xuất bản.
+      await this.syncAttachedLayouts(post.id, { publishLive: false });
       await this.cache.clear();
       return existingLayout;
     }
@@ -971,7 +993,10 @@ export class PostService {
     let published = 0;
     const skipped: string[] = [];
     for (const layout of layouts) {
-      if (layout.isPublished) continue;
+      // KHÔNG bỏ qua layout đã xuất bản: publish() chép puckData sang
+      // publishedPuckData, nên đây chính là bước đưa bản nháp vừa sửa lên trang
+      // công khai. Bỏ qua thì "Lưu và xuất bản ngay" trên bài đã xuất bản sẽ
+      // không đổi gì trên web.
       // Không cướp đường dẫn của một trang khác đang xuất bản.
       const conflict = await this.pageLayoutRepo.findAnyPublishedWithSlug(
         layout.slug,
@@ -1136,15 +1161,32 @@ export class PostService {
         status: true,
         publishedAt: true,
         deletedAt: true,
-        layouts: { where: { deletedAt: null }, select: { isPublished: true } },
+        scheduledAt: true,
+        layouts: {
+          where: { deletedAt: null },
+          select: { isPublished: true, scheduledAt: true },
+        },
       },
     });
     if (!post || post.deletedAt) return { slugs: [] };
     const hasPublished = post.layouts.some((l) => l.isPublished);
-    if (hasPublished && post.status !== 'PUBLISHED') {
+    // Còn layout nào đang chờ tới giờ thì bài vẫn ở trạng thái hẹn.
+    const stillScheduled = post.layouts.some((l) => l.scheduledAt !== null);
+    if (hasPublished && !stillScheduled && post.status !== 'PUBLISHED') {
       await this.prisma.post.update({
         where: { id: postId },
-        data: { status: 'PUBLISHED', publishedAt: post.publishedAt ?? new Date() },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: post.publishedAt ?? new Date(),
+          // Cron đã xuất bản xong → xoá mốc hẹn để giao diện không còn báo "Đã
+          // lên lịch" cho một việc đã chạy.
+          scheduledAt: null,
+        },
+      });
+    } else if (hasPublished && !stillScheduled && post.scheduledAt !== null) {
+      await this.prisma.post.update({
+        where: { id: postId },
+        data: { scheduledAt: null },
       });
     } else if (!hasPublished && post.status === 'PUBLISHED') {
       await this.prisma.post.update({
@@ -1160,7 +1202,20 @@ export class PostService {
     return { slugs };
   }
 
-  private async syncAttachedLayouts(postId: string): Promise<string[]> {
+  /**
+   * Bơm nội dung bài vào các layout gắn với nó.
+   *
+   * `publishLive` quyết định có ghi luôn vào `publishedPuckData` (bản đang phục
+   * vụ trang công khai) hay chỉ ghi `puckData` (bản nháp). Trước đây hàm này
+   * LUÔN ghi cả hai, nên "Lưu và lên lịch" đẩy nội dung mới lên trang công khai
+   * ngay lúc bấm lưu — đặt hẹn 9h23 thì 9h22 đã thấy bản mới. Bản công khai chỉ
+   * được thay ở đúng thời điểm xuất bản: hoặc do người dùng bấm xuất bản ngay
+   * (repo.publish chép puckData sang publishedPuckData), hoặc do cron tới giờ.
+   */
+  private async syncAttachedLayouts(
+    postId: string,
+    { publishLive }: { publishLive: boolean },
+  ): Promise<string[]> {
     const post = await this.findByIdOrThrow(postId);
     const layouts = await this.prisma.pageLayout.findMany({
       where: { sourcePostId: postId },
@@ -1210,7 +1265,7 @@ export class PostService {
             payload,
           ) as unknown as InputJsonValue;
         }
-        if (layout.publishedPuckData) {
+        if (publishLive && layout.publishedPuckData) {
           data.publishedPuckData = injectPostIntoPuckData(
             layout.publishedPuckData,
             payload,

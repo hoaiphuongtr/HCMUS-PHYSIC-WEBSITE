@@ -331,10 +331,15 @@ export function PostComposerView() {
     return true;
   };
 
-  // Lưu (giữ Nháp) → ghi nội dung + tạo/cập nhật trang nhưng CHƯA xuất bản.
+  // Lưu → ghi nội dung + tạo/cập nhật trang nhưng KHÔNG đổi trạng thái xuất bản.
+  // Bài mới thì là Nháp; bài đã xuất bản/đã hẹn thì GIỮ NGUYÊN trạng thái đó —
+  // trước đây luôn gửi "DRAFT" nên bấm Lưu trên bài đang sống là hạ nó về nháp,
+  // bài rơi khỏi feed công khai trong khi trang của nó vẫn còn.
   const saveDraft = async () => {
     if (!requireTitle()) return;
-    const saved = await saveMutation.mutateAsync(buildPayload("DRAFT"));
+    const saved = await saveMutation.mutateAsync(
+      buildPayload(postId ? undefined : "DRAFT"),
+    );
     const id = postId ?? saved?.id;
     if (id) await ensureLayout(id);
   };
