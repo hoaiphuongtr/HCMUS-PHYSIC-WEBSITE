@@ -106,6 +106,11 @@ const stripTags = (html: string) =>
   html
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
+    // Chữ tiếng Việt trong nội dung legacy được mã hoá theo MÃ SỐ ("H&#7885;c
+    // k&#7923;" = "Học kỳ"). Không quy về một ký tự thì đo độ dài sai gấp ba, mà
+    // mọi phép chia cột ở dưới đều dựa trên độ dài — cột nhiều dấu bị thổi phồng
+    // còn cột ít dấu bị bóp lại.
+    .replace(/&#x?[0-9a-f]+;/gi, "x")
     .replace(/&[a-z]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -157,12 +162,36 @@ const balanceColumnWidths = (inner: string): string => {
   const nCols = rows.reduce((mx, r) => Math.max(mx, colsIn(r)), 0);
   if (nCols < 2) return inner;
   // Chỉ đo trên hàng KHÔNG có ô gộp, vì ô gộp không thuộc về một cột nào.
-  const plainRows = rows.filter(
+  const isPlain = rows.map(
     (r) =>
       cellsOf(r).length === nCols &&
       cellsOf(r).every((c) => spanOf(c, "colspan") === 1),
   );
+  const plainRows = rows.filter((_r, i) => isPlain[i]);
   if (plainRows.length < 1) return inner;
+
+  // Tiêu đề cột nằm ở đúng những hàng CÓ ô gộp (vd "Số tiết" trùm 3 cột), tức
+  // những hàng vừa bị loại ở trên — nên phải dựng lưới có tính colspan/rowspan
+  // mới biết chữ nào thuộc cột nào. Không làm bước này thì "Học kỳ" chỉ được
+  // chia theo nội dung cột (toàn số 1 chữ) và bị bóp đến mức rớt chữ.
+  const headerLen = new Array<number>(nCols).fill(0);
+  const taken = new Set<string>();
+  rows.forEach((row, rIdx) => {
+    if (isPlain[rIdx]) return;
+    let col = 0;
+    for (const cell of cellsOf(row)) {
+      while (taken.has(`${rIdx}:${col}`)) col += 1;
+      const cs = spanOf(cell, "colspan");
+      const rs = spanOf(cell, "rowspan");
+      // Ô gộp: chữ của nó chia đều cho các cột nó trùm, không dồn cho một cột.
+      const per = Math.ceil(stripTags(cell).length / cs);
+      for (let c = col; c < Math.min(col + cs, nCols); c += 1) {
+        headerLen[c] = Math.max(headerLen[c] ?? 0, per);
+        for (let r = rIdx; r < rIdx + rs; r += 1) taken.add(`${r}:${c}`);
+      }
+      col += cs;
+    }
+  });
 
   const longestWord = (t: string) =>
     t.split(" ").reduce((mx, w) => Math.max(mx, w.length), 0);
@@ -176,6 +205,14 @@ const balanceColumnWidths = (inner: string): string => {
       if (rowIdx > 0) bodyLen[i] = Math.max(bodyLen[i] ?? 0, text.length);
     });
   }
+  // Tiêu đề ngắn ("Học kỳ", "Bài tập") phải đủ chỗ nằm TRỌN MỘT DÒNG — rớt chữ ở
+  // dòng tiêu đề trông hỏng hẳn, trong khi nội dung bên dưới xuống dòng thì bình
+  // thường. Chặn trên HEADER_CAP để một tiêu đề dài bất thường không nuốt bảng.
+  const HEADER_CAP = 14;
+  for (let i = 0; i < nCols; i += 1) {
+    wordLen[i] = Math.max(wordLen[i] ?? 0, Math.min(headerLen[i] ?? 0, HEADER_CAP));
+  }
+
   // Chia hai bước. Bước 1 dành sẵn RESERVED% chia theo TỪ DÀI NHẤT của mỗi cột —
   // đây là bề rộng tối thiểu để từ đó không bị bẻ. Bước 2 chia phần còn lại theo
   // độ dài nội dung (căn bậc hai để một cột rất dài không nuốt hết phần của cột

@@ -363,17 +363,17 @@ export const LegacyPageBody: ComponentConfig<{
   defaultProps: { html: { vi: "", en: "" } },
   fields: {
     html: localizedRichTextField("Nội dung trang"),
-    // Có mục thì trang hiện dạng TAB và bỏ qua "Nội dung trang"; để trống thì
-    // trang hiện một mạch như cũ. Nhờ vậy không phải thêm component mới và các
-    // trang legacy đang dùng vẫn chạy y nguyên.
+    // Có tab thì trang hiện dạng TAB và bỏ qua "Nội dung trang"; để trống thì
+    // trang hiện liền một mạch như cũ. Nhờ vậy không phải thêm component mới và
+    // các trang legacy đang dùng vẫn chạy y nguyên.
     sections: {
       type: "array",
-      label: "Các mục (để trống = trang một mạch)",
+      label: "Tách nội dung thành các tab (bỏ trống nếu không muốn tách)",
       getItemSummary: (item, i) =>
-        localizedSummary(item?.title, `Mục ${(i ?? 0) + 1}`),
+        localizedSummary(item?.title, `Tab ${(i ?? 0) + 1}`),
       arrayFields: {
-        title: localizedTextField("Tên mục"),
-        html: localizedRichTextField("Nội dung mục"),
+        title: localizedTextField("Tên tab (chữ hiện trên nút)"),
+        html: localizedRichTextField("Nội dung của tab này"),
       },
     },
   },

@@ -26,6 +26,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
+import { LegacyHtmlRender } from "@/views/admin/widgets-layout/components/post-placeholders";
 
 type MarkdownEditorProps = {
   value: string;
@@ -1011,14 +1012,13 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       ) : (
         <div className="px-4 py-3 min-h-[300px] max-h-[600px] overflow-y-auto">
           {value.trim() ? (
-            <article
-              className="prose prose-slate max-w-none prose-table:border prose-th:border prose-td:border prose-th:px-2 prose-td:px-2 prose-th:py-1 prose-td:py-1"
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: admin-authored content
-              // value giữ src ẢNH TƯƠNG ĐỐI (/uploads/…) như trong DB; tab Editor đã
-              // absolutize ở content nhưng Preview render thẳng value → phải absolutize
-              // tại đây, nếu không trình duyệt admin (:3000) không phân giải được ảnh.
-              dangerouslySetInnerHTML={{ __html: absolutizeUploads(value) }}
-            />
+            // Dùng CHÍNH bộ render của trang công khai, không đổ thẳng HTML ra.
+            // Trước đây Preview đổ raw HTML nên bỏ qua toàn bộ khâu chuẩn hoá
+            // bảng (chia bề rộng cột, đường kẻ, co vừa khung) — hai bên hiện
+            // khác hẳn nhau và người soạn không tin được cái mình nhìn thấy.
+            // LegacyHtmlRender tự phân giải ảnh /uploads/… nên không cần
+            // absolutize ở đây nữa.
+            <LegacyHtmlRender html={{ vi: value, en: value }} injected={false} />
           ) : (
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Preview hiển thị tại đây khi bạn nhập nội dung.
