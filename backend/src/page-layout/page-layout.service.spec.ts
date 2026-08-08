@@ -6,6 +6,8 @@ import { PageLayoutRepository } from './page-layout.repo';
 import { WidgetRepository } from '../widget/widget.repo';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import { NotificationService } from '../notification/notification.service';
+import { ChatbotService } from '../chatbot/chatbot.service';
+import { PostService } from '../post/post.service';
 import {
   PageLayoutNotFoundException,
   PageLayoutSlugExistsException,
@@ -46,6 +48,7 @@ const makeRepoMock = (): RepoMock => ({
   snapshotPublishedVersion: vi.fn(),
   archiveCurrentVersions: vi.fn(),
   restoreVersionAsDraft: vi.fn(),
+  rewriteSlugReferences: vi.fn(),
 });
 
 const sampleLayout = {
@@ -100,6 +103,23 @@ describe('PageLayoutService versioning', () => {
         {
           provide: NotificationService,
           useValue: { notifyPublished: vi.fn().mockResolvedValue(undefined) },
+        },
+        // PageLayoutService đánh chỉ mục chatbot và kéo trạng thái bài theo
+        // layout khi xuất bản; cả hai đều là hiệu ứng phụ, chỉ cần bản giả.
+        {
+          provide: ChatbotService,
+          useValue: {
+            indexPage: vi.fn().mockResolvedValue(undefined),
+            removePage: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: PostService,
+          useValue: {
+            syncStatusFromLayouts: vi
+              .fn()
+              .mockResolvedValue({ slugs: [] as string[] }),
+          },
         },
       ],
     }).compile();
@@ -200,7 +220,13 @@ describe('PageLayoutService versioning', () => {
       expect(repo.publish.mock.invocationCallOrder[0]).toBeLessThan(
         repo.snapshotPublishedVersion.mock.invocationCallOrder[0],
       );
-      expect(revalidate.trigger).toHaveBeenCalledWith(['sitemap', 'page:home']);
+      expect(revalidate.trigger).toHaveBeenCalledWith([
+        'sitemap',
+        // Trang chủ mang feed tin tức nên phải làm mới cùng lúc, không thì
+        // lưới tin ở trang chủ giữ bản cũ cho tới khi hết ISR.
+        'page:trang-chu',
+        'page:home',
+      ]);
     });
 
     it('rejects when another layout already publishes the slug', async () => {
