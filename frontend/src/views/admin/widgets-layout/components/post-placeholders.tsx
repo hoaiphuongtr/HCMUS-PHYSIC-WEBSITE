@@ -134,7 +134,22 @@ const colgroup = (widths: number[]): string => {
 };
 
 // Bề rộng do người soạn tự kéo trong trình soạn thảo: Tiptap ghi vào thuộc tính
-// `colwidth` của ô. Có nó thì tôn trọng, KHÔNG chia lại — người dùng đã quyết.
+// `colwidth` của ô, và kèm một <colgroup> của riêng nó. Có bề rộng thật thì tôn
+// trọng, KHÔNG chia lại — người dùng đã quyết.
+const COLGROUP_RE = /<colgroup\b[\s\S]*?<\/colgroup>/i;
+
+const colgroupWidths = (inner: string): number[] | null => {
+  const cg = COLGROUP_RE.exec(inner);
+  if (!cg) return null;
+  const widths = [...cg[0].matchAll(/<col\b[^>]*>/gi)].map((m) => {
+    // Chỉ tính `width` thật; `min-width: 25px` là mặc định Tiptap ghi cho mọi
+    // cột, không mang thông tin gì về tỉ lệ.
+    const w = /(?:^|[^-])\bwidth:\s*([\d.]+)/i.exec(m[0]);
+    return w ? Number(w[1]) : 0;
+  });
+  return widths.length >= 2 && widths.every((w) => w > 0) ? widths : null;
+};
+
 const authoredWidths = (rows: string[]): number[] | null => {
   for (const row of rows) {
     const cells = cellsOf(row);
@@ -152,8 +167,14 @@ const balanceColumnWidths = (inner: string): string => {
   const rows = inner.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi) || [];
   if (rows.length < 2) return inner;
 
-  const authored = authoredWidths(rows);
-  if (authored) return colgroup(authored) + inner;
+  // Bảng đã sửa trong trình soạn thảo mang sẵn <colgroup> của Tiptap. Phải THAY
+  // nó chứ không thêm cái thứ hai: hai colgroup 8 cột nối nhau là khai báo 16
+  // cột, trình duyệt chia bề rộng cho cả 16 nên mọi cột co lại và tiêu đề vẫn
+  // rớt chữ — đúng triệu chứng còn sót trên trang công khai.
+  const body = inner.replace(COLGROUP_RE, "");
+
+  const authored = colgroupWidths(inner) ?? authoredWidths(rows);
+  if (authored) return colgroup(authored) + body;
 
   // Số cột THẬT = tổng colspan lớn nhất qua các hàng. Trước đây chỉ đếm số ô của
   // hàng đầu, nên bảng có tiêu đề gộp (vd "Số tiết" trùm 3 cột Lý thuyết / Thực
@@ -238,7 +259,7 @@ const balanceColumnWidths = (inner: string): string => {
   // Ghi bề rộng vào <colgroup> chứ không vào hàng đầu: dưới table-layout:fixed
   // chỉ hàng ĐẦU quyết định bề rộng, mà hàng đầu lại chính là chỗ hay có ô gộp.
   // colgroup gán thẳng theo cột nên không phụ thuộc cấu trúc hàng tiêu đề.
-  return colgroup(weights) + inner;
+  return colgroup(weights) + body;
 };
 
 const INLINE_TAGS = "span|strong|em|b|i|u|font";
