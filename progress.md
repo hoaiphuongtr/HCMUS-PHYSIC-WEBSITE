@@ -1,5 +1,37 @@
 # Session Progress Log
 
+## Session 2026-08-08 — Lịch hẹn xuất bản, bảng sửa được trong admin, icon
+
+**Lên lịch không giữ được giờ hẹn.** `syncAttachedLayouts` ghi cả
+`publishedPuckData` (bản đang phục vụ web) ngay lúc lưu, nên "Lưu và lên lịch"
+đẩy nội dung lên luôn. Nay chỉ ghi bản nháp; bản công khai đổi ở đúng thời điểm
+xuất bản. Ba lỗi kèm theo: `publishAttachedLayouts` bỏ qua layout đã xuất bản
+(nên "xuất bản ngay" sẽ không đổi gì sau sửa trên); hẹn giờ bản cập nhật cho bài
+đang sống làm bài rơi khỏi feed vì lọc theo `status` — nay lọc theo "đã từng
+xuất bản + còn layout đang xuất bản" (`PUBLICLY_VISIBLE`); nút "Lưu" luôn gửi
+`DRAFT` nên hạ bài đang sống về nháp.
+E2E `deploy/e2e-post-schedule.py` chạy trên production: 5/5 PASS.
+
+**Baseline test đỏ sẵn** 21/40 (spec page-layout thiếu ChatbotService/PostService
+sau khi hai service này được tiêm vào). Đã sửa → 40/40.
+
+**Bảng trong nội dung.** Thanh công cụ chỉ có nút chèn bảng, không thêm/bớt được
+hàng cột. Thêm nhóm nút thao tác bảng + CSS cho tay kéo cột (tính năng đã bật
+sẵn nhưng vô hình). Trang công khai nay tôn trọng bề rộng người soạn tự kéo
+(`colwidth`). Sửa lỗi chia cột với bảng có tiêu đề GỘP Ô: đếm cột theo tổng
+colspan, đo trên hàng không gộp, ghi bề rộng vào `<colgroup>`. Kiểm trực tiếp
+trên trang CTĐT ngành công nghệ bán dẫn: 8 cột, ba cột "Lý thuyết/Thực hành/Bài
+tập" nay 8.873% mỗi cột thay vì bị bóp vỡ chữ.
+
+**Icon.** `phone`, `call`, `chat`, `edit_note` không có trong `IconMap` nên rơi
+về icon lưới mặc định. Đã bổ sung (kèm facebook/instagram/youtube).
+
+**Giảng viên cơ hữu.** Đối chiếu với site cũ: cả hai đúng 122 người, tập email
+trùng khít — không ai mất khi di trú. Lệch 7 dòng học hàm/chức danh do Khoa sửa
+sau mốc dump; đã lấy lại trang từ origin cũ.
+
+Commits: `573b824`, `589f0ec`, `3156516`, `b536844`, `1d10185`.
+
 ## Session 2026-08-03/04 — Soát link chết tới cạn (585 → 21)
 
 Tự động hoá thay cho kiểm tay: `deploy/audit-dead-links.sh` bóc link nội bộ từ
