@@ -504,9 +504,26 @@
   position: relative;
 }
 
+/* Đường kẻ và đệm ô GIỐNG trang công khai (xem khối table[data-grid="text"]
+   trong post-placeholders). Trước đây editor dựa vào các class prose-table:border
+   — mà @tailwindcss/typography không được cài nên chúng vô nghĩa, bảng trong
+   editor không có đường kẻ nào trong khi trên web thì có. */
+.ProseMirror table {
+  border: 1px solid #94a3b8;
+}
+
 .ProseMirror th,
 .ProseMirror td {
   position: relative;
+  border: 1px solid #94a3b8;
+  padding: 6px 10px;
+  vertical-align: top;
+}
+
+.ProseMirror th {
+  background: #f8fafc;
+  font-weight: 700;
+  text-align: left;
 }
 
 .ProseMirror .column-resize-handle {
