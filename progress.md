@@ -26,6 +26,19 @@ tập" nay 8.873% mỗi cột thay vì bị bóp vỡ chữ.
 **Icon.** `phone`, `call`, `chat`, `edit_note` không có trong `IconMap` nên rơi
 về icon lưới mặc định. Đã bổ sung (kèm facebook/instagram/youtube).
 
+**Tệp legacy thiếu.** Link PDF chương trình đào tạo trả JSON 404. Quét toàn bộ
+tham chiếu `/uploads/legacy/` của trang đã xuất bản: **244/2271 tệp không có
+trên đĩa**. `deploy/fetch-missing-legacy-assets.sh` lấy lại từ origin cũ →
+còn 31 (31 tệp đó site cũ cũng 403). Hai bẫy: site cũ trả 200 kèm soft-404 nên
+phải kiểm nội dung; tên tệp legacy có dấu ngoặc nên regex trích không được cắt
+ở `)`.
+
+**Preview khác trang thật.** Khung Preview đổ thẳng HTML ra thẻ `prose`, bỏ qua
+khâu chuẩn hoá bảng → hai bên hiện khác hẳn. Nay gọi đúng `LegacyHtmlRender`.
+Kèm theo: tiêu đề cột rớt chữ vì bộ chia cột chỉ đo hàng thường, mà tiêu đề lại
+nằm ở hàng CÓ ô gộp nên chưa từng được nhìn tới — dựng lưới tiêu đề có
+colspan/rowspan và đặt sàn theo độ dài cụm tiêu đề. "Học kỳ" 30px → 98px.
+
 **413 khi lưu layout dài.** Backend chưa từng đặt giới hạn body nên dùng mặc
 định 100kb của Express, trong khi 72 layout vượt mức đó (dài nhất 3,1MB) — lưu
 trong trình sửa layout trả 413. Nới `useBodyParser` lên 25MB. Kiểm trực tiếp:
