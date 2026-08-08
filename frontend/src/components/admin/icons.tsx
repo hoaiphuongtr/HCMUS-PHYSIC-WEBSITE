@@ -21,6 +21,7 @@ import {
   Copy,
   ExternalLink,
   Eye,
+  Facebook,
   EyeOff,
   FileText,
   Flame,
@@ -35,6 +36,7 @@ import {
   History,
   Images,
   Info,
+  Instagram,
   LayoutDashboard,
   LayoutGrid,
   LayoutPanelLeft,
@@ -49,14 +51,17 @@ import {
   MapPin,
   Megaphone,
   Menu,
+  MessageCircle,
   Minus,
   MoreVertical,
   MousePointer2,
   MoveVertical,
   Newspaper,
   Palette,
+  PenLine,
   PanelBottom,
   Pencil,
+  Phone,
   Play,
   PlayCircle,
   Plus,
@@ -73,6 +78,7 @@ import {
   Users,
   Wifi,
   X,
+  Youtube,
 } from "lucide-react";
 
 /**
@@ -92,8 +98,10 @@ export const IconMap: Record<string, LucideIcon> = {
   building: Building2,
   calendar_add_on: CalendarPlus,
   calendar_month: Calendar,
+  call: Phone,
   campaign: Megaphone,
   category: LayoutGrid,
+  chat: MessageCircle,
   check: Check,
   check_circle: CheckCircle2,
   chevron_left: ChevronLeft,
@@ -110,12 +118,14 @@ export const IconMap: Record<string, LucideIcon> = {
   drag_indicator: GripVertical,
   duplicate: Copy,
   edit: Pencil,
+  edit_note: PenLine,
   email: Mail,
   event: Calendar,
   expand_less: ChevronUp,
   expand_more: ChevronDown,
   extension: Puzzle,
   extension_off: Puzzle,
+  facebook: Facebook,
   featured_play_list: ListVideo,
   folder: Folder,
   folder_open: Folder,
@@ -128,6 +138,7 @@ export const IconMap: Record<string, LucideIcon> = {
   horizontal_rule: Minus,
   image: LucideImage,
   info: Info,
+  instagram: Instagram,
   keyboard_arrow_down: ChevronDown,
   language: Globe,
   link: LinkIconLucide,
@@ -148,6 +159,7 @@ export const IconMap: Record<string, LucideIcon> = {
   open_in_new: ExternalLink,
   palette: Palette,
   person: User,
+  phone: Phone,
   photo_library: Images,
   play_arrow: Play,
   play_circle: PlayCircle,
@@ -174,8 +186,14 @@ export const IconMap: Record<string, LucideIcon> = {
   web_stories: FileText,
   widget_data: LayoutGrid,
   widgets: LayoutGrid,
+  youtube: Youtube,
 };
 
+// Tên không có trong bảng trên sẽ rơi về đây — icon lưới, trông như "chưa chọn
+// icon". Vì vậy mọi tên dùng trong widget PHẢI có mặt trong IconMap: trước đây
+// "phone" (Thông tin liên hệ), "call"/"chat" (bong bóng chat) và "edit_note"
+// đều thiếu nên hiện ra hình lưới. Riêng "tiktok" không có trong lucide, nhưng
+// widget Social Icons tự vẽ SVG thương hiệu nên không đi qua đây.
 export const DEFAULT_ICON: LucideIcon = LayoutGrid;
 
 type DynamicIconProps = {

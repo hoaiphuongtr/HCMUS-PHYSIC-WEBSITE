@@ -41,6 +41,9 @@ const TARGETS: Record<string, string> = {
   // trỏ tới, nên lấy từ origin để giữ đúng hiện trạng công khai.
   'vat-ly-dia-cau/tin-tuc/thong-tin-tuyen-dung-thang-032021':
     'vat-ly-dia-cau/tin-tuc/thong-tin-tuyen-dung-thang-032021',
+  // Danh sách giảng viên cơ hữu: Khoa còn sửa học hàm/chức danh trên site cũ sau
+  // mốc dump, nên bản di trú lệch ở vài dòng. Lấy lại cho khớp.
+  'giang-vien-co-huu1678184500.html': 'giang-vien-co-huu',
 };
 
 function fetchLegacy(path: string): Promise<string> {
@@ -82,7 +85,13 @@ function fetchLegacy(path: string): Promise<string> {
  * `div.blogpost-content` (nằm trong `div.main.col-lg-9`) — thử lần lượt và lấy
  * lớp hẹp nhất trước để không kéo theo tiêu đề/ngày đăng của khung blog.
  */
-const CONTENT_CLASSES = ['blogpost-content', 'main col-md-9', 'main col-lg-9'];
+const CONTENT_CLASSES = [
+  'blogpost-content',
+  'main col-md-9',
+  'main col-lg-9',
+  // Trang chiếm trọn bề ngang (vd danh sách giảng viên cơ hữu) không có cột phải.
+  'main col-12',
+];
 
 function extractByClass(html: string, cls: string): string | null {
   const open = new RegExp(`<div[^>]*class="${cls}"[^>]*>`).exec(html);
