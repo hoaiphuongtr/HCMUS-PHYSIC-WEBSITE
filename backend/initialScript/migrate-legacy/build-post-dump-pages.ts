@@ -147,6 +147,27 @@ async function main(): Promise<void> {
         throw new Error(`nội dung quá ngắn (${body.length}b), nghi là trang lỗi`);
       const title = extractTitle(html) || slug;
 
+      // Site cũ có bản tiếng Anh ở /en/<đường dẫn>. KHÔNG lấy thì phải chép bản
+      // tiếng Việt sang ô tiếng Anh — trang sẽ hiện tiếng Việt khi người xem
+      // chuyển sang English, tức là XOÁ MẤT bản dịch vốn có.
+      let bodyEn = '';
+      let titleEn = '';
+      try {
+        const htmlEn = await fetchLegacy(`en/${legacyPath}`);
+        const mainEn = extractMain(htmlEn);
+        const candidate = mainEn ? transformLegacyHtml(mainEn) : '';
+        // Nhận cả khi nội dung trùng bản tiếng Việt: nhiều trang (danh mục công
+        // bố, danh sách…) vốn dĩ giống nhau ở hai ngôn ngữ và site cũ cũng phục
+        // vụ đúng như vậy. Để trống mới là sai — người xem bấm English sẽ thấy
+        // trang rỗng.
+        if (candidate.length >= 200) {
+          bodyEn = candidate;
+          titleEn = extractTitle(htmlEn);
+        }
+      } catch {
+        // Không có bản tiếng Anh thì để trống, đừng nhét tiếng Việt vào.
+      }
+
       const tree = {
         root: {},
         content: [
@@ -155,14 +176,14 @@ async function main(): Promise<void> {
             type: 'PageHero',
             props: {
               id: `hero-${slug}`,
-              title: { vi: title, en: title },
+              title: { vi: title, en: titleEn || title },
               subtitle: { vi: '', en: '' },
               bgImage: '',
             },
           },
           {
             type: 'LegacyPageBody',
-            props: { id: `body-${slug}`, html: { vi: body, en: body } },
+            props: { id: `body-${slug}`, html: { vi: body, en: bodyEn } },
           },
           { type: 'SiteFooter', props: { id: `ftr-${slug}` } },
         ],
