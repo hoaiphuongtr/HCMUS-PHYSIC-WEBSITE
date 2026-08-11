@@ -6,17 +6,13 @@ import { toast } from "react-toastify";
 import {
   DynamicIcon,
   PencilIcon,
-  PlusIcon,
   SearchIcon,
-  TrashIcon,
 } from "@/components/admin/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { useConfirm } from "@/components/use-confirm";
 import { type WidgetType, widgetApi } from "@/lib/api";
 import { WidgetFormModal } from "./widget-form-modal";
 
@@ -36,11 +32,9 @@ const CATEGORY_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
 
 export function WidgetsManageView() {
   const queryClient = useQueryClient();
-  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editingWidget, setEditingWidget] = useState<WidgetType | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
 
   const { data: widgets = [] } = useQuery({
     queryKey: ["WIDGETS"],
@@ -59,17 +53,6 @@ export function WidgetsManageView() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationKey: ["WIDGETS", "DELETE"],
-    mutationFn: (id: string) => widgetApi.remove(id),
-    onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ["WIDGETS"] });
-      toast.success("Đã xoá widget");
-    },
-    onError(err: { message?: string }) {
-      toast.error(err.message || "Không xoá được widget");
-    },
-  });
 
   const filtered = widgets.filter((w) => {
     const matchSearch =
@@ -90,10 +73,7 @@ export function WidgetsManageView() {
           <h1 className="text-sm font-semibold">Widget Types</h1>
           <Badge variant="secondary">{widgets.length}</Badge>
         </div>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
-          <PlusIcon className="w-3.5 h-3.5" />
-          Create Widget
-        </Button>
+
       </header>
 
       <div className="flex-1 overflow-y-auto p-5">
@@ -129,80 +109,61 @@ export function WidgetsManageView() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {filtered.map((w) => (
-            <Card
-              key={w.id}
-              size="sm"
-              className={w.isActive ? "" : "opacity-50"}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-8 rounded-md bg-muted flex items-center justify-center">
-                      <DynamicIcon
-                        name={w.icon || "widgets"}
-                        className="w-[18px] h-[18px] text-muted-foreground"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-semibold">{w.name}</h3>
-                      <span className="text-[9px] font-mono text-muted-foreground">
-                        {w.type}
-                      </span>
-                    </div>
-                  </div>
-                  <Switch
-                    size="sm"
-                    checked={w.isActive}
-                    onCheckedChange={(checked) =>
-                      toggleMutation.mutate({ id: w.id, isActive: !!checked })
-                    }
+        {/* Cùng một kiểu danh sách với trang Bố cục trang (ul chia dòng), thay cho
+            lưới thẻ trước đây — hai màn hình quản lý cạnh nhau mà mỗi cái một
+            kiểu khiến người dùng tưởng là hai chức năng khác nhau. */}
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            {filtered.map((w) => (
+              <li
+                key={w.id}
+                className={
+                  "flex items-center gap-3 px-3 py-2.5" +
+                  (w.isActive ? "" : " opacity-50")
+                }
+              >
+                <div className="size-8 shrink-0 rounded-md bg-muted flex items-center justify-center">
+                  <DynamicIcon
+                    name={w.icon || "widgets"}
+                    className="w-[18px] h-[18px] text-muted-foreground"
                   />
                 </div>
-
-                {w.description && (
-                  <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">
-                    {w.description}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                    {w.name}
                   </p>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <Badge variant={CATEGORY_VARIANT[w.category] || "outline"}>
-                    {CATEGORY_LABELS[w.category] || w.category}
-                  </Badge>
-                  <div className="flex items-center gap-0.5">
-                    <span className="text-[9px] text-muted-foreground mr-1">
-                      {Object.keys(w.configSchema).length} fields
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => setEditingWidget(w)}
-                    >
-                      <PencilIcon className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={async () => {
-                        const ok = await confirm({
-                          title: `Xoá widget "${w.name}"?`,
-                          description: "Hành động này không thể hoàn tác.",
-                          confirmLabel: "Xoá",
-                          destructive: true,
-                        });
-                        if (ok) deleteMutation.mutate(w.id);
-                      }}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <TrashIcon className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono truncate">
+                    {w.type}
+                    {w.description ? ` · ${w.description}` : ""}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <Badge
+                  variant={CATEGORY_VARIANT[w.category] || "outline"}
+                  className="shrink-0"
+                >
+                  {CATEGORY_LABELS[w.category] || w.category}
+                </Badge>
+                <span className="shrink-0 text-[11px] text-muted-foreground w-20 text-right">
+                  {Object.keys(w.configSchema).length} thuộc tính
+                </span>
+                <Switch
+                  size="sm"
+                  checked={w.isActive}
+                  onCheckedChange={(checked) =>
+                    toggleMutation.mutate({ id: w.id, isActive: !!checked })
+                  }
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setEditingWidget(w)}
+                  title="Sửa thuộc tính"
+                >
+                  <PencilIcon className="w-3.5 h-3.5" />
+                </Button>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {filtered.length === 0 && (
@@ -216,16 +177,12 @@ export function WidgetsManageView() {
         )}
       </div>
 
-      {(showCreate || editingWidget) && (
+      {editingWidget && (
         <WidgetFormModal
           widget={editingWidget}
-          onClose={() => {
-            setShowCreate(false);
-            setEditingWidget(null);
-          }}
+          onClose={() => setEditingWidget(null)}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["WIDGETS"] });
-            setShowCreate(false);
             setEditingWidget(null);
           }}
         />

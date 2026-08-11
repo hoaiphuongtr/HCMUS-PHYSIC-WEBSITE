@@ -199,49 +199,58 @@ export const WALKTHROUGHS: Walkthrough[] = [
   },
   {
     id: "create-post",
-    route: "/admin/posts/new",
-    label: { vi: "Tạo một bài đăng", en: "Create a post" },
+    route: "/admin/posts",
+    label: { vi: "Đăng một bài mới", en: "Publish a new post" },
     summary: {
-      vi: "Nhập tiêu đề, danh mục, trạng thái rồi lưu.",
-      en: "Fill in title, category, status, then save.",
+      vi: "Chọn loại bài → nhập nội dung → bấm một trong ba nút lưu.",
+      en: "Pick the kind, write, then use one of the three save buttons.",
     },
     steps: [
       {
-        route: "/admin/posts/new",
+        route: "/admin/posts",
+        selector: "#post-kind-modal",
+        title: { vi: "Chọn loại bài", en: "Choose the kind" },
+        body: {
+          vi: "Trước khi vào trình soạn, hệ thống hỏi bạn đăng <b>Tin tức</b> hay <b>Sự kiện</b>. Chọn xong nó tự gắn đúng mẫu trang, bạn không phải chọn layout nữa.",
+          en: "Before the editor opens you pick <b>News</b> or <b>Event</b>. The matching page template is attached automatically — no layout picking.",
+        },
+        side: "bottom",
+      },
+      {
         selector: "#post-title",
         title: { vi: "Tiêu đề", en: "Title" },
         body: {
-          vi: "Nhập <b>tiêu đề</b> bài đăng (có tab VI/EN cho song ngữ).",
-          en: "Enter the post <b>title</b> (VI/EN tabs for bilingual).",
+          vi: "Nhập <b>tiêu đề</b>. Hai tab Tiếng Việt / English ngay bên cạnh để nhập bản song ngữ.",
+          en: "Enter the <b>title</b>. The VI / English tabs next to it hold the bilingual version.",
         },
         side: "bottom",
       },
       {
         selector: "#post-category",
-        title: { vi: "Danh mục", en: "Category" },
+        title: { vi: "Danh mục", en: "Categories" },
         body: {
-          vi: "Chọn <b>danh mục</b> (Tin giáo vụ, Thông tin khoa học, …).",
-          en: "Pick a <b>category</b>.",
-        },
-        side: "bottom",
-      },
-      {
-        selector: "#post-status",
-        title: { vi: "Trạng thái", en: "Status" },
-        body: {
-          vi: "Chọn <b>trạng thái</b>: Nháp, Chờ duyệt, Lên lịch, hoặc Xuất bản.",
-          en: "Choose the <b>status</b>: Draft, Pending, Scheduled or Published.",
+          vi: "Chỉ có với Tin tức, và <b>chọn được nhiều danh mục</b>: bài sẽ hiện dưới mọi danh mục đã chọn mà vẫn chỉ một đường dẫn. Sửa bài cũ thì các danh mục đã chọn được điền sẵn, bấm lại để bỏ.",
+          en: "News only, and you can <b>pick several</b>: the post appears under every chosen category while keeping one URL. When editing, existing categories are pre-filled; click one to remove it.",
         },
         side: "bottom",
       },
       {
         selector: '[data-tour="post-save"]',
-        title: { vi: "Lưu bài đăng", en: "Save the post" },
+        title: { vi: "Ba nút lưu", en: "Three save buttons" },
         body: {
-          vi: "Bấm để <b>lưu</b>. Nếu chọn 'Lên lịch', bạn sẽ nhập ngày giờ xuất bản.",
-          en: "Click to <b>save</b>. If 'Scheduled', you'll pick a publish time.",
+          vi: "<b>Lưu</b> giữ nguyên trạng thái (bài đang xuất bản vẫn xuất bản, nội dung mới nằm ở bản nháp). <b>Lưu và lên lịch</b> hẹn giờ — trang công khai giữ nội dung cũ cho tới đúng giờ đó. <b>Lưu và xuất bản ngay</b> đưa nội dung mới lên web luôn.",
+          en: "<b>Save</b> keeps the current status (a live post stays live; new content waits as a draft). <b>Save &amp; schedule</b> holds the public page on the old content until the chosen time. <b>Save &amp; publish now</b> pushes it live immediately.",
         },
         side: "bottom",
+      },
+      {
+        selector: "#post-status",
+        title: { vi: "Trạng thái bài đăng", en: "Post status" },
+        body: {
+          vi: "Ô này <b>chỉ để xem</b>, nằm ngang hàng với tab ngôn ngữ. Nó đi theo nút lưu bạn bấm chứ không tự chọn được nữa.",
+          en: "This is <b>read-only</b>, shown next to the language tabs. It follows the save button you press.",
+        },
+        side: "left",
       },
     ],
   },
@@ -347,13 +356,60 @@ export const FAQ: FaqItem[] = [
     q: { vi: "Làm sao để lên lịch xuất bản?", en: "How do I schedule publishing?" },
     steps: [
       {
-        vi: "Trong trình chỉnh sửa layout: mũi tên cạnh Save → 'Save & schedule…'.",
-        en: "In the layout editor: caret next to Save → 'Save & schedule…'.",
+        vi: "Với bài đăng: bấm <b>Lưu và lên lịch</b>, chọn ngày giờ rồi xác nhận. Không cần chọn Trạng thái nữa — ô đó nay chỉ để xem.",
+        en: "For posts: click <b>Save &amp; schedule</b>, pick the date/time and confirm. No status picker any more — that field is read-only now.",
       },
-      { vi: "Chọn ngày giờ rồi bấm 'Schedule'.", en: "Pick a date/time and click 'Schedule'." },
       {
-        vi: "Với bài đăng: đặt Trạng thái = 'Lên lịch' rồi nhập thời gian.",
-        en: "For posts: set Status = 'Scheduled' and enter the time.",
+        vi: "Trang công khai <b>giữ nguyên nội dung cũ</b> cho tới đúng giờ hẹn; bài vẫn nằm trong danh sách tin, không biến mất.",
+        en: "The public page <b>keeps the old content</b> until that time; the post stays in the news list.",
+      },
+      {
+        vi: "Với layout: mũi tên cạnh Save → 'Save & schedule…' rồi chọn giờ.",
+        en: "For layouts: caret next to Save → 'Save & schedule…', then pick a time.",
+      },
+      {
+        vi: "Hệ thống kiểm mỗi phút một lần nên bài lên chậm nhất khoảng một phút so với giờ hẹn.",
+        en: "The scheduler runs once a minute, so publishing lands within about a minute of the chosen time.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Đăng bài xong mà trang công khai chưa đổi?",
+      en: "I saved a post but the public page hasn't changed?",
+    },
+    steps: [
+      {
+        vi: "Kiểm bạn đã bấm nút nào: <b>Lưu</b> chỉ ghi bản nháp, KHÔNG đưa nội dung mới lên web.",
+        en: "Check which button you pressed: <b>Save</b> only writes a draft; it does not push content live.",
+      },
+      {
+        vi: "Muốn lên ngay thì bấm <b>Lưu và xuất bản ngay</b>.",
+        en: "To go live immediately use <b>Save &amp; publish now</b>.",
+      },
+      {
+        vi: "Nếu đang có lịch hẹn thì nội dung mới chỉ lên đúng giờ đã đặt.",
+        en: "If a schedule is pending, the new content only appears at that time.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Một bài muốn hiện ở nhiều danh mục thì làm sao?",
+      en: "How do I show one post under several categories?",
+    },
+    steps: [
+      {
+        vi: "Ở bài Tin tức, tick <b>nhiều danh mục</b> cùng lúc trong ô Danh mục.",
+        en: "On a News post, tick <b>several categories</b> at once.",
+      },
+      {
+        vi: "Bài chỉ có <b>một đường dẫn duy nhất</b>, nhưng lọc theo danh mục nào cũng thấy nó.",
+        en: "The post keeps a <b>single URL</b> but appears under every category filter you picked.",
+      },
+      {
+        vi: "Đường dẫn hiển thị (Trang chủ / Tin tức / …) chạy theo danh mục chính là danh mục bạn chọn đầu tiên.",
+        en: "The breadcrumb follows the first category you picked.",
       },
     ],
   },
