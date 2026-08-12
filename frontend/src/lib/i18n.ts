@@ -37,6 +37,28 @@ export const ensureLocalized = (
   return value;
 };
 
+// Các ngôn ngữ (khác mặc định) còn để trống trong khi ngôn ngữ mặc định đã có
+// nội dung. Trình soạn thảo dùng để cảnh báo: trường này sẽ tự lùi về tiếng Việt
+// trên trang công khai. `isHtml` bóc thẻ để "<p></p>" cũng tính là trống.
+export const untranslatedLocales = (
+  value: LocalizedString | null | undefined,
+  isHtml = false,
+): string[] => {
+  const map = ensureLocalized(value);
+  const clean = (s: string | undefined) => {
+    if (!s) return "";
+    const text = isHtml
+      ? s.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ")
+      : s;
+    return text.trim();
+  };
+  // Chưa nhập gì ở ngôn ngữ mặc định → chưa có gì để dịch, không cảnh báo.
+  if (!clean(map[DEFAULT_LOCALE])) return [];
+  return (LOCALES as readonly string[]).filter(
+    (l) => l !== DEFAULT_LOCALE && !clean(map[l]),
+  );
+};
+
 export const setLocaleValue = (
   value: LocalizedString | null | undefined,
   locale: string,

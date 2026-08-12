@@ -10,6 +10,7 @@ import {
   LOCALE_LABELS,
   LOCALES,
   type LocalizedString,
+  untranslatedLocales,
 } from "@/lib/i18n";
 
 // The Tiptap editor is heavy and admin-only — load it lazily so it never lands on
@@ -35,6 +36,7 @@ function LocalizedRichText({
   onChange: (value: LocalizedString) => void;
 }) {
   const normalized = ensureLocalized(value);
+  const missing = untranslatedLocales(value, true);
   const [locale, setLocale] = useState<string>(DEFAULT_LOCALE);
   // Visual (WYSIWYG) by default; raw HTML is an escape hatch so complex legacy
   // markup (styled tables etc.) can be edited without Tiptap normalising it away.
@@ -65,9 +67,15 @@ function LocalizedRichText({
               key={l}
               type="button"
               onClick={() => setLocale(l)}
-              className={tabBtn(locale === l)}
+              className={tabBtn(locale === l) + " inline-flex items-center gap-1"}
             >
               {LOCALE_LABELS[l] || l}
+              {missing.includes(l) && (
+                <span
+                  title="Chưa dịch"
+                  className="w-1.5 h-1.5 rounded-full bg-amber-500"
+                />
+              )}
             </button>
           ))}
         </div>
@@ -89,6 +97,13 @@ function LocalizedRichText({
           HTML
         </button>
       </div>
+
+      {missing.includes(locale) && (
+        <p className="flex items-center gap-1 text-[10px] leading-snug text-amber-600">
+          <DynamicIcon name="warning" className="w-3 h-3 shrink-0" />
+          Bỏ trống — trang công khai sẽ hiển thị nội dung tiếng Việt.
+        </p>
+      )}
 
       {mode === "visual" ? (
         <MarkdownEditor

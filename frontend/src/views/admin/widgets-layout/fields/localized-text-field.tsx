@@ -9,6 +9,7 @@ import {
   LOCALE_LABELS,
   LOCALES,
   type LocalizedString,
+  untranslatedLocales,
 } from "@/lib/i18n";
 
 type LocalizedTextInputProps = {
@@ -23,6 +24,7 @@ type LocaleInputRowProps = {
   isDefault: boolean;
   text: string;
   multiline: boolean;
+  warn: boolean;
   onCommit: (next: string) => void;
 };
 
@@ -31,6 +33,7 @@ const LocaleInputRow = ({
   isDefault,
   text,
   multiline,
+  warn,
   onCommit,
 }: LocaleInputRowProps) => {
   const [local, setLocal] = useState(text);
@@ -50,7 +53,11 @@ const LocaleInputRow = ({
 
   const inputClass =
     "w-full min-w-0 px-2 py-1.5 text-xs border rounded-md outline-none focus:ring-2 focus:ring-blue-200 " +
-    (isDefault ? "border-blue-300 bg-blue-50/30" : "border-slate-200 bg-white");
+    (isDefault
+      ? "border-blue-300 bg-blue-50/30"
+      : warn
+        ? "border-amber-400 bg-amber-50/50"
+        : "border-slate-200 bg-white");
 
   const sharedHandlers = {
     onCompositionStart: () => {
@@ -101,6 +108,12 @@ const LocaleInputRow = ({
             (mặc định)
           </span>
         )}
+        {warn && (
+          <span className="ml-auto flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 normal-case">
+            <DynamicIcon name="warning" className="w-3 h-3" />
+            chưa dịch
+          </span>
+        )}
       </div>
       {multiline ? (
         <textarea
@@ -111,6 +124,11 @@ const LocaleInputRow = ({
         />
       ) : (
         <input value={local} className={inputClass} {...sharedHandlers} />
+      )}
+      {warn && (
+        <p className="text-[10px] leading-snug text-amber-600">
+          Bỏ trống — trang công khai sẽ hiển thị nội dung tiếng Việt.
+        </p>
       )}
     </div>
   );
@@ -123,6 +141,7 @@ const LocalizedTextInput = ({
   multiline,
 }: LocalizedTextInputProps) => {
   const normalized = ensureLocalized(value);
+  const missing = untranslatedLocales(value);
 
   const handleLocaleCommit = (locale: string, text: string) => {
     onChange({ ...normalized, [locale]: text });
@@ -144,6 +163,7 @@ const LocalizedTextInput = ({
           isDefault={locale === DEFAULT_LOCALE}
           text={normalized[locale] ?? ""}
           multiline={!!multiline}
+          warn={missing.includes(locale)}
           onCommit={(next) => handleLocaleCommit(locale, next)}
         />
       ))}
