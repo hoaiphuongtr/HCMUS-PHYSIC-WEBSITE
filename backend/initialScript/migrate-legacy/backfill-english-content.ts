@@ -21,7 +21,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as https from 'node:https';
 import { Pool } from 'pg';
 import { Prisma, PrismaClient } from '../../src/generated/prisma/client';
-import { transformLegacyHtml } from './legacy-html';
+import { transformLegacyHtml, ensureTableBorderAttr } from './legacy-html';
 import { flushCache } from './flush-cache';
 
 const prisma = new PrismaClient({
@@ -250,7 +250,7 @@ async function main(): Promise<void> {
     let bodyChanged = false;
     if (needyBody.length > 0) {
       const main = extractMain(page);
-      const englishBody = main ? transformLegacyHtml(main) : '';
+      const englishBody = main ? ensureTableBorderAttr(transformLegacyHtml(main)) : '';
       const viBody = needyBody[0]?.get()?.vi ?? '';
       if (englishBody.length <= 200 || englishBody === viBody) {
         identical += 1;

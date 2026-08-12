@@ -100,3 +100,22 @@ export const rewriteImagePath = (
     return src.replace(/^\/uploads\//, '/uploads/legacy/');
   return src;
 };
+
+/**
+ * Gắn `border="0"` cho thẻ <table> nào chưa có thuộc tính border.
+ *
+ * Trang công khai nhận diện "bảng dữ liệu" (để kẻ đường và ép bố cục cột) dựa
+ * vào dấu hiệu trong chính HTML: có `border=`, có MsoTableGrid, hoặc ô có
+ * border-color. Nội dung lấy từ TRANG RENDER của site cũ thường không còn thuộc
+ * tính đó, trong khi nội dung lấy từ DUMP thì có — nên hai bản của cùng một
+ * trang hiện khác hẳn nhau: bản Việt có đường kẻ, bản Anh mất sạch, ảnh chồng
+ * lên chữ (đo trên trang Giảng viên cơ hữu: 12/27 bảng bên bản Anh không được
+ * nhận là bảng).
+ *
+ * Dùng `border="0"` chứ không phải "1" để khớp đúng cách dump ghi: nó chỉ là
+ * dấu hiệu nhận diện, còn đường kẻ do CSS của trang vẽ.
+ */
+export const ensureTableBorderAttr = (html: string): string =>
+  html.replace(/<table\b([^>]*)>/gi, (whole, attrs: string) =>
+    /\bborder\s*=/i.test(attrs) ? whole : `<table border="0"${attrs}>`,
+  );

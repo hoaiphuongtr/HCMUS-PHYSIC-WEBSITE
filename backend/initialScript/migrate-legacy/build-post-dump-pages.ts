@@ -19,7 +19,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import * as https from 'node:https';
 import { Pool } from 'pg';
 import { Prisma, PrismaClient } from '../../src/generated/prisma/client';
-import { decodeEntities, transformLegacyHtml } from './legacy-html';
+import { decodeEntities, transformLegacyHtml, ensureTableBorderAttr } from './legacy-html';
 import { flushCache } from './flush-cache';
 
 const prisma = new PrismaClient({
@@ -142,7 +142,7 @@ async function main(): Promise<void> {
       const html = await fetchLegacy(legacyPath);
       const main = extractMain(html);
       if (!main) throw new Error('không tìm được div.main.col-md-9');
-      const body = transformLegacyHtml(main);
+      const body = ensureTableBorderAttr(transformLegacyHtml(main));
       if (body.length < 200)
         throw new Error(`nội dung quá ngắn (${body.length}b), nghi là trang lỗi`);
       const title = extractTitle(html) || slug;
@@ -155,7 +155,7 @@ async function main(): Promise<void> {
       try {
         const htmlEn = await fetchLegacy(`en/${legacyPath}`);
         const mainEn = extractMain(htmlEn);
-        const candidate = mainEn ? transformLegacyHtml(mainEn) : '';
+        const candidate = mainEn ? ensureTableBorderAttr(transformLegacyHtml(mainEn)) : '';
         // Nhận cả khi nội dung trùng bản tiếng Việt: nhiều trang (danh mục công
         // bố, danh sách…) vốn dĩ giống nhau ở hai ngôn ngữ và site cũ cũng phục
         // vụ đúng như vậy. Để trống mới là sai — người xem bấm English sẽ thấy
