@@ -171,7 +171,7 @@ async function main(): Promise<void> {
       const tree = {
         root: {},
         content: [
-          { type: 'SiteHeader', props: { id: `hdr-${slug}` } },
+          { type: 'Header', props: { id: `hdr-${slug}` } },
           {
             type: 'PageHero',
             props: {
@@ -185,7 +185,7 @@ async function main(): Promise<void> {
             type: 'LegacyPageBody',
             props: { id: `body-${slug}`, html: { vi: body, en: bodyEn } },
           },
-          { type: 'SiteFooter', props: { id: `ftr-${slug}` } },
+          { type: 'Footer', props: { id: `ftr-${slug}` } },
         ],
       };
 
