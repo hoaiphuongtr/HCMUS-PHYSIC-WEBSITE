@@ -1,12 +1,19 @@
+/** Giá trị song ngữ nhét vào layout: object {vi,en} (hoặc chuỗi cho tương thích ngược). */
+export type Localized = string | { vi?: string; en?: string };
+
+/** Làm phẳng về một chuỗi (dùng cho thuộc tính alt của ảnh — không theo locale). */
+const flat = (v: Localized | null | undefined): string =>
+  v == null ? '' : typeof v === 'string' ? v : v.vi || v.en || '';
+
 export type PostInjectPayload = {
-  title: string;
-  body: string;
-  excerpt: string | null;
+  title: Localized;
+  body: Localized;
+  excerpt: Localized | null;
   coverUrl: string | null;
   coverAlt: string | null;
   tags: { slug: string; name: string; icon?: string | null }[];
   category: string;
-  categoryLabel: string;
+  categoryLabel: Localized;
   publishedAt: string | null;
   eventStartAt: string | null;
   eventEndAt: string | null;
@@ -49,7 +56,7 @@ const buildInjectedProps = (
       return {
         ...original,
         src: post.coverUrl ?? '',
-        alt: post.coverAlt ?? post.title,
+        alt: post.coverAlt ?? flat(post.title),
         injected: true,
       };
     case 'PostTagList':

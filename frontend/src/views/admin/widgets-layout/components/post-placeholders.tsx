@@ -346,6 +346,8 @@ const POST_LABELS = {
 };
 
 export const PostTitle: ComponentConfig<{
+  // `text` là giá trị NHÉT khi publish: chuỗi cũ hoặc {vi,en} mới (backend nhét
+  // object; type để `string` cho khớp field auto, render dùng t() lo cả hai).
   text: string;
   defaultText: LocalizedString;
   alignment: string;
@@ -390,7 +392,9 @@ function PostTitleRender({
   const { locale } = useLocale();
   const placeholder =
     t(defaultText, locale) || t(POST_LABELS.titleFallback, locale);
-  const content = text || placeholder;
+  // Bài publish "nhét" tiêu đề dạng {vi,en}; bài cũ có thể còn là chuỗi đơn ngữ —
+  // t() xử lý cả hai (chuỗi trả nguyên, object chọn theo locale).
+  const content = t(text, locale) || placeholder;
   return (
     <h1
       data-post-body
@@ -403,6 +407,7 @@ function PostTitleRender({
 }
 
 export const PostBody: ComponentConfig<{
+  // Xem ghi chú ở PostTitle: `markdown` nhét là chuỗi cũ hoặc {vi,en} mới.
   markdown: string;
   defaultMarkdown: LocalizedString;
   injected?: boolean;
@@ -438,7 +443,10 @@ function PostBodyRender({
   injected: boolean;
 }) {
   const { locale } = useLocale();
-  if (injected && !markdown) {
+  // Nội dung nhét dạng {vi,en} (bài cũ có thể còn chuỗi đơn ngữ); t() chọn đúng
+  // ngôn ngữ, thiếu bản EN thì tự lùi về VI.
+  const injectedSource = t(markdown, locale);
+  if (injected && !injectedSource) {
     // Bài di trú không có nội dung nguồn: không để trang trống trơn.
     return (
       <p className="text-slate-500 dark:text-slate-400 italic py-8 text-center">
@@ -448,7 +456,7 @@ function PostBodyRender({
       </p>
     );
   }
-  const rawSource = markdown || t(defaultMarkdown, locale) || "";
+  const rawSource = injectedSource || t(defaultMarkdown, locale) || "";
   const source = markNumericCells(replaceBrokenMathImages(rawSource))
     .replace(/(?:<p>(?:&nbsp;|&#160;| |\s)*<\/p>\s*){2,}/gi, "<p>&nbsp;</p>")
     .replace(LEADING_NBSP_RE, "$1")
@@ -1305,6 +1313,7 @@ function PostEventInfoRender({
 }
 
 export const PostHeader: ComponentConfig<{
+  // `text`/`categoryLabel` nhét là chuỗi cũ hoặc {vi,en} mới — render dùng t().
   text: string;
   defaultText: LocalizedString;
   categoryLabel: string;
@@ -1364,8 +1373,8 @@ function PostHeaderRender({
   publishedAt: string;
 }) {
   const { locale } = useLocale();
-  const title = text || t(defaultText, locale);
-  const cat = categoryLabel || t(defaultCategoryLabel, locale);
+  const title = t(text, locale) || t(defaultText, locale);
+  const cat = t(categoryLabel, locale) || t(defaultCategoryLabel, locale);
   const dateLine = formatPublishedHeader(publishedAt, locale);
   const homeLabel = locale === "en" ? "Home" : "Trang chủ";
   const newsLabel = locale === "en" ? "News" : "Tin tức";

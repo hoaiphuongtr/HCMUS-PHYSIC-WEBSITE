@@ -860,11 +860,10 @@ export class PostService {
           select: { slug: true, name: true },
         })
       : null;
-    const titleVi = viOf(post.title);
     const injectPayload: PostInjectPayload = {
-      title: titleVi,
-      body: viOf(post.body),
-      excerpt: viOf(post.excerpt) || null,
+      title: asLocalized(post.title) ?? { vi: '' },
+      body: asLocalized(post.body) ?? { vi: '' },
+      excerpt: asLocalized(post.excerpt),
       coverUrl:
         post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
@@ -874,7 +873,7 @@ export class PostService {
         icon: pt.tag.icon,
       })),
       category: layoutCategory?.slug ?? '',
-      categoryLabel: viOf(layoutCategory?.name),
+      categoryLabel: asLocalized(layoutCategory?.name) ?? { vi: '' },
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
@@ -911,7 +910,7 @@ export class PostService {
 
     const layout = await this.prisma.pageLayout.create({
       data: {
-        name: body.layoutName || titleVi,
+        name: body.layoutName || viOf(post.title),
         slug: layoutSlug,
         description: viOf(post.excerpt) || null,
         puckData: injectedTree as unknown as InputJsonValue,
@@ -1232,9 +1231,9 @@ export class PostService {
     // mỗi layout tự chèn danh mục của mình (bài rót vào layout câu lạc bộ và
     // layout tin khoa học phải hiện đúng danh mục ở mỗi trang).
     const sharedPayload: Omit<PostInjectPayload, 'category' | 'categoryLabel'> = {
-      title: viOf(post.title),
-      body: viOf(post.body),
-      excerpt: viOf(post.excerpt) || null,
+      title: asLocalized(post.title) ?? { vi: '' },
+      body: asLocalized(post.body) ?? { vi: '' },
+      excerpt: asLocalized(post.excerpt),
       coverUrl:
         post.coverUrl ?? (post.coverMedia ? post.coverMedia.url : null) ?? null,
       coverAlt: post.coverAlt ?? null,
@@ -1253,7 +1252,7 @@ export class PostService {
         const payload: PostInjectPayload = {
           ...sharedPayload,
           category: layout.category?.slug ?? '',
-          categoryLabel: viOf(layout.category?.name),
+          categoryLabel: asLocalized(layout.category?.name) ?? { vi: '' },
         };
         const data: {
           puckData?: InputJsonValue;
