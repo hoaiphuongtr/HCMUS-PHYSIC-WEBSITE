@@ -12,6 +12,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
   Eraser,
@@ -406,7 +407,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       FontFamily,
       TextAlign.configure({
         types: ["heading", "paragraph"],
-        alignments: ["left", "center", "right"],
+        alignments: ["left", "center", "right", "justify"],
       }),
       ImageResize.extend({
         renderHTML({ node, HTMLAttributes }) {
@@ -781,6 +782,15 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               title="Align right"
             >
               <AlignRight className="w-3.5 h-3.5" />
+            </ToolbarButton>
+            <ToolbarButton
+              active={editor.isActive({ textAlign: "justify" })}
+              onClick={() =>
+                editor.chain().focus().setTextAlign("justify").run()
+              }
+              title="Căn đều hai bên"
+            >
+              <AlignJustify className="w-3.5 h-3.5" />
             </ToolbarButton>
 
             <ToolbarDivider />
