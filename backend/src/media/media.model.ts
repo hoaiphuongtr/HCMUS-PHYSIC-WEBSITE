@@ -2,6 +2,9 @@ import z from 'zod';
 
 export const UploadMediaBodySchema = z.object({
   alt: z.string().optional(),
+  // Bộ môn đích của ảnh (kho riêng). Chỉ admin toàn khoa mới đặt được sang bộ
+  // môn khác; admin bộ môn luôn lưu vào kho của mình.
+  departmentId: z.string().optional(),
   tagSlugs: z
     .union([z.array(z.string()), z.string()])
     .transform((v) => {
@@ -32,6 +35,7 @@ export const CreateFromUrlBodySchema = z.object({
   url: z.url(),
   name: z.string().optional(),
   alt: z.string().optional(),
+  departmentId: z.string().optional(),
   tagSlugs: z.array(z.string()).default([]),
 });
 export type CreateFromUrlBodyType = z.infer<typeof CreateFromUrlBodySchema>;
@@ -42,6 +46,8 @@ export const ListMediaQuerySchema = z.object({
   search: z.string().optional(),
   tagSlug: z.string().optional(),
   type: z.string().optional(),
+  // Lọc theo kho bộ môn. FACULTY_DEPT_ID = kho "Khoa" (gồm cả ảnh dùng chung).
+  departmentId: z.string().optional(),
 });
 export type ListMediaQueryType = z.infer<typeof ListMediaQuerySchema>;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Extension, Node } from "@tiptap/core";
 import { Color } from "@tiptap/extension-color";
 import { Table } from "@tiptap/extension-table";
 import { TableCell } from "@tiptap/extension-table-cell";
@@ -16,18 +17,119 @@ import {
   AlignLeft,
   AlignRight,
   Eraser,
+  Film,
   Image as ImageIcon,
   Link2Off,
   Link as LinkIcon,
   Minus,
+  PaintBucket,
   Redo2,
   Table as TableIcon,
   Undo2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ImageResize from "tiptap-extension-resize-image";
+import { toEmbedUrl } from "@/views/admin/widgets-layout/components/media-src";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
 import { LegacyHtmlRender } from "@/views/admin/widgets-layout/components/post-placeholders";
+
+// ── Cỡ chữ ── mở rộng textStyle để lưu style="font-size:…" + lệnh set/unset.
+const FontSize = Extension.create({
+  name: "fontSize",
+  addOptions() {
+    return { types: ["textStyle"] };
+  },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (el: HTMLElement) => el.style.fontSize || null,
+            renderHTML: (attrs: { fontSize?: string | null }) =>
+              attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {},
+          },
+        },
+      },
+    ];
+  },
+});
+
+// ── Ô bảng có nền màu ── thêm thuộc tính backgroundColor cho <td>/<th>.
+const bgAttr = {
+  backgroundColor: {
+    default: null as string | null,
+    parseHTML: (el: HTMLElement) =>
+      el.style.backgroundColor || el.getAttribute("data-bg") || null,
+    renderHTML: (attrs: { backgroundColor?: string | null }) =>
+      attrs.backgroundColor
+        ? { style: `background-color: ${attrs.backgroundColor}` }
+        : {},
+  },
+};
+const TableCellBg = TableCell.extend({
+  addAttributes() {
+    return { ...this.parent?.(), ...bgAttr };
+  },
+});
+const TableHeaderBg = TableHeader.extend({
+  addAttributes() {
+    return { ...this.parent?.(), ...bgAttr };
+  },
+});
+
+// ── Embed video/PDF ── node khối chứa <iframe> trong khung TỈ LỆ giữ được để
+// responsive. kind="video" (16:9) hoặc "doc" (khung cao cho PDF/tài liệu).
+const embedDims = (kind: string) =>
+  kind === "doc"
+    ? { pad: "129%", maxW: "760px" }
+    : { pad: "56.25%", maxW: "800px" };
+const Embed = Node.create({
+  name: "embed",
+  group: "block",
+  atom: true,
+  draggable: true,
+  selectable: true,
+  addAttributes() {
+    return { src: { default: "" }, kind: { default: "video" } };
+  },
+  parseHTML() {
+    return [
+      {
+        tag: "div.embed-responsive",
+        getAttrs: (el: HTMLElement) => ({
+          src: el.querySelector("iframe")?.getAttribute("src") || "",
+          kind: el.getAttribute("data-kind") || "video",
+        }),
+      },
+    ];
+  },
+  renderHTML({ node }) {
+    const kind = node.attrs.kind === "doc" ? "doc" : "video";
+    const { pad, maxW } = embedDims(kind);
+    return [
+      "div",
+      {
+        class: "embed-responsive",
+        "data-kind": kind,
+        style: `position:relative;width:100%;max-width:${maxW};margin:1rem auto;padding-bottom:${pad};height:0;overflow:hidden;border-radius:8px`,
+      },
+      [
+        "iframe",
+        {
+          src: node.attrs.src as string,
+          style:
+            "position:absolute;top:0;left:0;width:100%;height:100%;border:0",
+          allowfullscreen: "true",
+          allow: "autoplay; encrypted-media; fullscreen",
+          loading: "lazy",
+          frameborder: "0",
+        },
+      ],
+    ];
+  },
+});
 
 type MarkdownEditorProps = {
   value: string;
@@ -392,6 +494,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     pos: number;
   } | null>(null);
   const [imageLayoutOpen, setImageLayoutOpen] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState("");
+  const [embedKind, setEmbedKind] = useState<"video" | "doc">("video");
   const skipNextUpdate = useRef(false);
 
   const editor = useEditor({
@@ -402,6 +507,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
       // setColor/unsetColor cho nút chọn màu trên thanh công cụ.
       TextStyle,
       Color,
+      // Cỡ chữ (span style="font-size:…") — nút chọn cỡ trên thanh công cụ.
+      FontSize,
       // Cho phép chọn font chữ (span style="font-family:…") — nút chọn font trên
       // thanh công cụ. Types mặc định gồm textStyle.
       FontFamily,
@@ -444,8 +551,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         HTMLAttributes: { class: "post-table" },
       }),
       TableRow,
-      TableHeader,
-      TableCell,
+      TableHeaderBg,
+      TableCellBg,
+      Embed,
     ],
     content: absolutizeUploads(value || ""),
     editorProps: {
@@ -559,6 +667,25 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
           wrapperStyle: "display: block; max-width: 100%;",
         },
       })
+      .run();
+  };
+
+  // Chèn video/PDF: chuyển URL chia sẻ → embed, bọc trong khung TỈ LỆ giữ được
+  // (padding-bottom) để responsive trên mọi bề rộng. Video 16:9, tài liệu khung cao.
+  const confirmInsertEmbed = () => {
+    const raw = embedUrl.trim();
+    setEmbedOpen(false);
+    setEmbedUrl("");
+    if (!raw) return;
+    const src = toEmbedUrl(raw);
+    if (!src) return;
+    editor
+      .chain()
+      .focus()
+      .insertContent([
+        { type: "embed", attrs: { src, kind: embedKind } },
+        { type: "paragraph" },
+      ])
       .run();
   };
 
@@ -758,6 +885,41 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               <option value="'Courier New', monospace">Courier New</option>
             </select>
 
+            {/* Cỡ chữ cho đoạn bôi chọn. */}
+            <select
+              title="Cỡ chữ"
+              value={
+                (editor.getAttributes("textStyle").fontSize as string) || ""
+              }
+              onChange={(e) => {
+                const s = e.target.value;
+                if (s)
+                  editor
+                    .chain()
+                    .focus()
+                    .setMark("textStyle", { fontSize: s })
+                    .run();
+                else
+                  editor
+                    .chain()
+                    .focus()
+                    .setMark("textStyle", { fontSize: null })
+                    .removeEmptyTextStyle()
+                    .run();
+              }}
+              className="h-8 px-1.5 text-xs border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-[#1a2436] text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+            >
+              <option value="">Cỡ chữ</option>
+              <option value="12px">12</option>
+              <option value="14px">14</option>
+              <option value="16px">16</option>
+              <option value="18px">18</option>
+              <option value="20px">20</option>
+              <option value="24px">24</option>
+              <option value="30px">30</option>
+              <option value="36px">36</option>
+            </select>
+
             <ToolbarDivider />
 
             <ToolbarButton
@@ -844,6 +1006,17 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
               <TableIcon className="w-3.5 h-3.5" />
             </ToolbarButton>
 
+            <ToolbarButton
+              onClick={() => {
+                setEmbedUrl("");
+                setEmbedKind("video");
+                setEmbedOpen(true);
+              }}
+              title="Chèn video / PDF (YouTube, Google Drive, OneDrive…)"
+            >
+              <Film className="w-3.5 h-3.5" />
+            </ToolbarButton>
+
             {editor.isActive("table") && (
               <>
                 <ToolbarDivider />
@@ -860,6 +1033,39 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                     <span className="whitespace-nowrap">{action.label}</span>
                   </ToolbarButton>
                 ))}
+                {/* Tô màu nền ô đang chọn + xoá màu. */}
+                <label
+                  title="Tô màu nền ô"
+                  className="min-w-[28px] h-7 px-2 rounded border bg-white border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center cursor-pointer relative"
+                >
+                  <PaintBucket className="w-3.5 h-3.5" />
+                  <input
+                    type="color"
+                    onInput={(e) =>
+                      editor
+                        .chain()
+                        .focus()
+                        .setCellAttribute(
+                          "backgroundColor",
+                          (e.target as HTMLInputElement).value,
+                        )
+                        .run()
+                    }
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </label>
+                <ToolbarButton
+                  onClick={() =>
+                    editor
+                      .chain()
+                      .focus()
+                      .setCellAttribute("backgroundColor", null)
+                      .run()
+                  }
+                  title="Xoá màu nền ô"
+                >
+                  <span className="whitespace-nowrap">Xoá màu ô</span>
+                </ToolbarButton>
               </>
             )}
 
@@ -987,6 +1193,56 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             </div>
           ) : null}
 
+          {embedOpen ? (
+            <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-blue-50 text-xs">
+              <input
+                value={embedUrl}
+                onChange={(e) => setEmbedUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    confirmInsertEmbed();
+                  } else if (e.key === "Escape") setEmbedOpen(false);
+                }}
+                placeholder="Dán link YouTube / Google Drive / OneDrive / .pdf…"
+                className="flex-1 min-w-[220px] px-2 py-1 text-xs border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-[#1a2436] outline-none"
+                // biome-ignore lint/a11y/noAutofocus: dialog-style inline bar
+                autoFocus
+              />
+              <div className="inline-flex rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {(["video", "doc"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setEmbedKind(k)}
+                    className={
+                      "px-2 py-1 text-[11px] " +
+                      (embedKind === k
+                        ? "bg-blue-600 text-white"
+                        : "bg-white dark:bg-[#1a2436] text-slate-600 dark:text-slate-300")
+                    }
+                  >
+                    {k === "video" ? "Video 16:9" : "Tài liệu/PDF"}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={confirmInsertEmbed}
+                className="px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded hover:bg-blue-700"
+              >
+                Chèn
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmbedOpen(false)}
+                className="px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700"
+              >
+                Hủy
+              </button>
+            </div>
+          ) : null}
+
           {/* Cho nội dung trong trình soạn thảo hiển thị gần giống trang công
               khai (đồng nhất editor↔preview): bảng có đường kẻ, ảnh co vừa
               khung, link có gạch chân. Màu chữ inline (TextStyle/Color) tự hiện. */}
@@ -1006,6 +1262,12 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             .ProseMirror table td, .ProseMirror table th { border: 1px solid #94a3b8; padding: 6px 10px; vertical-align: top; }
             .ProseMirror img { max-width: 100%; height: auto; }
             .ProseMirror a { color: #1d4ed8; text-decoration: underline; }
+            .ProseMirror .embed-responsive iframe { position:absolute; top:0; left:0; width:100%; height:100%; min-height:0; }
+            /* Trong editor: chặn iframe bắt chuột để bấm là CHỌN được node embed (xoá/di chuyển). */
+            .ProseMirror .embed-responsive iframe { pointer-events: none; }
+            .ProseMirror .embed-responsive { outline: 1px dashed #cbd5e1; }
+            .ProseMirror .ProseMirror-selectednode .embed-responsive,
+            .ProseMirror div.embed-responsive.ProseMirror-selectednode { outline: 2px solid #2563eb; }
           `}</style>
           <EditorContent editor={editor} />
 

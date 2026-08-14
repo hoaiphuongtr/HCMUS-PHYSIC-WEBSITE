@@ -48,19 +48,25 @@ export class MediaRepository {
       type?: string;
     },
     scopeWhere?: Record<string, unknown>,
+    departmentFilter?: Record<string, unknown>,
   ) {
     const { page, pageSize, search, tagSlug, type } = params;
-    const where: Record<string, unknown> = { ...(scopeWhere ?? {}) };
+    // Gộp mọi điều kiện bằng AND để chúng KHÔNG đè OR của nhau (trước đây `search`
+    // ghi đè OR của scope quyền → admin bộ môn tìm kiếm thấy sai phạm vi).
+    const and: Record<string, unknown>[] = [];
+    if (scopeWhere) and.push(scopeWhere);
+    if (departmentFilter) and.push(departmentFilter);
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { alt: { contains: search, mode: 'insensitive' } },
-      ];
+      and.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { alt: { contains: search, mode: 'insensitive' } },
+        ],
+      });
     }
-    if (type) where.type = type;
-    if (tagSlug) {
-      where.mediaTags = { some: { tag: { slug: tagSlug } } };
-    }
+    if (type) and.push({ type });
+    if (tagSlug) and.push({ mediaTags: { some: { tag: { slug: tagSlug } } } });
+    const where: Record<string, unknown> = and.length ? { AND: and } : {};
 
     const [items, total] = await Promise.all([
       this.prisma.media.findMany({

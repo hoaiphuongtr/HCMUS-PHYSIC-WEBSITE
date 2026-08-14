@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { toSlug } from '../shared/helpers';
 import { DepartmentRepository } from './department.repo';
 import {
   CreateDepartmentBodyType,
@@ -18,9 +19,18 @@ export class DepartmentService {
   ) {}
 
   async create(body: CreateDepartmentBodyType) {
-    const existing = await this.departmentRepository.findBySlug(body.slug);
-    if (existing) throw DepartmentSlugExistsException;
-    return this.departmentRepository.create(body);
+    // Slug không bắt buộc: tự sinh từ tên, thêm hậu tố nếu trùng.
+    const base = (body.slug || toSlug(body.name)).trim() || 'don-vi';
+    let slug = base;
+    let n = 1;
+    while (await this.departmentRepository.findBySlug(slug)) {
+      slug = `${base}-${++n}`;
+    }
+    return this.departmentRepository.create({
+      ...body,
+      slug,
+      kind: body.kind ?? 'department',
+    });
   }
 
   findAll() {

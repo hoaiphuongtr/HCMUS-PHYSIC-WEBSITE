@@ -199,10 +199,12 @@ export const adminApi = {
   },
 };
 
+export type DepartmentKind = "department" | "unit";
 export type Department = {
   id: string;
   name: string;
   slug: string;
+  kind: DepartmentKind;
   description: string | null;
   createdAt: string;
   updatedAt: string;
@@ -212,7 +214,7 @@ export const departmentApi = {
   list() {
     return authFetch<Department[]>("/departments");
   },
-  create(body: { name: string; description?: string }) {
+  create(body: { name: string; description?: string; kind?: DepartmentKind }) {
     return authFetch<Department>("/departments", {
       method: "POST",
       body: JSON.stringify(body),
@@ -220,7 +222,12 @@ export const departmentApi = {
   },
   update(
     id: string,
-    body: { name?: string; slug?: string; description?: string },
+    body: {
+      name?: string;
+      slug?: string;
+      description?: string;
+      kind?: DepartmentKind;
+    },
   ) {
     return authFetch<Department>(`/departments/${id}`, {
       method: "PATCH",
@@ -586,11 +593,12 @@ const buildQuery = (
 export const mediaApi = {
   upload: async (
     file: File,
-    opts?: { alt?: string; tagSlugs?: string[] },
+    opts?: { alt?: string; tagSlugs?: string[]; departmentId?: string },
   ): Promise<MediaItem> => {
     const fd = new FormData();
     fd.append("file", file);
     if (opts?.alt) fd.append("alt", opts.alt);
+    if (opts?.departmentId) fd.append("departmentId", opts.departmentId);
     if (opts?.tagSlugs?.length)
       fd.append("tagSlugs", JSON.stringify(opts.tagSlugs));
     const token =
@@ -613,6 +621,7 @@ export const mediaApi = {
     name?: string;
     alt?: string;
     tagSlugs?: string[];
+    departmentId?: string;
   }) =>
     authFetch<MediaItem>(`/media/from-url`, {
       method: "POST",
@@ -623,6 +632,7 @@ export const mediaApi = {
     pageSize?: number;
     search?: string;
     tagSlug?: string;
+    departmentId?: string;
   }) => authFetch<MediaListRes>(`/media${buildQuery(query)}`),
   get: (id: string) => authFetch<MediaItem>(`/media/${id}`),
   update: (

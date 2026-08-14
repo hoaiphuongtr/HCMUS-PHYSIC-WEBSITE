@@ -8,6 +8,8 @@ import { type MediaItem, mediaApi } from "@/lib/api";
 
 type UploadZoneProps = {
   tagSlugs?: string[];
+  // Kho bộ môn đích khi tải lên (admin toàn khoa mới đổi được sang bộ môn khác).
+  departmentId?: string;
   onUploaded: () => void;
   // Fired with the created Media row after a successful upload or URL import.
   // Lets a caller (e.g. the media picker) immediately use the new image.
@@ -16,6 +18,7 @@ type UploadZoneProps = {
 
 export function UploadZone({
   tagSlugs,
+  departmentId,
   onUploaded,
   onUploadedItem,
 }: UploadZoneProps) {
@@ -27,12 +30,14 @@ export function UploadZone({
 
   const uploadMutation = useMutation({
     mutationKey: ["MEDIA", "UPLOAD"],
-    mutationFn: (file: File) => mediaApi.upload(file, { tagSlugs }),
+    mutationFn: (file: File) =>
+      mediaApi.upload(file, { tagSlugs, departmentId }),
   });
 
   const urlMutation = useMutation({
     mutationKey: ["MEDIA", "CREATE_FROM_URL"],
-    mutationFn: (url: string) => mediaApi.createFromUrl({ url, tagSlugs }),
+    mutationFn: (url: string) =>
+      mediaApi.createFromUrl({ url, tagSlugs, departmentId }),
     onSuccess: (item) => {
       toast.success("Đã lưu URL");
       setUrlValue("");

@@ -2,7 +2,9 @@ import z from 'zod';
 
 export const CreateDepartmentBodySchema = z.object({
   name: z.string().min(1).max(200),
-  slug: z.string().min(1).max(200),
+  // Không bắt buộc: tự sinh từ name nếu bỏ trống.
+  slug: z.string().min(1).max(200).optional(),
+  kind: z.enum(['department', 'unit']).optional(),
   description: z.string().optional(),
   email: z.email().optional(),
   phone: z.string().optional(),
@@ -30,6 +32,7 @@ export const DepartmentResSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
+  kind: z.string(),
   description: z.string().nullable(),
   email: z.string().nullable(),
   phone: z.string().nullable(),

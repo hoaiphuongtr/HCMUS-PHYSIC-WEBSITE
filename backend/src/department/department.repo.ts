@@ -9,7 +9,7 @@ import {
 export class DepartmentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateDepartmentBodyType) {
+  create(data: CreateDepartmentBodyType & { slug: string }) {
     return this.prisma.department.create({ data });
   }
 

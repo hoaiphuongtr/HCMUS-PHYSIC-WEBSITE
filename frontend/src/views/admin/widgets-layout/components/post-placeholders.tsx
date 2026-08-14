@@ -606,6 +606,19 @@ function PostBodyRender({
             min-height: 600px;
             border: 0;
           }
+          /* Video/PDF chèn qua nút "Chèn video/PDF": khung giữ TỈ LỆ (padding-bottom)
+             nên iframe phải lấp đầy khung, KHÔNG dính min-height 600px ở trên. */
+          [data-post-body] .embed-responsive {
+            max-width: 100%;
+          }
+          [data-post-body] .embed-responsive iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+          }
           [data-post-body] img {
             max-width: 100% !important;
             /* KHÔNG ép width:auto — giữ thuộc tính width/height của ảnh để trình

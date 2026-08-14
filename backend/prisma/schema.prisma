@@ -197,6 +197,9 @@ model Department {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
+  // Phân loại đơn vị: "department" = bộ môn (hiện như bộ môn), "unit" = đơn vị
+  // khác (Đoàn – Hội, CLB…) — KHÔNG coi là bộ môn ở các listing động.
+  kind        String   @default("department")
   description String?
   email       String?
   phone       String?

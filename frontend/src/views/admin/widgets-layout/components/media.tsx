@@ -24,7 +24,7 @@ import {
   localizedTextField,
 } from "../fields/localized-text-field";
 import { mediaPickerField } from "../fields/media-picker-field";
-import { resolveMediaSrc } from "./media-src";
+import { guessEmbedKind, resolveMediaSrc, toEmbedUrl } from "./media-src";
 
 export const ImageBlock: ComponentConfig<{
   src: string;
@@ -224,22 +224,38 @@ export const VideoEmbed: ComponentConfig<{
   title: string;
   aspectRatio: string;
 }> = {
-  label: "Video",
+  label: "Video / PDF",
   defaultProps: { videoUrl: "", title: "", aspectRatio: "16:9" },
   fields: {
-    videoUrl: { type: "text", label: "Video URL (YouTube/Vimeo)" },
+    videoUrl: {
+      type: "text",
+      label: "URL (YouTube / Vimeo / Google Drive / OneDrive / PDF)",
+    },
     title: { type: "text", label: "Title" },
     aspectRatio: {
       type: "select",
-      label: "Aspect Ratio",
+      label: "Khung hiển thị",
       options: [
-        { label: "16:9", value: "16:9" },
-        { label: "4:3", value: "4:3" },
+        { label: "16:9 (video)", value: "16:9" },
+        { label: "4:3 (video)", value: "4:3" },
+        { label: "Tài liệu / PDF (khung cao)", value: "doc" },
       ],
     },
   },
   render: ({ videoUrl, title, aspectRatio }) => {
-    const ratio = aspectRatio === "4:3" ? "aspect-[4/3]" : "aspect-video";
+    // "auto": nếu người dùng để 16:9 mà dán PDF/tài liệu thì tự dùng khung cao.
+    const kind =
+      aspectRatio === "doc"
+        ? "doc"
+        : aspectRatio === "16:9"
+          ? guessEmbedKind(videoUrl)
+          : "video";
+    const ratio =
+      kind === "doc"
+        ? "aspect-[3/4] sm:aspect-[1/1.294]"
+        : aspectRatio === "4:3"
+          ? "aspect-[4/3]"
+          : "aspect-video";
     return (
       <div>
         {title && (
@@ -249,9 +265,10 @@ export const VideoEmbed: ComponentConfig<{
         )}
         {videoUrl ? (
           <iframe
-            src={resolveMediaSrc(videoUrl)}
-            className={`w-full ${ratio} rounded-lg`}
+            src={toEmbedUrl(videoUrl)}
+            className={`w-full ${ratio} rounded-lg border-0`}
             allowFullScreen
+            allow="autoplay; encrypted-media; fullscreen"
           />
         ) : (
           <div

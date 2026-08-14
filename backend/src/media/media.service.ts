@@ -9,7 +9,12 @@ import type {
   UploadMediaBodyType,
 } from './media.model';
 import { MediaNotFoundException } from './media.error';
-import { canAccessDepartment, mediaScopeWhere } from '../shared/helpers';
+import {
+  canAccessDepartment,
+  FACULTY_DEPT_ID,
+  isFacultyWide,
+  mediaScopeWhere,
+} from '../shared/helpers';
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads');
 
@@ -42,6 +47,7 @@ export class MediaService {
     body: UploadMediaBodyType,
     userId: string,
     departmentId: string | null,
+    roleName: string,
   ) {
     const created = await this.repo.create({
       name: file.originalname,
@@ -51,7 +57,11 @@ export class MediaService {
       size: file.size,
       alt: body.alt ?? null,
       createdBy: userId,
-      departmentId: departmentId ?? null,
+      departmentId: this.resolveTargetDept(
+        roleName,
+        departmentId,
+        body.departmentId,
+      ),
     });
     if (body.tagSlugs?.length)
       await this.repo.syncTags(created.id, body.tagSlugs);
@@ -59,10 +69,22 @@ export class MediaService {
     return toMedia(withTags);
   }
 
+  // Chỉ admin toàn khoa mới lưu ảnh sang bộ môn khác; còn lại luôn dùng kho của
+  // chính mình (bỏ qua departmentId gửi lên).
+  private resolveTargetDept(
+    roleName: string,
+    userDept: string | null,
+    target: string | null | undefined,
+  ): string | null {
+    if (target && isFacultyWide(roleName, userDept)) return target;
+    return userDept ?? null;
+  }
+
   async createFromUrl(
     body: CreateFromUrlBodyType,
     userId: string,
     departmentId: string | null,
+    roleName: string,
   ) {
     const filename = body.url.split('/').pop()?.split('?')[0] || 'remote-image';
     const created = await this.repo.create({
@@ -73,7 +95,11 @@ export class MediaService {
       size: null,
       alt: body.alt ?? null,
       createdBy: userId,
-      departmentId: departmentId ?? null,
+      departmentId: this.resolveTargetDept(
+        roleName,
+        departmentId,
+        body.departmentId,
+      ),
     });
     if (body.tagSlugs?.length)
       await this.repo.syncTags(created.id, body.tagSlugs);
@@ -88,7 +114,20 @@ export class MediaService {
     departmentId: string | null,
   ) {
     const scope = mediaScopeWhere(roleName, departmentId);
-    const { items, total } = await this.repo.findPaginated(query, scope);
+    // Lọc theo kho bộ môn được chọn. "Khoa" (FACULTY_DEPT_ID) gồm cả ảnh dùng
+    // chung (departmentId null). Quyền vẫn do `scope` chặn ở tầng trên.
+    let deptFilter: Record<string, unknown> | undefined;
+    if (query.departmentId) {
+      deptFilter =
+        query.departmentId === FACULTY_DEPT_ID
+          ? { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] }
+          : { departmentId: query.departmentId };
+    }
+    const { items, total } = await this.repo.findPaginated(
+      query,
+      scope,
+      deptFilter,
+    );
     return {
       items: items.map((m) => ({
         ...m,

@@ -131,13 +131,59 @@ export function TaxonomyView() {
     queryFn: departmentApi.list,
   });
   const [deptEdit, setDeptEdit] = useState<Record<string, string>>({});
+  const [deptNameEdit, setDeptNameEdit] = useState<Record<string, string>>({});
+  const [newDeptName, setNewDeptName] = useState("");
+  const [newDeptKind, setNewDeptKind] = useState<"department" | "unit">(
+    "department",
+  );
+  const [mergeTarget, setMergeTarget] = useState<Record<string, string>>({});
+  const invalidateDepts = () => {
+    queryClient.invalidateQueries({ queryKey: ["DEPARTMENTS"] });
+    queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+  };
   const saveDept = useMutation({
     mutationFn: ({ id, slug }: { id: string; slug: string }) =>
       departmentApi.update(id, { slug }),
     onSuccess: () => {
       toast.success("Đã đổi slug bộ môn");
-      queryClient.invalidateQueries({ queryKey: ["DEPARTMENTS"] });
-      queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
+      invalidateDepts();
+    },
+    onError: (e: { message?: string }) => toast.error(e.message || "Lỗi"),
+  });
+  const renameDept = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      departmentApi.update(id, { name }),
+    onSuccess: () => {
+      toast.success("Đã đổi tên bộ môn");
+      invalidateDepts();
+    },
+    onError: (e: { message?: string }) => toast.error(e.message || "Lỗi"),
+  });
+  const createDept = useMutation({
+    mutationFn: (body: { name: string; kind: "department" | "unit" }) =>
+      departmentApi.create(body),
+    onSuccess: () => {
+      toast.success("Đã thêm đơn vị");
+      setNewDeptName("");
+      invalidateDepts();
+    },
+    onError: (e: { message?: string }) => toast.error(e.message || "Lỗi"),
+  });
+  const setKind = useMutation({
+    mutationFn: ({ id, kind }: { id: string; kind: "department" | "unit" }) =>
+      departmentApi.update(id, { kind }),
+    onSuccess: () => {
+      toast.success("Đã đổi phân loại");
+      invalidateDepts();
+    },
+    onError: (e: { message?: string }) => toast.error(e.message || "Lỗi"),
+  });
+  const mergeDept = useMutation({
+    mutationFn: ({ id, targetId }: { id: string; targetId: string }) =>
+      departmentApi.merge(id, targetId),
+    onSuccess: () => {
+      toast.success("Đã gộp & xoá bộ môn");
+      invalidateDepts();
     },
     onError: (e: { message?: string }) => toast.error(e.message || "Lỗi"),
   });
@@ -383,19 +429,71 @@ export function TaxonomyView() {
       {tab === "departments" ? (
         <section className="space-y-4">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Đổi slug sẽ tự cập nhật slug các layout dưới bộ môn.
+            Quản lý bộ môn / đơn vị (vd thêm "Đoàn – Hội và CLB"). Đổi slug sẽ tự
+            cập nhật slug các layout dưới bộ môn. "Gộp &amp; xoá" chuyển toàn bộ
+            bài/ảnh/layout sang bộ môn khác rồi xoá bộ môn này.
           </p>
+
+          {/* Thêm bộ môn / đơn vị mới */}
+          <div className="flex items-center gap-2">
+            <input
+              className={`${input} flex-1`}
+              placeholder="Tên bộ môn / đơn vị mới…"
+              value={newDeptName}
+              onChange={(e) => setNewDeptName(e.target.value)}
+            />
+            <select
+              className={`${input} w-40`}
+              value={newDeptKind}
+              onChange={(e) =>
+                setNewDeptKind(e.target.value as "department" | "unit")
+              }
+            >
+              <option value="department">Bộ môn</option>
+              <option value="unit">Đơn vị (Đoàn–Hội, CLB)</option>
+            </select>
+            <button
+              type="button"
+              disabled={!newDeptName.trim() || createDept.isPending}
+              onClick={() =>
+                createDept.mutate({
+                  name: newDeptName.trim(),
+                  kind: newDeptKind,
+                })
+              }
+              className="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg disabled:opacity-40"
+            >
+              + Thêm
+            </button>
+          </div>
+
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             {(deptsQuery.data ?? []).map((d: Department) => (
               <li
                 key={d.id}
-                className="flex items-center gap-3 px-4 py-2 text-sm"
+                className="flex flex-wrap items-center gap-2 px-4 py-2 text-sm"
               >
-                <span className="w-40 truncate text-slate-700 dark:text-slate-200">
-                  {d.name}
-                </span>
                 <input
-                  className={`${input} flex-1`}
+                  className={`${input} w-52`}
+                  value={deptNameEdit[d.id] ?? d.name}
+                  onChange={(e) =>
+                    setDeptNameEdit((s) => ({ ...s, [d.id]: e.target.value }))
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    renameDept.mutate({
+                      id: d.id,
+                      name: (deptNameEdit[d.id] ?? d.name).trim(),
+                    })
+                  }
+                  className="text-xs text-blue-600"
+                >
+                  Đổi tên
+                </button>
+                <input
+                  className={`${input} flex-1 min-w-[120px]`}
                   value={deptEdit[d.id] ?? d.slug}
                   onChange={(e) =>
                     setDeptEdit((s) => ({ ...s, [d.id]: e.target.value }))
@@ -412,6 +510,53 @@ export function TaxonomyView() {
                   className="text-xs text-blue-600"
                 >
                   Lưu slug
+                </button>
+                <select
+                  className={`${input} w-32`}
+                  value={d.kind}
+                  onChange={(e) =>
+                    setKind.mutate({
+                      id: d.id,
+                      kind: e.target.value as "department" | "unit",
+                    })
+                  }
+                  title="Phân loại"
+                >
+                  <option value="department">Bộ môn</option>
+                  <option value="unit">Đơn vị</option>
+                </select>
+                <select
+                  className={`${input} w-36`}
+                  value={mergeTarget[d.id] ?? ""}
+                  onChange={(e) =>
+                    setMergeTarget((s) => ({ ...s, [d.id]: e.target.value }))
+                  }
+                >
+                  <option value="">Gộp vào…</option>
+                  {(deptsQuery.data ?? [])
+                    .filter((o) => o.id !== d.id)
+                    .map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={!mergeTarget[d.id]}
+                  onClick={() => {
+                    const t = mergeTarget[d.id];
+                    if (
+                      t &&
+                      confirm(
+                        `Gộp "${d.name}" vào bộ môn đã chọn rồi XOÁ "${d.name}"? Toàn bộ bài/ảnh/layout sẽ chuyển sang bộ môn kia.`,
+                      )
+                    )
+                      mergeDept.mutate({ id: d.id, targetId: t });
+                  }}
+                  className="text-xs text-red-600 disabled:opacity-40"
+                >
+                  Gộp &amp; xoá
                 </button>
               </li>
             ))}

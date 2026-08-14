@@ -335,14 +335,33 @@ export function AdminCreateView() {
                   onChange={(e) => setField("departmentId", e.target.value)}
                   className="flex-1 px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100"
                 >
-                  <option value="">— Chọn bộ môn —</option>
-                  {departments
-                    .filter((d) => d.id !== FACULTY_DEPT_ID)
-                    .map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
+                  <option value="">— Chọn bộ môn / đơn vị —</option>
+                  <optgroup label="Bộ môn">
+                    {departments
+                      .filter(
+                        (d) => d.id !== FACULTY_DEPT_ID && d.kind !== "unit",
+                      )
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  {departments.some(
+                    (d) => d.id !== FACULTY_DEPT_ID && d.kind === "unit",
+                  ) && (
+                    <optgroup label="Đơn vị (Đoàn – Hội, CLB…)">
+                      {departments
+                        .filter(
+                          (d) => d.id !== FACULTY_DEPT_ID && d.kind === "unit",
+                        )
+                        .map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
                 </select>
                 <button
                   type="button"

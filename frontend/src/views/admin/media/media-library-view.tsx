@@ -2,23 +2,43 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { type MediaItem, mediaApi, resolveMediaUrl } from "@/lib/api";
+import {
+  departmentApi,
+  type MediaItem,
+  mediaApi,
+  resolveMediaUrl,
+} from "@/lib/api";
 import { MediaDetailModal } from "./media-detail-modal";
 import { UploadZone } from "./upload-zone";
 
 const PAGE_SIZE = 24;
+// Kho "Khoa" (dùng chung) — khớp FACULTY_DEPT_ID ở backend.
+const FACULTY_DEPT_ID = "dept_legacy_1";
 
 export function MediaLibraryView() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [tagSlug, setTagSlug] = useState<string | undefined>();
+  // undefined = tất cả kho; FACULTY_DEPT_ID = kho Khoa; còn lại = kho bộ môn.
+  const [deptId, setDeptId] = useState<string | undefined>();
   const [selected, setSelected] = useState<MediaItem | null>(null);
 
   const listQuery = useQuery({
-    queryKey: ["MEDIA", "LIST", { page, search, tagSlug }],
+    queryKey: ["MEDIA", "LIST", { page, search, tagSlug, deptId }],
     queryFn: () =>
-      mediaApi.list({ page, pageSize: PAGE_SIZE, search, tagSlug }),
+      mediaApi.list({
+        page,
+        pageSize: PAGE_SIZE,
+        search,
+        tagSlug,
+        departmentId: deptId,
+      }),
+  });
+
+  const departmentsQuery = useQuery({
+    queryKey: ["DEPARTMENTS", "LIST"],
+    queryFn: departmentApi.list,
   });
 
   const tagsQuery = useQuery({
@@ -56,11 +76,46 @@ export function MediaLibraryView() {
         />
       </header>
 
+      {/* Kho theo bộ môn: mỗi bộ môn có drive ảnh riêng; "Khoa" là kho dùng chung. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-slate-500 dark:text-slate-400">Kho:</span>
+        {[
+          { id: undefined as string | undefined, label: "Tất cả" },
+          { id: FACULTY_DEPT_ID, label: "Khoa (chung)" },
+          ...(departmentsQuery.data ?? [])
+            .filter((d) => d.id !== FACULTY_DEPT_ID)
+            .map((d) => ({ id: d.id, label: d.name })),
+        ].map((d) => (
+          <button
+            key={d.id ?? "__all__"}
+            type="button"
+            onClick={() => {
+              setDeptId(d.id);
+              setPage(1);
+            }}
+            className={
+              "px-3 py-1 text-xs rounded-full border transition-colors " +
+              (deptId === d.id
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")
+            }
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-6">
         <UploadZone
           tagSlugs={tagSlug ? [tagSlug] : undefined}
+          departmentId={deptId}
           onUploaded={invalidate}
         />
+        {deptId && deptId !== FACULTY_DEPT_ID && (
+          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            Ảnh tải lên sẽ vào kho bộ môn đang chọn.
+          </p>
+        )}
       </div>
 
       {(tagsQuery.data?.length ?? 0) > 0 && (

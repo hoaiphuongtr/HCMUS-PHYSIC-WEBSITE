@@ -64,9 +64,10 @@ export class MediaController {
     @Body() body: UploadMediaBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('departmentId') departmentId: string | null,
+    @ActiveUser('roleName') roleName: string,
   ) {
     if (!file) throw FileRequiredException;
-    return this.service.upload(file, body, userId, departmentId);
+    return this.service.upload(file, body, userId, departmentId, roleName);
   }
 
   @Post('from-url')
@@ -76,8 +77,9 @@ export class MediaController {
     @Body() body: CreateFromUrlBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('departmentId') departmentId: string | null,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.service.createFromUrl(body, userId, departmentId);
+    return this.service.createFromUrl(body, userId, departmentId, roleName);
   }
 
   @Get()
