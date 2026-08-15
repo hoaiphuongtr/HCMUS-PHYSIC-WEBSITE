@@ -210,10 +210,20 @@ export class PostService {
     ]);
   }
 
+  // Ngày đăng do Super Admin chỉ định (lùi về quá khứ). Role khác gửi lên bị bỏ qua.
+  private backdateFor(
+    roleName: string,
+    publishedAt: string | null | undefined,
+  ): Date | null {
+    if (roleName === 'SUPER_ADMIN' && publishedAt) return new Date(publishedAt);
+    return null;
+  }
+
   async create(
     body: UpsertPostBodyType,
     userId: string,
     departmentId: string | null,
+    roleName: string,
   ) {
     const slug = toSlug(body.slug || body.title.vi);
     const existing = await this.prisma.post.findUnique({ where: { slug } });
@@ -224,6 +234,7 @@ export class PostService {
       status === 'SCHEDULED' && body.scheduledAt
         ? new Date(body.scheduledAt)
         : null;
+    const backdate = this.backdateFor(roleName, body.publishedAt);
     const created = await this.prisma.post.create({
       data: {
         title: body.title,
@@ -231,7 +242,8 @@ export class PostService {
         body: body.body ?? undefined,
         excerpt: body.excerpt ?? undefined,
         status,
-        publishedAt: status === 'PUBLISHED' ? new Date() : null,
+        publishedAt:
+          status === 'PUBLISHED' ? (backdate ?? new Date()) : null,
         scheduledAt: scheduledAtValue,
         coverMediaId: body.coverMediaId ?? null,
         coverUrl: body.coverUrl ?? null,
@@ -283,11 +295,19 @@ export class PostService {
       existing.status === 'PUBLISHED' &&
       nextStatus !== 'PUBLISHED' &&
       nextStatus !== 'SCHEDULED';
-    const publishedAtPatch = becamePublished
-      ? { publishedAt: new Date() }
-      : leftPublished
-        ? { publishedAt: null }
-        : {};
+    // Super Admin có thể LÙI ngày đăng: kể cả bài đang xuất bản, đổi publishedAt
+    // về mốc quá khứ đã chọn. CHỈ áp khi KẾT QUẢ là PUBLISHED — nếu đang gỡ bài
+    // xuống nháp/lưu trữ thì phải để leftPublished xoá publishedAt (null), nếu
+    // không bài vẫn công khai dù đã về nháp.
+    const backdate = this.backdateFor(roleName, body.publishedAt);
+    const publishedAtPatch =
+      backdate && nextStatus === 'PUBLISHED'
+        ? { publishedAt: backdate }
+        : becamePublished
+          ? { publishedAt: new Date() }
+          : leftPublished
+            ? { publishedAt: null }
+            : {};
     const scheduledAtValue =
       nextStatus === 'SCHEDULED' && body.scheduledAt
         ? new Date(body.scheduledAt)

@@ -96,8 +96,9 @@ export class PostController {
     @Body() body: UpsertPostBodyDTO,
     @ActiveUser('userId') userId: string,
     @ActiveUser('departmentId') departmentId: string | null,
+    @ActiveUser('roleName') roleName: string,
   ) {
-    return this.postService.create(body, userId, departmentId);
+    return this.postService.create(body, userId, departmentId, roleName);
   }
 
   @Get()

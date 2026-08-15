@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { DynamicIcon } from "@/components/admin/icons";
 import {
+  authApi,
   categoryApi,
   type ContentStatusValue,
   type LocalizedText,
@@ -101,6 +102,8 @@ export function PostComposerView() {
   const [eventEndAt, setEventEndAt] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
+  // Ngày đăng tuỳ chỉnh (lùi về quá khứ) — chỉ Super Admin.
+  const [publishedAt, setPublishedAt] = useState("");
   // Loại bài chốt ngay ở modal trước khi vào soạn — từ đó suy ra layout mẫu.
   const [kind, setKind] = useState<"news" | "event" | null>(null);
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
@@ -111,6 +114,11 @@ export function PostComposerView() {
     queryKey: ["CATEGORIES"],
     queryFn: categoryApi.list,
   });
+  const { data: profile } = useQuery({
+    queryKey: ["PROFILE"],
+    queryFn: authApi.getProfile,
+  });
+  const isSuperAdmin = profile?.role === "SUPER_ADMIN";
   // Bài SỰ KIỆN luôn thuộc danh mục "Sự kiện", không cho chọn; bài TIN TỨC thì
   // tick được nhiều danh mục còn lại.
   const newsCategories = (categoriesQuery.data ?? []).filter(
@@ -170,6 +178,7 @@ export function PostComposerView() {
     setEventEndAt(toLocalInput(data.eventEndAt));
     setEventLocation(data.eventLocation ?? "");
     setScheduledAt(toLocalInput(data.scheduledAt));
+    setPublishedAt(toLocalInput(data.publishedAt));
     setKind(data.eventStartAt ? "event" : "news");
     // Điền sẵn danh mục của trang đang gắn, để mở bài cũ ra sửa không phải chọn
     // lại từ đầu (bấm vào một danh mục vẫn là bỏ nó khỏi bài như bình thường).
@@ -227,6 +236,11 @@ export function PostComposerView() {
         effectiveStatus === "SCHEDULED" && scheduledAt
           ? new Date(scheduledAt).toISOString()
           : null,
+      // Lùi ngày đăng: chỉ gửi khi là Super Admin và có nhập (backend cũng chặn).
+      publishedAt:
+        isSuperAdmin && publishedAt
+          ? new Date(publishedAt).toISOString()
+          : undefined,
       coverMediaId: coverMediaId ?? null,
       coverUrl: coverUrl || null,
       coverAlt: coverAlt || null,
@@ -798,6 +812,32 @@ export function PostComposerView() {
                 />
               </div>
             </div>
+          </section>
+        ) : null}
+
+        {isSuperAdmin ? (
+          <section className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-white dark:bg-[#1a2436]">
+            <label
+              htmlFor="publishedAt"
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+            >
+              Ngày đăng{" "}
+              <span className="font-normal text-slate-400">
+                (Super Admin — có thể lùi về quá khứ)
+              </span>
+            </label>
+            <input
+              id="publishedAt"
+              type="datetime-local"
+              value={publishedAt}
+              onChange={(e) => setPublishedAt(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+            />
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+              Bỏ trống = dùng thời điểm xuất bản thực tế. Điền ngày quá khứ để
+              bài hiển thị như đã đăng vào ngày đó (áp dụng khi bài ở trạng thái
+              đã xuất bản).
+            </p>
           </section>
         ) : null}
 

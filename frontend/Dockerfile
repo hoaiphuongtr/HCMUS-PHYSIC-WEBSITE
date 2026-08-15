@@ -1,16 +1,17 @@
+# syntax=docker/dockerfile:1
 FROM node:20-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
 
-FROM base AS deps
-COPY package.json ./
-# The admin build context is ./frontend, which has no pnpm-lock.yaml (the lockfile
-# lives at the monorepo root and isn't reachable from this context). Frozen-lockfile
-# therefore can't be used here — install resolves from package.json directly.
-RUN pnpm install --prod=false --no-frozen-lockfile
-
 FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+# Cài deps NGAY trong builder, KHÔNG copy node_modules từ stage khác: COPY
+# node_modules giữa các stage phải nhân bản hàng vạn file nhỏ trên overlay/loopback
+# → tốn 400–900s. Lớp `pnpm install` này vẫn được Docker cache khi package.json
+# không đổi, còn store mount giúp lần cài lại (đổi deps / sau khi prune) không phải
+# tải lại từ mạng.
+COPY package.json ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --prod=false --no-frozen-lockfile
 COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -22,7 +23,8 @@ ENV NEXT_PUBLIC_IMAGE_FETCH_ORIGIN=$NEXT_PUBLIC_IMAGE_FETCH_ORIGIN
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3002
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm exec next build
+# Cache mount .next/cache: giữ artifact Turbopack qua các lần build → build lặp nhanh.
+RUN --mount=type=cache,target=/app/.next/cache pnpm exec next build
 
 FROM base AS runner
 ENV NODE_ENV=production

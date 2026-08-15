@@ -17,6 +17,9 @@ export const UpsertPostBodySchema = z.object({
   excerpt: LocalizedTextSchema.nullable().optional(),
   status: ContentStatusEnum.optional(),
   scheduledAt: z.string().datetime().nullable().optional(),
+  // Ngày đăng tuỳ chọn (lùi về quá khứ) — CHỈ Super Admin được áp; role khác gửi
+  // lên cũng bị bỏ qua ở service.
+  publishedAt: z.string().datetime().nullable().optional(),
   coverMediaId: z.string().nullable().optional(),
   coverUrl: z.string().nullable().optional(),
   coverAlt: z.string().nullable().optional(),

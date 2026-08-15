@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Public site (frontend-public, :3002).
 #
 # IMPORTANT: build from the REPO ROOT, not from frontend-public/, because this
@@ -11,17 +12,16 @@ FROM node:20-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
 
-# --- deps: full workspace install so the frontend/src components the public app
-#     pulls in (@puckeditor/core, lucide-react, …) resolve against frontend/node_modules.
-FROM base AS deps
+FROM base AS builder
+# Cài deps NGAY trong builder (KHÔNG copy /app node_modules từ stage khác — trên
+# overlay/loopback việc copy hàng vạn file nhỏ tốn ~900s). Lớp install được cache
+# khi các package.json + lockfile không đổi; store mount giúp cài lại không tải lại.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 COPY frontend-public/package.json frontend-public/
-RUN pnpm install --frozen-lockfile
-
-FROM base AS builder
-COPY --from=deps /app/ ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 COPY frontend ./frontend
 COPY frontend-public ./frontend-public
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
@@ -48,7 +48,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # 4GB box: cap the Node heap so the build doesn't OOM (needs swap too — see deploy.sh).
 ENV NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /app/frontend-public
-RUN pnpm exec next build
+# Cache mount .next/cache → build lặp nhanh hơn (incremental Turbopack).
+RUN --mount=type=cache,target=/app/frontend-public/.next/cache pnpm exec next build
 
 # --- runner: Next standalone output. For a monorepo build the standalone tree is
 #     rooted at /app with the server entry under frontend-public/server.js.

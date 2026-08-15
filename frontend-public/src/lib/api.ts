@@ -130,6 +130,7 @@ export const mediaApi = {
     pageSize?: number;
     search?: string;
     tagSlug?: string;
+    departmentId?: string;
   }) =>
     Promise.resolve({
       items: [] as MediaItem[],
@@ -141,14 +142,18 @@ export const mediaApi = {
     Promise.resolve([] as { id: string; slug: string; name: string }[]),
   // Admin-only in practice (Puck editor fields never run on the public render),
   // but the shared MediaPickerModal/UploadZone reference these, so the public
-  // build needs them to type-check.
-  upload: (_file: File, _opts?: { tagSlugs?: string[] }): Promise<MediaItem> =>
+  // build needs them to type-check. Giữ CHỮ KÝ khớp frontend/src/lib/api.ts.
+  upload: (
+    _file: File,
+    _opts?: { tagSlugs?: string[]; alt?: string; departmentId?: string },
+  ): Promise<MediaItem> =>
     Promise.reject(new Error("media upload is admin-only")),
   createFromUrl: (_body: {
     url: string;
     name?: string;
     alt?: string;
     tagSlugs?: string[];
+    departmentId?: string;
   }): Promise<MediaItem> =>
     Promise.reject(new Error("media createFromUrl is admin-only")),
 };

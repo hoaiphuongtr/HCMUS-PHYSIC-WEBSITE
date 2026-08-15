@@ -33,10 +33,12 @@ $Files = @(
   'backend/tsconfig.json',
   'backend/tsconfig.build.json',
   'backend/prisma.config.ts',
+  'backend/Dockerfile',
   'backend/src',
   'backend/prisma',
   'backend/initialScript',
   'frontend/package.json',
+  'frontend/Dockerfile',
   'frontend/src',
   # public/ holds static assets served straight off the origin (default-cover.png,
   # logos, self-hosted fonts). Leaving it out let the server keep a July copy, so
@@ -44,6 +46,7 @@ $Files = @(
   # image. Static assets are part of "full source" — keep them in the bundle.
   'frontend/public',
   'frontend-public/package.json',
+  'frontend-public/Dockerfile',
   'frontend-public/next.config.ts',
   'frontend-public/src',
   'frontend-public/public'

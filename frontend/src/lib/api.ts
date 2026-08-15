@@ -720,6 +720,8 @@ export type UpsertPostBody = {
   excerpt?: LocalizedText | null;
   status?: ContentStatusValue;
   scheduledAt?: string | null;
+  // Lùi ngày đăng (chỉ Super Admin — backend bỏ qua nếu role khác).
+  publishedAt?: string | null;
   coverMediaId?: string | null;
   coverUrl?: string | null;
   coverAlt?: string | null;
