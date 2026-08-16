@@ -11,7 +11,6 @@ import {
   LogOut,
   type LucideIcon,
   Moon,
-  Puzzle,
   Settings,
   Sun,
   Users,
@@ -37,8 +36,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/widgets-layout",
     icon: LayoutPanelLeft,
   },
-  { name: "Widget Types", href: "/admin/widgets", icon: Puzzle },
-];
+]
+// "Widget Types" bị ẩn khỏi thanh điều hướng: bảng Widget trong CSDL chỉ có 24
+// dòng và KHÔNG được trình sửa layout đọc tới (danh sách component đến từ cấu
+// hình Puck tĩnh, ~90 cái), nên sửa gì ở đó cũng không đổi được trang. Route
+// /admin/widgets vẫn còn, chỉ không hiện trong menu.;
 
 const SYSTEM_ITEMS: NavItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },

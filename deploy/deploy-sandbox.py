@@ -36,6 +36,19 @@ def sh(cmd: str, timeout: int = 1200) -> str:
     return out.read().decode() + err.read().decode()
 
 
+# Ổ GỐC của box (47G) chứa cả docker.img 32G, nên nó đầy trước ổ docker rất
+# nhiều. Trước đây script chỉ in df của /var/lib/docker nên ổ gốc âm thầm đầy
+# 100% và sftp chết giữa chừng với "OSError: Failure" — nhìn log không ra bệnh.
+need_mb = os.path.getsize(archive) // 1048576 + 200
+free_mb = int(sh("df -Pm / | awk 'NR==2{print $4}'").strip() or 0)
+print(f"o goc con trong {free_mb}MB, can it nhat {need_mb}MB", flush=True)
+if free_mb < need_mb:
+    raise SystemExit(
+        f"DUNG: o goc chi con {free_mb}MB, khong du cho goi {need_mb - 200}MB.\n"
+        "Don bot roi chay lai: xoa tarball cu o /home/vlkt, `yum clean all`, "
+        "hoac bot ban sao cu trong /home/vlkt/db-backups."
+    )
+
 t0 = time.time()
 sf = c.open_sftp()
 sf.put(archive, "/tmp/deploy.tar.gz")
@@ -52,7 +65,7 @@ print(
     ),
     flush=True,
 )
-print(sh("docker image prune -f 2>&1 | tail -1; rm -f /tmp/deploy.tar.gz; df -h /var/lib/docker | tail -1"), flush=True)
+print(sh("docker image prune -f 2>&1 | tail -1; rm -f /tmp/deploy.tar.gz; df -h / /var/lib/docker | tail -2"), flush=True)
 print(sh(f"cd {REMOTE_DIR} && {COMPOSE} ps {' '.join(services)} --format '{{{{.Service}}}} {{{{.Status}}}}'"), flush=True)
 print("DEPLOY_DONE", flush=True)
 c.close()

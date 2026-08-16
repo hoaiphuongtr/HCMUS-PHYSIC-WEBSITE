@@ -12,7 +12,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DynamicIcon } from "@/components/admin/icons";
 import { LOCALE_LABELS, LOCALES, type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
@@ -87,6 +87,23 @@ function NavbarMenuButton({
   const lineColor = hoverLineColor || "#2563eb";
   const onTextHover = hoverTextColor || textColor || "#1e293b";
 
+  // Menu con canh trái mục cha, nên mục nằm gần mép phải (Tiện ích, Cựu sinh
+  // viên…) đẩy bảng 220px tràn ra khỏi màn hình — nhìn như bị dán vào mép. Đo
+  // sau khi mở rồi lật sang canh phải nếu vượt khung; đo lại từ đầu ở lần mở
+  // sau nên đổi cỡ cửa sổ vẫn đúng.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [alignRight, setAlignRight] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      setAlignRight(false);
+      return;
+    }
+    const el = panelRef.current;
+    if (!el) return;
+    const { right } = el.getBoundingClientRect();
+    if (right > window.innerWidth - 8) setAlignRight(true);
+  }, [open]);
+
   return (
     <div
       className="relative"
@@ -123,7 +140,10 @@ function NavbarMenuButton({
         </span>
       </a>
       {hasChildren && open && (
-        <div className="absolute left-0 top-full pt-2 z-50">
+        <div
+          ref={panelRef}
+          className={`absolute ${alignRight ? "right-0" : "left-0"} top-full pt-2 z-50`}
+        >
           <div className="min-w-[220px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2436] shadow-lg overflow-visible">
             <ul role="menu" className="py-1">
               {item.children.map((child, j) => (
