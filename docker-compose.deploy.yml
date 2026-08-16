@@ -44,7 +44,25 @@ services:
       timeout: 3s
       retries: 10
 
+  # Bước khởi tạo AN TOÀN chạy mỗi lần `up`: chỉ bật extension và tạo bảng chatbot
+  # nếu chưa có (toàn bộ là CREATE ... IF NOT EXISTS). Đây mới là thứ backend chờ.
+  db-init:
+    image: *image-backend
+    command: sh -c "npx prisma db execute --file prisma/migrations/20260717_chatbot_vectors/migration.sql"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   db-setup:
+    # CHỈ dùng cho lần cài ĐẦU TIÊN trên CSDL trống — `prisma db push` là công cụ
+    # lúc phát triển, nó xoá bất cứ thứ gì lệch với schema. Chạy tay khi dựng mới:
+    #   docker compose --profile setup up db-setup
+    profiles: ["setup"]
     image: *image-backend
     command: sh -c "npx prisma db push"
     security_opt:
@@ -79,7 +97,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      db-setup:
+      db-init:
         condition: service_completed_successfully
 
   admin:

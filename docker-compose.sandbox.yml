@@ -65,7 +65,36 @@ services:
     volumes:
       - ollama_models:/root/.ollama
 
+  # Bước khởi tạo AN TOÀN chạy mỗi lần `up`: chỉ bật extension và tạo bảng chatbot
+  # nếu chưa có. Toàn bộ là CREATE ... IF NOT EXISTS nên chạy lại vô hại, không
+  # đụng tới dữ liệu sẵn có. Đây mới là thứ backend nên chờ.
+  db-init:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "npx prisma db execute --file prisma/migrations/20260717_chatbot_vectors/migration.sql"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/.env:/app/.env:ro
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-hcmus_physics}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   db-setup:
+    # CHỈ dùng cho lần cài ĐẦU TIÊN trên CSDL trống, nên nằm trong profile riêng:
+    # `docker compose up -d` thường sẽ BỎ QUA nó. Chạy tay khi dựng mới:
+    #   docker compose --profile setup up db-setup
+    # Lý do tách ra: `prisma db push` là công cụ lúc phát triển — nó so schema với
+    # CSDL rồi làm mọi thứ để khớp, ở đây là XOÁ bảng ChatbotChunk (16.842 dòng)
+    # để migration tạo lại rỗng. Và bước seed luôn exit 1 trên CSDL đã có người
+    # dùng (initialScript/index.ts chặn khi userCount > 0). Gắn nó làm điều kiện
+    # cứng của backend nghĩa là mỗi lần `up` đầy đủ là backend không lên nổi.
+    profiles: ["setup"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -132,7 +161,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      db-setup:
+      db-init:
         condition: service_completed_successfully
       ollama:
         condition: service_started

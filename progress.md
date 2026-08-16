@@ -19,12 +19,24 @@ chunk, 103 media, 15 user). Kèm theo: dọn 14,85G build cache, KEEP sao lưu
 bật lại — cần chạy lại dig-holes định kỳ, hoặc chuyển hẳn data-root ra thư mục
 thường rồi xoá file loop.
 
-⚠ **MÌN CHƯA GỠ — `docker compose up -d` đầy đủ sẽ KHÔNG dựng nổi backend:**
+**Đã gỡ mìn `db-setup`** (xem mục dưới). `docker compose up -d` đầy đủ nay dựng
+được backend, `ChatbotChunk` giữ nguyên 16.842 dòng.
+
+Bối cảnh — **`docker compose up -d` đầy đủ trước đây KHÔNG dựng nổi backend:**
 service `db-setup` chạy `npx prisma db push` không có `--accept-data-loss`, mà
 push muốn xoá bảng `ChatbotChunk` (16.842 dòng, bảng SQL thô không khai báo
 trong schema.prisma) và bỏ giá trị enum `REJECTED` → exit 1 → backend bị chặn.
 Lâu nay không lộ vì deploy luôn dùng `--no-deps` cho từng service. Đã đưa
 backend lên bằng `docker start`. `REJECTED` hiện KHÔNG có bản ghi nào dùng.
+
+**Cách gỡ:** bỏ `db push` khỏi đường khởi động. Tách làm hai:
+- `db-init` (mới, chạy mỗi lần `up`): chỉ chạy migration chatbot — toàn bộ là
+  `CREATE EXTENSION/TABLE IF NOT EXISTS` nên chạy lại vô hại. Backend nay chờ
+  service này.
+- `db-setup` (cũ): chuyển vào profile `setup`, `up` thường bỏ qua. Chỉ chạy tay
+  khi dựng mới: `docker compose --profile setup up db-setup`.
+Áp cho cả ba file compose (sandbox/deploy/dev). Kiểm trên máy chủ thật: `up` đầy
+đủ → backend healthy, ChatbotChunk vẫn 16.842 dòng, site + admin 200.
 
 ## Session 2026-08-16 — Song ngữ, header, bảng, ảnh bìa
 
