@@ -1,5 +1,31 @@
 # Session Progress Log
 
+## Session 2026-08-16 (khuya) — Cứu ổ đĩa máy chủ
+
+**Ổ gốc đầy 100%** làm deploy chết giữa chừng (`OSError: Failure` khi sftp) và cả
+ba container `unhealthy`. Nguyên nhân: `/var/lib/docker.img` cấp phát CỨNG 32G
+trên ổ 47G trong khi docker chỉ dùng 8,6G — 23G nằm chết; cộng swapfile 4G thì
+chỉ còn ~1G dư cho uploads (4,7G), sao lưu và OS. Sao lưu DB tăng 79MB/ngày ×
+30 bản là giọt nước tràn ly. Không ai thấy vì mọi chỗ in `df` đều in ổ docker
+(29%) chứ không phải ổ gốc.
+
+Đã làm: dump DB tải về máy dev trước → dừng stack + docker daemon → ghi 0 lên
+vùng trống trong docker.img → `fallocate --dig-holes` → bật lại. **Ổ gốc 99% →
+57% (21G trống)**, dữ liệu nguyên vẹn (1680 post, 2520 layout, 16842 chatbot
+chunk, 103 media, 15 user). Kèm theo: dọn 14,85G build cache, KEEP sao lưu
+30→10, watchdog canh ổ gốc, deploy dừng sớm khi thiếu chỗ.
+
+⚠ **CÒN LẠI:** `docker.img` không tự co lại, thực chiếm đã bò lên 13G sau khi
+bật lại — cần chạy lại dig-holes định kỳ, hoặc chuyển hẳn data-root ra thư mục
+thường rồi xoá file loop.
+
+⚠ **MÌN CHƯA GỠ — `docker compose up -d` đầy đủ sẽ KHÔNG dựng nổi backend:**
+service `db-setup` chạy `npx prisma db push` không có `--accept-data-loss`, mà
+push muốn xoá bảng `ChatbotChunk` (16.842 dòng, bảng SQL thô không khai báo
+trong schema.prisma) và bỏ giá trị enum `REJECTED` → exit 1 → backend bị chặn.
+Lâu nay không lộ vì deploy luôn dùng `--no-deps` cho từng service. Đã đưa
+backend lên bằng `docker start`. `REJECTED` hiện KHÔNG có bản ghi nào dùng.
+
 ## Session 2026-08-16 — Song ngữ, header, bảng, ảnh bìa
 
 **Mất bản tiếng Anh.** 142 khối nội dung để `en` trùng khít `vi` trong khi site cũ
