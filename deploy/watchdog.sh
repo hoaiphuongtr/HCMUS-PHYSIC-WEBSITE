@@ -18,6 +18,17 @@ mkdir -p "$STATE"
 # Đĩa / đang ~99% (docker.img chiếm sẵn 32G) nên tự cắt log, đừng để nó góp phần làm đầy.
 [ -f "$LOG" ] && [ "$(stat -c%s "$LOG")" -gt 5242880 ] && tail -c 1048576 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
 
+# Cảnh báo + dọn khi ổ GỐC sắp đầy. Docker chỉ báo df của /var/lib/docker (ổ loop
+# riêng) nên ổ gốc có thể đầy 100% mà mọi thứ vẫn "trông ổn" cho tới lúc Postgres
+# hết chỗ ghi và sập — đã xảy ra 28/07 và suýt lặp lại 16/08.
+free_mb=$(df -Pm / | awk 'NR==2{print $4}')
+if [ "${free_mb:-99999}" -lt 2048 ]; then
+  echo "[$(date '+%F %T')] CANH BAO: o goc chi con ${free_mb}MB" >> "$LOG"
+  # Dọn thứ chắc chắn là rác, không đụng dữ liệu: gói deploy bỏ lại và build cache.
+  rm -f /tmp/deploy.tar.gz /home/vlkt/*.tar.gz 2>/dev/null
+  docker builder prune -af >/dev/null 2>&1
+fi
+
 check() { # check <ten container> <url>
   name=$1; url=$2; f="$STATE/$name"
   code=$(curl -s -o /dev/null -m "$TIMEOUT" -w '%{http_code}' "$url" 2>/dev/null)

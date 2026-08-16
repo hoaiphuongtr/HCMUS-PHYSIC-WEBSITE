@@ -15,7 +15,11 @@ DB_CONTAINER="${DB_CONTAINER:-hcmus-cms-db-1}"
 DB_USER="${DB_USER:-physics}"
 DB_NAME="${DB_NAME:-hcmus_physics}"
 BACKUP_DIR="${BACKUP_DIR:-$HOME/db-backups}"
-KEEP="${KEEP:-30}"                 # keep last N dumps
+# Giữ 10 bản (10 ngày). Ổ GỐC của box 47G nhưng docker.img chiếm cứng 32G +
+# swapfile 4G, chỉ còn ~1G dư sau uploads — mỗi bản dump nay ~79MB nên giữ 30 bản
+# (2,4GB) là tự làm đầy đĩa trong hai tuần. Đã xảy ra 16/08: / đầy 100%, sftp
+# deploy chết, cả ba container unhealthy.
+KEEP="${KEEP:-10}"                 # keep last N dumps
 
 mkdir -p "$BACKUP_DIR"
 TS="$(date +%Y%m%d_%H%M%S)"
