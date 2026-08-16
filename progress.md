@@ -1,5 +1,33 @@
 # Session Progress Log
 
+## Session 2026-08-16 — Song ngữ, header, bảng, ảnh bìa
+
+**Mất bản tiếng Anh.** 142 khối nội dung để `en` trùng khít `vi` trong khi site cũ
+có bản dịch thật. `backfill-english-content.ts` lấy lại từ `/en/<slug>.html`:
+thân bài 653→686 có bản Anh riêng, tiêu đề 730→766. Còn lại là trang site cũ
+vốn không có bản Anh (100 trang 404 ở `/en/`, 43 trang nội dung giống hệt).
+Chặn trường hợp `<title>` chỉ còn tên site, nếu không sẽ ghi "Khoa Vật lý -
+Vật lý kỹ thuật" làm tiêu đề tiếng Anh cho 15 trang.
+
+**656 layout mất header/footer.** Script di trú ghi `SiteHeader`/`SiteFooter`
+trong khi Puck đăng ký `Header`/`Footer` → "No configuration for SiteHeader".
+Đã đổi trong DB và sửa 6 script.
+
+**Bảng lệch giữa hai ngôn ngữ.** Trang công khai nhận diện bảng dữ liệu bằng dấu
+hiệu trong HTML (`border=`…); nội dung lấy từ trang render của site cũ không có
+dấu hiệu đó còn nội dung từ dump thì có. `normalize-table-borders.ts` chỉ vá khi
+bản ngôn ngữ KIA có `border=` (23 layout/148 bảng) thay vì vá đại trà (124/1002).
+
+**Mở trang legacy trong trình soạn thảo rồi lưu sẽ hỏng bảng.** Tiptap chuẩn hoá
+theo mô hình ProseMirror: thêm ô rỗng cho đủ cột, gắn `class="post-table"`, bỏ
+thuộc tính bố cục cũ → trang Giảng viên cơ hữu sinh cột trống, ô nào cũng kẻ
+khung, email bẻ giữa từ. Đã lấy lại bản gốc từ origin (nội dung chữ giống 99,7%,
+chỉ khác thứ tự 3 giảng viên).
+
+**6 bài mất ảnh bìa**: `coverUrl` là URL tuyệt đối `https://phys.hcmus.edu.vn/
+uploads/khoa-vat-ly/…` — thiếu đoạn `/legacy/` nên 404 (ảnh vẫn có trên đĩa).
+Đã sửa cả `Post.coverUrl` lẫn bản đã rót vào layout.
+
 ## Session 2026-08-08 — Lịch hẹn xuất bản, bảng sửa được trong admin, icon
 
 **Lên lịch không giữ được giờ hẹn.** `syncAttachedLayouts` ghi cả
