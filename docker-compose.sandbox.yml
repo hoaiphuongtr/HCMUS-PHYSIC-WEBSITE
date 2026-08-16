@@ -263,7 +263,16 @@ services:
 volumes:
   pgdata:
   redisdata:
+  # Chứng chỉ Let's Encrypt THẬT nằm ở volume tên trần `caddy_data` (Caddy trước
+  # đây chạy ngoài compose). Nếu để compose tự tạo thì nó dùng
+  # `hcmus-cms_caddy_data` rỗng và Caddy sẽ xin cấp lại chứng chỉ — vừa gián đoạn
+  # HTTPS vừa đụng giới hạn phát hành của Let's Encrypt. Khai báo external để
+  # dùng đúng volume đang giữ chứng chỉ.
   caddy_data:
+    external: true
+    name: caddy_data
   caddy_config:
+    external: true
+    name: caddy_config
   public_imgcache:
   ollama_models:

@@ -19,6 +19,13 @@ chunk, 103 media, 15 user). Kèm theo: dọn 14,85G build cache, KEEP sao lưu
 bật lại — cần chạy lại dig-holes định kỳ, hoặc chuyển hẳn data-root ra thư mục
 thường rồi xoá file loop.
 
+**Caddy đã vào compose.** Trước đây nó tạo ngoài compose nên `up` đầy đủ báo
+trùng tên rồi dừng giữa chừng. Bẫy: chứng chỉ Let's Encrypt thật nằm ở volume
+tên trần `caddy_data`, còn compose lại tự tạo `hcmus-cms_caddy_data` rỗng — dựng
+thẳng là Caddy xin cấp lại chứng chỉ. Đã khai báo external đúng tên. Kiểm bằng
+vân tay SHA-256 trước/sau: y nguyên, không xin cấp lại. `docker compose up -d`
+trần (không liệt kê service) nay chạy sạch.
+
 **Đã gỡ mìn `db-setup`** (xem mục dưới). `docker compose up -d` đầy đủ nay dựng
 được backend, `ChatbotChunk` giữ nguyên 16.842 dòng.
 
