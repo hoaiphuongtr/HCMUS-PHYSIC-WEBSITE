@@ -36,19 +36,25 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/widgets-layout",
     icon: LayoutPanelLeft,
   },
-]
+];
 // "Widget Types" bị ẩn khỏi thanh điều hướng: bảng Widget trong CSDL chỉ có 24
 // dòng và KHÔNG được trình sửa layout đọc tới (danh sách component đến từ cấu
 // hình Puck tĩnh, ~90 cái), nên sửa gì ở đó cũng không đổi được trang. Route
-// /admin/widgets vẫn còn, chỉ không hiện trong menu.;
+// /admin/widgets vẫn còn, chỉ không hiện trong menu.
+
+// Hai mục QUẢN LÝ NỘI DUNG, nằm ngay dưới Page Layouts vì dùng cùng lúc với nó.
+// Trước đây chúng nằm ở khối chân thanh bên chung với Cài đặt và Trợ giúp nên xa
+// hẳn phần nội dung. Vẫn giữ nguyên điều kiện quyền như cũ (chỉ cấp khoa thấy).
+const CONTENT_ADMIN_ITEMS: NavItem[] = [
+  { name: "Category & Tag", href: "/admin/taxonomy", icon: Tags },
+  { name: "Trang HTML", href: "/admin/static-pages", icon: Code2 },
+];
 
 const SYSTEM_ITEMS: NavItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 const SUPER_ADMIN_ITEMS: NavItem[] = [
-  { name: "Category & Tag", href: "/admin/taxonomy", icon: Tags },
-  { name: "Trang HTML", href: "/admin/static-pages", icon: Code2 },
   { name: "Admin Management", href: "/admin/admins", icon: Users },
 ];
 
@@ -230,6 +236,10 @@ export function AdminSidebar() {
         {NAV_ITEMS.map((item) =>
           renderNavItem(item, isPathActive(pathname, item.href)),
         )}
+        {isFacultyWide(profile?.role, profile?.departmentId) &&
+          CONTENT_ADMIN_ITEMS.map((item) =>
+            renderNavItem(item, isPathActive(pathname, item.href)),
+          )}
       </nav>
 
       <div
