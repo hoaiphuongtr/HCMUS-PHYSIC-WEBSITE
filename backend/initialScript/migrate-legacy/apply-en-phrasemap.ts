@@ -48,6 +48,15 @@ for (const [k, v] of Object.entries(raw)) {
   MAP.set(k, v);
 }
 
+/**
+ * Luật "Nhãn: giá trị" — trang môn học đầy những dòng như "Số tiết lý thuyết: 45".
+ * Liệt kê từng con số vào bảng thì vừa dài vừa sót; ở đây chỉ cần dịch phần NHÃN
+ * rồi giữ nguyên giá trị (hoặc dịch tiếp nếu giá trị cũng có trong bảng).
+ */
+const LABELS = new Map<string, string>(
+  Object.entries((raw._labels ?? {}) as Record<string, string>),
+);
+
 /** Giải mã thực thể HTML để so khớp — nội dung legacy đầy &aacute;, &#7885;. */
 const ENTITIES: Record<string, string> = {
   amp: '&',
@@ -101,7 +110,17 @@ function translateHtml(html: string, stat: Stat): string {
   return html.replace(/(>|^)([^<]+)(?=<|$)/g, (whole, lead: string, text: string) => {
     const key = norm(text);
     if (!key) return whole;
-    const hit = MAP.get(key);
+    let hit = MAP.get(key);
+    if (hit === undefined) {
+      // Thử luật "Nhãn: giá trị".
+      const m = /^([^:]{2,60}):\s*(.*)$/.exec(key);
+      const lab = m ? LABELS.get(m[1].trim()) : undefined;
+      if (m && lab !== undefined) {
+        const val = m[2].trim();
+        const valEn = val ? (MAP.get(val) ?? val) : '';
+        hit = valEn ? `${lab}: ${valEn}` : `${lab}:`;
+      }
+    }
     if (hit === undefined) {
       // Bỏ qua chuỗi thuần số/ký hiệu khi thống kê để danh sách còn thiếu dễ đọc.
       if (!/^[\d\s.,;:/%()+-]*$/.test(key)) {

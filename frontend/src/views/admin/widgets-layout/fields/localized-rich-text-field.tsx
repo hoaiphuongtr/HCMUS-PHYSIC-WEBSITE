@@ -2,7 +2,7 @@
 
 import type { CustomField } from "@puckeditor/core";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DynamicIcon } from "@/components/admin/icons";
 import {
   DEFAULT_LOCALE,
@@ -12,6 +12,7 @@ import {
   type LocalizedString,
   untranslatedLocales,
 } from "@/lib/i18n";
+import { useLocale } from "@/lib/locale-context";
 
 // The Tiptap editor is heavy and admin-only — load it lazily so it never lands on
 // the public render path (the Puck config is compiled by frontend-public too, but
@@ -37,7 +38,16 @@ function LocalizedRichText({
 }) {
   const normalized = ensureLocalized(value);
   const missing = untranslatedLocales(value, true);
-  const [locale, setLocale] = useState<string>(DEFAULT_LOCALE);
+  // Tab ngôn ngữ của ô soạn thảo BÁM THEO công tắc VI/EN của cả trang. Trước đây
+  // nó giữ trạng thái riêng, nên bấm EN ở thanh trên thì khung xem trước đổi sang
+  // tiếng Anh còn ô soạn thảo vẫn hiện tiếng Việt — người soạn tưởng bản Anh chưa
+  // có, hoặc tệ hơn là gõ bản Anh đè lên ô tiếng Việt.
+  // Vẫn cho bấm tab riêng ở đây khi muốn sửa một ngôn ngữ mà xem trước ngôn ngữ kia.
+  const { locale: pageLocale } = useLocale();
+  const [locale, setLocale] = useState<string>(pageLocale || DEFAULT_LOCALE);
+  useEffect(() => {
+    if (pageLocale) setLocale(pageLocale);
+  }, [pageLocale]);
   // Visual (WYSIWYG) by default; raw HTML is an escape hatch so complex legacy
   // markup (styled tables etc.) can be edited without Tiptap normalising it away.
   const [mode, setMode] = useState<"visual" | "html">("visual");
