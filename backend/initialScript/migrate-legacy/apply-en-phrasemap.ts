@@ -17,6 +17,7 @@
  *   pnpm --filter backend exec tsx initialScript/migrate-legacy/apply-en-phrasemap.ts
  *   pnpm --filter backend exec tsx initialScript/migrate-legacy/apply-en-phrasemap.ts --apply
  *   ... --only mon-hoc/      (chỉ chạy cho slug bắt đầu bằng chuỗi này)
+ *   ... --polish          (dịch tiếp trên ô tiếng Anh đã có, xem chú thích dưới)
  */
 import { PrismaPg } from '@prisma/adapter-pg';
 import { readFileSync } from 'node:fs';
@@ -36,6 +37,20 @@ const prisma = new PrismaClient({
 });
 
 const APPLY = process.argv.includes('--apply');
+/**
+ * --polish: dịch tiếp NGAY TRÊN ô tiếng Anh hiện có, thay vì dựng lại từ tiếng
+ * Việt.
+ *
+ * Cần khi mở rộng bảng từ vựng: sau lần chạy đầu, ô `en` đã khác `vi` nên chốt
+ * chặn mặc định bỏ qua và từ mới không bao giờ được áp.
+ *
+ * An toàn theo cấu tạo: chuỗi đã là tiếng Anh thì không khớp khoá tiếng Việt
+ * nào, nên không bị đụng tới. Chỉ những nút còn nguyên tiếng Việt mới được thay.
+ * Nhờ vậy không cần đoán xem trang nào "dịch dở" — chạy trên toàn bộ vẫn không
+ * làm hỏng bản dịch thật.
+ */
+const POLISH = process.argv.includes('--polish');
+
 const onlyIdx = process.argv.indexOf('--only');
 const ONLY = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;
 
@@ -65,6 +80,21 @@ const ENTITIES: Record<string, string> = {
   quot: '"',
   apos: "'",
   nbsp: ' ',
+  // Dấu câu kiểu Word: thiếu mấy cái này thì chuỗi có ngoặc kép cong
+  // (&ldquo;Quản lý nhiệt&rdquo;) không bao giờ khớp khoá trong bảng, và bản
+  // dịch lặng lẽ không được áp — đúng chỗ đã vấp.
+  ldquo: '\u201C',
+  rdquo: '\u201D',
+  lsquo: '\u2018',
+  rsquo: '\u2019',
+  ndash: '\u2013',
+  mdash: '\u2014',
+  hellip: '\u2026',
+  laquo: '\u00AB',
+  raquo: '\u00BB',
+  middot: '\u00B7',
+  times: '\u00D7',
+  deg: '\u00B0',
 };
 function decode(s: string): string {
   return s
@@ -97,8 +127,14 @@ const NAMED_ACCENTS: Record<string, string> = Object.fromEntries(
     .map((p) => p.split(':') as [string, string]),
 );
 
-/** Chuẩn hoá để so khớp: bỏ thực thể, gộp khoảng trắng. */
-const norm = (s: string) => decode(s).replace(/\s+/g, ' ').trim();
+/**
+ * Chuẩn hoá để so khớp: bỏ thực thể, gộp khoảng trắng, và đưa Unicode về dạng
+ * DỰNG SẴN (NFC). Nội dung legacy trộn cả hai dạng — "ổ" có chỗ là một ký tự,
+ * có chỗ là "ô" cộng dấu hỏi rời. Không chuẩn hoá thì hai chuỗi nhìn y hệt nhau
+ * trên màn hình vẫn không khớp, và bản dịch lặng lẽ không được áp.
+ */
+const norm = (s: string) =>
+  decode(s).normalize('NFC').replace(/\s+/g, ' ').trim();
 
 type Stat = { matched: number; missed: Map<string, number> };
 
@@ -147,8 +183,15 @@ function translateTree(tree: unknown, stat: Stat): number {
     // CHỐT CHẶN: chỉ đụng vào ô tiếng Anh còn TRỐNG hoặc đang là bản sao y hệt
     // tiếng Việt. Ô đã có bản dịch thật thì tuyệt đối không ghi đè — nếu không,
     // chạy script này là xoá sạch công dịch trước đó.
-    if (cur !== '' && cur !== vi) return;
-    const en = translateHtml(vi, stat);
+    const untouched = cur === '' || cur === vi;
+    // Ô chưa dịch → dựng từ tiếng Việt. Ô đã dịch dở → chỉ dịch tiếp trên chính
+    // nó (giữ nguyên phần đã là tiếng Anh).
+    const en = untouched
+      ? translateHtml(vi, stat)
+      : POLISH
+        ? translateHtml(cur, stat)
+        : null;
+    if (en === null) return;
     if (en !== cur) {
       node.en = en;
       changed += 1;
