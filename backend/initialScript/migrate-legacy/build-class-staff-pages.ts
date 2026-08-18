@@ -52,8 +52,9 @@ const FAMILIES = [
     langTable: 'classeslang',
     fk: 'classid',
     segment: 'lop-hoc',
-    // classes có bgimage + excerpt; staffs KHÔNG có cả hai (chỉ image + content).
-    cols: 'id, slug, deptid, image, bgimage',
+    // classes có bgimage + excerpt; staffs KHÔNG có cả hai (chỉ image + content),
+    // bù lại staffs có `email` để điền vào danh thiếp StaffProfile.
+    cols: 'id, slug, deptid, image, bgimage, NULL AS email',
     langCols: 'langid, title, content, excerpt',
   },
   {
@@ -61,7 +62,7 @@ const FAMILIES = [
     langTable: 'staffslang',
     fk: 'staffid',
     segment: 'nhan-su',
-    cols: 'id, slug, deptid, image, NULL AS bgimage',
+    cols: 'id, slug, deptid, image, NULL AS bgimage, email',
     langCols: 'langid, title, content, NULL AS excerpt',
   },
 ] as const;
@@ -72,6 +73,7 @@ type Row = {
   deptid: number | null;
   image: string | null;
   bgimage: string | null;
+  email: string | null;
 };
 
 type LangRow = {
@@ -81,6 +83,33 @@ type LangRow = {
   content: string | null;
   excerpt: string | null;
 };
+
+/** Chạy thử: in ra sẽ làm gì mà KHÔNG ghi vào DB. `--dry` hoặc DRY_RUN=1. */
+const DRY = process.argv.includes('--dry') || process.env.DRY_RUN === '1';
+
+type PuckNode = { type?: string; props?: Record<string, unknown> };
+
+/**
+ * Đọc khung trang đã có trong DB. Trang do script này sinh ra luôn đúng 4 khối
+ * Header → PageHero → (LegacyPageBody|StaffProfile) → Footer. Trả về khối thân
+ * nếu khung còn nguyên; `custom` = true nếu người ta đã thêm/bớt component (đã
+ * biên tập tay) → không đụng vào nữa.
+ */
+function readExistingFrame(puckData: unknown): {
+  body: PuckNode | null;
+  custom: boolean;
+} {
+  const content = (puckData as { content?: PuckNode[] } | null)?.content;
+  if (!Array.isArray(content)) return { body: null, custom: true };
+  const types = content.map((c) => c?.type);
+  const shaped =
+    content.length === 4 &&
+    types[0] === 'Header' &&
+    types[1] === 'PageHero' &&
+    types[3] === 'Footer' &&
+    (types[2] === 'LegacyPageBody' || types[2] === 'StaffProfile');
+  return shaped ? { body: content[2], custom: false } : { body: null, custom: true };
+}
 
 async function main(): Promise<void> {
   const template = await prisma.pageLayout.findUnique({
@@ -106,16 +135,23 @@ async function main(): Promise<void> {
     ]),
   );
 
-  const existingBySlug = new Map<string, string>(
-    (await prisma.pageLayout.findMany({ select: { id: true, slug: true } })).map(
-      (l) => [l.slug, l.id],
-    ),
+  const existingBySlug = new Map<
+    string,
+    { id: string; puckData: unknown }
+  >(
+    (
+      await prisma.pageLayout.findMany({
+        select: { id: true, slug: true, puckData: true },
+      })
+    ).map((l) => [l.slug, { id: l.id, puckData: l.puckData }]),
   );
 
   let created = 0;
   let updated = 0;
   let failed = 0;
   let skippedNoDept = 0;
+  let skippedConverted = 0;
+  let skippedCustom = 0;
 
   for (const fam of FAMILIES) {
     const [rows] = await legacy.query<mysql.RowDataPacket[]>(
@@ -156,9 +192,32 @@ async function main(): Promise<void> {
       // StaffProfile. Lớp học vẫn dùng bgimage như cũ.
       const heroBg = isStaff ? '' : (rewriteImagePath(row.bgimage) ?? portrait);
 
-      // Nhân sự → StaffProfile (ảnh trái, nội dung phải). name điền sẵn từ tiêu đề
-      // để card có chú thích; role/email/phone để trống, biên tập viên bổ sung
-      // trong Puck. Lớp học → giữ LegacyPageBody.
+      const existing = existingBySlug.get(slug);
+
+      // Trang nhân sự ĐÃ CÓ trong DB: chuyển khung LegacyPageBody → StaffProfile
+      // mà KHÔNG ghi đè nội dung. Ghi đè bằng HTML dựng lại từ dump sẽ xoá mọi
+      // chỉnh sửa biên tập viên đã làm trong Puck kể từ lần migrate trước.
+      let keptHtml: unknown = null;
+      if (isStaff && existing) {
+        const frame = readExistingFrame(existing.puckData);
+        if (frame.custom) {
+          // Khung đã bị sửa (thêm/bớt component) → người ta dựng lại trang bằng
+          // tay, đụng vào là hỏng. Bỏ qua, báo để người xem lại.
+          console.log(`  ~ bỏ qua (đã dựng tay): ${slug}`);
+          skippedCustom += 1;
+          continue;
+        }
+        if (frame.body?.type === 'StaffProfile') {
+          // Đã chuyển rồi ở lần chạy trước → không đụng, giữ nguyên chỉnh sửa.
+          skippedConverted += 1;
+          continue;
+        }
+        keptHtml = frame.body?.props?.html ?? null;
+      }
+
+      // Nhân sự → StaffProfile (ảnh trái, nội dung phải). name + email điền sẵn từ
+      // dữ liệu cũ; role/phone để trống, biên tập viên bổ sung trong Puck.
+      // Lớp học → giữ LegacyPageBody.
       const bodyComponent = isStaff
         ? {
             type: 'StaffProfile',
@@ -167,9 +226,9 @@ async function main(): Promise<void> {
               photo: portrait,
               name: { vi: titleVi, en: titleEn },
               role: { vi: '', en: '' },
-              email: '',
+              email: (row.email ?? '').trim(),
               phone: '',
-              html: { vi: bodyVi, en: bodyEn },
+              html: keptHtml ?? { vi: bodyVi, en: bodyEn },
             },
           }
         : {
@@ -200,10 +259,15 @@ async function main(): Promise<void> {
 
       try {
         const now = new Date();
-        const existingId = existingBySlug.get(slug);
-        if (existingId) {
+        if (DRY) {
+          console.log(`  [dry] ${existing ? 'cập nhật' : 'tạo mới'} ${slug}`);
+          if (existing) updated += 1;
+          else created += 1;
+          continue;
+        }
+        if (existing) {
           await prisma.pageLayout.update({
-            where: { id: existingId },
+            where: { id: existing.id },
             data: {
               name: titleVi || row.slug,
               description: excerptVi || null,
@@ -227,7 +291,7 @@ async function main(): Promise<void> {
               createdBy: owner,
             },
           });
-          existingBySlug.set(slug, made.id);
+          existingBySlug.set(slug, { id: made.id, puckData: tree });
           created += 1;
         }
       } catch (err) {
@@ -240,8 +304,14 @@ async function main(): Promise<void> {
 
   await legacy.end();
   console.log(
-    `Done. created=${created} updated=${updated} failed=${failed} bo_qua_khong_ro_bo_mon=${skippedNoDept}`,
+    `Done${DRY ? ' (CHẠY THỬ — chưa ghi gì)' : ''}. created=${created} updated=${updated} ` +
+      `failed=${failed} bo_qua_khong_ro_bo_mon=${skippedNoDept} ` +
+      `bo_qua_da_chuyen=${skippedConverted} bo_qua_dung_tay=${skippedCustom}`,
   );
+  if (DRY) {
+    await prisma.$disconnect();
+    return;
+  }
   await flushCache();
   await prisma.$disconnect();
 }
