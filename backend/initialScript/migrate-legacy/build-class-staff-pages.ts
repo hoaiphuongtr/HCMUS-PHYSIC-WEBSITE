@@ -149,8 +149,36 @@ async function main(): Promise<void> {
       const bodyEn = transformLegacyHtml(en?.content) || bodyVi;
       const excerptVi = vi?.excerpt ? decodeEntities(vi.excerpt) : '';
       const excerptEn = en?.excerpt ? decodeEntities(en.excerpt) : excerptVi;
-      const heroBg =
-        rewriteImagePath(row.bgimage) ?? rewriteImagePath(row.image) ?? '';
+      const isStaff = fam.table === 'staffs';
+      const portrait = rewriteImagePath(row.image) ?? '';
+      // Nhân sự: ẢNH CHÂN DUNG KHÔNG dùng làm nền banner nữa (trước đây bị phủ tối
+      // 85% thành nền mờ sau tên) — để trống cho banner navy sạch; ảnh đưa vào card
+      // StaffProfile. Lớp học vẫn dùng bgimage như cũ.
+      const heroBg = isStaff ? '' : (rewriteImagePath(row.bgimage) ?? portrait);
+
+      // Nhân sự → StaffProfile (ảnh trái, nội dung phải). name điền sẵn từ tiêu đề
+      // để card có chú thích; role/email/phone để trống, biên tập viên bổ sung
+      // trong Puck. Lớp học → giữ LegacyPageBody.
+      const bodyComponent = isStaff
+        ? {
+            type: 'StaffProfile',
+            props: {
+              id: `body-${row.slug}`,
+              photo: portrait,
+              name: { vi: titleVi, en: titleEn },
+              role: { vi: '', en: '' },
+              email: '',
+              phone: '',
+              html: { vi: bodyVi, en: bodyEn },
+            },
+          }
+        : {
+            type: 'LegacyPageBody',
+            props: {
+              id: `body-${row.slug}`,
+              html: { vi: bodyVi, en: bodyEn },
+            },
+          };
 
       const tree = {
         root: {},
@@ -165,13 +193,7 @@ async function main(): Promise<void> {
               bgImage: heroBg,
             },
           },
-          {
-            type: 'LegacyPageBody',
-            props: {
-              id: `body-${row.slug}`,
-              html: { vi: bodyVi, en: bodyEn },
-            },
-          },
+          bodyComponent,
           { type: 'Footer', props: { id: `ftr-${row.slug}` } },
         ],
       };

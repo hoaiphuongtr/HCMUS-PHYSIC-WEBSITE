@@ -62,7 +62,11 @@ import {
   PostTitle,
 } from "./components/post-placeholders";
 import { Footer, Header } from "./components/site-syndication";
-import { LegacyPageBody, PageHero } from "./components/legacy-page";
+import {
+  LegacyPageBody,
+  PageHero,
+  StaffProfile,
+} from "./components/legacy-page";
 import { ChatBubble } from "./components/chat-bubble";
 
 export const puckConfig: Config = {
@@ -208,6 +212,7 @@ export const puckConfig: Config = {
     Footer,
     PageHero,
     LegacyPageBody,
+    StaffProfile,
     ChatBubble,
   } as any,
 };

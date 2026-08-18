@@ -196,22 +196,10 @@ function fetchLatestNews(): Promise<LatestPost[]> {
   return newsInflight;
 }
 
-type LegacySection = { title: LocalizedString; html: LocalizedString };
-
-function LegacyPageBodyRender({
-  html,
-  sections,
-}: {
-  html: LocalizedString;
-  sections?: LegacySection[];
-}) {
+// Sidebar dùng chung cho mọi trang legacy (bộ môn, ngành, nhân sự…): Danh mục +
+// Tin mới nhất. Tự fetch qua các hàm cache module-level nên chỉ cần thả <LegacySidebar/>.
+function LegacySidebar() {
   const { locale } = useLocale();
-  // Trang ngành gồm 9 mục (giới thiệu, chuẩn đầu ra, chương trình đào tạo…). Ghép
-  // hết vào một trang thì dài tới mức không ai cuộn hết, nên chia tab như site cũ.
-  // Chỉ những mục có nội dung thật mới thành tab.
-  const tabs = (sections ?? []).filter((sec) => t(sec.html, locale)?.trim());
-  const [active, setActive] = useState(0);
-  const activeIdx = Math.min(active, Math.max(0, tabs.length - 1));
   const prefix = `/${locale}`;
   const [news, setNews] = useState<LatestPost[]>([]);
   const [cats, setCats] = useState<SidebarCategory[]>([]);
@@ -231,6 +219,93 @@ function LegacyPageBodyRender({
 
   const postUrl = (p: LatestPost) =>
     `${prefix}/${p.layoutSlug ?? `tin-tuc/${p.slug}`}`;
+
+  return (
+    <aside className="space-y-8">
+      <section>
+        <h2 className="text-lg font-bold text-[#0c2340] dark:text-slate-100 border-b-2 border-blue-700 pb-2 mb-3">
+          {locale === "en" ? "Categories" : "Danh mục"}
+        </h2>
+        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          {cats.map((c) => {
+            const href = `${prefix}/tin-tuc?category=${c.slug}`;
+            return (
+              <li key={c.slug}>
+                <a
+                  href={href}
+                  className="flex items-center justify-between gap-2 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                >
+                  <span className="uppercase tracking-wide">
+                    {t(c.name, locale)}
+                  </span>
+                  <span aria-hidden="true" className="text-slate-300">
+                    ›
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-bold text-[#0c2340] dark:text-slate-100 border-b-2 border-blue-700 pb-2 mb-3">
+          {locale === "en" ? "Latest news" : "Tin mới nhất"}
+        </h2>
+        <ul className="space-y-4">
+          {news.map((p) => (
+            <li key={p.id}>
+              <NextLink href={postUrl(p)} className="flex gap-3 group">
+                <span className="shrink-0 w-20 h-16 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  {p.coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={resolveMediaUrl(p.coverUrl)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : null}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm text-slate-700 dark:text-slate-200 line-clamp-2 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                    {t(p.title as LocalizedString, locale)}
+                  </span>
+                  <span className="block mt-1 text-xs text-slate-400">
+                    📅 {formatDate(p.publishedAt)}
+                  </span>
+                </span>
+              </NextLink>
+            </li>
+          ))}
+          {news.length === 0 ? (
+            <li className="text-sm text-slate-400">…</li>
+          ) : null}
+        </ul>
+      </section>
+    </aside>
+  );
+}
+
+type LegacySection = { title: LocalizedString; html: LocalizedString };
+
+function LegacyPageBodyRender({
+  html,
+  sections,
+}: {
+  html: LocalizedString;
+  sections?: LegacySection[];
+}) {
+  const { locale } = useLocale();
+  // Trang ngành gồm 9 mục (giới thiệu, chuẩn đầu ra, chương trình đào tạo…). Ghép
+  // hết vào một trang thì dài tới mức không ai cuộn hết, nên chia tab như site cũ.
+  // Chỉ những mục có nội dung thật mới thành tab.
+  const tabs = (sections ?? []).filter((sec) => t(sec.html, locale)?.trim());
+  const [active, setActive] = useState(0);
+  const activeIdx = Math.min(active, Math.max(0, tabs.length - 1));
 
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-8">
@@ -282,74 +357,7 @@ function LegacyPageBodyRender({
             />
           )}
         </main>
-        <aside className="space-y-8">
-          <section>
-            <h2 className="text-lg font-bold text-[#0c2340] dark:text-slate-100 border-b-2 border-blue-700 pb-2 mb-3">
-              {locale === "en" ? "Categories" : "Danh mục"}
-            </h2>
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {cats.map((c) => {
-                const href = `${prefix}/tin-tuc?category=${c.slug}`;
-                return (
-                  <li key={c.slug}>
-                    <a
-                      href={href}
-                      className="flex items-center justify-between gap-2 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                    >
-                      <span className="uppercase tracking-wide">
-                        {t(c.name, locale)}
-                      </span>
-                      <span aria-hidden="true" className="text-slate-300">
-                        ›
-                      </span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-[#0c2340] dark:text-slate-100 border-b-2 border-blue-700 pb-2 mb-3">
-              {locale === "en" ? "Latest news" : "Tin mới nhất"}
-            </h2>
-            <ul className="space-y-4">
-              {news.map((p) => (
-                <li key={p.id}>
-                  <NextLink href={postUrl(p)} className="flex gap-3 group">
-                    <span className="shrink-0 w-20 h-16 rounded overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                      {p.coverUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={resolveMediaUrl(p.coverUrl)}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          // Hide gracefully if the cover is missing (some legacy
-                          // post covers weren't migrated) instead of a broken icon.
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      ) : null}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm text-slate-700 dark:text-slate-200 line-clamp-2 group-hover:text-blue-700 dark:group-hover:text-blue-300">
-                        {t(p.title as LocalizedString, locale)}
-                      </span>
-                      <span className="block mt-1 text-xs text-slate-400">
-                        📅 {formatDate(p.publishedAt)}
-                      </span>
-                    </span>
-                  </NextLink>
-                </li>
-              ))}
-              {news.length === 0 ? (
-                <li className="text-sm text-slate-400">…</li>
-              ) : null}
-            </ul>
-          </section>
-        </aside>
+        <LegacySidebar />
       </div>
     </div>
   );
@@ -379,5 +387,135 @@ export const LegacyPageBody: ComponentConfig<{
   },
   render: ({ html, sections }) => (
     <LegacyPageBodyRender html={html} sections={sections} />
+  ),
+};
+
+// ── StaffProfile ────────────────────────────────────────────────────────────
+// Trang hồ sơ giảng viên: ảnh chân dung thành CARD bên trái (không còn bị chôn
+// làm nền banner mờ), nội dung legacy bên phải, cạnh sidebar Danh mục/Tin mới.
+// name/role/email/phone là field tuỳ chọn — bỏ trống thì card chỉ hiện ảnh; biên
+// tập viên có thể điền thêm trong Puck để có "danh thiếp" đầy đủ.
+function StaffProfileRender({
+  photo,
+  name,
+  role,
+  email,
+  phone,
+  html,
+}: {
+  photo: string;
+  name: LocalizedString;
+  role: LocalizedString;
+  email: string;
+  phone: string;
+  html: LocalizedString;
+}) {
+  const { locale } = useLocale();
+  const img = resolveMediaUrl(photo || "");
+  const nameText = t(name, locale);
+  const roleText = t(role, locale);
+  const hasFacts = Boolean(nameText || roleText || email || phone);
+
+  return (
+    <div className="max-w-[1200px] mx-auto px-6 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
+        <main className="min-w-0">
+          <div className="flex flex-col sm:flex-row gap-6">
+            <div className="sm:w-56 shrink-0 sm:sticky sm:top-24 self-start w-full max-w-[16rem] mx-auto sm:mx-0">
+              <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b] shadow-sm">
+                <div className="aspect-[3/4] w-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={img}
+                      alt={nameText || ""}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span className="text-6xl text-slate-300 dark:text-slate-600">
+                      👤
+                    </span>
+                  )}
+                </div>
+                {hasFacts ? (
+                  <div className="p-4 space-y-1.5">
+                    {nameText ? (
+                      <p className="font-bold text-[#0c2340] dark:text-slate-100 leading-snug">
+                        {nameText}
+                      </p>
+                    ) : null}
+                    {roleText ? (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {roleText}
+                      </p>
+                    ) : null}
+                    {email ? (
+                      <p className="text-sm break-all">
+                        <a
+                          href={`mailto:${email}`}
+                          className="text-blue-700 dark:text-blue-300 hover:underline"
+                        >
+                          {email}
+                        </a>
+                      </p>
+                    ) : null}
+                    {phone ? (
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        {phone}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            <div className="min-w-0 flex-1 overflow-x-auto pb-2 pr-2">
+              <LegacyHtmlRender html={html} injected={false} />
+            </div>
+          </div>
+        </main>
+        <LegacySidebar />
+      </div>
+    </div>
+  );
+}
+
+export const StaffProfile: ComponentConfig<{
+  photo: string;
+  name: LocalizedString;
+  role: LocalizedString;
+  email: string;
+  phone: string;
+  html: LocalizedString;
+}> = {
+  label: "Staff Profile",
+  defaultProps: {
+    photo: "",
+    name: { vi: "", en: "" },
+    role: { vi: "", en: "" },
+    email: "",
+    phone: "",
+    html: { vi: "", en: "" },
+  },
+  fields: {
+    photo: mediaPickerField("Ảnh chân dung"),
+    name: localizedTextField("Họ tên (hiện dưới ảnh)"),
+    role: localizedTextField("Chức danh / học vị"),
+    email: { type: "text", label: "Email" },
+    phone: { type: "text", label: "Điện thoại" },
+    html: localizedRichTextField("Nội dung hồ sơ"),
+  },
+  render: ({ photo, name, role, email, phone, html }) => (
+    <StaffProfileRender
+      photo={photo}
+      name={name}
+      role={role}
+      email={email}
+      phone={phone}
+      html={html}
+    />
   ),
 };
