@@ -23,6 +23,12 @@ const INK = "#111111";
 const PAPER = "#F9F9F6";
 
 type Entry = { title: LocalizedString; desc: LocalizedString };
+/** Mục tự đặt tên (Học vấn, Major, Giải thưởng…) — gom theo `section`. */
+type Extra = {
+  section: LocalizedString;
+  title: LocalizedString;
+  desc: LocalizedString;
+};
 type Project = {
   category: LocalizedString;
   title: LocalizedString;
@@ -46,6 +52,7 @@ type Props = {
   research?: Entry[];
   teachingTitle: LocalizedString;
   teaching?: Entry[];
+  extras?: Extra[];
   projectsTitle: LocalizedString;
   projects?: Project[];
   pubsTitle: LocalizedString;
@@ -100,6 +107,39 @@ function StaffProfileEditorialRender(props: Props) {
 
   const research = (props.research ?? []).filter((e) => tx(e.title).trim());
   const teaching = (props.teaching ?? []).filter((e) => tx(e.title).trim());
+
+  // Nghiên cứu / Giảng dạy / các mục tự đặt tên đều đổ chung vào một lưới, mục
+  // nào trống thì không sinh cột. Mục tự đặt gom theo tên `section`, giữ thứ tự
+  // xuất hiện lần đầu.
+  const groups = new Map<string, Entry[]>();
+  for (const e of props.extras ?? []) {
+    const sec = tx(e.section).trim();
+    if (!sec || !tx(e.title).trim()) continue;
+    groups.set(sec, [...(groups.get(sec) ?? []), { title: e.title, desc: e.desc }]);
+  }
+  const columns: { title: string; items: Entry[] }[] = [
+    ...(research.length
+      ? [
+          {
+            title:
+              tx(props.researchTitle) ||
+              (locale === "en" ? "Research" : "Nghiên cứu"),
+            items: research,
+          },
+        ]
+      : []),
+    ...(teaching.length
+      ? [
+          {
+            title:
+              tx(props.teachingTitle) ||
+              (locale === "en" ? "Teaching" : "Giảng dạy"),
+            items: teaching,
+          },
+        ]
+      : []),
+    ...[...groups.entries()].map(([title, items]) => ({ title, items })),
+  ];
   const projects = (props.projects ?? []).filter((p) => tx(p.title).trim());
   const pubs = (props.publications ?? []).filter((p) => tx(p.title).trim());
   const hasBody = tx(props.html).trim().length > 0;
@@ -174,33 +214,20 @@ function StaffProfileEditorialRender(props: Props) {
       </div>
 
       {/* ── Nghiên cứu / Giảng dạy ── */}
-      {research.length || teaching.length ? (
+      {columns.length ? (
         <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-24 text-gray-900">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 border-t border-gray-300 pt-16">
-            {research.length ? (
-              <div>
+            {columns.map((col) => (
+              <div key={col.title}>
                 <h2
                   className="text-3xl md:text-4xl mb-8 uppercase tracking-wide text-gray-800"
                   style={{ fontFamily: "var(--font-playfair)" }}
                 >
-                  {tx(props.researchTitle) ||
-                    (locale === "en" ? "Research" : "Nghiên cứu")}
+                  {col.title}
                 </h2>
-                <EntryList items={research} tx={tx} />
+                <EntryList items={col.items} tx={tx} />
               </div>
-            ) : null}
-            {teaching.length ? (
-              <div>
-                <h2
-                  className="text-3xl md:text-4xl mb-8 uppercase tracking-wide text-gray-800"
-                  style={{ fontFamily: "var(--font-playfair)" }}
-                >
-                  {tx(props.teachingTitle) ||
-                    (locale === "en" ? "Teaching" : "Giảng dạy")}
-                </h2>
-                <EntryList items={teaching} tx={tx} />
-              </div>
-            ) : null}
+            ))}
           </div>
         </div>
       ) : null}
@@ -325,6 +352,7 @@ export const StaffProfileEditorial: ComponentConfig<Props> = {
     research: [],
     teachingTitle: { vi: "Giảng dạy", en: "Teaching" },
     teaching: [],
+    extras: [],
     projectsTitle: { vi: "Dự án ứng dụng", en: "Projects" },
     projects: [],
     pubsTitle: { vi: "Xuất bản khoa học", en: "Publications" },
@@ -376,6 +404,17 @@ export const StaffProfileEditorial: ComponentConfig<Props> = {
         localizedSummary(item?.title, `Mục ${(i ?? 0) + 1}`),
       arrayFields: {
         title: localizedTextField("Tên mảng"),
+        desc: localizedTextField("Mô tả"),
+      },
+    },
+    extras: {
+      type: "array",
+      label: "Mục tự đặt tên (Học vấn, Major, Giải thưởng… — cùng tên mục thì gom chung)",
+      getItemSummary: (item, i) =>
+        `${localizedSummary(item?.section, "Mục")} — ${localizedSummary(item?.title, `Dòng ${(i ?? 0) + 1}`)}`,
+      arrayFields: {
+        section: localizedTextField("Tên mục (vd: Học vấn)"),
+        title: localizedTextField("Tiêu đề dòng"),
         desc: localizedTextField("Mô tả"),
       },
     },
