@@ -462,6 +462,21 @@ export class PostService {
     return { OR: [{ departmentId: FACULTY_DEPT_ID }, { departmentId: null }] };
   }
 
+  /**
+   * Feed Khoa + bài của các ĐƠN VỊ (Đoàn–Hội, CLB… — `kind='unit'`). Dùng cho
+   * trang tin khi đã lọc theo MỘT danh mục cụ thể: đơn vị cố ý không lên trang
+   * chủ, nhưng phải hiện được trong chính danh mục của nó.
+   */
+  private feedDeptWhereWithUnits(): Record<string, unknown> {
+    return {
+      OR: [
+        { departmentId: FACULTY_DEPT_ID },
+        { departmentId: null },
+        { department: { kind: 'unit' } },
+      ],
+    };
+  }
+
   // By resolved departmentId (used when snapshotting per-layout).
   private feedDeptWhereById(
     departmentId: string | null,
@@ -539,7 +554,16 @@ export class PostService {
       ...NOT_DELETED,
       ...PUBLICLY_VISIBLE,
       // Faculty feed by default; a dept slug narrows to that department's posts.
-      AND: [this.feedDeptWhere(department), HAS_PUBLIC_CONTENT],
+      // Khi người xem đã CHỌN ĐÚNG MỘT DANH MỤC thì nới thêm bài của các ĐƠN VỊ
+      // (Đoàn–Hội, CLB — kind='unit'): chúng cố ý không lên trang chủ, nhưng nếu
+      // feed Khoa lọc luôn ở đây thì bài của đơn vị không hiện được ở BẤT KỲ đâu,
+      // kể cả trong chính danh mục của nó.
+      AND: [
+        category && !department
+          ? this.feedDeptWhereWithUnits()
+          : this.feedDeptWhere(department),
+        HAS_PUBLIC_CONTENT,
+      ],
     };
     if (category) Object.assign(where, categoryWhere(category, true));
     if (fromDate || toDate) {
