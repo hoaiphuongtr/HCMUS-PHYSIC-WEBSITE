@@ -6,6 +6,10 @@ import {
   buildCanonical,
   buildLanguageAlternates,
   buildOgImage,
+  DESCRIPTION_EN,
+  DESCRIPTION_VI,
+  SITE_NAME_EN,
+  SITE_NAME_VI,
 } from "@/lib/seo";
 
 export const revalidate = 3600;
@@ -25,16 +29,16 @@ export async function generateMetadata({
     // The homepage always uses the faculty's own name — never the internal
     // layout name (e.g. "New Homepage"), which must not leak into the tab title.
     const title = isEn
-      ? "Faculty of Physics & Engineering Physics | HCMUS"
-      : "Khoa Vật lý - Vật lý kỹ thuật | HCMUS";
+      ? SITE_NAME_EN
+      : SITE_NAME_VI;
     const description =
       layout.description ??
       (isEn
-        ? "Faculty of Physics & Engineering Physics, VNUHCM-University of Science. News, events, scholarships and admissions."
-        : "Khoa Vật lý - Vật lý kỹ thuật, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM. Tin tức, sự kiện, học bổng, và thông tin tuyển sinh.");
+        ? DESCRIPTION_EN
+        : DESCRIPTION_VI);
     const canonical = buildCanonical("/");
     return {
-      // absolute so the root "%s | Khoa Vật lý - HCMUS" template isn't appended
+      // absolute so the root "%s | <tên khoa>" template isn't appended
       title: { absolute: title },
       description,
       alternates: { canonical, languages: buildLanguageAlternates("/") },

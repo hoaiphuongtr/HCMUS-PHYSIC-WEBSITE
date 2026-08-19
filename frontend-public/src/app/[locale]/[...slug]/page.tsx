@@ -12,7 +12,11 @@ import {
   buildCanonical,
   buildLanguageAlternates,
   buildOgImage,
+  FACULTY_EN,
+  FACULTY_VI,
   getBaseUrl,
+  UNIVERSITY_EN,
+  UNIVERSITY_VI,
 } from "@/lib/seo";
 
 export const revalidate = 3600;
@@ -32,13 +36,13 @@ export async function generateMetadata({
     if (!layout.isPublished) return {};
     // Tên trang lưu một chuỗi (tiếng Việt); phần đuôi/mô tả đổi theo ngôn ngữ đang xem.
     const titleText = isEn
-      ? `${layout.name} | Faculty of Physics - HCMUS`
-      : `${layout.name} | Khoa Vật lý - HCMUS`;
+      ? `${layout.name} | ${FACULTY_EN}`
+      : `${layout.name} | ${FACULTY_VI}`;
     const description =
       layout.description ??
       (isEn
-        ? `${layout.name} - Faculty of Physics & Engineering Physics, VNUHCM-University of Science`
-        : `${layout.name} - Khoa Vật lý, Đại học Khoa học Tự nhiên - ĐHQG TP.HCM`);
+        ? `${layout.name} - ${FACULTY_EN}, ${UNIVERSITY_EN}`
+        : `${layout.name} - ${FACULTY_VI}, ${UNIVERSITY_VI}`);
     const canonical = buildCanonical(`/${slugPath}`);
     // FB/Twitter thumbnail: prefer the post's own cover image (nếu trang này
     // gắn với một bài viết có ảnh bìa) để share ra đúng ảnh + tên bài, thay vì

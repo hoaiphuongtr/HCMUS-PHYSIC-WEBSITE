@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { DESCRIPTION_VI, FACULTY_VI, SITE_NAME_VI } from "@/lib/seo";
 
 export const runtime = "edge";
 
@@ -8,12 +9,12 @@ const BRAND_GRAY = "#64748b";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const title = (searchParams.get("title") ?? "Khoa Vật lý - HCMUS").slice(
+  const title = (searchParams.get("title") ?? SITE_NAME_VI).slice(
     0,
     140,
   );
   const subtitle = (
-    searchParams.get("subtitle") ?? "Khoa Vật lý - Vật lý kỹ thuật, ĐHQG TP.HCM"
+    searchParams.get("subtitle") ?? DESCRIPTION_VI
   ).slice(0, 200);
   const slug = searchParams.get("slug") ?? "";
 
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
               color: BRAND_DARK,
             }}
           >
-            Khoa Vật lý - HCMUS
+            {FACULTY_VI}
           </div>
           <div style={{ fontSize: "18px", color: BRAND_GRAY }}>
             phys.hcmus.edu.vn

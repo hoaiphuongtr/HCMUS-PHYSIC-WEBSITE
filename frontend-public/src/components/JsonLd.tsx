@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@/lib/seo";
+import { getBaseUrl, SITE_NAME_VI } from "@/lib/seo";
 
 type Schema = Record<string, unknown>;
 
@@ -24,7 +24,7 @@ export function JsonLd({ schema }: { schema: Schema | Schema[] }) {
 export const organizationSchema = (): Schema => ({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Khoa Vật lý - HCMUS",
+  name: SITE_NAME_VI,
   url: getBaseUrl(),
   logo: `${getBaseUrl()}/Logo_Phys-blue.png`,
 });
@@ -32,7 +32,7 @@ export const organizationSchema = (): Schema => ({
 export const websiteSchema = (): Schema => ({
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Khoa Vật lý - HCMUS",
+  name: SITE_NAME_VI,
   url: getBaseUrl(),
   potentialAction: {
     "@type": "SearchAction",
@@ -64,11 +64,11 @@ export const articleSchema = (args: {
   dateModified: args.modifiedAt ?? args.publishedAt,
   author: {
     "@type": "Person",
-    name: args.author ?? "Khoa Vật lý - HCMUS",
+    name: args.author ?? SITE_NAME_VI,
   },
   publisher: {
     "@type": "Organization",
-    name: "Khoa Vật lý - HCMUS",
+    name: SITE_NAME_VI,
     logo: {
       "@type": "ImageObject",
       url: `${getBaseUrl()}/Logo_Phys-blue.png`,
@@ -103,7 +103,7 @@ export const personSchema = (args: {
   ...(args.image ? { image: args.image } : {}),
   worksFor: {
     "@type": "EducationalOrganization",
-    name: "Khoa Vật lý - HCMUS",
+    name: SITE_NAME_VI,
     url: getBaseUrl(),
   },
 });
@@ -111,7 +111,7 @@ export const personSchema = (args: {
 export const educationalOrganizationSchema = (): Schema => ({
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
-  name: "Khoa Vật lý - Vật lý kỹ thuật, HCMUS",
+  name: SITE_NAME_VI,
   url: getBaseUrl(),
   logo: `${getBaseUrl()}/Logo_Phys-blue.png`,
 });
@@ -156,7 +156,7 @@ export const courseSchema = (args: {
   url: args.url,
   provider: {
     "@type": "EducationalOrganization",
-    name: "Khoa Vật lý - HCMUS",
+    name: SITE_NAME_VI,
     url: getBaseUrl(),
   },
 });
