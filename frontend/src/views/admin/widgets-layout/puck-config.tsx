@@ -68,6 +68,7 @@ import {
   StaffProfile,
 } from "./components/legacy-page";
 import { ChatBubble } from "./components/chat-bubble";
+import { StaffProfileEditorial } from "./components/staff-editorial";
 
 export const puckConfig: Config = {
   categories: {
@@ -213,6 +214,7 @@ export const puckConfig: Config = {
     PageHero,
     LegacyPageBody,
     StaffProfile,
+    StaffProfileEditorial,
     ChatBubble,
   } as any,
 };
