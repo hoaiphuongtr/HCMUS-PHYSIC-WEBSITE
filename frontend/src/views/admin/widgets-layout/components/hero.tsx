@@ -47,6 +47,49 @@ const TAGLINE_SIZES: Record<string, string> = {
   xl: "text-xs md:text-2xl",
 };
 
+// Dấu phân cách trong khẩu hiệu/tiêu đề ("KHÁM PHÁ • SÁNG TẠO • CỐNG HIẾN",
+// "Khoa Vật lý - Vật lý kỹ thuật"): chỉ những dấu này mới là chỗ được xuống
+// dòng, còn từng cụm chữ giữ nguyên khối.
+const PHRASE_SEP = /^[•·|–—-]$/;
+// Cụm dài hơn mức này thì KHÔNG ép giữ nguyên khối nữa — ép mà không vừa màn
+// hình thì chữ tràn ra ngoài, còn tệ hơn là bị ngắt dòng.
+const MAX_NOWRAP_CHARS = 24;
+
+/**
+ * Chia chuỗi thành các cụm + dấu phân cách, để trên màn hẹp chữ chỉ xuống dòng ở
+ * dấu phân cách chứ không cắt đôi một cụm ("… • CỐNG / HIẾN", "… - Vật / lý").
+ * Không có dấu nào thì trả về mảng rỗng, nơi gọi cứ hiển thị nguyên văn.
+ */
+function splitPhrases(text: string): string[] {
+  if (!text) return [];
+  const parts = text
+    .split(/\s+([•·|–—-])\s+/)
+    .filter((x) => x.trim().length > 0);
+  return parts.length > 1 ? parts : [];
+}
+
+/** Hiển thị các cụm đã tách: cụm thì nowrap, dấu thì cho phép xuống dòng. */
+function PhraseParts({ parts }: { parts: string[] }) {
+  return (
+    <>
+      {parts.map((part, i) =>
+        PHRASE_SEP.test(part) ? (
+          <span key={`sep-${i}`}>{` ${part} `}</span>
+        ) : (
+          <span
+            key={`seg-${i}`}
+            className={
+              part.length <= MAX_NOWRAP_CHARS ? "whitespace-nowrap" : undefined
+            }
+          >
+            {part}
+          </span>
+        ),
+      )}
+    </>
+  );
+}
+
 const FONT_FAMILIES: Record<string, string> = {
   default: "",
   serif: "font-serif",
@@ -281,6 +324,11 @@ function HeroFullScreenText({
   const subtitle = t(slide?.subtitle, locale);
   const ctaLabel = t(slide?.ctaLabel, locale);
 
+  // Tách theo dấu phân cách để KHÔNG cắt đôi cụm từ khi xuống dòng trên điện
+  // thoại ("… • CỐNG / HIẾN", "… - Vật / lý kỹ thuật").
+  const taglineParts = splitPhrases(taglineText);
+  const headlineParts = splitPhrases(headline);
+
   return (
     <>
       {taglineText && (
@@ -293,20 +341,31 @@ function HeroFullScreenText({
             ...(taglineStyle || {}),
           }}
         >
-          {taglineText}
+          {taglineParts.length ? (
+            <PhraseParts parts={taglineParts} />
+          ) : (
+            taglineText
+          )}
         </p>
       )}
       {headline && (
         <h1
           key={`h-${current}`}
-          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-full break-words md:whitespace-nowrap font-heading italic"
+          // [text-wrap:balance]: chia đều độ dài các dòng thay vì nhồi đầy dòng
+          // trên rồi bỏ một chữ lẻ xuống dưới ("… - Vật / lý kỹ thuật").
+          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-full break-words [text-wrap:balance] md:[text-wrap:normal] md:whitespace-nowrap font-heading italic"
           style={{
-            fontSize: "clamp(2rem, 7vw, 6.5rem)",
+            // Cỡ tối thiểu nhỏ hơn một nhịp để tên khoa dài vẫn vừa màn hình hẹp.
+            fontSize: "clamp(1.75rem, 7vw, 6.5rem)",
             textShadow: "0 4px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
             WebkitTextStroke: "0.5px rgba(0,0,0,0.2)",
           }}
         >
-          {headline}
+          {headlineParts.length ? (
+            <PhraseParts parts={headlineParts} />
+          ) : (
+            headline
+          )}
         </h1>
       )}
       {subtitle && (

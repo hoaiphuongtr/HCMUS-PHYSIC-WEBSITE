@@ -43,14 +43,9 @@ export const OVERVIEW_STEPS: {
       en: "Build and edit pages with the drag-and-drop editor; publish/schedule here.",
     },
   },
-  {
-    selector: '[data-tour="nav:/admin/widgets"]',
-    title: { vi: "Loại widget", en: "Widget Types" },
-    body: {
-      vi: "Danh mục các khối (widget) có thể dùng trong trình dựng trang.",
-      en: "The catalogue of blocks available in the page builder.",
-    },
-  },
+  // Bỏ bước "Loại widget": mục /admin/widgets đã được ẩn khỏi thanh điều hướng
+  // (xem admin-sidebar.tsx), nên bước này chỉ dẫn người dùng tới một menu không
+  // còn tồn tại. Tour tự lọc phần tử không có nên trước đây nó âm thầm bị bỏ qua.
   {
     selector: '[data-tour="nav:/admin/subscriptions"]',
     title: { vi: "Người đăng ký", en: "Subscribers" },
@@ -517,6 +512,142 @@ export const FAQ: FaqItem[] = [
       {
         vi: "Đổi mật khẩu ở phần Bảo mật: nhập mật khẩu hiện tại và mật khẩu mới.",
         en: "Change your password in the Security section: enter the current and the new password.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Bài đã xuất bản nhưng không thấy ở danh mục hay trang chủ?",
+      en: "My post is published but doesn't appear in its category or on the homepage?",
+    },
+    steps: [
+      {
+        vi: "Bài phải có <b>layout đã xuất bản</b> mới hiện ra — đây là bước hay quên nhất. Xuất bản riêng bài thôi là chưa đủ.",
+        en: "A post only appears once it has a <b>published layout</b> — the most commonly missed step. Publishing the post alone is not enough.",
+      },
+      {
+        vi: "<b>Danh mục gắn trên LAYOUT</b>, không phải trên bài. Layout chưa xuất bản thì bài cũng chưa thuộc danh mục nào.",
+        en: "The <b>category lives on the LAYOUT</b>, not on the post. If the layout isn't published, the post has no category yet.",
+      },
+      {
+        vi: "Nếu bạn thuộc một <b>đơn vị</b> (Đoàn – Hội, CLB…): bài <b>cố ý không lên trang chủ</b>, chỉ hiện trong danh mục của đơn vị.",
+        en: "If you belong to a <b>unit</b> (Youth Union, clubs…): posts are <b>intentionally kept off the homepage</b> and appear only in the unit's category.",
+      },
+      {
+        vi: "Đơn vị đó phải được đánh dấu phân loại là <b>Đơn vị</b> trong Danh mục &amp; Thẻ → tab Bộ môn. Để nhầm là <b>Bộ môn</b> thì bài không hiện ở đâu cả.",
+        en: "That unit must be flagged as <b>Unit</b> under Categories &amp; Tags → Departments tab. Left as <b>Department</b>, the post shows up nowhere.",
+      },
+      {
+        vi: "Làm đủ các bước trên mà vẫn chưa thấy thì chờ 1–2 phút cho bộ nhớ đệm cập nhật.",
+        en: "If all of the above is done and it still doesn't show, wait 1–2 minutes for the cache to refresh.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Đăng bài với ngày trong quá khứ (bài cũ) được không?",
+      en: "Can I publish a post with a past date (backdating)?",
+    },
+    steps: [
+      {
+        vi: "Được, nhưng <b>chỉ Super Admin</b>. Trong trình soạn bài sẽ thấy ô <b>Ngày đăng</b>; tài khoản khác không thấy ô này.",
+        en: "Yes, but <b>Super Admin only</b>. The post composer shows a <b>Publish date</b> field; other accounts don't see it.",
+      },
+      {
+        vi: "Chọn ngày giờ mong muốn rồi lưu và xuất bản như bình thường.",
+        en: "Pick the date/time, then save and publish as usual.",
+      },
+      {
+        vi: "Ngày này quyết định thứ tự bài trong danh sách tin, nên bài cũ sẽ nằm đúng vị trí theo thời gian thay vì nhảy lên đầu.",
+        en: "This date drives the ordering in news lists, so an old post sits in its correct chronological place instead of jumping to the top.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Chèn video hoặc file PDF vào bài viết?",
+      en: "How do I embed a video or PDF in an article?",
+    },
+    steps: [
+      {
+        vi: "Trong trình soạn bài, bấm biểu tượng <b>thước phim</b> trên thanh công cụ.",
+        en: "In the editor toolbar, click the <b>film</b> icon.",
+      },
+      {
+        vi: "Dán link YouTube, Google Drive hoặc OneDrive — hệ thống tự đổi sang dạng nhúng.",
+        en: "Paste a YouTube, Google Drive or OneDrive link — it is converted to an embed automatically.",
+      },
+      {
+        vi: "Với file trên Drive/OneDrive, nhớ đặt quyền chia sẻ là <b>ai có link đều xem được</b>, nếu không người ngoài sẽ thấy ô trống.",
+        en: "For Drive/OneDrive files, set sharing to <b>anyone with the link</b>, otherwise visitors see an empty box.",
+      },
+      {
+        vi: "Khung nhúng tự co theo màn hình, xem trên điện thoại vẫn vừa.",
+        en: "The embed is responsive and fits phone screens automatically.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Tô màu ô bảng hoặc đổi cỡ chữ trong bài?",
+      en: "How do I colour table cells or change the font size?",
+    },
+    steps: [
+      {
+        vi: "Đặt con trỏ vào ô bảng cần tô, rồi chọn màu ở nút <b>màu nền ô</b> trên thanh công cụ.",
+        en: "Put the cursor in the cell, then pick a colour from the <b>cell background</b> button in the toolbar.",
+      },
+      {
+        vi: "Bôi đen chữ rồi chọn cỡ ở ô <b>cỡ chữ</b> để phóng to hoặc thu nhỏ.",
+        en: "Select the text and choose a size from the <b>font size</b> dropdown.",
+      },
+      {
+        vi: "Muốn căn đều hai bên thì dùng nút căn lề <b>justify</b>.",
+        en: "Use the <b>justify</b> alignment button for text aligned on both edges.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Ảnh của bộ môn tôi lưu ở đâu trong thư viện ảnh?",
+      en: "Where are my department's images kept in the media library?",
+    },
+    steps: [
+      {
+        vi: "Thư viện ảnh có các <b>thẻ theo bộ môn</b> ở phía trên: ảnh dùng chung của Khoa và ảnh riêng từng bộ môn.",
+        en: "The media library has <b>department tabs</b> at the top: faculty-wide images and each department's own.",
+      },
+      {
+        vi: "Ảnh bạn tải lên tự vào kho của bộ môn mình, người bộ môn khác không thấy.",
+        en: "Images you upload go to your own department's store; other departments don't see them.",
+      },
+      {
+        vi: "Super Admin xem được mọi kho và chọn tải ảnh vào bộ môn bất kỳ.",
+        en: "A Super Admin sees every store and can upload into any department.",
+      },
+    ],
+  },
+  {
+    q: {
+      vi: "Cập nhật trang hồ sơ giảng viên (nhân sự)?",
+      en: "How do I update a staff profile page?",
+    },
+    steps: [
+      {
+        vi: "Vào <b>Bố cục trang</b>, tìm trang theo đường dẫn dạng <code>&lt;bộ môn&gt;/nhan-su/&lt;tên&gt;</code>.",
+        en: "Open <b>Page Layouts</b> and find the page by its path, e.g. <code>&lt;department&gt;/nhan-su/&lt;name&gt;</code>.",
+      },
+      {
+        vi: "Bấm vào khối <b>Staff Profile</b> để sửa ảnh chân dung, họ tên, chức danh, email và nội dung hồ sơ.",
+        en: "Click the <b>Staff Profile</b> block to edit the portrait, name, title, email and profile content.",
+      },
+      {
+        vi: "Ô nội dung có hai thẻ VI và EN — sửa ở thẻ nào chỉ đổi ngôn ngữ đó.",
+        en: "The content field has VI and EN tabs — editing one only changes that language.",
+      },
+      {
+        vi: "Xong bấm <b>Lưu và xuất bản ngay</b>, nếu không trang ngoài site vẫn giữ bản cũ.",
+        en: "Finish with <b>Save &amp; publish now</b>, otherwise the public page keeps the old version.",
       },
     ],
   },
