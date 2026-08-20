@@ -156,6 +156,33 @@ export function PostComposerView() {
     setPostId(idParam);
   }, [idParam]);
 
+  // "Tạo bài đăng mới" trỏ về CÙNG route với trình soạn bài (/admin/posts), nên
+  // đi từ trang sửa bài sang tạo mới KHÔNG dựng lại component — trước đây chỉ
+  // `postId` được xoá, còn tiêu đề/nội dung/tags/danh mục/ảnh bìa của bài cũ vẫn
+  // nằm nguyên trong form, và khối "Layouts đã gắn" vẫn hiện layout của bài cũ.
+  // Rất dễ vô tình đăng đè nội dung bài khác.
+  useEffect(() => {
+    if (postId) return;
+    setTitle(emptyLocalized());
+    setSlug("");
+    setSlugTouched(false);
+    setExcerpt(emptyLocalized());
+    setBody(emptyLocalized());
+    setStatus("DRAFT");
+    setTagSlugs(DEFAULT_TAG_SLUGS);
+    setTagDraft("");
+    setCoverMediaId(null);
+    setCoverUrl("");
+    setCoverAlt("");
+    setEventStartAt("");
+    setEventEndAt("");
+    setEventLocation("");
+    setScheduledAt("");
+    setPublishedAt("");
+    setCategoryIds([]);
+    setKind(null);
+  }, [postId]);
+
   const postQuery = useQuery({
     queryKey: ["POSTS", postId],
     queryFn: () => postApi.getById(postId!),
