@@ -98,7 +98,10 @@ export const WALKTHROUGHS: Walkthrough[] = [
   {
     id: "create-layout",
     route: "/admin/widgets-layout",
-    label: { vi: "Tạo một trang (layout) mới", en: "Create a new page (layout)" },
+    label: {
+      vi: "Tạo một trang (layout) mới",
+      en: "Create a new page (layout)",
+    },
     summary: {
       vi: "Hướng dẫn tạo một layout mới từ đầu.",
       en: "Walk through creating a new layout from scratch.",
@@ -124,7 +127,9 @@ export const WALKTHROUGHS: Walkthrough[] = [
         },
         side: "bottom",
         preAction: () => {
-          document.querySelector<HTMLElement>('[data-tour="new-layout"]')?.click();
+          document
+            .querySelector<HTMLElement>('[data-tour="new-layout"]')
+            ?.click();
         },
         waitMs: 4000,
       },
@@ -143,7 +148,10 @@ export const WALKTHROUGHS: Walkthrough[] = [
   {
     id: "publish-schedule",
     route: "/admin/widgets-layout",
-    label: { vi: "Xuất bản / Lên lịch một layout", en: "Publish / schedule a layout" },
+    label: {
+      vi: "Xuất bản / Lên lịch một layout",
+      en: "Publish / schedule a layout",
+    },
     summary: {
       vi: "Cách lưu nháp, lên lịch, hoặc xuất bản ngay.",
       en: "How to save a draft, schedule, or publish now.",
@@ -171,7 +179,10 @@ export const WALKTHROUGHS: Walkthrough[] = [
       },
       {
         selector: '[data-tour="save-schedule"]',
-        title: { vi: "Bước 3 — Lưu & lên lịch", en: "Step 3 — Save & schedule" },
+        title: {
+          vi: "Bước 3 — Lưu & lên lịch",
+          en: "Step 3 — Save & schedule",
+        },
         body: {
           vi: "<b>Save &amp; schedule…</b>: chọn ngày giờ để trang tự động xuất bản sau.",
           en: "<b>Save &amp; schedule…</b>: pick a date/time to auto-publish later.",
@@ -336,7 +347,10 @@ export const FAQ: FaqItem[] = [
       en: "My new page doesn't show on the public site?",
     },
     steps: [
-      { vi: "Mở layout trong trình chỉnh sửa.", en: "Open the layout in the editor." },
+      {
+        vi: "Mở layout trong trình chỉnh sửa.",
+        en: "Open the layout in the editor.",
+      },
       {
         vi: "Bấm mũi tên cạnh nút Save → chọn 'Save & publish now'.",
         en: "Click the caret next to Save → 'Save & publish now'.",
@@ -348,7 +362,10 @@ export const FAQ: FaqItem[] = [
     ],
   },
   {
-    q: { vi: "Làm sao để lên lịch xuất bản?", en: "How do I schedule publishing?" },
+    q: {
+      vi: "Làm sao để lên lịch xuất bản?",
+      en: "How do I schedule publishing?",
+    },
     steps: [
       {
         vi: "Với bài đăng: bấm <b>Lưu và lên lịch</b>, chọn ngày giờ rồi xác nhận. Không cần chọn Trạng thái nữa — ô đó nay chỉ để xem.",
@@ -409,7 +426,10 @@ export const FAQ: FaqItem[] = [
     ],
   },
   {
-    q: { vi: "Ảnh trong bài không hiển thị?", en: "Images in my content aren't showing?" },
+    q: {
+      vi: "Ảnh trong bài không hiển thị?",
+      en: "Images in my content aren't showing?",
+    },
     steps: [
       {
         vi: "Kiểm tra ảnh đã được tải lên trong Thư viện ảnh chưa.",
@@ -424,7 +444,10 @@ export const FAQ: FaqItem[] = [
   {
     q: { vi: "Tôi không đăng nhập được?", en: "I can't log in?" },
     steps: [
-      { vi: "Kiểm tra email và mật khẩu.", en: "Check your email and password." },
+      {
+        vi: "Kiểm tra email và mật khẩu.",
+        en: "Check your email and password.",
+      },
       {
         vi: "Nếu quên mật khẩu, dùng 'Quên mật khẩu' ở trang đăng nhập.",
         en: "If forgotten, use 'Forgot password' on the login page.",

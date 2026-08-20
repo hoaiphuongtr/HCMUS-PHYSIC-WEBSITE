@@ -8,13 +8,13 @@ import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
 import { colorField } from "../fields/color-field";
 import { localizedSummary } from "../fields/item-summary";
+import { localizedTextField } from "../fields/localized-text-field";
+import { mediaPickerField } from "../fields/media-picker-field";
 import {
   resolveTextStyle,
   type TextStyle,
   textStyleField,
 } from "../fields/text-style-field";
-import { localizedTextField } from "../fields/localized-text-field";
-import { mediaPickerField } from "../fields/media-picker-field";
 import { resolveOptimizerSrc } from "./media-src";
 
 const withLocalePrefix = (

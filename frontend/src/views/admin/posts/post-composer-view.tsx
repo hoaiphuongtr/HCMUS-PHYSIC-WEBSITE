@@ -9,14 +9,15 @@ import { toast } from "react-toastify";
 import { DynamicIcon } from "@/components/admin/icons";
 import {
   authApi,
-  categoryApi,
   type ContentStatusValue,
+  categoryApi,
   type LocalizedText,
   postApi,
   resolveMediaUrl,
   tagApi,
   type UpsertPostBody,
 } from "@/lib/api";
+import { untranslatedLocales } from "@/lib/i18n";
 import { emptyLocalized, type Locale, toLocalized } from "@/lib/localized";
 import { toSlug } from "@/lib/utils";
 import { MediaPickerModal } from "@/views/admin/widgets-layout/fields/media-picker-modal";
@@ -185,6 +186,21 @@ export function PostComposerView() {
     const linked = data.layouts?.[0]?.categoryLinks;
     if (linked?.length) setCategoryIds(linked.map((l) => l.categoryId));
   }, [postQuery.data]);
+
+  // Cảnh báo THIẾU BẢN TIẾNG ANH. Trước đây cảnh báo này chỉ có ở trình sửa
+  // layout, còn trình soạn bài thì không — người viết gõ xong tiếng Việt là bấm
+  // xuất bản, trang /en lặng lẽ hiển thị nguyên văn tiếng Việt.
+  // Chỉ báo khi ô đó ĐÃ có tiếng Việt (chưa nhập gì thì không có gì để dịch).
+  const missingEnFields = [
+    { label: "Tiêu đề", missing: untranslatedLocales(title).includes("en") },
+    { label: "Tóm tắt", missing: untranslatedLocales(excerpt).includes("en") },
+    {
+      label: "Nội dung",
+      missing: untranslatedLocales(body, true).includes("en"),
+    },
+  ]
+    .filter((f) => f.missing)
+    .map((f) => f.label);
 
   const commitTagDraft = () => {
     const parsed = parseTagInput(tagDraft);
@@ -476,7 +492,10 @@ export function PostComposerView() {
         </div>
       </header>
 
-      <div className="flex-1 px-6 py-5 space-y-6">
+      {/* max-w + mx-auto: trên màn rộng, ô nhập kéo dài gần 2000px vừa khó đọc
+          vừa trống trải. Giới hạn bề rộng rồi canh giữa, gọn hơn nhiều.
+          px nhỏ hơn ở màn hẹp để không phí chỗ trên điện thoại. */}
+      <div className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-6 py-4 space-y-4">
         {/* Trạng thái nằm ngang hàng với tab ngôn ngữ để nhường trọn hàng dưới
             cho tiêu đề — trước đây nó chiếm 1/3 hàng tiêu đề khá phí chỗ. */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -494,9 +513,21 @@ export function PostComposerView() {
                 }
               >
                 {l === "vi" ? "Tiếng Việt" : "English"}
+                {l === "en" && missingEnFields.length ? (
+                  <span
+                    className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </button>
             ))}
           </div>
+          {missingEnFields.length ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md px-2 py-1">
+              Chưa có bản tiếng Anh: <b>{missingEnFields.join(", ")}</b> — trang
+              /en sẽ hiển thị nội dung tiếng Việt.
+            </p>
+          ) : null}
           <div className="flex items-center gap-2">
             {/* Trạng thái KHÔNG còn chọn tay: nó do nút lưu quyết định (Lưu = Nháp,
                 Lưu và lên lịch = Lên lịch, Lưu và xuất bản ngay = Công khai). Bày
@@ -548,7 +579,7 @@ export function PostComposerView() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <div>
             <label
               className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
@@ -570,182 +601,188 @@ export function PostComposerView() {
           {/* Không còn chọn Danh mục ở đây: danh mục đi theo LAYOUT mà bài được
               rót vào (chọn "Layout mẫu — Câu lạc bộ" thì bài nằm ở danh mục Câu
               lạc bộ). Nhờ vậy một bài rót vào nhiều layout sẽ hiện dưới nhiều
-              danh mục, thay vì bị ép về đúng một danh mục như trước. */}
-        </section>
-
-        <section>
-          <label
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-            htmlFor="post-tags"
-          >
-            Tags (chọn bên dưới, hoặc gõ tag mới rồi Enter)
-          </label>
-          <div className="flex flex-wrap items-center gap-1 w-full min-h-[38px] px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-200 bg-white dark:bg-[#1a2436]">
-            {tagSlugs.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium"
-              >
-                <TagIcon icon={tagBySlug(tag)?.icon} />#
-                {tagBySlug(tag)?.name ?? tag}
-                <button
-                  type="button"
-                  onClick={() => removeTag(tag)}
-                  className="text-blue-500 hover:text-blue-700"
-                  aria-label={`Xoá tag ${tag}`}
+              danh mục, thay vì bị ép về đúng một danh mục như trước.
+              Ô trống đó nay dành cho Tags — đỡ được một hàng. */}
+          <div>
+            <label
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+              htmlFor="post-tags"
+            >
+              Tags (chọn bên dưới, hoặc gõ tag mới rồi Enter)
+            </label>
+            <div className="flex flex-wrap items-center gap-1 w-full min-h-[38px] px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-200 bg-white dark:bg-[#1a2436]">
+              {tagSlugs.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium"
                 >
-                  ×
-                </button>
-              </span>
-            ))}
-            <input
-              id="post-tags"
-              value={tagDraft}
-              onChange={(e) => setTagDraft(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-              onBlur={commitTagDraft}
-              className="flex-1 min-w-[120px] px-1 py-0.5 text-sm outline-none bg-transparent"
-              placeholder={tagSlugs.length ? "" : "tag mới…"}
-            />
-          </div>
-          {allTags.length > 0 && (
-            <div className="relative mt-2">
-              <button
-                type="button"
-                onClick={() => setTagPickerOpen((v) => !v)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300"
-              >
-                + Chọn tag có sẵn
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-              {tagPickerOpen && (
-                <>
+                  <TagIcon icon={tagBySlug(tag)?.icon} />#
+                  {tagBySlug(tag)?.name ?? tag}
                   <button
                     type="button"
-                    aria-label="Đóng"
-                    className="fixed inset-0 z-10 cursor-default"
-                    onClick={() => setTagPickerOpen(false)}
-                  />
-                  <div className="absolute left-0 z-20 mt-1 w-72 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
-                    <div className="flex border-b border-slate-100 dark:border-slate-800">
-                      {(["image", "text"] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => setTagPickerTab(tab)}
-                          className={`flex-1 px-3 py-2 text-xs font-medium ${
-                            tagPickerTab === tab
-                              ? "text-blue-600 border-b-2 border-blue-600"
-                              : "text-slate-500 dark:text-slate-400"
-                          }`}
-                        >
-                          {tab === "image" ? "Tag ảnh" : "Tag chữ"}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="p-2">
-                      <input
-                        value={tagPickerSearch}
-                        onChange={(e) => setTagPickerSearch(e.target.value)}
-                        placeholder="Tìm tag…"
-                        className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
-                      />
-                    </div>
-                    <div className="max-h-52 overflow-y-auto py-1">
-                      {pickerTags.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-slate-400">
-                          Không có tag.
-                        </p>
-                      ) : (
-                        pickerTags.map((tg) => {
-                          const active = tagSlugs.includes(tg.slug);
-                          return (
-                            <button
-                              key={tg.slug}
-                              type="button"
-                              onClick={() => toggleTag(tg.slug)}
-                              className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-[#202c44] ${
-                                active
-                                  ? "text-blue-600 font-medium"
-                                  : "text-slate-700 dark:text-slate-200"
-                              }`}
-                            >
-                              <TagIcon icon={tg.icon} />
-                              <span className="flex-1 truncate">{tg.name}</span>
-                              {active && (
-                                <span className="text-blue-600">✓</span>
-                              )}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
+                    onClick={() => removeTag(tag)}
+                    className="text-blue-500 hover:text-blue-700"
+                    aria-label={`Xoá tag ${tag}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                id="post-tags"
+                value={tagDraft}
+                onChange={(e) => setTagDraft(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={commitTagDraft}
+                className="flex-1 min-w-[120px] px-1 py-0.5 text-sm outline-none bg-transparent"
+                placeholder={tagSlugs.length ? "" : "tag mới…"}
+              />
             </div>
-          )}
+            {allTags.length > 0 && (
+              <div className="relative mt-2">
+                <button
+                  type="button"
+                  onClick={() => setTagPickerOpen((v) => !v)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300"
+                >
+                  + Chọn tag có sẵn
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+                {tagPickerOpen && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Đóng"
+                      className="fixed inset-0 z-10 cursor-default"
+                      onClick={() => setTagPickerOpen(false)}
+                    />
+                    <div className="absolute left-0 z-20 mt-1 w-72 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] shadow-lg">
+                      <div className="flex border-b border-slate-100 dark:border-slate-800">
+                        {(["image", "text"] as const).map((tab) => (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setTagPickerTab(tab)}
+                            className={`flex-1 px-3 py-2 text-xs font-medium ${
+                              tagPickerTab === tab
+                                ? "text-blue-600 border-b-2 border-blue-600"
+                                : "text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {tab === "image" ? "Tag ảnh" : "Tag chữ"}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="p-2">
+                        <input
+                          value={tagPickerSearch}
+                          onChange={(e) => setTagPickerSearch(e.target.value)}
+                          placeholder="Tìm tag…"
+                          className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-700 rounded outline-none bg-transparent"
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto py-1">
+                        {pickerTags.length === 0 ? (
+                          <p className="px-3 py-2 text-xs text-slate-400">
+                            Không có tag.
+                          </p>
+                        ) : (
+                          pickerTags.map((tg) => {
+                            const active = tagSlugs.includes(tg.slug);
+                            return (
+                              <button
+                                key={tg.slug}
+                                type="button"
+                                onClick={() => toggleTag(tg.slug)}
+                                className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-[#202c44] ${
+                                  active
+                                    ? "text-blue-600 font-medium"
+                                    : "text-slate-700 dark:text-slate-200"
+                                }`}
+                              >
+                                <TagIcon icon={tg.icon} />
+                                <span className="flex-1 truncate">
+                                  {tg.name}
+                                </span>
+                                {active && (
+                                  <span className="text-blue-600">✓</span>
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </section>
 
-        <section>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-            Ảnh bìa
-          </label>
-          <div className="flex flex-wrap items-start gap-3">
-            <input
-              value={coverUrl}
-              onChange={(e) => {
-                setCoverUrl(e.target.value);
-                setCoverMediaId(null);
-              }}
-              placeholder="URL ảnh hoặc chọn từ thư viện"
-              className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
-            />
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Chọn từ thư viện
-            </button>
-            {coverUrl ? (
+        {/* Ảnh bìa + Tóm tắt xếp cạnh nhau: cả hai đều thấp, để mỗi thứ một
+            hàng thì form dài không cần thiết. */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+              Ảnh bìa
+            </label>
+            <div className="flex flex-wrap items-start gap-3">
               <input
-                value={coverAlt}
-                onChange={(e) => setCoverAlt(e.target.value)}
-                placeholder="Alt text"
+                value={coverUrl}
+                onChange={(e) => {
+                  setCoverUrl(e.target.value);
+                  setCoverMediaId(null);
+                }}
+                placeholder="URL ảnh hoặc chọn từ thư viện"
                 className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
               />
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Chọn từ thư viện
+              </button>
+              {coverUrl ? (
+                <input
+                  value={coverAlt}
+                  onChange={(e) => setCoverAlt(e.target.value)}
+                  placeholder="Alt text"
+                  className="flex-1 min-w-[220px] px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200 truncate"
+                />
+              ) : null}
+            </div>
+            {previewCover ? (
+              <div className="mt-3 max-w-sm rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b]">
+                {/** biome-ignore lint/performance/noImgElement: preview only */}
+                <img
+                  src={previewCover}
+                  alt={coverAlt || title.vi}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
             ) : null}
           </div>
-          {previewCover ? (
-            <div className="mt-3 max-w-sm rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121a2b]">
-              {/** biome-ignore lint/performance/noImgElement: preview only */}
-              <img
-                src={previewCover}
-                alt={coverAlt || title.vi}
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          ) : null}
-        </section>
 
-        <section>
-          <label
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
-            htmlFor="post-excerpt"
-          >
-            Tóm tắt ({lang === "vi" ? "VI" : "EN"}) — hiển thị ở danh sách
-          </label>
-          <textarea
-            id="post-excerpt"
-            value={excerpt[lang] ?? ""}
-            onChange={(e) =>
-              setExcerpt((prev) => ({ ...prev, [lang]: e.target.value }))
-            }
-            rows={3}
-            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="Tóm tắt ngắn 1-2 câu"
-          />
+          <div>
+            <label
+              className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+              htmlFor="post-excerpt"
+            >
+              Tóm tắt ({lang === "vi" ? "VI" : "EN"}) — hiển thị ở danh sách
+            </label>
+            <textarea
+              id="post-excerpt"
+              value={excerpt[lang] ?? ""}
+              onChange={(e) =>
+                setExcerpt((prev) => ({ ...prev, [lang]: e.target.value }))
+              }
+              rows={3}
+              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="Tóm tắt ngắn 1-2 câu"
+            />
+          </div>
         </section>
 
         <section>
