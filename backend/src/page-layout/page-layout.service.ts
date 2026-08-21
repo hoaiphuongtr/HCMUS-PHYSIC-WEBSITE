@@ -40,6 +40,33 @@ import { WidgetNotFoundException } from '../widget/widget.error';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import { ChatbotService } from '../chatbot/chatbot.service';
 
+/**
+ * Duyệt cây Puck gom tên các khối "holder" của bài viết.
+ *
+ * Puck bản này cất khối con NGAY TRONG props của khối cha (kiểu slot), nên phải
+ * đệ quy qua props chứ không chỉ đọc `content` — giống hệt cách puck-inject bơm
+ * dữ liệu vào.
+ */
+function collectHolders(puckData: unknown): string[] {
+  const found = new Set<string>();
+  const visit = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item);
+      return;
+    }
+    if (!node || typeof node !== 'object') return;
+    const obj = node as Record<string, unknown>;
+    if (typeof obj.type === 'string' && obj.type.startsWith('Post')) {
+      found.add(obj.type);
+    }
+    for (const value of Object.values(obj)) {
+      if (value && typeof value === 'object') visit(value);
+    }
+  };
+  visit((puckData as { content?: unknown })?.content);
+  return [...found];
+}
+
 @Injectable()
 export class PageLayoutService {
   private readonly logger = new Logger(PageLayoutService.name);
@@ -195,7 +222,13 @@ export class PageLayoutService {
       if (scope) and.push(scope);
       where.AND = and;
     }
-    return this.pageLayoutRepository.findPostTemplates(where);
+    const rows = await this.pageLayoutRepository.findPostTemplates(where);
+    // Trả kèm danh sách HOLDER, bỏ puckData ra khỏi kết quả (nặng, giao diện
+    // không cần). Nhờ vậy trình soạn bài biết bố cục này cần nhập thêm gì.
+    return rows.map(({ puckData, ...rest }) => ({
+      ...rest,
+      holders: collectHolders(puckData),
+    }));
   }
 
   async findById(id: string) {

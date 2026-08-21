@@ -27,6 +27,13 @@ export const UpsertPostBodySchema = z.object({
   eventStartAt: z.string().nullable().optional(),
   eventEndAt: z.string().nullable().optional(),
   eventLocation: z.string().max(300).nullable().optional(),
+  // Dữ liệu cho holder đa phương tiện của layout. Cất trong Post.metadata (cột
+  // Json có sẵn, đang bỏ trống) nên KHÔNG phải đổi cấu trúc CSDL.
+  gallery: z
+    .array(z.object({ src: z.string(), alt: z.string().default('') }))
+    .optional(),
+  videoUrl: z.string().nullable().optional(),
+  videoCaption: LocalizedTextSchema.nullable().optional(),
 });
 export type UpsertPostBodyType = z.infer<typeof UpsertPostBodySchema>;
 
@@ -78,6 +85,9 @@ export const PostResSchema = z.object({
   eventStartAt: z.date().nullable(),
   eventEndAt: z.date().nullable(),
   eventLocation: z.string().nullable(),
+  gallery: z.array(z.object({ src: z.string(), alt: z.string() })).default([]),
+  videoUrl: z.string().nullable().default(null),
+  videoCaption: LocalizedTextSchema.nullable().default(null),
   publishedAt: z.date().nullable(),
   scheduledAt: z.date().nullable(),
   createdBy: z.string(),

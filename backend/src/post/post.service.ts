@@ -210,6 +210,44 @@ export class PostService {
     ]);
   }
 
+  /**
+   * Dữ liệu cho holder đa phương tiện (thư viện ảnh, video) cất trong cột Json
+   * `metadata` sẵn có — tránh phải thêm cột vào CSDL đang chạy.
+   * Chỉ ghi đè khoá nào client thực sự gửi lên, giữ nguyên phần còn lại.
+   */
+  private mediaMetadata(
+    current: unknown,
+    body: UpsertPostBodyType,
+  ): Prisma.InputJsonValue {
+    const base =
+      current && typeof current === 'object' && !Array.isArray(current)
+        ? (current as Record<string, unknown>)
+        : {};
+    const next = { ...base };
+    if (body.gallery !== undefined) next.gallery = body.gallery;
+    if (body.videoUrl !== undefined) next.videoUrl = body.videoUrl;
+    if (body.videoCaption !== undefined) next.videoCaption = body.videoCaption;
+    return next as Prisma.InputJsonValue;
+  }
+
+  /** Bóc dữ liệu đa phương tiện ra khỏi `metadata` để trả cho giao diện. */
+  private readMedia(metadata: unknown) {
+    const m =
+      metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>)
+        : {};
+    return {
+      gallery: Array.isArray(m.gallery)
+        ? (m.gallery as { src: string; alt: string }[])
+        : [],
+      videoUrl: typeof m.videoUrl === 'string' ? m.videoUrl : null,
+      videoCaption:
+        m.videoCaption && typeof m.videoCaption === 'object'
+          ? (m.videoCaption as Record<string, string>)
+          : null,
+    };
+  }
+
   // Ngày đăng do Super Admin chỉ định (lùi về quá khứ). Role khác gửi lên bị bỏ qua.
   private backdateFor(
     roleName: string,
@@ -251,6 +289,7 @@ export class PostService {
         eventStartAt: body.eventStartAt ? new Date(body.eventStartAt) : null,
         eventEndAt: body.eventEndAt ? new Date(body.eventEndAt) : null,
         eventLocation: body.eventLocation ?? null,
+        metadata: this.mediaMetadata(null, body),
         createdBy: userId,
         departmentId: departmentId ?? null,
         postTags: {
@@ -335,6 +374,7 @@ export class PostService {
           eventStartAt: body.eventStartAt ? new Date(body.eventStartAt) : null,
           eventEndAt: body.eventEndAt ? new Date(body.eventEndAt) : null,
           eventLocation: body.eventLocation ?? null,
+          metadata: this.mediaMetadata(existing.metadata, body),
           postTags: {
             create: tagIds.map((tagId) => ({ tagId })),
           },
@@ -841,12 +881,16 @@ export class PostService {
     // it can never be published at the faculty root (/, /tin-tuc). Faculty and
     // untagged posts keep the template-derived path.
     let deptSlug: string | null = null;
-    if (post.departmentId && post.departmentId !== FACULTY_DEPT_ID) {
+    // Danh muc mac dinh cua don vi (CLB, Doan-Hoi): bai cua don vi LUON duoc gan
+    // danh muc nay, khong phu thuoc nguoi dang co nho tick hay khong.
+    let unitCategoryId: string | null = null;
+    if (post.departmentId) {
       const dept = await this.prisma.department.findUnique({
         where: { id: post.departmentId },
-        select: { slug: true },
+        select: { slug: true, defaultCategoryId: true },
       });
-      deptSlug = dept?.slug ?? null;
+      if (post.departmentId !== FACULTY_DEPT_ID) deptSlug = dept?.slug ?? null;
+      unitCategoryId = dept?.defaultCategoryId ?? null;
     }
     // Faculty/untagged posts publish under the news prefix (/tin-tuc/<slug>);
     // bộ-môn posts stay under their department slug (never at the faculty root).
@@ -892,11 +936,18 @@ export class PostService {
     // Người dùng chọn danh mục ở trình soạn bài; không chọn thì dùng của layout
     // mẫu (vd bài sự kiện luôn là danh mục Sự kiện).
     const requested = Array.from(new Set(body.categoryIds ?? [])).filter(Boolean);
-    const categoryIds = requested.length
+    const picked = requested.length
       ? requested
       : template.categoryId
         ? [template.categoryId]
         : [];
+    // Bai cua mot DON VI (Doan-Hoi, CLB...) LUON mang danh muc cua don vi do.
+    // Truoc day nguoi dang phai tu nho tick; quen la bai khong hien trong muc cua
+    // chinh minh. Ep o backend nen khong the bo sot.
+    const categoryIds =
+      unitCategoryId && !picked.includes(unitCategoryId)
+        ? [...picked, unitCategoryId]
+        : picked;
     const primaryCategoryId = categoryIds[0] ?? template.categoryId ?? null;
     const layoutCategory = primaryCategoryId
       ? await this.prisma.category.findUnique({
@@ -922,6 +973,7 @@ export class PostService {
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
       eventLocation: post.eventLocation ?? null,
+      ...this.readMedia(post.metadata),
     };
     const injectedTree = injectPostIntoPuckData(
       template.puckData,
@@ -1290,6 +1342,7 @@ export class PostService {
       eventStartAt: post.eventStartAt ? post.eventStartAt.toISOString() : null,
       eventEndAt: post.eventEndAt ? post.eventEndAt.toISOString() : null,
       eventLocation: post.eventLocation ?? null,
+      ...this.readMedia(post.metadata),
     };
     await Promise.all(
       layouts.map((layout) => {
@@ -1402,6 +1455,8 @@ export class PostService {
       eventStartAt: record.eventStartAt,
       eventEndAt: record.eventEndAt,
       eventLocation: record.eventLocation,
+      // Trình soạn bài đọc lại dữ liệu holder khi mở bài cũ ra sửa.
+      ...this.readMedia((record as { metadata?: unknown }).metadata),
       publishedAt: record.publishedAt,
       scheduledAt: record.scheduledAt,
       createdBy: record.createdBy,

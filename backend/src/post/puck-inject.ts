@@ -18,6 +18,12 @@ export type PostInjectPayload = {
   eventStartAt: string | null;
   eventEndAt: string | null;
   eventLocation: string | null;
+  // Dữ liệu cho các holder đa phương tiện. Ô nhập tương ứng chỉ hiện trong trình
+  // soạn bài KHI layout có holder đó — nội dung bám theo bố cục, không phải mọi
+  // bài đều phải điền mọi thứ.
+  gallery: { src: string; alt: string }[];
+  videoUrl: string | null;
+  videoCaption: Localized | null;
 };
 
 type PuckNode = {
@@ -40,6 +46,8 @@ const PLACEHOLDER_TYPES = new Set([
   'PostTagList',
   'PostEventInfo',
   'PostHeader',
+  'PostGallery',
+  'PostVideo',
 ]);
 
 const buildInjectedProps = (
@@ -76,6 +84,15 @@ const buildInjectedProps = (
         categoryLabel: post.categoryLabel,
         categorySlug: post.category,
         publishedAt: post.publishedAt ?? '',
+        injected: true,
+      };
+    case 'PostGallery':
+      return { ...original, images: post.gallery, injected: true };
+    case 'PostVideo':
+      return {
+        ...original,
+        url: post.videoUrl ?? '',
+        caption: post.videoCaption ?? { vi: '' },
         injected: true,
       };
     default:

@@ -2,6 +2,7 @@
 
 import type { Config } from "@puckeditor/core";
 import { EventCard, NewsOverlayCard } from "./components/cards";
+import { ChatBubble } from "./components/chat-bubble";
 import {
   ContactInfo,
   DepartmentCard,
@@ -20,7 +21,6 @@ import {
   ButtonBlock,
   SearchOverlay,
 } from "./components/interactive";
-import { ScholarshipList } from "./components/scholarship";
 import {
   Card,
   Columns,
@@ -30,6 +30,11 @@ import {
   Grid,
   Spacer,
 } from "./components/layout";
+import {
+  LegacyPageBody,
+  PageHero,
+  StaffProfile,
+} from "./components/legacy-page";
 import {
   ImageBlock,
   ImageGallery,
@@ -52,6 +57,7 @@ import {
   NewsListPaginated,
   UpcomingEventsAuto,
 } from "./components/news-feed";
+import { PostGallery, PostVideo } from "./components/post-media-holders";
 import {
   PostBody,
   PostCoverImage,
@@ -61,13 +67,8 @@ import {
   PostTagList,
   PostTitle,
 } from "./components/post-placeholders";
+import { ScholarshipList } from "./components/scholarship";
 import { Footer, Header } from "./components/site-syndication";
-import {
-  LegacyPageBody,
-  PageHero,
-  StaffProfile,
-} from "./components/legacy-page";
-import { ChatBubble } from "./components/chat-bubble";
 import { StaffProfileEditorial } from "./components/staff-editorial";
 
 export const puckConfig: Config = {
@@ -155,8 +156,10 @@ export const puckConfig: Config = {
         "PostEventInfo",
         "PostHeader",
         "PostReaderTools",
+        "PostGallery",
         "PostTagList",
         "PostTitle",
+        "PostVideo",
       ],
     },
   },
@@ -209,6 +212,8 @@ export const puckConfig: Config = {
     PostEventInfo,
     PostHeader,
     PostReaderTools,
+    PostGallery,
+    PostVideo,
     Header,
     Footer,
     PageHero,

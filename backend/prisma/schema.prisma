@@ -194,18 +194,22 @@ model VerificationCode {
 }
 
 model Department {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
   // Phân loại đơn vị: "department" = bộ môn (hiện như bộ môn), "unit" = đơn vị
   // khác (Đoàn – Hội, CLB…) — KHÔNG coi là bộ môn ở các listing động.
-  kind        String   @default("department")
-  description String?
-  email       String?
-  phone       String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  kind              String   @default("department")
+  // Danh muc MAC DINH cua don vi: bai do tai khoan thuoc don vi nay dang se LUON
+  // duoc gan danh muc do (vd CLB -> "Cau lac bo"), khong phu thuoc nguoi dang co
+  // nho tick hay khong. De trong = khong ep gi.
+  defaultCategoryId String?
+  description       String?
+  email             String?
+  phone             String?
+  address           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   users       User[]
   posts       Post[]       @relation("PostDepartment")
@@ -299,7 +303,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  layouts PageLayout[] @relation("PageLayoutCategory")
+  layouts     PageLayout[]             @relation("PageLayoutCategory")
   layoutLinks PageLayoutCategoryLink[]
 
   @@index([slug])
@@ -443,10 +447,10 @@ model PageLayout {
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
 
-  createdByUser User                @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  sourcePost    Post?               @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
-  department    Department?         @relation("PageLayoutDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
-  category      Category?           @relation("PageLayoutCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  createdByUser User                     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  sourcePost    Post?                    @relation("PageLayoutSourcePost", fields: [sourcePostId], references: [id], onDelete: SetNull)
+  department    Department?              @relation("PageLayoutDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  category      Category?                @relation("PageLayoutCategory", fields: [categoryId], references: [id], onDelete: SetNull)
   // Một trang tin có thể nằm dưới NHIỀU danh mục (vd vừa Câu lạc bộ vừa Tin
   // học vụ) mà vẫn chỉ có MỘT URL. categoryId ở trên là danh mục CHÍNH, dùng
   // cho breadcrumb; bảng nối này mới là nguồn cho bộ lọc danh mục.

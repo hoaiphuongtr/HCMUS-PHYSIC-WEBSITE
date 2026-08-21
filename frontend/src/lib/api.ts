@@ -326,6 +326,9 @@ export const widgetApi = {
 export type PostTemplateLayout = PageLayout & {
   categoryId: string | null;
   category?: { slug: string; name: { vi: string; en?: string } } | null;
+  /** Các khối holder có trong bố cục (PostGallery, PostVideo…). Trình soạn bài
+   *  dựa vào đây để hiện đúng ô nhập — bố cục không có holder thì không hỏi. */
+  holders?: string[];
 };
 
 export const pageLayoutApi = {
@@ -707,6 +710,9 @@ export type PostRecord = {
   eventStartAt: string | null;
   eventEndAt: string | null;
   eventLocation: string | null;
+  gallery?: { src: string; alt: string }[];
+  videoUrl?: string | null;
+  videoCaption?: LocalizedText | null;
   publishedAt: string | null;
   scheduledAt: string | null;
   createdBy: string;
@@ -733,6 +739,9 @@ export type UpsertPostBody = {
   eventStartAt?: string | null;
   eventEndAt?: string | null;
   eventLocation?: string | null;
+  gallery?: { src: string; alt: string }[];
+  videoUrl?: string | null;
+  videoCaption?: LocalizedText | null;
 };
 
 export type PostPublicCard = {

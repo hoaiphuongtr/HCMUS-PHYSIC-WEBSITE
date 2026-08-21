@@ -139,6 +139,14 @@ export function PostComposerView() {
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  // Ba bước tạo bài: (1) chọn danh mục → (2) chọn bố cục → (3) điền nội dung.
+  // Bước 2 TỰ BỎ QUA khi chỉ có một bố cục — bắt bấm khi không có gì để chọn
+  // chỉ làm phiền.
+  const [pickStep, setPickStep] = useState<"category" | "layout">("category");
+  // Dữ liệu cho holder của layout. Chỉ hỏi khi bố cục đã chọn CÓ holder đó.
+  const [gallery, setGallery] = useState<{ src: string; alt: string }[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [galleryPickerOpen, setGalleryPickerOpen] = useState(false);
 
   // Layout mẫu quyết định BỐ CỤC của trang public sinh ra cho bài. Trước đây bị
   // ép cứng một mẫu cho mỗi loại bài, nên khoa có dựng thêm mẫu khác cũng không
@@ -239,6 +247,9 @@ export function PostComposerView() {
     setCategoryIds([]);
     setKind(null);
     setTemplateId("");
+    setPickStep("category");
+    setGallery([]);
+    setVideoUrl("");
   }, [postId]);
 
   // Mặc định về đúng mẫu cũ đang dùng cho loại bài đó; không có thì lấy mẫu đầu.
@@ -281,6 +292,8 @@ export function PostComposerView() {
     setEventLocation(data.eventLocation ?? "");
     setScheduledAt(toLocalInput(data.scheduledAt));
     setPublishedAt(toLocalInput(data.publishedAt));
+    setGallery(data.gallery ?? []);
+    setVideoUrl(data.videoUrl ?? "");
     setKind(data.eventStartAt ? "event" : "news");
     // Điền sẵn danh mục của trang đang gắn, để mở bài cũ ra sửa không phải chọn
     // lại từ đầu (bấm vào một danh mục vẫn là bỏ nó khỏi bài như bình thường).
@@ -365,6 +378,8 @@ export function PostComposerView() {
       eventStartAt: eventStartAt ? new Date(eventStartAt).toISOString() : null,
       eventEndAt: eventEndAt ? new Date(eventEndAt).toISOString() : null,
       eventLocation: eventLocation || null,
+      gallery,
+      videoUrl: videoUrl || null,
     };
   };
 
@@ -520,62 +535,146 @@ export function PostComposerView() {
    * danh mục. Trước đây hỏi ba lần ở ba chỗ, mà "Sự kiện" lại xuất hiện ở cả
    * bước loại bài lẫn bước mẫu nên người dùng tưởng bị hỏi trùng.
    */
-  const pickTemplate = (tpl: {
-    id: string;
-    categoryId: string | null;
-    category?: { slug: string } | null;
-  }) => {
-    const isEvent = tpl.category?.slug === "event";
-    setKind(isEvent ? "event" : "news");
-    setTemplateId(tpl.id);
-    rememberTemplate(isEvent ? "event" : "news", tpl.id);
-    // Tick sẵn danh mục của mẫu (bài sự kiện không cần vì "Sự kiện" tự kèm).
-    if (!isEvent && tpl.categoryId) setCategoryIds([tpl.categoryId]);
+  /**
+   * Hộp thoại đầu vào hỏi DANH MỤC, không hỏi layout mẫu.
+   *
+   * Lý do: kiểm dữ liệu thật cho thấy cả 7 "layout mẫu" có cấu trúc GIỐNG HỆT
+   * nhau (Header → Container[PostReaderTools, PostHeader, PostTagList,
+   * PostCoverImage, PostBody, PostEventInfo, Spacer] → Footer). Chúng chỉ khác
+   * tên và danh mục — tức là nhãn danh mục đội lốt layout. Bắt người dùng "chọn
+   * mẫu" trong khi mọi mẫu cho ra cùng một trang là gây nhầm lẫn vô ích.
+   *
+   * Loại bài suy từ danh mục: "event" → bài sự kiện (hiện ô thời gian, đường dẫn
+   * /su-kien do post.eventStartAt quyết định), còn lại → tin tức.
+   */
+  const pickCategory = (
+    cat: { id: string; slug: string } | null,
+    asEvent: boolean,
+  ) => {
+    const nextKind = asEvent ? "event" : "news";
+    setKind(nextKind);
+    // Bài sự kiện: "Sự kiện" tự được kèm ở finalCategoryIds, nên ở đây chỉ giữ
+    // danh mục PHỤ (Câu lạc bộ, Học bổng…) nếu người dùng chọn kèm.
+    setCategoryIds(cat && cat.slug !== "event" ? [cat.id] : []);
+    // Bố cục: lấy mẫu hợp với loại bài; không có thì để trống, lúc lưu dùng mẫu
+    // dự phòng.
+    const list = templatesFor(asEvent);
+    const remembered = readLastTemplate(nextKind);
+    const preset =
+      remembered && list.some((t) => t.id === remembered)
+        ? remembered
+        : (list[0]?.id ?? "");
+    setTemplateId(preset);
+    // Nhiều hơn một bố cục thì mới hỏi; còn lại vào thẳng bước điền nội dung.
+    setPickStep(list.length > 1 ? "layout" : "category");
   };
 
-  const eventTemplates = (templatesQuery.data ?? []).filter(
-    (t) => t.category?.slug === "event",
+  /** Holder của bố cục đang chọn — quyết định hiện ô nhập nào. */
+  const activeHolders =
+    (templatesQuery.data ?? []).find((t) => t.id === templateId)?.holders ?? [];
+  // Bài cũ đã có dữ liệu thì vẫn hiện ô để sửa/xoá, kể cả khi bố cục đổi.
+  const showGallery =
+    activeHolders.includes("PostGallery") || gallery.length > 0;
+  const showVideo = activeHolders.includes("PostVideo") || !!videoUrl;
+
+  const templatesFor = (asEvent: boolean) =>
+    (templatesQuery.data ?? []).filter((t) =>
+      asEvent ? t.category?.slug === "event" : t.category?.slug !== "event",
+    );
+
+  const pickLayout = (id: string) => {
+    setTemplateId(id);
+    if (kind) rememberTemplate(kind, id);
+    setPickStep("category");
+  };
+
+  const eventCategory = (categoriesQuery.data ?? []).find(
+    (c) => c.slug === "event",
   );
-  const newsTemplates = (templatesQuery.data ?? []).filter(
-    (t) => t.category?.slug !== "event",
+  const newsCategoryChoices = (categoriesQuery.data ?? []).filter(
+    (c) => c.slug !== "event",
   );
 
   // Bài MỚI chưa chọn loại: chỉ hiện hộp thoại, KHÔNG dựng trình soạn phía sau.
   // Để editor hiện mờ sau lớp phủ dễ khiến người dùng tưởng đã vào soạn được rồi.
-  if (!postId && !kind) {
+  if (!postId && (!kind || pickStep === "layout")) {
     return (
       <div className="flex items-center justify-center h-full px-4 bg-slate-50 dark:bg-[#111827]">
         <div className="bg-white dark:bg-[#1a2436] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6">
+          <p className="text-[11px] font-semibold tracking-wider uppercase text-blue-600 dark:text-blue-400 mb-1">
+            {pickStep === "layout" ? "Bước 2 / 3" : "Bước 1 / 3"}
+          </p>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-            Bạn muốn đăng gì?
+            {pickStep === "layout"
+              ? "Dùng bố cục nào?"
+              : "Bài này thuộc mục nào?"}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-            Chọn <b>mục</b> mà bài sẽ nằm vào. Hệ thống dùng sẵn bố cục mặc định
-            của mục đó — đổi bố cục hay thêm mục khác đều làm được ở bước sau.
+            {pickStep === "layout" ? (
+              <>
+                Bố cục quyết định <b>cách trình bày</b> trang, không ảnh hưởng
+                bài nằm ở mục nào. Đổi lại được khi soạn.
+              </>
+            ) : (
+              <>
+                Chọn <b>mục</b> mà bài sẽ nằm vào. Thêm mục khác hoặc đổi bố cục
+                đều làm được ở bước soạn nội dung.
+              </>
+            )}
           </p>
 
-          {newsTemplates.length || eventTemplates.length ? (
+          {pickStep === "layout" ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {templatesFor(kind === "event").map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => pickLayout(tpl.id)}
+                    className={
+                      "px-3 py-2 text-sm rounded-lg border text-slate-800 dark:text-slate-100 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] " +
+                      (tpl.id === templateId
+                        ? "border-blue-500 bg-blue-50/60 dark:bg-[#202c44]"
+                        : "border-slate-200 dark:border-slate-700")
+                    }
+                  >
+                    {tpl.name.replace(/^Layout mẫu\s*[—-]\s*/, "")}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setKind(null);
+                  setPickStep("category");
+                }}
+                className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
+              >
+                ← Chọn lại mục
+              </button>
+            </div>
+          ) : newsCategoryChoices.length || eventCategory ? (
             <div className="space-y-4 max-h-[55vh] overflow-y-auto">
-              {newsTemplates.length ? (
+              {newsCategoryChoices.length ? (
                 <div>
                   <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 mb-2">
                     Tin tức
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {newsTemplates.map((tpl) => (
+                    {newsCategoryChoices.map((cat) => (
                       <button
-                        key={tpl.id}
+                        key={cat.id}
                         type="button"
-                        onClick={() => pickTemplate(tpl)}
+                        onClick={() => pickCategory(cat, false)}
                         className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] text-slate-800 dark:text-slate-100"
                       >
-                        {tpl.name.replace(/^Layout mẫu\s*[—-]\s*/, "")}
+                        {localizeCategory(cat.name)}
                       </button>
                     ))}
                   </div>
                 </div>
               ) : null}
-              {eventTemplates.length ? (
+              {eventCategory ? (
                 <div>
                   <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 mb-2">
                     Sự kiện{" "}
@@ -584,14 +683,23 @@ export function PostComposerView() {
                     </span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {eventTemplates.map((tpl) => (
+                    <button
+                      type="button"
+                      onClick={() => pickCategory(null, true)}
+                      className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] text-slate-800 dark:text-slate-100"
+                    >
+                      Sự kiện chung
+                    </button>
+                    {/* Sự kiện của một mục cụ thể: bài nằm ở CẢ "Sự kiện" lẫn
+                        mục đó (vd hội thảo của CLB hiện ở cả hai nơi). */}
+                    {newsCategoryChoices.map((cat) => (
                       <button
-                        key={tpl.id}
+                        key={`ev-${cat.id}`}
                         type="button"
-                        onClick={() => pickTemplate(tpl)}
+                        onClick={() => pickCategory(cat, true)}
                         className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] text-slate-800 dark:text-slate-100"
                       >
-                        {tpl.name.replace(/^Layout mẫu\s*[—-]\s*/, "")}
+                        {localizeCategory(cat.name)}
                       </button>
                     ))}
                   </div>
@@ -959,6 +1067,78 @@ export function PostComposerView() {
           </div>
         </section>
 
+        {/* Ô nhập cho HOLDER: chỉ hiện khi bố cục đã chọn có khối tương ứng.
+            Bố cục nào không có thì không hỏi — nội dung bám theo bố cục. */}
+        {showGallery || showVideo ? (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            {showGallery ? (
+              <div>
+                <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                  Thư viện ảnh{" "}
+                  <span className="font-normal text-slate-400">
+                    ({gallery.length} ảnh)
+                  </span>
+                </span>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {gallery.map((img, i) => (
+                    <span
+                      key={`${img.src}-${i}`}
+                      className="relative w-16 h-12 rounded overflow-hidden border border-slate-200 dark:border-slate-700"
+                    >
+                      {/* biome-ignore lint/performance/noImgElement: preview nhỏ */}
+                      <img
+                        src={resolveMediaUrl(img.src)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGallery((prev) => prev.filter((_, k) => k !== i))
+                        }
+                        aria-label="Bỏ ảnh này"
+                        className="absolute top-0 right-0 w-4 h-4 bg-black/60 text-white text-[10px] leading-4 text-center"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGalleryPickerOpen(true)}
+                  className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  Thêm ảnh từ thư viện
+                </button>
+              </div>
+            ) : null}
+
+            {showVideo ? (
+              <div>
+                <label
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1"
+                  htmlFor="post-video"
+                >
+                  Video
+                </label>
+                <input
+                  id="post-video"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="Dán link YouTube, Google Drive, OneDrive…"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  File trên Drive/OneDrive nhớ đặt quyền{" "}
+                  <b>ai có link đều xem được</b>, nếu không người ngoài thấy ô
+                  trống.
+                </p>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         <section>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">
             Nội dung bài đăng ({lang === "vi" ? "VI" : "EN"})
@@ -1204,6 +1384,20 @@ export function PostComposerView() {
             setCoverMediaId(null);
           }}
           onClose={() => setPickerOpen(false)}
+        />
+      ) : null}
+
+      {galleryPickerOpen ? (
+        <MediaPickerModal
+          onSelect={(url) => {
+            // Chọn xong đóng luôn (modal dùng chung), bấm lại để thêm ảnh nữa.
+            setGallery((prev) =>
+              prev.some((g) => g.src === url)
+                ? prev
+                : [...prev, { src: url, alt: "" }],
+            );
+          }}
+          onClose={() => setGalleryPickerOpen(false)}
         />
       ) : null}
 

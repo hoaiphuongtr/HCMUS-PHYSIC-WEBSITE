@@ -193,6 +193,9 @@ export class PageLayoutRepository {
         ...listSelect,
         categoryId: true,
         category: { select: { slug: true, name: true } },
+        // Service dùng để tính ra layout có những HOLDER nào (trình soạn bài chỉ
+        // hiện ô nhập tương ứng với holder có thật trong bố cục).
+        puckData: true,
       },
     });
   }

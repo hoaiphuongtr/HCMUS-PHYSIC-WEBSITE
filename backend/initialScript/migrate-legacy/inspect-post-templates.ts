@@ -45,7 +45,34 @@ async function main(): Promise<void> {
       console.log('  cấu trúc : (không đọc được puckData)');
       continue;
     }
-    console.log(`  cấu trúc : ${content.length} khối`);
+    // Puck cất các khối LỒNG BÊN TRONG (vd trong Container) ở `zones`, không
+    // nằm trong `content`. Không đọc zones là tưởng mọi mẫu giống hệt nhau.
+    const zones = (t.puckData as { zones?: Record<string, PuckNode[]> } | null)
+      ?.zones;
+    console.log(`  cấu trúc : ${content.length} khối ở ngoài cùng`);
+
+    /**
+     * In cả khối con nằm TRONG props (Puck bản này dùng "slot": mảng component
+     * cất thẳng trong props của khối cha, không nằm ở `zones`). Đọc thiếu chỗ
+     * này là tưởng mọi mẫu chỉ có Header/Container/Footer giống hệt nhau.
+     */
+    const printNested = (props: Record<string, unknown>, depth: number) => {
+      const pad = '   '.repeat(depth + 2);
+      for (const [key, value] of Object.entries(props)) {
+        if (!Array.isArray(value)) continue;
+        const nodes = value.filter(
+          (v): v is PuckNode =>
+            !!v && typeof v === 'object' && 'type' in (v as object),
+        );
+        if (!nodes.length) continue;
+        console.log(`${pad}└ ${key}: ${nodes.length} khối`);
+        nodes.forEach((n, k) => {
+          console.log(`${pad}   ${k + 1}. ${n.type ?? '?'}`);
+          if (n.props) printNested(n.props, depth + 2);
+        });
+      }
+    };
+
     content.forEach((c, i) => {
       const props = c?.props ?? {};
       // In vài prop dễ nhận biết để phân biệt các mẫu với nhau.
@@ -63,7 +90,19 @@ async function main(): Promise<void> {
         })
         .join(' ');
       console.log(`    ${i + 1}. ${c?.type ?? '?'}${hints ? `  (${hints})` : ''}`);
+      if (c?.props) printNested(c.props, 0);
     });
+
+    if (zones && Object.keys(zones).length) {
+      for (const [zoneKey, nodes] of Object.entries(zones)) {
+        console.log(`    [vùng lồng] ${zoneKey}`);
+        (nodes ?? []).forEach((n, j) => {
+          console.log(`       ${j + 1}. ${n?.type ?? '?'}`);
+        });
+      }
+    } else {
+      console.log('    [không có vùng lồng nào]');
+    }
   }
 
   await prisma.$disconnect();
