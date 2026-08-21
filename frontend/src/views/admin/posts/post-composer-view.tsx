@@ -12,6 +12,7 @@ import {
   type ContentStatusValue,
   categoryApi,
   type LocalizedText,
+  pageLayoutApi,
   postApi,
   resolveMediaUrl,
   tagApi,
@@ -37,9 +38,37 @@ const localizeCategory = (name: { vi?: string; en?: string } | string) =>
 // nên đổi tên tag trong quản trị vẫn gắn đúng tag (và đúng ảnh icon của nó).
 const DEFAULT_TAG_SLUGS = ["sdg4", "sdg17"];
 
-// Chỉ còn HAI loại bài: tin tức và sự kiện. Mỗi loại ứng với một layout mẫu; các
-// layout mẫu theo danh mục (câu lạc bộ, học bổng…) không còn cần nữa vì danh mục
-// giờ chọn được nhiều trên cùng một trang.
+// Nhớ mẫu dùng lần gần nhất (theo loại bài) ngay trên trình duyệt của người
+// dùng. Rẻ hơn hẳn việc dựng bảng "yêu thích" riêng trong CSDL mà hiệu quả
+// tương đương: người đăng bài đều đặn thường chỉ dùng một mẫu quen.
+const LAST_TEMPLATE_KEY = (kind: "news" | "event") =>
+  `hcmus:last-post-template:${kind}`;
+
+const readLastTemplate = (kind: "news" | "event"): string => {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(LAST_TEMPLATE_KEY(kind)) ?? "";
+  } catch {
+    return "";
+  }
+};
+
+const rememberTemplate = (kind: "news" | "event", id: string): void => {
+  if (typeof window === "undefined" || !id) return;
+  try {
+    window.localStorage.setItem(LAST_TEMPLATE_KEY(kind), id);
+  } catch {
+    // Trình duyệt chặn localStorage (chế độ riêng tư) — bỏ qua, không ảnh hưởng.
+  }
+};
+
+// Mẫu DỰ PHÒNG cho mỗi loại bài — dùng khi chưa có layout mẫu nào được đánh dấu
+// (hoặc danh sách chưa tải xong), để không ai bị kẹt không tạo được bài.
+//
+// LƯU Ý HAI KHÁI NIỆM KHÁC NHAU, đừng gộp:
+//   - LAYOUT MẪU  = bố cục trình bày của trang public.
+//   - DANH MỤC    = bài hiện ở mục nào trên site.
+// Chúng trùng tên nhau (đều có "Học bổng", "Tuyển dụng"…) nên rất dễ nhầm là một.
 const KIND_TEMPLATE: Record<"news" | "event", string> = {
   news: "cat_tmpl_scientific-information",
   event: "cat_tmpl_event",
@@ -111,6 +140,21 @@ export function PostComposerView() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
+  // Layout mẫu quyết định BỐ CỤC của trang public sinh ra cho bài. Trước đây bị
+  // ép cứng một mẫu cho mỗi loại bài, nên khoa có dựng thêm mẫu khác cũng không
+  // chọn được. Danh sách do backend lọc sẵn theo quyền/bộ môn.
+  const [templateId, setTemplateId] = useState<string>("");
+  const templatesQuery = useQuery({
+    queryKey: ["POST_TEMPLATES"],
+    queryFn: () => pageLayoutApi.postTemplates(),
+  });
+  // Bài sự kiện chỉ hợp với mẫu thuộc danh mục "event"; tin tức lấy phần còn lại.
+  const kindTemplates = (templatesQuery.data ?? []).filter((tpl) =>
+    kind === "event"
+      ? tpl.category?.slug === "event"
+      : tpl.category?.slug !== "event",
+  );
+
   const categoriesQuery = useQuery({
     queryKey: ["CATEGORIES"],
     queryFn: categoryApi.list,
@@ -120,11 +164,24 @@ export function PostComposerView() {
     queryFn: authApi.getProfile,
   });
   const isSuperAdmin = profile?.role === "SUPER_ADMIN";
-  // Bài SỰ KIỆN luôn thuộc danh mục "Sự kiện", không cho chọn; bài TIN TỨC thì
-  // tick được nhiều danh mục còn lại.
-  const newsCategories = (categoriesQuery.data ?? []).filter(
+  // Danh mục CHỌN ĐƯỢC: bỏ "Sự kiện" ra khỏi danh sách tick vì với bài sự kiện
+  // nó luôn được gắn ngầm, còn bài tin tức thì không thuộc về nó.
+  const pickableCategories = (categoriesQuery.data ?? []).filter(
     (c) => c.slug !== "event",
   );
+  const eventCategoryId = (categoriesQuery.data ?? []).find(
+    (c) => c.slug === "event",
+  )?.id;
+
+  /**
+   * Danh mục gửi lên backend. Backend THAY THẾ hoàn toàn danh mục của layout mẫu
+   * bằng danh sách này, nên bài sự kiện phải tự kèm "Sự kiện" — thiếu là bài rơi
+   * khỏi bộ lọc Sự kiện. Đặt nó ĐẦU danh sách để breadcrumb vẫn là Sự kiện.
+   */
+  const finalCategoryIds = (): string[] =>
+    kind === "event" && eventCategoryId
+      ? [eventCategoryId, ...categoryIds.filter((id) => id !== eventCategoryId)]
+      : categoryIds;
 
   // Existing tags (with icons) so the author can pick instead of typing slugs.
   const tagsQuery = useQuery({ queryKey: ["TAGS"], queryFn: tagApi.list });
@@ -181,7 +238,24 @@ export function PostComposerView() {
     setPublishedAt("");
     setCategoryIds([]);
     setKind(null);
+    setTemplateId("");
   }, [postId]);
+
+  // Mặc định về đúng mẫu cũ đang dùng cho loại bài đó; không có thì lấy mẫu đầu.
+  useEffect(() => {
+    if (!kind || !kindTemplates.length) return;
+    const stillValid = kindTemplates.some((tpl) => tpl.id === templateId);
+    if (stillValid) return;
+    const has = (id: string) => !!id && kindTemplates.some((t) => t.id === id);
+    const remembered = readLastTemplate(kind);
+    setTemplateId(
+      has(remembered)
+        ? remembered
+        : has(KIND_TEMPLATE[kind])
+          ? KIND_TEMPLATE[kind]
+          : kindTemplates[0].id,
+    );
+  }, [kind, kindTemplates, templateId]);
 
   const postQuery = useQuery({
     queryKey: ["POSTS", postId],
@@ -382,8 +456,8 @@ export function PostComposerView() {
     }
     await cloneMutation.mutateAsync({
       postId: id,
-      templateLayoutId: KIND_TEMPLATE[kind ?? "news"],
-      categoryIds: kind === "news" ? categoryIds : undefined,
+      templateLayoutId: templateId || KIND_TEMPLATE[kind ?? "news"],
+      categoryIds: finalCategoryIds(),
     });
     return true;
   };
@@ -441,6 +515,31 @@ export function PostComposerView() {
   const previewCover = resolveMediaUrl(coverUrl);
   const attachedLayouts = postQuery.data?.layouts ?? [];
 
+  /**
+   * Chọn mẫu ở hộp thoại đầu vào = chốt luôn cả ba thứ: loại bài, layout, và
+   * danh mục. Trước đây hỏi ba lần ở ba chỗ, mà "Sự kiện" lại xuất hiện ở cả
+   * bước loại bài lẫn bước mẫu nên người dùng tưởng bị hỏi trùng.
+   */
+  const pickTemplate = (tpl: {
+    id: string;
+    categoryId: string | null;
+    category?: { slug: string } | null;
+  }) => {
+    const isEvent = tpl.category?.slug === "event";
+    setKind(isEvent ? "event" : "news");
+    setTemplateId(tpl.id);
+    rememberTemplate(isEvent ? "event" : "news", tpl.id);
+    // Tick sẵn danh mục của mẫu (bài sự kiện không cần vì "Sự kiện" tự kèm).
+    if (!isEvent && tpl.categoryId) setCategoryIds([tpl.categoryId]);
+  };
+
+  const eventTemplates = (templatesQuery.data ?? []).filter(
+    (t) => t.category?.slug === "event",
+  );
+  const newsTemplates = (templatesQuery.data ?? []).filter(
+    (t) => t.category?.slug !== "event",
+  );
+
   // Bài MỚI chưa chọn loại: chỉ hiện hộp thoại, KHÔNG dựng trình soạn phía sau.
   // Để editor hiện mờ sau lớp phủ dễ khiến người dùng tưởng đã vào soạn được rồi.
   if (!postId && !kind) {
@@ -451,36 +550,84 @@ export function PostComposerView() {
             Bạn muốn đăng gì?
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-            Chọn loại bài để hệ thống dùng đúng layout và đưa bài vào đúng chỗ.
+            Chọn <b>mục</b> mà bài sẽ nằm vào. Hệ thống dùng sẵn bố cục mặc định
+            của mục đó — đổi bố cục hay thêm mục khác đều làm được ở bước sau.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setKind("news")}
-              className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
-            >
-              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Tin tức
-              </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                Bài sẽ xuất hiện ở mục Tin tức trên trang chủ và trang /tin-tuc.
-                Bạn chọn được nhiều danh mục cho cùng một bài.
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setKind("event")}
-              className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
-            >
-              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Sự kiện
-              </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                Bài sẽ xuất hiện ở mục Sự kiện sắp tới và có đường dẫn /su-kien.
-                Cần điền thời gian và địa điểm diễn ra.
-              </span>
-            </button>
-          </div>
+
+          {newsTemplates.length || eventTemplates.length ? (
+            <div className="space-y-4 max-h-[55vh] overflow-y-auto">
+              {newsTemplates.length ? (
+                <div>
+                  <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 mb-2">
+                    Tin tức
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {newsTemplates.map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => pickTemplate(tpl)}
+                        className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] text-slate-800 dark:text-slate-100"
+                      >
+                        {tpl.name.replace(/^Layout mẫu\s*[—-]\s*/, "")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {eventTemplates.length ? (
+                <div>
+                  <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 mb-2">
+                    Sự kiện{" "}
+                    <span className="font-normal normal-case tracking-normal">
+                      — cần điền thời gian, địa điểm
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {eventTemplates.map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => pickTemplate(tpl)}
+                        className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44] text-slate-800 dark:text-slate-100"
+                      >
+                        {tpl.name.replace(/^Layout mẫu\s*[—-]\s*/, "")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            /* Chưa có mẫu nào được đánh dấu (hoặc đang tải): quay về hai lựa
+               chọn cũ để không ai bị kẹt không tạo được bài. */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setKind("news")}
+                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+              >
+                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                  Tin tức
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  Hiện ở trang chủ và trang /tin-tuc.
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setKind("event")}
+                className="text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-[#202c44]"
+              >
+                <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                  Sự kiện
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  Hiện ở mục Sự kiện sắp tới, đường dẫn /su-kien.
+                </span>
+              </button>
+            </div>
+          )}
           <div className="mt-5 flex justify-end">
             <Link
               href="/admin/posts/list"
@@ -916,6 +1063,41 @@ export function PostComposerView() {
             mục.
           </p>
 
+          {kindTemplates.length ? (
+            <div className="mb-4">
+              <label
+                className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1.5"
+                htmlFor="post-template"
+              >
+                Bố cục trang{" "}
+                <span className="font-normal normal-case text-slate-400">
+                  — chỉ đổi cách trình bày
+                </span>
+              </label>
+              <select
+                id="post-template"
+                value={templateId}
+                onChange={(e) => {
+                  setTemplateId(e.target.value);
+                  if (kind) rememberTemplate(kind, e.target.value);
+                }}
+                disabled={attachedLayouts.length > 0}
+                className="w-full max-w-md px-3 py-2 text-sm border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-[#1a2436] outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-60"
+              >
+                {kindTemplates.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                {attachedLayouts.length
+                  ? "Bài đã có trang public nên không đổi được bố cục — xoá trang rồi tạo lại nếu cần."
+                  : "KHÔNG liên quan tới việc bài nằm ở mục nào — mục do phần Danh mục bên dưới quyết định."}
+              </p>
+            </div>
+          ) : null}
+
           {attachedLayouts.length ? (
             <div className="mb-4">
               <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
@@ -932,53 +1114,53 @@ export function PostComposerView() {
           {/* Không còn chọn "layout mẫu" nữa: loại bài (tin tức / sự kiện) đã chốt
               ở modal đầu vào và quyết định luôn layout. Người dùng chỉ còn chọn
               DANH MỤC, và chọn được nhiều — một bài, một URL, nhiều bộ lọc. */}
-          {kind === "news" ? (
-            <div className="space-y-2">
-              <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
-                Danh mục{" "}
-                <span className="font-normal text-slate-400">
-                  (chọn được nhiều)
-                </span>
+          <div className="space-y-2">
+            <span className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
+              Danh mục{" "}
+              <span className="font-normal text-slate-400">
+                — quyết định bài hiện ở mục nào (chọn được nhiều)
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {newsCategories.map((c) => {
-                  const on = categoryIds.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() =>
-                        setCategoryIds((prev) =>
-                          prev.includes(c.id)
-                            ? prev.filter((x) => x !== c.id)
-                            : [...prev, c.id],
-                        )
-                      }
-                      className={
-                        "px-2.5 py-1 text-xs font-medium rounded-md border " +
-                        (on
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white dark:bg-[#1a2436] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#202c44]")
-                      }
-                    >
-                      {localizeCategory(c.name)}
-                    </button>
-                  );
-                })}
-              </div>
-              {/* Chỉ nhắc khi TẠO MỚI. Lúc sửa bài, bỏ hết danh mục là hành động
-                  có ý thức, không phải quên chọn — nhắc lại chỉ gây nhiễu. */}
-              {!postId && categoryIds.length === 0 ? (
-                <p className="text-[11px] text-amber-600">
-                  Chọn ít nhất một danh mục để bài hiện đúng chỗ.
-                </p>
-              ) : null}
+            </span>
+            {kind === "event" ? (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Bài sự kiện luôn có sẵn danh mục <b>Sự kiện</b>; tick thêm bên
+                dưới nếu muốn bài hiện ở cả những mục khác.
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-1.5">
+              {pickableCategories.map((c) => {
+                const on = categoryIds.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() =>
+                      setCategoryIds((prev) =>
+                        prev.includes(c.id)
+                          ? prev.filter((x) => x !== c.id)
+                          : [...prev, c.id],
+                      )
+                    }
+                    className={
+                      "px-2.5 py-1 text-xs font-medium rounded-md border " +
+                      (on
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white dark:bg-[#1a2436] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#202c44]")
+                    }
+                  >
+                    {localizeCategory(c.name)}
+                  </button>
+                );
+              })}
             </div>
-          ) : (
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Bài sự kiện luôn thuộc danh mục <b>Sự kiện</b>.
-            </p>
-          )}
+            {/* Chỉ nhắc khi TẠO MỚI. Lúc sửa bài, bỏ hết danh mục là hành động
+                  có ý thức, không phải quên chọn — nhắc lại chỉ gây nhiễu. */}
+            {!postId && kind === "news" && categoryIds.length === 0 ? (
+              <p className="text-[11px] text-amber-600">
+                Chọn ít nhất một danh mục để bài hiện đúng chỗ.
+              </p>
+            ) : null}
+          </div>
         </section>
       </div>
 

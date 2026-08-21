@@ -141,11 +141,25 @@ describe('PageLayoutService versioning', () => {
       repo.findAllScoped.mockResolvedValue([sampleLayout]);
       const result = await service.findAllForAdmin('user-1', 'ADMIN');
       expect(repo.findUserDepartmentId).toHaveBeenCalledWith('user-1');
+      // Lọc bộ môn AND lọc riêng tư: layout người khác đánh dấu "chỉ mình tôi
+      // dùng" không lọt vào danh sách, kể cả khi cùng bộ môn.
       expect(repo.findAllScoped).toHaveBeenCalledWith({
-        departmentId: 'dept_legacy_6',
+        AND: [
+          { departmentId: 'dept_legacy_6' },
+          { OR: [{ isPrivate: false }, { createdBy: 'user-1' }] },
+        ],
       });
       expect(repo.findAll).not.toHaveBeenCalled();
       expect(result).toEqual([sampleLayout]);
+    });
+
+    it('faculty-wide admin still gets the privacy filter', async () => {
+      repo.findUserDepartmentId.mockResolvedValue(null);
+      repo.findAllScoped.mockResolvedValue([sampleLayout]);
+      await service.findAllForAdmin('user-9', 'ADMIN');
+      expect(repo.findAllScoped).toHaveBeenCalledWith({
+        AND: [{ OR: [{ isPrivate: false }, { createdBy: 'user-9' }] }],
+      });
     });
   });
 

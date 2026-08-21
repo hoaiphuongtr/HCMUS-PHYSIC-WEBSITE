@@ -30,6 +30,10 @@ export function EditLayoutModal({
   const [slug, setSlug] = useState(layout.slug);
   const [description, setDescription] = useState(layout.description || "");
   const [categoryId, setCategoryId] = useState(layout.categoryId ?? "");
+  const [isPostTemplate, setIsPostTemplate] = useState(
+    layout.isPostTemplate ?? false,
+  );
+  const [isPrivate, setIsPrivate] = useState(layout.isPrivate ?? false);
   const [slugTouched, setSlugTouched] = useState(false);
   const categoriesQuery = useQuery({
     queryKey: ["CATEGORIES"],
@@ -43,6 +47,8 @@ export function EditLayoutModal({
       slug: string;
       description?: string;
       categoryId?: string | null;
+      isPostTemplate?: boolean;
+      isPrivate?: boolean;
     }) => pageLayoutApi.update(layout.id, body),
     onSuccess(data) {
       queryClient.invalidateQueries({ queryKey: ["PAGE_LAYOUTS"] });
@@ -70,6 +76,8 @@ export function EditLayoutModal({
       slug,
       description: description || undefined,
       categoryId: categoryId || null,
+      isPostTemplate,
+      isPrivate,
     });
   };
 
@@ -109,14 +117,55 @@ export function EditLayoutModal({
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
+          {/* Cờ TƯỜNG MINH. Trước đây chỉ cần gắn danh mục là layout tự lọt vào
+              danh sách mẫu, nên trang giới thiệu/liên hệ lỡ gắn danh mục cũng
+              hiện ra mà người dùng không hiểu vì sao. */}
           <div className="space-y-1.5">
-            <Label>Danh mục — làm layout mẫu cho bài post (tuỳ chọn)</Label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPostTemplate}
+                onChange={(e) => setIsPostTemplate(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-sm font-medium">
+                  Dùng làm layout mẫu cho bài viết mới
+                </span>
+                <span className="block text-[10px] text-muted-foreground">
+                  Chỉ layout được tick ở đây mới hiện trong ô chọn mẫu lúc soạn
+                  bài.
+                </span>
+              </span>
+            </label>
+          </div>
+          <div className="space-y-1.5">
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-sm font-medium">
+                  Chỉ mình tôi dùng layout này
+                </span>
+                <span className="block text-[10px] text-muted-foreground">
+                  Người khác trong cùng bộ môn sẽ không thấy nó trong danh sách
+                  layout lẫn ô chọn mẫu. Super admin vẫn thấy để quản trị.
+                </span>
+              </span>
+            </label>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Danh mục của layout mẫu (tuỳ chọn)</Label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a2436]"
             >
-              <option value="">— Không phải layout mẫu —</option>
+              <option value="">— Không gắn danh mục —</option>
               {(categoriesQuery.data ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name.vi}
@@ -124,8 +173,8 @@ export function EditLayoutModal({
               ))}
             </select>
             <p className="text-[10px] text-muted-foreground">
-              Gắn danh mục để layout này xuất hiện trong picker khi tạo layout từ
-              bài post.
+              Danh mục "Sự kiện" thì mẫu chỉ hiện cho bài sự kiện; danh mục khác
+              thì hiện cho bài tin tức.
             </p>
           </div>
           <DialogFooter>

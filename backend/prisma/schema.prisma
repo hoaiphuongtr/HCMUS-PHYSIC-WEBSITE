@@ -431,6 +431,13 @@ model PageLayout {
   sourcePostId      String?
   departmentId      String?
   categoryId        String?
+  // Đánh dấu TƯỜNG MINH đây là layout mẫu để tạo bài mới. Trước đây hệ thống
+  // suy đoán "có categoryId + không sinh từ bài" nên mọi trang giới thiệu/liên
+  // hệ lỡ gắn danh mục đều lọt vào danh sách mẫu.
+  isPostTemplate    Boolean   @default(false)
+  // Layout RIÊNG: chỉ người tạo (và super admin) thấy/dùng được. Mặc định false
+  // = dùng chung trong phạm vi bộ môn như trước.
+  isPrivate         Boolean   @default(false)
   createdBy         String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -456,6 +463,7 @@ model PageLayout {
   @@index([scheduledAt])
   @@index([sourcePostId])
   @@index([deletedAt])
+  @@index([isPostTemplate])
 }
 
 model PageLayoutCategoryLink {

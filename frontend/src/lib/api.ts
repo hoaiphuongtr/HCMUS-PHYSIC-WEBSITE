@@ -77,10 +77,10 @@ export const authApi = {
     });
   },
   setStarred(body: { layoutIds?: string[]; widgetIds?: string[] }) {
-    return authFetch<{ starredLayoutIds: string[]; starredWidgetIds: string[] }>(
-      "/auth/starred",
-      { method: "PUT", body: JSON.stringify(body) },
-    );
+    return authFetch<{
+      starredLayoutIds: string[];
+      starredWidgetIds: string[];
+    }>("/auth/starred", { method: "PUT", body: JSON.stringify(body) });
   },
   login(body: { email: string; password: string }) {
     return apiFetch<{ accessToken: string; refreshToken: string }>(
@@ -287,6 +287,10 @@ export type PageLayout = {
   createdBy: string;
   departmentId: string | null;
   categoryId?: string | null;
+  // Được đánh dấu làm mẫu tạo bài mới (thay cho luật suy đoán cũ).
+  isPostTemplate?: boolean;
+  // Chỉ người tạo (và super admin) thấy/dùng được layout này.
+  isPrivate?: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -764,6 +768,9 @@ export const postPublicApi = {
     page?: number;
     pageSize?: number;
     category?: string;
+    // Lọc theo bộ môn (trang tin của từng bộ môn). Thiếu tham số này thì API
+    // trả feed của Khoa.
+    department?: string;
     fromDate?: string;
     toDate?: string;
     search?: string;
@@ -952,9 +959,7 @@ export const staticPageApi = {
       body: fd,
     }).then(async (res) => {
       if (!res.ok) {
-        const err = await res
-          .json()
-          .catch(() => ({ message: res.statusText }));
+        const err = await res.json().catch(() => ({ message: res.statusText }));
         throw err;
       }
       return res.json() as Promise<StaticPage>;
@@ -977,7 +982,8 @@ export const notificationApi = {
     authFetch<{ items: NotificationItem[]; unread: number }>(
       `/notifications?limit=${limit}`,
     ),
-  unreadCount: () => authFetch<{ unread: number }>(`/notifications/unread-count`),
+  unreadCount: () =>
+    authFetch<{ unread: number }>(`/notifications/unread-count`),
   markRead: (id: string) =>
     authFetch<{ ok: boolean }>(`/notifications/${id}/read`, {
       method: "PATCH",

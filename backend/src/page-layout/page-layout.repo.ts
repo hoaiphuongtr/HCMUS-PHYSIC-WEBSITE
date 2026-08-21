@@ -42,6 +42,8 @@ const listSelect = {
   sourcePostId: true,
   departmentId: true,
   categoryId: true,
+  isPostTemplate: true,
+  isPrivate: true,
   createdBy: true,
   createdAt: true,
   updatedAt: true,
@@ -178,7 +180,10 @@ export class PageLayoutRepository {
   findPostTemplates(where: Record<string, unknown>) {
     return this.prisma.pageLayout.findMany({
       where: {
-        categoryId: { not: null },
+        // CHỈ những layout được đánh dấu tường minh. Trước đây suy đoán theo
+        // "có danh mục + không sinh từ bài" nên danh sách lẫn cả trang giới
+        // thiệu, trang liên hệ… mà người dùng không hiểu vì sao chúng ở đó.
+        isPostTemplate: true,
         sourcePostId: null,
         deletedAt: null,
         ...where,

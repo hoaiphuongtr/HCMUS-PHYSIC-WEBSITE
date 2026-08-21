@@ -16,6 +16,10 @@ export const UpdatePageLayoutBodySchema =
     // Tag a layout as a category's "post template" (or null to untag). Drives
     // the scoped composer picker.
     categoryId: z.string().nullable().optional(),
+    // Bật/tắt cờ "layout mẫu cho bài mới".
+    isPostTemplate: z.boolean().optional(),
+    // Chỉ người tạo dùng được layout này.
+    isPrivate: z.boolean().optional(),
   });
 
 export const SavePuckDataBodySchema = z.object({

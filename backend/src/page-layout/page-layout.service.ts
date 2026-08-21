@@ -8,6 +8,7 @@ import {
 import {
   canAccessDepartment,
   departmentScopeWhere,
+  mediaScopeWhere,
   FACULTY_DEPT_ID,
   toSlug,
 } from '../shared/helpers';
@@ -137,6 +138,15 @@ export class PageLayoutService {
     return layout;
   }
 
+  /**
+   * Lọc layout RIÊNG: người khác không thấy layout mà chủ nhân đánh dấu "chỉ
+   * mình tôi dùng". Super admin không bị lọc (còn phải quản trị). Layout cũ
+   * `isPrivate = false` nên không ai mất gì.
+   */
+  private privacyWhere(userId: string): Record<string, unknown> {
+    return { OR: [{ isPrivate: false }, { createdBy: userId }] };
+  }
+
   async findAllForAdmin(userId: string, roleName: string, deleted = false) {
     // The "Đã xoá" (trash) tab is private/dept-scoped: a dept account only sees the
     // layouts trashed within its own scope; super admins see everything.
@@ -146,7 +156,14 @@ export class PageLayoutService {
         : this.pageLayoutRepository.findAll();
     }
     const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
-    const scope = departmentScopeWhere(roleName, dept) ?? {};
+    // AND thay vì trải phẳng: departmentScopeWhere CÓ THỂ trả về khoá `OR`
+    // (theo kiểu khai báo của nó), trải phẳng là đè mất bộ lọc riêng tư.
+    const deptScope = departmentScopeWhere(roleName, dept);
+    const scope = {
+      AND: deptScope
+        ? [deptScope, this.privacyWhere(userId)]
+        : [this.privacyWhere(userId)],
+    };
     return deleted
       ? this.pageLayoutRepository.findTrashed(scope)
       : this.pageLayoutRepository.findAllScoped(scope);
@@ -167,8 +184,16 @@ export class PageLayoutService {
     if (categorySlug) where.category = { slug: categorySlug };
     if (roleName !== 'SUPER_ADMIN') {
       const dept = await this.pageLayoutRepository.findUserDepartmentId(userId);
-      const scope = departmentScopeWhere(roleName, dept);
-      if (scope) Object.assign(where, scope);
+      // Dùng mediaScopeWhere (bộ môn mình + của Khoa + chưa gắn bộ môn) chứ KHÔNG
+      // dùng departmentScopeWhere: các mẫu hệ thống ("Layout mẫu — Tuyển dụng",
+      // "Học bổng"…) thuộc về Khoa, lọc cứng theo bộ môn thì admin bộ môn thấy
+      // danh sách RỖNG và không tạo được bài. Thư viện ảnh đã theo quy tắc này.
+      // Gộp bằng AND: cả hai điều kiện đều dùng khoá `OR`, Object.assign thẳng
+      // sẽ đè mất bộ lọc bộ môn (đúng lỗi từng dính ở thư viện ảnh).
+      const scope = mediaScopeWhere(roleName, dept);
+      const and: Record<string, unknown>[] = [this.privacyWhere(userId)];
+      if (scope) and.push(scope);
+      where.AND = and;
     }
     return this.pageLayoutRepository.findPostTemplates(where);
   }

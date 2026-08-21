@@ -30,6 +30,12 @@ const withLocalePrefix = (
 type HeroSlide = {
   src: string;
   alt: string;
+  // Khẩu hiệu RIÊNG của slide này. Bỏ trống thì dùng khẩu hiệu chung của khối.
+  // KHÔNG khai optional: Puck không nhận field cho thuộc tính optional. Slide cũ
+  // trong CSDL không có khoá này nên lúc chạy vẫn phải truy cập an toàn.
+  tagline: LocalizedString;
+  // Ẩn hẳn khẩu hiệu ở slide này, kể cả khi có khẩu hiệu chung.
+  hideTagline: boolean;
   headline: LocalizedString;
   subtitle: LocalizedString;
   ctaLabel: LocalizedString;
@@ -54,6 +60,10 @@ const PHRASE_SEP = /^[•·|–—-]$/;
 // Cụm dài hơn mức này thì KHÔNG ép giữ nguyên khối nữa — ép mà không vừa màn
 // hình thì chữ tràn ra ngoài, còn tệ hơn là bị ngắt dòng.
 const MAX_NOWRAP_CHARS = 24;
+// Tiêu đề NGẮN thì ép một dòng trên desktop cho đẹp; tiêu đề DÀI mà vẫn ép thì
+// tràn ra ngoài và bị cắt mất chữ (bản tiếng Anh "Faculty of Physics &
+// Engineering Physics" dài 40 ký tự, gấp rưỡi bản tiếng Việt).
+const MAX_ONE_LINE_HEADLINE = 32;
 
 /**
  * Chia chuỗi thành các cụm + dấu phân cách, để trên màn hẹp chữ chỉ xuống dòng ở
@@ -319,7 +329,10 @@ function HeroFullScreenText({
   isEditing: boolean;
   locale: string;
 }) {
-  const taglineText = t(tagline, locale);
+  // Thứ tự ưu tiên: slide tắt hẳn -> khẩu hiệu riêng của slide -> khẩu hiệu chung.
+  const taglineText = slide?.hideTagline
+    ? ""
+    : t(slide?.tagline, locale) || t(tagline, locale);
   const headline = t(slide?.headline, locale);
   const subtitle = t(slide?.subtitle, locale);
   const ctaLabel = t(slide?.ctaLabel, locale);
@@ -353,7 +366,12 @@ function HeroFullScreenText({
           key={`h-${current}`}
           // [text-wrap:balance]: chia đều độ dài các dòng thay vì nhồi đầy dòng
           // trên rồi bỏ một chữ lẻ xuống dưới ("… - Vật / lý kỹ thuật").
-          className="font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-full break-words [text-wrap:balance] md:[text-wrap:normal] md:whitespace-nowrap font-heading italic"
+          className={
+            "font-black text-white mb-3 animate-[fadeInUp_0.8s_ease] leading-[1.05] max-w-full break-words [text-wrap:balance] font-heading italic " +
+            (headline.length <= MAX_ONE_LINE_HEADLINE
+              ? "md:[text-wrap:normal] md:whitespace-nowrap"
+              : "")
+          }
           style={{
             // Cỡ tối thiểu nhỏ hơn một nhịp để tên khoa dài vẫn vừa màn hình hẹp.
             fontSize: "clamp(1.75rem, 7vw, 6.5rem)",
@@ -427,6 +445,8 @@ export const HeroFullScreen: ComponentConfig<{
       {
         src: "",
         alt: "Slide 1",
+        tagline: { vi: "", en: "" },
+        hideTagline: false,
         headline: {
           vi: "Khoa Vật lý - Vật lý kỹ thuật",
           en: "Faculty of Physics - Engineering Physics",
@@ -462,13 +482,24 @@ export const HeroFullScreen: ComponentConfig<{
       arrayFields: {
         src: mediaPickerField("Image"),
         alt: { type: "text", label: "Alt Text" },
+        tagline: localizedTextField(
+          "Khẩu hiệu riêng của slide (trống = dùng khẩu hiệu chung)",
+        ),
+        hideTagline: {
+          type: "radio",
+          label: "Ẩn khẩu hiệu ở slide này",
+          options: [
+            { label: "Không", value: false },
+            { label: "Có", value: true },
+          ],
+        },
         headline: localizedTextField("Headline"),
         subtitle: localizedTextField("Subtitle"),
         ctaLabel: localizedTextField("CTA Label"),
         ctaUrl: { type: "text", label: "CTA URL" },
       },
     },
-    tagline: localizedTextField("Tagline"),
+    tagline: localizedTextField("Khẩu hiệu chung (mặc định cho mọi slide)"),
     taglineColor: colorField("Tagline Color"),
     taglineSize: {
       type: "select",

@@ -201,9 +201,7 @@ function EventCard({
   prefix: string;
 }) {
   const cat = post.category;
-  const catLabel = cat
-    ? t(cat.name as LocalizedString, locale)
-    : "";
+  const catLabel = cat ? t(cat.name as LocalizedString, locale) : "";
   const catColor = categoryColor(cat?.slug);
   const dateText = formatDate(post.eventStartAt, locale);
   const title = localizeWithFallback(post.title, locale);
@@ -405,9 +403,7 @@ function LatestNewsAutoRender({
       />
       {data.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {locale === "en"
-            ? "No news yet."
-            : "Chưa có tin tức nào."}
+          {locale === "en" ? "No news yet." : "Chưa có tin tức nào."}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
@@ -579,9 +575,7 @@ function NewsListPaginatedRender({
   const [category, setCategory] = useState(
     () => searchParams.get("category") ?? "",
   );
-  const [search, setSearch] = useState(
-    () => searchParams.get("search") ?? "",
-  );
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [searchDraft, setSearchDraft] = useState(
     () => searchParams.get("search") ?? "",
   );
@@ -589,6 +583,10 @@ function NewsListPaginatedRender({
     () => searchParams.get("from") ?? "",
   );
   const [toDate, setToDate] = useState(() => searchParams.get("to") ?? "");
+  // Bộ môn KHÔNG phải bộ lọc người dùng bấm — nó là ngữ cảnh của trang tin bộ
+  // môn (/tin-tuc?department=vat-ly-tin-hoc). Trước đây component bỏ qua tham
+  // số này nên trang bộ môn nào cũng hiện feed của Khoa.
+  const department = searchParams.get("department") ?? "";
   const [categories, setCategories] = useState<Category[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -609,6 +607,9 @@ function NewsListPaginatedRender({
   }) => {
     const merged = {
       category: next.category ?? category,
+      // Giữ lại: trước đây bấm một danh mục là tham số department bị xoá khỏi
+      // URL, trang bộ môn lặng lẽ nhảy về feed của Khoa.
+      department,
       search: next.search ?? search,
       from: next.fromDate ?? fromDate,
       to: next.toDate ?? toDate,
@@ -648,6 +649,7 @@ function NewsListPaginatedRender({
         page: 1,
         pageSize: PAGE_SIZE,
         category: category || undefined,
+        department: department || undefined,
         search: search || undefined,
         fromDate: fromDate || undefined,
         toDate: toDate || undefined,
@@ -662,16 +664,19 @@ function NewsListPaginatedRender({
         if (reqIdRef.current !== myId) return;
         setLoading(false);
       });
-  }, [category, search, fromDate, toDate]);
+  }, [category, department, search, fromDate, toDate]);
 
   // Infinite scroll (disabled in editor preview)
   // Only re-attach observer when filters or hasMore flag changes, NOT on
   // every page/loading state change (would cause re-fire loop on failure).
+  // `department` phải nằm trong ref này: khối tải-thêm đọc bộ lọc từ đây, thiếu
+  // nó thì trang 2 trở đi lấy feed của Khoa — tin bộ môn ở đầu, tin Khoa ở dưới.
   const stateRef = useRef({
     page,
     loading,
     failed: false,
     category,
+    department,
     search,
     fromDate,
     toDate,
@@ -681,6 +686,7 @@ function NewsListPaginatedRender({
     loading,
     failed: stateRef.current.failed,
     category,
+    department,
     search,
     fromDate,
     toDate,
@@ -707,6 +713,7 @@ function NewsListPaginatedRender({
             page: nextPage,
             pageSize: PAGE_SIZE,
             category: s.category || undefined,
+            department: s.department || undefined,
             search: s.search || undefined,
             fromDate: s.fromDate || undefined,
             toDate: s.toDate || undefined,
@@ -799,9 +806,7 @@ function NewsListPaginatedRender({
               return categories
                 .map((c) => ({
                   c,
-                  label: (
-                    locale === "en" ? c.name.en || c.name.vi : c.name.vi
-                  )
+                  label: (locale === "en" ? c.name.en || c.name.vi : c.name.vi)
                     .trim()
                     .toLowerCase(),
                 }))

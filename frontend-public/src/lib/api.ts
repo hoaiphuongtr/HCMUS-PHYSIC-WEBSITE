@@ -175,6 +175,9 @@ export const postPublicApi = {
     page?: number;
     pageSize?: number;
     category?: string;
+    // Lọc theo bộ môn (trang tin của từng bộ môn). Thiếu tham số này thì API
+    // trả feed của Khoa.
+    department?: string;
     fromDate?: string;
     toDate?: string;
     search?: string;
@@ -183,6 +186,7 @@ export const postPublicApi = {
     if (params.page) sp.set("page", String(params.page));
     if (params.pageSize) sp.set("pageSize", String(params.pageSize));
     if (params.category) sp.set("category", params.category);
+    if (params.department) sp.set("department", params.department);
     if (params.fromDate) sp.set("fromDate", params.fromDate);
     if (params.toDate) sp.set("toDate", params.toDate);
     if (params.search) sp.set("search", params.search);
