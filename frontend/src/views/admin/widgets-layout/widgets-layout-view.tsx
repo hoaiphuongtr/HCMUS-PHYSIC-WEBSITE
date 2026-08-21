@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { type PageLayout, pageLayoutApi, authApi } from "@/lib/api";
+import { authApi, type PageLayout, pageLayoutApi } from "@/lib/api";
 import { CreateLayoutModal } from "./create-layout-modal";
 import { EditLayoutModal } from "./edit-layout-modal";
 import { PortalMenu } from "./portal-menu";
@@ -177,7 +177,8 @@ export function WidgetsLayoutView() {
     deletedAt
       ? Math.max(
           0,
-          30 - Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86400000),
+          30 -
+            Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86400000),
         )
       : null;
 
@@ -235,7 +236,7 @@ export function WidgetsLayoutView() {
               className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44] inline-flex items-center gap-2"
             >
               <PencilIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-              Edit name & slug
+              Thông tin layout
             </button>
             <button
               type="button"
@@ -502,7 +503,8 @@ function LayoutPicker({
     [profile],
   );
   const starMutation = useMutation({
-    mutationFn: (nextIds: string[]) => authApi.setStarred({ layoutIds: nextIds }),
+    mutationFn: (nextIds: string[]) =>
+      authApi.setStarred({ layoutIds: nextIds }),
     onMutate: async (nextIds: string[]) => {
       await pickerQueryClient.cancelQueries({ queryKey: ["PROFILE"] });
       const prev = pickerQueryClient.getQueryData(["PROFILE"]);
@@ -570,7 +572,9 @@ function LayoutPicker({
         const sa = starredIds.has(a.id) ? 1 : 0;
         const sb = starredIds.has(b.id) ? 1 : 0;
         if (sa !== sb) return sb - sa; // favourites first
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
       });
   }, [layouts, groupFilter, deferredSearch, starredIds]);
   const starredList = allFiltered.filter((l) => starredIds.has(l.id));

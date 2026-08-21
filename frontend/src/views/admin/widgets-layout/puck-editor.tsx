@@ -16,6 +16,7 @@ import {
 import { type PageLayout, pageLayoutApi } from "@/lib/api";
 import { DEFAULT_LOCALE, LOCALE_LABELS, LOCALES } from "@/lib/i18n";
 import { LocaleProvider, useLocale } from "@/lib/locale-context";
+import { EditLayoutModal } from "./edit-layout-modal";
 import { ModalPortal, PortalMenu } from "./portal-menu";
 import { puckConfig } from "./puck-config";
 
@@ -606,6 +607,7 @@ export function PuckEditor({
   onLayoutChanged: (updated: PageLayout) => void;
   isSaving: boolean;
 }) {
+  const [metaOpen, setMetaOpen] = useState(false);
   const [initialData] = useState(() => {
     if (layout.puckData) return layout.puckData;
     return { root: {}, content: [] };
@@ -643,6 +645,17 @@ export function PuckEditor({
       headerActions: () => (
         <div className="inline-flex items-center gap-2">
           <PuckLocaleTabs />
+          {/* Loi vao thong tin layout (ten, slug, danh dau lam mau, rieng tu).
+              Truoc day chi vao duoc tu menu ba cham ngoai danh sach layout — o
+              trong day khong ai tim ra. */}
+          <button
+            type="button"
+            onClick={() => setMetaOpen(true)}
+            title="Sửa thông tin layout"
+            className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#202c44]"
+          >
+            Thông tin layout
+          </button>
           <EditJsonButton />
           <PublishMenu
             layout={layout}
@@ -680,6 +693,16 @@ export function PuckEditor({
           headerPath={`/${layout.slug}`}
         />
       </div>
+      {metaOpen ? (
+        <EditLayoutModal
+          layout={layout}
+          onClose={() => setMetaOpen(false)}
+          onUpdated={(updated) => {
+            onLayoutChanged(updated);
+            setMetaOpen(false);
+          }}
+        />
+      ) : null}
     </LocaleProvider>
   );
 }
