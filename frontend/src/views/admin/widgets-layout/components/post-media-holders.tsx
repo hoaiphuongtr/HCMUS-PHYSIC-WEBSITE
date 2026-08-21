@@ -1,8 +1,8 @@
 "use client";
 
 import type { ComponentConfig } from "@puckeditor/core";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { resolveMediaUrl } from "@/lib/api";
 import { type LocalizedString, t } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale-context";
@@ -53,20 +53,100 @@ function PostGalleryRender({
     return <EmptyHolder label="Thư viện ảnh của bài (điền khi soạn bài)" />;
   }
 
-  const go = (next: number) => setIndex((next + list.length) % list.length);
+  const go = useCallback(
+    (next: number) => setIndex((next + list.length) % list.length),
+    [list.length],
+  );
   const current = list[Math.min(index, list.length - 1)];
   const text = t(caption, locale);
 
   return (
+    <GalleryView
+      list={list}
+      index={Math.min(index, list.length - 1)}
+      current={current}
+      caption={text}
+      go={go}
+      setIndex={setIndex}
+    />
+  );
+}
+
+/** Tách riêng phần hiển thị để hook (phím tắt, khoá cuộn) luôn chạy đúng thứ tự
+ *  — nhánh "chưa có ảnh" ở trên return sớm nên không được gọi hook. */
+function GalleryView({
+  list,
+  index,
+  current,
+  caption: text,
+  go,
+  setIndex,
+}: {
+  list: GalleryImage[];
+  index: number;
+  current: GalleryImage;
+  caption: string;
+  go: (next: number) => void;
+  setIndex: (i: number) => void;
+}) {
+  // Xem phóng to: bấm vào ảnh mở lớp phủ toàn màn hình.
+  const [zoom, setZoom] = useState(false);
+  const [touchX, setTouchX] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!zoom) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setZoom(false);
+      if (e.key === "ArrowLeft") go(index - 1);
+      if (e.key === "ArrowRight") go(index + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    // Khoá cuộn nền khi đang xem phóng to.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [zoom, index, go]);
+
+  // Vuốt ngang trên điện thoại để lật ảnh.
+  const onTouchEnd = (endX: number) => {
+    if (touchX === null) return;
+    const dx = endX - touchX;
+    if (Math.abs(dx) > 50) go(dx < 0 ? index + 1 : index - 1);
+    setTouchX(null);
+  };
+
+  return (
     <figure className="my-6">
-      <div className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-[#121a2b]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolveMediaUrl(current.src)}
-          alt={current.alt || text || ""}
-          className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-          loading="lazy"
-        />
+      <div
+        className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-[#121a2b] group"
+        onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
+        onTouchEnd={(e) => onTouchEnd(e.changedTouches[0]?.clientX ?? 0)}
+      >
+        <button
+          type="button"
+          onClick={() => setZoom(true)}
+          aria-label="Phóng to ảnh"
+          className="block w-full cursor-zoom-in"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={resolveMediaUrl(current.src)}
+            alt={current.alt || text || ""}
+            className="w-full h-auto max-h-[70vh] object-contain mx-auto"
+            loading="lazy"
+          />
+        </button>
+        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-black/45 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <Maximize2 className="w-3.5 h-3.5" /> Bấm để phóng to
+        </span>
+        {list.length > 1 ? (
+          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs">
+            {index + 1}/{list.length}
+          </span>
+        ) : null}
         {list.length > 1 ? (
           <>
             <button
@@ -121,6 +201,62 @@ function PostGalleryRender({
         <figcaption className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
           {text}
         </figcaption>
+      ) : null}
+
+      {zoom ? (
+        <div
+          className="fixed inset-0 z-[100] bg-black/92 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setZoom(false)}
+          onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
+          onTouchEnd={(e) => onTouchEnd(e.changedTouches[0]?.clientX ?? 0)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={resolveMediaUrl(current.src)}
+            alt={current.alt || text || ""}
+            className="max-w-[94vw] max-h-[88vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setZoom(false)}
+            aria-label="Đóng"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/30"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {list.length > 1 ? (
+            <>
+              <button
+                type="button"
+                aria-label="Ảnh trước"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  go(index - 1);
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/30"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                aria-label="Ảnh sau"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  go(index + 1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/15 text-white flex items-center justify-center hover:bg-white/30"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/15 text-white text-sm">
+                {index + 1}/{list.length}
+              </span>
+            </>
+          ) : null}
+        </div>
       ) : null}
     </figure>
   );
