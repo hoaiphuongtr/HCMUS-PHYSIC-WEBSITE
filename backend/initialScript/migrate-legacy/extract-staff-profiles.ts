@@ -95,6 +95,19 @@ type Extracted = {
 };
 
 const MAILTO = /mailto:([^"'\s>?]+)/gi;
+/** Email viết dạng chữ thường trong nội dung, không phải link. Đợt migration đổ
+ *  cả trang cũ vào ô `html` nên nhiều địa chỉ nằm ở đây chứ không thành mailto. */
+const BARE_EMAIL = /[A-Za-z0-9._%+-]+\s*@\s*[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+
+/** Thực thể HTML hay gặp trong nội dung legacy, đủ để không phá địa chỉ email. */
+function decodeEntities(v: string): string {
+  return v
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCharCode(Number(d)));
+}
 
 /**
  * Chọn email theo mức KHỚP VỚI TÊN, không lấy bừa cái đầu tiên.
@@ -189,20 +202,30 @@ function extract(
       }
     }
 
-    // Email nằm rải rác trong html/liên hệ, không có ô riêng — quét mailto trên
-    // toàn bộ chuỗi của khối.
-    for (const v of Object.values(p)) {
-      if (typeof v !== 'string') continue;
-      for (const m of v.matchAll(MAILTO)) emails.add(m[1].toLowerCase());
-    }
-    for (const v of Object.values(p)) {
+    // Email không có ô riêng: nó nằm rải rác trong nội dung, kể cả ô `html` mà
+    // đợt migration đổ nguyên trang cũ vào. Quét CẢ link mailto lẫn email viết
+    // dạng chữ thường — bắt rộng ra không nguy hiểm nữa, vì scoreEmail() lọc lại
+    // theo tên và cái nào không khớp sẽ bị đẩy sang mục phải xem tay.
+    const scan = (raw: string) => {
+      const v = decodeEntities(raw);
+      for (const m of v.matchAll(MAILTO)) {
+        emails.add(m[1].toLowerCase().replace(/\s+/g, ''));
+      }
+      for (const m of v.matchAll(BARE_EMAIL)) {
+        emails.add(m[0].toLowerCase().replace(/\s+/g, ''));
+      }
+    };
+    const deep = (v: unknown, depth = 0) => {
+      if (depth > 4) return;
+      if (typeof v === 'string') return scan(v);
+      if (Array.isArray(v)) return v.forEach((x) => deep(x, depth + 1));
       if (v && typeof v === 'object') {
-        for (const s of Object.values(v as Record<string, unknown>)) {
-          if (typeof s !== 'string') continue;
-          for (const m of s.matchAll(MAILTO)) emails.add(m[1].toLowerCase());
+        for (const x of Object.values(v as Record<string, unknown>)) {
+          deep(x, depth + 1);
         }
       }
-    }
+    };
+    deep(p);
   });
 
   if (!name) return null;
