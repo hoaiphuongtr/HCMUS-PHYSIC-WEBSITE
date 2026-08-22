@@ -15,7 +15,15 @@ import {
   ResolvePreviewResSchema,
   ScholarProfileResSchema,
   SetNameVariantsBodySchema,
+  CreateProjectBodySchema,
+  IntegrationProjectResSchema,
+  ListProjectsQuerySchema,
+  PendingProjectListResSchema,
+  ProjectClaimBodySchema,
+  ProjectListResSchema,
+  ProjectResSchema,
   StaffPageResSchema,
+  UpdateProjectBodySchema,
   StatsResSchema,
   UpdateStaffPageBodySchema,
   UpdatePublicationBodySchema,
@@ -71,4 +79,23 @@ export class StatsResDTO extends createZodDto(StatsResSchema) {}
 export class StaffPageResDTO extends createZodDto(StaffPageResSchema) {}
 export class UpdateStaffPageBodyDTO extends createZodDto(
   UpdateStaffPageBodySchema,
+) {}
+
+export class ProjectResDTO extends createZodDto(ProjectResSchema) {}
+export class ProjectListResDTO extends createZodDto(ProjectListResSchema) {}
+export class CreateProjectBodyDTO extends createZodDto(
+  CreateProjectBodySchema,
+) {}
+export class UpdateProjectBodyDTO extends createZodDto(
+  UpdateProjectBodySchema,
+) {}
+export class ListProjectsQueryDTO extends createZodDto(
+  ListProjectsQuerySchema,
+) {}
+export class PendingProjectListResDTO extends createZodDto(
+  PendingProjectListResSchema,
+) {}
+export class ProjectClaimBodyDTO extends createZodDto(ProjectClaimBodySchema) {}
+export class IntegrationProjectResDTO extends createZodDto(
+  IntegrationProjectResSchema,
 ) {}

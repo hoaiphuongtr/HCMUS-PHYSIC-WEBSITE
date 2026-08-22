@@ -276,6 +276,17 @@ export const CreatePublicationBodySchema = z.object({
   /** Đồng tác giả trong Khoa — họ sẽ ở PENDING cho tới khi tự xác nhận. */
   coAuthorUserIds: z.array(z.string()).max(50).default([]),
   totalAuthors: z.number().int().min(1).max(2000).optional(),
+
+  // ── Phân loại Phụ lục 2, chọn NGAY lúc khai ──────────────────────────────
+  // Bắt quay lại lần hai nghĩa là nhiều người sẽ không quay lại, mà chưa phân
+  // loại thì không được tính vào NV2. Vẫn cho để trống: người không chắc mình
+  // thuộc mục nào thì đừng chặn họ lưu bài.
+  catalogCode: OptionalText(20),
+  quartile: z.enum(QUARTILES).nullish(),
+  satellite: z.boolean().optional(),
+  reprint: z.boolean().optional(),
+  fromProject: z.boolean().optional(),
+  stage: z.number().int().min(0).max(2).optional(),
 });
 export type CreatePublicationBodyType = z.infer<
   typeof CreatePublicationBodySchema
@@ -464,3 +475,132 @@ export const UpdateStaffPageBodySchema = z.object({
   publications: z.array(StaffPubSchema).max(300).optional(),
 });
 export type UpdateStaffPageBodyType = z.infer<typeof UpdateStaffPageBodySchema>;
+
+// ── Đề tài, dự án NCKH (Bảng 2 của Phụ lục 2) ───────────────────────────────
+export const PROJECT_STATUSES = [
+  'PROPOSED',
+  'ONGOING',
+  'COMPLETED',
+  'FAILED',
+] as const;
+export const PROJECT_ROLES = ['LEAD', 'SECRETARY', 'MEMBER'] as const;
+
+const ProjectYear = z.number().int().min(1950).max(2200);
+const ProjectMonth = z.number().int().min(1).max(12);
+
+export const ProjectMemberResSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  displayName: z.string(),
+  email: z.string(),
+  role: z.enum(PROJECT_ROLES),
+  sharePercent: z.number().int().nullable(),
+  claimStatus: z.enum(CLAIM_STATUSES),
+  invitedBy: z.string().nullable(),
+  respondedAt: z.date().nullable(),
+});
+
+export const ProjectResSchema = z.object({
+  id: z.string(),
+  code: z.string().nullable(),
+  title: z.string(),
+  catalogCode: z.string().nullable(),
+  funder: z.string().nullable(),
+  /** VND. Lưu BigInt trong CSDL, trả về dạng số thường. */
+  budget: z.number().nullable(),
+  status: z.enum(PROJECT_STATUSES),
+  startYear: z.number().int().nullable(),
+  startMonth: z.number().int().nullable(),
+  endYear: z.number().int().nullable(),
+  endMonth: z.number().int().nullable(),
+  months: z.number().int().nullable(),
+  note: z.string().nullable(),
+  createdBy: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  members: z.array(ProjectMemberResSchema),
+  isClassified: z.boolean(),
+  myRole: z.enum(PROJECT_ROLES).nullable(),
+  myClaimStatus: z.enum(CLAIM_STATUSES).nullable(),
+});
+
+export const ProjectListResSchema = z.object({
+  items: z.array(ProjectResSchema),
+  total: z.number().int(),
+  unclassified: z.number().int(),
+});
+
+export const CreateProjectBodySchema = z.object({
+  title: z.string().min(1).max(500),
+  code: OptionalText(100),
+  /** Mã Bảng 2 — CHỦ NHIỆM tự chọn. Hệ thống không suy cấp đề tài từ kinh phí. */
+  catalogCode: OptionalText(20),
+  funder: OptionalText(300),
+  budget: z.number().min(0).max(1e15).nullish(),
+  status: z.enum(PROJECT_STATUSES).optional(),
+  startYear: ProjectYear.nullish(),
+  startMonth: ProjectMonth.nullish(),
+  endYear: ProjectYear.nullish(),
+  endMonth: ProjectMonth.nullish(),
+  /** Số tháng thực hiện — Phụ lục 2 chia đều giờ cho từng tháng. */
+  months: z.number().int().min(1).max(240).nullish(),
+  note: OptionalText(2000),
+  myRole: z.enum(PROJECT_ROLES).optional(),
+  mySharePercent: z.number().int().min(1).max(100).nullish(),
+  memberUserIds: z.array(z.string()).max(50).default([]),
+});
+export type CreateProjectBodyType = z.infer<typeof CreateProjectBodySchema>;
+
+export const UpdateProjectBodySchema = CreateProjectBodySchema.partial().extend(
+  {
+    memberUserIds: z.array(z.string()).max(50).optional(),
+  },
+);
+export type UpdateProjectBodyType = z.infer<typeof UpdateProjectBodySchema>;
+
+export const ListProjectsQuerySchema = z.object({
+  status: z.enum(PROJECT_STATUSES).optional(),
+  filter: z.enum(['all', 'unclassified', 'pending']).optional(),
+});
+export type ListProjectsQueryType = z.infer<typeof ListProjectsQuerySchema>;
+
+export const PendingProjectListResSchema = z.array(
+  z.object({
+    projectId: z.string(),
+    title: z.string(),
+    code: z.string().nullable(),
+    funder: z.string().nullable(),
+    year: z.number().int().nullable(),
+    invitedBy: z.string().nullable(),
+    invitedByName: z.string().nullable(),
+  }),
+);
+
+export const ProjectClaimBodySchema = z.object({
+  accept: z.boolean(),
+  role: z.enum(PROJECT_ROLES).optional(),
+});
+export type ProjectClaimBodyType = z.infer<typeof ProjectClaimBodySchema>;
+
+/** Trả DỮ KIỆN, không trả giờ — hệ số Bảng 2 nằm ở ACADsoom. */
+export const IntegrationProjectResSchema = z.object({
+  items: z.array(
+    z.object({
+      projectId: z.string(),
+      code: z.string().nullable(),
+      title: z.string(),
+      catalogCode: z.string(),
+      funder: z.string().nullable(),
+      budget: z.number().nullable(),
+      status: z.enum(PROJECT_STATUSES),
+      startYear: z.number().int().nullable(),
+      startMonth: z.number().int().nullable(),
+      endYear: z.number().int().nullable(),
+      endMonth: z.number().int().nullable(),
+      months: z.number().int().nullable(),
+      role: z.enum(PROJECT_ROLES),
+      isLead: z.boolean(),
+      sharePercent: z.number().int().nullable(),
+    }),
+  ),
+});

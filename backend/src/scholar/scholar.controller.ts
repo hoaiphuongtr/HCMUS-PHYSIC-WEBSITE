@@ -33,7 +33,14 @@ import {
   ResolvePreviewResDTO,
   ScholarProfileResDTO,
   SetNameVariantsBodyDTO,
+  CreateProjectBodyDTO,
+  ListProjectsQueryDTO,
+  PendingProjectListResDTO,
+  ProjectClaimBodyDTO,
+  ProjectListResDTO,
+  ProjectResDTO,
   StaffPageResDTO,
+  UpdateProjectBodyDTO,
   StatsResDTO,
   UpdateStaffPageBodyDTO,
   UpdatePublicationBodyDTO,
@@ -41,6 +48,7 @@ import {
 } from './scholar.dto';
 import { ScholarService } from './scholar.service';
 import { StaffPageService } from './staff-page.service';
+import { ProjectService } from './project.service';
 import { PhotoRequiredException } from './scholar.error';
 
 // Cùng thư mục và cùng cách đặt tên với module media, để ảnh chân dung nằm chung
@@ -61,6 +69,7 @@ export class ScholarController {
   constructor(
     private readonly service: ScholarService,
     private readonly staffPage: StaffPageService,
+    private readonly projects: ProjectService,
   ) {}
 
   // ── Lý lịch khoa học ──────────────────────────────────────────────────────
@@ -173,6 +182,63 @@ export class ScholarController {
     @Body() body: ClaimResponseBodyDTO,
   ) {
     return this.service.respondToClaim(userId, publicationId, body);
+  }
+
+  // ── Đề tài, dự án NCKH (Bảng 2) ───────────────────────────────────────────
+  @Get('projects')
+  @ZodSerializerDto(ProjectListResDTO)
+  listProjects(
+    @ActiveUser('userId') userId: string,
+    @Query() query: ListProjectsQueryDTO,
+  ) {
+    return this.projects.list(userId, query);
+  }
+
+  @Get('projects/:id')
+  @ZodSerializerDto(ProjectResDTO)
+  findProject(@ActiveUser('userId') userId: string, @Param('id') id: string) {
+    return this.projects.findOne(id, userId);
+  }
+
+  /** Người khai mặc định là chủ nhiệm; thành viên được gắn tên phải tự xác nhận. */
+  @Post('projects')
+  @ZodSerializerDto(ProjectResDTO)
+  createProject(
+    @ActiveUser('userId') userId: string,
+    @Body() body: CreateProjectBodyDTO,
+  ) {
+    return this.projects.create(userId, body);
+  }
+
+  @Patch('projects/:id')
+  @ZodSerializerDto(ProjectResDTO)
+  updateProject(
+    @ActiveUser('userId') userId: string,
+    @Param('id') id: string,
+    @Body() body: UpdateProjectBodyDTO,
+  ) {
+    return this.projects.update(userId, id, body);
+  }
+
+  @Delete('projects/:id')
+  removeProject(@ActiveUser('userId') userId: string, @Param('id') id: string) {
+    return this.projects.remove(userId, id);
+  }
+
+  @Get('project-claims/pending')
+  @ZodSerializerDto(PendingProjectListResDTO)
+  pendingProjects(@ActiveUser('userId') userId: string) {
+    return this.projects.pending(userId);
+  }
+
+  @Post('project-claims/:projectId')
+  @ZodSerializerDto(ProjectResDTO)
+  respondProject(
+    @ActiveUser('userId') userId: string,
+    @Param('projectId') projectId: string,
+    @Body() body: ProjectClaimBodyDTO,
+  ) {
+    return this.projects.respond(userId, projectId, body.accept, body.role);
   }
 
   // ── Trang nhân sự trên web Khoa ───────────────────────────────────────────

@@ -45,6 +45,22 @@ enum PublicationStatus {
   RETRACTED
 }
 
+/// Vai trò trong đề tài. Chủ nhiệm là người đại diện khai và chia giờ cho nhóm.
+enum ProjectRole {
+  LEAD
+  SECRETARY
+  MEMBER
+}
+
+/// Trạng thái đề tài. Phụ lục 2 tính giờ theo THÁNG THỰC HIỆN trong năm học, nên
+/// đề tài đang triển khai vẫn được tính dù chưa nghiệm thu.
+enum ProjectStatus {
+  PROPOSED
+  ONGOING
+  COMPLETED
+  FAILED
+}
+
 /// Một bài được dùng chung cho mọi đồng tác giả trong Khoa. Người khai đầu tiên
 /// gắn tên đồng nghiệp vào; những người đó phải tự xác nhận thì mới được tính.
 enum AuthorClaimStatus {
@@ -162,6 +178,7 @@ model User {
   pageLayoutVersions PageLayoutVersion[]
   scholarProfile     ScholarProfile?
   publicationAuthors PublicationAuthor[]
+  projectMembers     ProjectMember[]
 
   @@index([role])
   @@index([email])
@@ -969,5 +986,68 @@ model PublicationAuthor {
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([publicationId, userId])
+  @@index([userId, claimStatus])
+}
+
+/// Đề tài, dự án, chương trình NCKH — Bảng 2 của Phụ lục 2.
+///
+/// Vì sao ở đây chứ không ở ACADsoom: giảng viên không nên khai công bố ở một
+/// app rồi đề tài ở app khác. Web Khoa giữ dữ kiện, ACADsoom lấy về rồi tự nhân
+/// hệ số ra giờ — cùng một ranh giới như với công bố.
+model ResearchProject {
+  id          String  @id @default(cuid())
+  /// Mã số đề tài do cơ quan chủ quản cấp.
+  code        String?
+  title       String
+  /// Mã Bảng 2 (B2-1.1 … B2-2.2) do CHỦ NHIỆM tự chọn — hệ thống không đoán cấp
+  /// đề tài từ kinh phí, vì cùng một mức tiền có thể thuộc nhiều cấp khác nhau.
+  catalogCode String?
+  /// Cơ quan tài trợ / chủ quản.
+  funder      String?
+  /// Kinh phí (VND). Bảng 2 quy đổi giờ theo kinh phí nên đây là con số bắt buộc
+  /// với hầu hết các mục; dùng BigInt vì đề tài tiền tỷ vượt phạm vi int32.
+  budget      BigInt?
+
+  status     ProjectStatus @default(ONGOING)
+  startYear  Int?
+  startMonth Int?
+  endYear    Int?
+  endMonth   Int?
+  /// Số tháng thực hiện chính thức. Phụ lục 2 chia đều giờ cho từng tháng, nên
+  /// thiếu con số này thì ACADsoom không tính được phần rơi vào năm học nào.
+  months     Int?
+
+  note      String?
+  createdBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members ProjectMember[]
+
+  @@index([catalogCode])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+/// Thành viên đề tài thuộc Khoa. Cùng cơ chế xác nhận như đồng tác giả: chủ
+/// nhiệm gắn tên, người được gắn phải tự đồng ý thì mới được tính.
+model ProjectMember {
+  id           String            @id @default(cuid())
+  projectId    String
+  userId       String
+  role         ProjectRole       @default(MEMBER)
+  /// Tỷ lệ chia giờ do nhóm thoả thuận; chủ nhiệm là người khai (Phụ lục 2 tr. 2.8).
+  sharePercent Int?
+  claimStatus  AuthorClaimStatus @default(PENDING)
+  invitedBy    String?
+  respondedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
   @@index([userId, claimStatus])
 }

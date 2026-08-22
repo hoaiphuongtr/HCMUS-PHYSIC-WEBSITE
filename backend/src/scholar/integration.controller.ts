@@ -2,11 +2,13 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import {
+  IntegrationProjectResDTO,
   IntegrationPublicationResDTO,
   IntegrationQueryDTO,
 } from './scholar.dto';
 import { IntegrationSecretGuard } from './integration-secret.guard';
 import { ScholarService } from './scholar.service';
+import { ProjectService } from './project.service';
 
 /**
  * Kênh máy-với-máy cho ACADsoom.
@@ -24,11 +26,21 @@ import { ScholarService } from './scholar.service';
 @IsPublic()
 @UseGuards(IntegrationSecretGuard)
 export class ScholarIntegrationController {
-  constructor(private readonly service: ScholarService) {}
+  constructor(
+    private readonly service: ScholarService,
+    private readonly projects: ProjectService,
+  ) {}
 
   @Get('publications')
   @ZodSerializerDto(IntegrationPublicationResDTO)
   publications(@Query() query: IntegrationQueryDTO) {
     return this.service.integrationList(query);
+  }
+
+  /** Đề tài đã chọn mã Bảng 2, thành viên đã xác nhận. Không trả giờ. */
+  @Get('projects')
+  @ZodSerializerDto(IntegrationProjectResDTO)
+  listProjects(@Query() query: IntegrationQueryDTO) {
+    return this.projects.integrationList(query.email, query.from, query.to);
   }
 }

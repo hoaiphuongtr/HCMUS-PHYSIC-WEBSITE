@@ -89,3 +89,14 @@ export const PhotoRequiredException = new UnprocessableEntityException([
     error: 'Cần chọn một tệp ảnh (JPG, PNG, WebP), tối đa 8 MB',
   },
 ]);
+
+export const ProjectNotFoundException = new NotFoundException([
+  { field: 'id', error: 'Không tìm thấy đề tài' },
+]);
+
+export const NotAProjectMemberException = new ForbiddenException([
+  {
+    field: 'id',
+    error: 'Chỉ thành viên đã xác nhận của đề tài mới được sửa',
+  },
+]);

@@ -286,6 +286,20 @@ export class ScholarService {
       });
       if (existing) {
         await this.attachSelf(existing.id, userId, body);
+        // Bài đã có nhưng CHƯA phân loại (ví dụ do nhập hàng loạt từ trang nhân
+        // sự) mà người khai có chọn mã — áp vào luôn, đừng bắt họ vào màn khác
+        // chọn lại đúng thứ vừa chọn.
+        if (body.catalogCode) {
+          await this.prisma.publication.updateMany({
+            where: { id: existing.id, catalogCode: null },
+            data: {
+              catalogCode: body.catalogCode,
+              quartile: body.quartile ?? null,
+              classifiedBy: userId,
+              classifiedAt: new Date(),
+            },
+          });
+        }
         await this.recount(existing.id);
         return this.findOne(existing.id, userId);
       }
@@ -319,6 +333,16 @@ export class ScholarService {
         source: w.source || 'manual',
         raw: (w as { raw?: unknown }).raw as Prisma.InputJsonValue,
         totalAuthors: body.totalAuthors ?? Math.max(1, w.authors?.length ?? 1),
+        // Phân loại chọn ngay lúc khai. Để trống vẫn lưu được, chỉ là bài đó
+        // chưa lọt vào API tích hợp nên chưa tính KPI.
+        catalogCode: body.catalogCode ?? null,
+        quartile: body.quartile ?? null,
+        classifiedBy: body.catalogCode ? userId : null,
+        classifiedAt: body.catalogCode ? new Date() : null,
+        satellite: body.satellite ?? false,
+        reprint: body.reprint ?? false,
+        fromProject: body.fromProject ?? false,
+        stage: body.stage ?? 0,
         createdBy: userId,
       },
       select: { id: true },
