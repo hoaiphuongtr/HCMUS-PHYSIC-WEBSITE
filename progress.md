@@ -916,3 +916,19 @@ lần chạy sau báo lỗi "đã bị sửa sau khi áp dụng".
 **Quy tắc: migration đã chạy là bất biến. Thêm gì thì tạo tệp mới.** Đã tách ra
 `20260822d_project_show_on_web/migration.sql` và trả `20260822c` về đúng nội dung lúc
 chạy. Chạy `20260822d` trên box là màn Đề tài hết lỗi (cộng thêm, chạy lại được).
+
+### Gỡ Ollama (2026-08-22)
+Chatbot đã chuyển sang Gemini cho **cả embedding lẫn câu trả lời**
+(`backend/src/chatbot/{embedding,llm}.service.ts` chỉ đọc `GEMINI_API_KEY`).
+Kiểm chứng: quét cả kho mã, `ollama` chỉ còn xuất hiện ở hai tệp compose và một
+dòng chú thích trong `embedding.service.ts` nói chính nó đã bị bỏ. Không mã nào
+đọc `OLLAMA_URL`.
+
+Nhưng dịch vụ vẫn chạy nhiều tuần sau đó, giữ **4.77GB ảnh + 672MB model** trong
+ổ docker 32G, cộng `OLLAMA_KEEP_ALIVE: -1` (giữ model trong RAM vĩnh viễn) trên
+box 3.7GB RAM. Đây là một phần lý do ổ đầy.
+
+Đã gỡ khỏi cả `docker-compose.yml` và `docker-compose.sandbox.yml`: service,
+`depends_on`, biến `OLLAMA_URL`/`OLLAMA_MODEL`/`HF_CACHE_DIR`, và khai báo volume
+`ollama_models`/`hf_cache`. **Gỡ khai báo volume KHÔNG xoá dữ liệu trên box** —
+volume thành mồ côi, phải `docker volume rm` tay.

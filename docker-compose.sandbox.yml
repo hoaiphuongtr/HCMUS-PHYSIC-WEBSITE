@@ -56,22 +56,10 @@ services:
       timeout: 3s
       retries: 10
 
-  # Self-hosted answer LLM (CPU). On this 4 GB box the small model is the safe
-  # default — the 1.5b model + the full stack will OOM. Pull it once after boot:
-  #   docker compose -f docker-compose.sandbox.yml exec ollama ollama pull qwen2.5:0.5b-instruct
-  # deploy.sh sets up swap, which is essential for CPU inference here.
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      # keep both the embed + answer models warm in RAM so each question doesn't
-      # pay the ~10-15s model-reload penalty (2 small models fit in the free ~1.7G).
-      OLLAMA_KEEP_ALIVE: "-1"
-      OLLAMA_MAX_LOADED_MODELS: "2"
-    volumes:
-      - ollama_models:/root/.ollama
+  # Ollama đã gỡ 2026-08-22. Chatbot chuyển sang Gemini cho CẢ embedding lẫn câu
+  # trả lời (backend/src/chatbot/{embedding,llm}.service.ts), không mã nào còn đọc
+  # OLLAMA_URL. Nó vẫn nằm đây nhiều tuần sau khi hết dùng và ăn 4.77GB ảnh +
+  # 672MB model trong ổ docker 32G — chính là thứ góp phần làm đầy ổ hôm nay.
 
   # Bước khởi tạo AN TOÀN chạy mỗi lần `up`: chỉ bật extension và tạo bảng chatbot
   # nếu chưa có. Toàn bộ là CREATE ... IF NOT EXISTS nên chạy lại vô hại, không
@@ -171,8 +159,6 @@ services:
         condition: service_healthy
       db-init:
         condition: service_completed_successfully
-      ollama:
-        condition: service_started
 
   admin:
     build:
@@ -283,4 +269,3 @@ volumes:
     external: true
     name: caddy_config
   public_imgcache:
-  ollama_models:
