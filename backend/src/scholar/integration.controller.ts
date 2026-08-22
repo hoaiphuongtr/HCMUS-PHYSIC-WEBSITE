@@ -41,6 +41,6 @@ export class ScholarIntegrationController {
   @Get('projects')
   @ZodSerializerDto(IntegrationProjectResDTO)
   listProjects(@Query() query: IntegrationQueryDTO) {
-    return this.projects.integrationList(query.email, query.from, query.to);
+    return this.projects.integrationList(query);
   }
 }

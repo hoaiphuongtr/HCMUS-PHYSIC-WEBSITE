@@ -8,12 +8,14 @@ import { AccessTokenGuard } from './guards/access-token.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { EmailService } from './email/email.service';
 import { PublicRevalidateService } from './services/public-revalidate.service';
+import { EventBusService } from './services/event-bus.service';
 
 const sharedServices = [
   TokenService,
   HashingService,
   EmailService,
   PublicRevalidateService,
+  EventBusService,
 ];
 
 @Global()

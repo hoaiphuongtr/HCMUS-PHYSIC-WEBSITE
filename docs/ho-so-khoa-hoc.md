@@ -253,30 +253,128 @@ chỉ mở cho vai trò quản lý.
 ### 6.2 `/api/integration/*` — cho ACADsoom (khoá bí mật)
 
 ```
-GET /api/integration/publications?email=...&from=...&to=...
+GET /api/integration/publications?email=…&from=…&to=…&since=…&limit=…
+GET /api/integration/projects?email=…&from=…&to=…&since=…&limit=…
      header: x-acadsoom-secret
 
 → { items: [ {
-      doi, title, venue, year, url,
-      catalogCode, quartile,                       // luôn khác null
+      publicationId, doi, title, venue, url, status,
+      countYear, publishedYear/Month, acceptedYear/Month,
+      catalogCode, quartile,
       satellite, reprint, fromProject, stage,
       totalAuthors, schoolAuthors, mainAuthorAtSchool,
-      isMainAuthor, sharePercent
-    } ] }
+      isMainAuthor, sharePercent,
+      email,                    // của ai — cần khi quét theo `since` (không lọc email)
+      removed                   // true = thôi không tính nữa
+    } ],
+    nextSince, hasMore }        // chỉ có ở chế độ `since`
 ```
 
-- **Chỉ trả bài đã phân loại** (`catalogCode != null`). Bài chưa phân loại không tồn
-  tại đối với ACADsoom.
 - **Không trả giờ.** Các trường trên khớp đúng tham số đầu vào của
   `computeResearchHours` bên ACADsoom.
 - Phía ACADsoom viết một adapter `src/lib/profile.js` sao y `physoom.js`: gọi endpoint,
   hỏng thì trả rỗng, không làm sập màn khai báo.
 
 Mẫu khoá bí mật + gọi fail-soft đã có sẵn ở
+Mẫu khoá bí mật + gọi fail-soft đã có sẵn ở
 [public-revalidate.service.ts](backend/src/shared/services/public-revalidate.service.ts) —
 làm theo đúng kiểu đó.
 
 ---
+
+
+## 6.3 Đồng bộ: webhook để nhanh, quét lại để chắc
+
+**Webhook một mình KHÔNG đảm bảo đồng bộ.** Đây là điều cần nói thẳng, vì cách bố trí
+bên dưới chỉ hợp lý khi đã chấp nhận điều đó. Một cú POST có thể mất vì: bên nhận đang
+deploy, hàm serverless nguội quá 8 giây, mạng rớt, hoặc chính backend web Khoa khởi
+động lại đúng lúc đang gửi. Thử lại vài lần chỉ làm xác suất mất nhỏ đi, không khử
+được — và nếu mất, không ai biết là đã mất.
+
+Cũng vì thế **không dùng MQTT**: ACADsoom và PHYsoom chạy serverless trên Vercel, mỗi
+hàm chỉ sống theo một request nên không giữ nổi kết nối để subscribe. Broker dựng lên
+sẽ không có ai nghe.
+
+Nên chia làm hai việc, đừng bắt một cơ chế gánh cả hai:
+
+| | Webhook (đẩy) | `?since=` (kéo) |
+|---|---|---|
+| Vai trò | cú hích cho nhanh | **chỗ bảo đảm** |
+| Mất thì sao | lần quét sau vá lại | không mất, vì luôn hỏi từ mốc đang giữ |
+| Bên nhận gọi khi | nhận được POST | **theo lịch**, vd 15 phút một lần |
+
+### Bên gửi (web Khoa)
+
+[event-bus.service.ts](backend/src/shared/services/event-bus.service.ts) POST tới từng
+URL trong `EVENT_WEBHOOKS`, thử lại 3 lần (0s → 2s → 15s), ký HMAC-SHA256 bằng
+`EVENT_WEBHOOK_SECRET` ở header `x-signature`. Gặp 4xx thì dừng ngay — đó là lỗi cấu
+hình, thử lại cũng vậy. Hỏng hẳn thì bỏ, chỉ ghi nhật ký một lần.
+
+Gói tin **cố ý mỏng**, không kèm nội dung:
+
+```json
+{ "event": "publication.changed", "id": "…", "userIds": ["…"], "at": "2026-08-22T…" }
+```
+
+Hai lý do: đường webhook không phân quyền theo người dùng nên nhét dữ liệu vào là phát
+tán cho mọi bên nhận; và payload dày sẽ lệch với CSDL ngay khi có bản cập nhật kế tiếp.
+Bên nhận chỉ cần biết "có cái đổi rồi" rồi tự gọi API lấy bản mới với đúng quyền của họ.
+
+Các loại: `publication.changed`, `project.changed`, `profile.changed`,
+`staff-page.changed` (kèm `key` = slug trang).
+
+### Bên nhận (ACADsoom / PHYsoom)
+
+```js
+// 1. Endpoint nhận cú hích — chỉ đánh dấu "cần quét", đừng xử lý nặng trong này.
+export async function POST(req) {
+  const raw = await req.text();
+  const sig = createHmac('sha256', process.env.WEBKHOA_EVENT_SECRET).update(raw).digest('hex');
+  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(req.headers.get('x-signature') ?? '')))
+    return new Response('sai chữ ký', { status: 401 });
+  await pull();                       // hoặc đẩy vào hàng đợi
+  return new Response('ok');
+}
+
+// 2. Quét — chạy cả khi có webhook lẫn theo lịch. Đây mới là chỗ đảm bảo.
+async function pull() {
+  let since = await store.get('webkhoa:since');   // mốc lần trước, null = nạp lần đầu
+  do {
+    const r = await fetch(`${API}/integration/publications?since=${since ?? ''}&limit=500`,
+                          { headers: { 'x-acadsoom-secret': SECRET } }).then((r) => r.json());
+    for (const it of r.items)
+      it.removed ? await store.drop(it.publicationId, it.email)
+                 : await store.upsert(it);        // ghi đè theo id → gửi trùng vô hại
+    since = r.nextSince ?? since;
+    await store.set('webkhoa:since', since);      // lưu SAU khi ghi xong, không phải trước
+    var more = r.hasMore;
+  } while (more);
+}
+```
+
+Ba điểm dễ làm sai:
+
+1. **Phải xử lý `removed`.** Chế độ `since` trả cả bài vừa xoá, vừa bị rút phân loại
+   (`catalogCode` về null), hoặc tác giả vừa rút xác nhận. Không trả những cái đó thì
+   bên nhận không có đường nào biết mà bỏ đi, và số liệu cứ phình mãi. Đây cũng là lý do
+   `catalogCode` trong lược đồ cho phép null — nhưng chỉ khi `removed: true`.
+2. **Lưu mốc sau khi ghi xong.** Lưu trước là mất dữ liệu nếu ghi hỏng giữa chừng.
+3. **Nhận trùng là bình thường.** Mốc dùng `gte` và không cắt giữa chừng một mốc thời
+   gian, nên vài bản ghi ở ranh giới sẽ về hai lần. Ghi đè theo id là xong. Thà thừa
+   còn hơn thiếu — thiếu thì không có gì phát hiện ra.
+
+Chạy theo lịch quan trọng ngang webhook: **kể cả khi mọi webhook đều mất, hệ thống vẫn
+tự lành ở lần quét kế tiếp.** Đó là toàn bộ ý đồ của cách bố trí này.
+
+### Biến môi trường
+
+```
+EVENT_WEBHOOKS=https://acadsoom.vercel.app/api/webhook/webkhoa,https://physoom.vercel.app/api/webhook/webkhoa
+EVENT_WEBHOOK_SECRET=<chuỗi ngẫu nhiên đủ dài>
+```
+
+Không đặt `EVENT_WEBHOOKS` thì bộ phát im lặng hoàn toàn — không log, không tốn gì.
+Kênh `?since=` vẫn chạy độc lập, nên có thể triển khai bên kéo trước, bên đẩy sau.
 
 ## 7. Hiển thị trên trang nhân sự
 

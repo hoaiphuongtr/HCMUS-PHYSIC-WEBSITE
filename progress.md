@@ -843,3 +843,36 @@ Cũng trong lúc dò: `rewrites()` của Next KHÔNG dùng được cho đích n
 bộ định tuyến biên Vercel bắt tay TLS với phys.hcmus.edu.vn thất bại
 (`ROUTER_EXTERNAL_TARGET_HANDSHAKE_ERROR`, hkg1), trong khi `fetch` từ hàm máy chủ
 (iad1) tới đúng địa chỉ đó trả 200 trong 1 giây. Nên proxy phải là route handler.
+
+### Báo thay đổi cho app khác: webhook + quét lại (2026-08-22)
+Yêu cầu ban đầu là **MQTT**. Đã bỏ, vì lý do kỹ thuật chứ không phải tiện tay: ACADsoom
+và PHYsoom chạy serverless trên Vercel, mỗi hàm chỉ sống theo một request nên **không
+giữ nổi kết nối để subscribe**. Dựng broker lên sẽ không có ai nghe. (Đã lỡ thêm gói
+`mqtt` vào `backend/package.json` rồi gỡ ra — hiện không thêm phụ thuộc mới nào; bộ
+phát chỉ dùng `node:crypto` và `fetch` có sẵn.)
+
+**Và webhook một mình KHÔNG đảm bảo đồng bộ.** Gói tin mất được: bên nhận đang deploy,
+hàm nguội quá 8 giây, mạng rớt, hoặc backend khởi động lại giữa lúc gửi. Thử lại chỉ
+giảm xác suất, không khử. Nên chia hai việc:
+
+- **Webhook = cú hích cho nhanh.** `EventBusService` POST tới `EVENT_WEBHOOKS`, thử lại
+  3 lần (0s → 2s → 15s), ký HMAC-SHA256 bằng `EVENT_WEBHOOK_SECRET`. Gặp 4xx dừng ngay
+  (lỗi cấu hình). Hỏng hẳn thì bỏ, ghi nhật ký một lần. Gói tin **mỏng** — loại, id,
+  `userIds` — không kèm nội dung, vì đường này không phân quyền theo người dùng và
+  payload dày sẽ lệch với CSDL ngay lần cập nhật sau.
+- **`?since=` = chỗ bảo đảm.** `/integration/publications` và `/integration/projects`
+  nhận `since` + `limit`, trả phần đã đổi từ mốc đó kèm `nextSince` / `hasMore`, và
+  **kèm cả bản ghi đã hết hiệu lực** (`removed: true` khi xoá bài / rút phân loại / rút
+  xác nhận). Không trả mấy cái đó thì bên nhận không có đường nào biết mà bỏ đi. Bên
+  nhận gọi khi có webhook VÀ theo lịch → mất hết webhook thì lần quét sau vá lại.
+
+Hai chỗ dễ sai đã xử lý trong `integration-cursor.ts`: mốc đổi của một dòng là
+`max(updatedAt của dòng, updatedAt của bài)` — sửa quartile không đụng dòng tác giả, đọc
+sai mốc là bỏ sót; và **không cắt trang giữa chừng một mốc thời gian** — cắt thì `gte`
+đưa lần quét sau về đúng chỗ cũ và không bao giờ tiến, còn nhích mốc lên 1ms thì mất
+phần còn lại. Lấy trọn mốc rồi mới dừng.
+
+Đã nối `emit()` vào: tạo/sửa/xoá công bố, phản hồi xác nhận, sửa hồ sơ, tạo/sửa/xoá đề
+tài, lưu + sinh lại trang nhân sự. Kiểm chứng: tsc sạch, eslint 0 lỗi (đã sửa luôn 3
+lỗi `no-base-to-string` có sẵn ở `staff-page.service.ts` — `String(p.photo ?? '')` có
+thể ra `[object Object]`), vitest 103/103 (9 tệp, +8 test cho bộ cắt trang).

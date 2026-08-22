@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventBusService } from '../shared/services/event-bus.service';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import {
   NoStaffPageException,
@@ -35,6 +36,14 @@ const asText = (v: unknown): string => {
   return String(l?.vi ?? l?.en ?? '');
 };
 
+/**
+ * Chuỗi trần — URL ảnh, năm. Khác `asText` vốn dành cho ô song ngữ. Gặp object
+ * thì trả rỗng: dữ liệu sai hình dạng mà để lọt ra trang thành "[object Object]"
+ * còn tệ hơn là bỏ trống.
+ */
+const asPlain = (v: unknown): string =>
+  typeof v === 'string' ? v : typeof v === 'number' ? String(v) : '';
+
 /** Giữ nguyên hình dạng song ngữ mà trình dựng trang mong đợi. */
 const toLocalized = (vi: string, prev: unknown): Localized => {
   const p = (typeof prev === 'object' && prev ? prev : {}) as Localized;
@@ -51,6 +60,7 @@ export class StaffPageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly publicRevalidate: PublicRevalidateService,
+    private readonly bus: EventBusService,
   ) {}
 
   /** Tìm layout của chính người gọi, và vị trí khối hồ sơ trong cây Puck. */
@@ -105,7 +115,7 @@ export class StaffPageService {
     return {
       slug,
       layoutId: layout.id,
-      photo: String(p.photo ?? ''),
+      photo: asPlain(p.photo),
       eyebrow: asText(p.eyebrow),
       name: asText(p.name),
       intro: asText(p.intro),
@@ -119,10 +129,10 @@ export class StaffPageService {
       publications: (
         (p.publications ?? []) as Array<Record<string, unknown>>
       ).map((e) => ({
-        year: String(e.year ?? ''),
+        year: asPlain(e.year),
         title: asText(e.title),
         meta: asText(e.meta),
-        url: String(e.url ?? ''),
+        url: asPlain(e.url),
       })),
       /** Nội dung cũ, CHỈ ĐỌC — xem ghi chú đầu tệp. */
       legacyHtml: asText(p.html),
@@ -177,6 +187,7 @@ export class StaffPageService {
     // Trang công khai chạy ISR nên phải báo Next dựng lại, nếu không người đọc
     // vẫn thấy bản cũ tới cả tiếng.
     this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
+    this.bus.emit('staff-page.changed', { userIds: [userId], key: slug });
 
     return this.read(userId);
   }
@@ -327,6 +338,7 @@ export class StaffPageService {
       },
     });
     this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
+    this.bus.emit('staff-page.changed', { userIds: [userId], key: slug });
     return this.read(userId);
   }
 

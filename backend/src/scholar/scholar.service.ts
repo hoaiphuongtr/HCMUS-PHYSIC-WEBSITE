@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventBusService } from '../shared/services/event-bus.service';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import {
   matchAuthors,
@@ -8,6 +9,7 @@ import {
   suggestNameVariants,
   type CandidateProfile,
 } from './name-match';
+import { laterOf, pageBySince } from './integration-cursor';
 import { parseBibliographyFile } from './resolve/bibliography';
 import { ResolveService } from './resolve/resolve.service';
 import {
@@ -67,6 +69,7 @@ export class ScholarService {
     private readonly prisma: PrismaService,
     private readonly resolver: ResolveService,
     private readonly publicRevalidate: PublicRevalidateService,
+    private readonly bus: EventBusService,
   ) {}
 
   // ── Lý lịch khoa học ──────────────────────────────────────────────────────
@@ -153,6 +156,7 @@ export class ScholarService {
           body.gradStudyNote === undefined ? undefined : body.gradStudyNote,
       },
     });
+    this.bus.emit('profile.changed', { userIds: [userId] });
     return this.getProfile(userId);
   }
 
@@ -351,6 +355,10 @@ export class ScholarService {
     await this.attachSelf(created.id, userId, body);
     await this.invite(created.id, userId, body.coAuthorUserIds ?? []);
     await this.recount(created.id);
+    this.bus.emit('publication.changed', {
+      id: created.id,
+      userIds: [userId, ...(body.coAuthorUserIds ?? [])],
+    });
     return this.findOne(created.id, userId);
   }
 
@@ -529,6 +537,7 @@ export class ScholarService {
     if (body.mainAuthorAtSchool === undefined) await this.recount(id);
 
     await this.revalidateStaffPages(id);
+    this.bus.emit('publication.changed', { id, userIds: [userId] });
     return this.findOne(id, userId);
   }
 
@@ -556,6 +565,7 @@ export class ScholarService {
       });
     }
     await this.revalidateStaffPages(id);
+    this.bus.emit('publication.changed', { id, userIds: [userId] });
     return { removed: true, sharedWithOthers: others > 0 };
   }
 
@@ -766,6 +776,10 @@ export class ScholarService {
     });
     await this.recount(publicationId);
     await this.revalidateStaffPages(publicationId);
+    this.bus.emit('publication.changed', {
+      id: publicationId,
+      userIds: [userId],
+    });
     return this.findOne(publicationId, userId);
   }
 
@@ -830,32 +844,62 @@ export class ScholarService {
    * CHỈ trả bài đã phân loại và tác giả đã xác nhận. Không trả giờ quy đổi —
    * xem ghi chú ở IntegrationPublicationResSchema.
    */
+  /**
+   * Kênh cho ACADsoom. Hai chế độ, và chế độ thứ hai mới là chỗ bảo đảm:
+   *
+   *   không `since` — ảnh chụp hiện trạng: chỉ bài còn sống, đã phân loại, tác
+   *                   giả đã xác nhận. Dùng cho lần nạp đầu.
+   *   có `since`    — phần đã đổi từ mốc đó, KỂ CẢ bài vừa xoá hoặc vừa bị rút
+   *                   phân loại (`removed: true`). Không trả mấy cái đó thì bên
+   *                   nhận không có đường nào biết mà bỏ đi, và số liệu của họ
+   *                   cứ phình mãi.
+   *
+   * Webhook có thể mất gói; lần quét `since` kế tiếp lấy đúng phần đã sót, nên
+   * đồng bộ không phụ thuộc vào việc mỗi cú hích đều tới nơi.
+   */
   async integrationList(query: IntegrationQueryType) {
+    const { since } = query;
+    const years =
+      query.from || query.to
+        ? {
+            countYear: {
+              ...(query.from ? { gte: query.from } : {}),
+              ...(query.to ? { lte: query.to } : {}),
+            },
+          }
+        : {};
+
     const rows = await this.prisma.publicationAuthor.findMany({
       where: {
-        claimStatus: 'CONFIRMED',
         ...(query.email ? { user: { email: query.email.toLowerCase() } } : {}),
-        publication: {
-          deletedAt: null,
-          catalogCode: { not: null },
-          ...(query.from || query.to
-            ? {
-                countYear: {
-                  ...(query.from ? { gte: query.from } : {}),
-                  ...(query.to ? { lte: query.to } : {}),
-                },
-              }
-            : {}),
-        },
+        ...(since
+          ? {
+              // Bài đổi mà dòng tác giả không đổi (vd sửa quartile), hoặc ngược
+              // lại (vd rút xác nhận) — phải bắt cả hai phía.
+              OR: [
+                { updatedAt: { gte: since } },
+                { publication: { updatedAt: { gte: since } } },
+              ],
+              publication: years,
+            }
+          : {
+              claimStatus: 'CONFIRMED',
+              publication: {
+                deletedAt: null,
+                catalogCode: { not: null },
+                ...years,
+              },
+            }),
       },
       include: { publication: true, user: { select: { email: true } } },
       orderBy: { publication: { countYear: 'desc' } },
     });
 
-    return {
-      items: rows.map((r) => {
-        const p = r.publication;
-        return {
+    const mapped = rows.map((r) => {
+      const p = r.publication;
+      return {
+        changedAt: laterOf(r.updatedAt, p.updatedAt),
+        item: {
           publicationId: p.id,
           doi: p.doi,
           title: p.title,
@@ -867,7 +911,7 @@ export class ScholarService {
           publishedMonth: p.publishedMonth,
           acceptedYear: p.acceptedYear,
           acceptedMonth: p.acceptedMonth,
-          catalogCode: p.catalogCode as string,
+          catalogCode: p.catalogCode,
           quartile: p.quartile,
           satellite: p.satellite,
           reprint: p.reprint,
@@ -878,9 +922,19 @@ export class ScholarService {
           mainAuthorAtSchool: p.mainAuthorAtSchool,
           isMainAuthor: r.isFirst || r.isCorresponding || r.isLast,
           sharePercent: r.sharePercent,
-        };
-      }),
-    };
+          email: r.user?.email ?? null,
+          // Ba đường dẫn tới "thôi không tính nữa", gộp thành một cờ để bên nhận
+          // khỏi phải tự suy luận: xoá bài, rút phân loại, rút xác nhận.
+          removed:
+            p.deletedAt !== null ||
+            p.catalogCode === null ||
+            r.claimStatus !== 'CONFIRMED',
+        },
+      };
+    });
+
+    if (!since) return { items: mapped.map((m) => m.item) };
+    return pageBySince(mapped, query.limit);
   }
 
   // ── Trang nhân sự ─────────────────────────────────────────────────────────

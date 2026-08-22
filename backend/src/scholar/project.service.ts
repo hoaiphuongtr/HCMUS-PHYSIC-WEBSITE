@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventBusService } from '../shared/services/event-bus.service';
+import { laterOf, pageBySince } from './integration-cursor';
 import {
   NotAProjectMemberException,
   ProjectNotFoundException,
 } from './scholar.error';
 import type {
   CreateProjectBodyType,
+  IntegrationQueryType,
   ListProjectsQueryType,
   UpdateProjectBodyType,
 } from './scholar.model';
@@ -30,7 +33,10 @@ import type {
  */
 @Injectable()
 export class ProjectService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bus: EventBusService,
+  ) {}
 
   private get memberInclude() {
     return {
@@ -150,6 +156,10 @@ export class ProjectService {
       select: { id: true },
     });
     await this.invite(created.id, userId, body.memberUserIds ?? []);
+    this.bus.emit('project.changed', {
+      id: created.id,
+      userIds: [userId, ...(body.memberUserIds ?? [])],
+    });
     return this.findOne(created.id, userId);
   }
 
@@ -220,6 +230,7 @@ export class ProjectService {
       });
     }
     if (body.memberUserIds) await this.invite(id, userId, body.memberUserIds);
+    this.bus.emit('project.changed', { id, userIds: [userId] });
     return this.findOne(id, userId);
   }
 
@@ -244,6 +255,7 @@ export class ProjectService {
         data: { deletedAt: new Date() },
       });
     }
+    this.bus.emit('project.changed', { id, userIds: [userId] });
     return { removed: true, sharedWithOthers: others > 0 };
   }
 
@@ -322,45 +334,72 @@ export class ProjectService {
    * Chỉ trả đề tài ĐÃ CHỌN MÃ và thành viên ĐÃ XÁC NHẬN. Không trả giờ — hệ số
    * `base + rate × kinh phí / per` và việc chia đều theo tháng là của ACADsoom.
    */
-  async integrationList(email?: string, from?: number, to?: number) {
+  /** Xem chú thích ở `ScholarService.integrationList` — cùng một giao kèo. */
+  async integrationList(query: IntegrationQueryType) {
+    const { since } = query;
+    const years =
+      query.from || query.to
+        ? {
+            startYear: {
+              ...(query.from ? { gte: query.from } : {}),
+              ...(query.to ? { lte: query.to } : {}),
+            },
+          }
+        : {};
+
     const rows = await this.prisma.projectMember.findMany({
       where: {
-        claimStatus: 'CONFIRMED',
-        ...(email ? { user: { email: email.toLowerCase() } } : {}),
-        project: {
-          deletedAt: null,
-          catalogCode: { not: null },
-          ...(from || to
-            ? {
-                startYear: {
-                  ...(from ? { gte: from } : {}),
-                  ...(to ? { lte: to } : {}),
-                },
-              }
-            : {}),
-        },
+        ...(query.email ? { user: { email: query.email.toLowerCase() } } : {}),
+        ...(since
+          ? {
+              OR: [
+                { updatedAt: { gte: since } },
+                { project: { updatedAt: { gte: since } } },
+              ],
+              project: years,
+            }
+          : {
+              claimStatus: 'CONFIRMED',
+              project: {
+                deletedAt: null,
+                catalogCode: { not: null },
+                ...years,
+              },
+            }),
       },
       include: { project: true, user: { select: { email: true } } },
     });
 
-    return {
-      items: rows.map((r) => ({
-        projectId: r.project.id,
-        code: r.project.code,
-        title: r.project.title,
-        catalogCode: r.project.catalogCode as string,
-        funder: r.project.funder,
-        budget: r.project.budget === null ? null : Number(r.project.budget),
-        status: r.project.status,
-        startYear: r.project.startYear,
-        startMonth: r.project.startMonth,
-        endYear: r.project.endYear,
-        endMonth: r.project.endMonth,
-        months: r.project.months,
-        role: r.role,
-        isLead: r.role === 'LEAD',
-        sharePercent: r.sharePercent,
-      })),
-    };
+    const mapped = rows.map((r) => {
+      const p = r.project;
+      return {
+        changedAt: laterOf(r.updatedAt, p.updatedAt),
+        item: {
+          projectId: p.id,
+          code: p.code,
+          title: p.title,
+          catalogCode: p.catalogCode,
+          funder: p.funder,
+          budget: p.budget === null ? null : Number(p.budget),
+          status: p.status,
+          startYear: p.startYear,
+          startMonth: p.startMonth,
+          endYear: p.endYear,
+          endMonth: p.endMonth,
+          months: p.months,
+          role: r.role,
+          isLead: r.role === 'LEAD',
+          sharePercent: r.sharePercent,
+          email: r.user?.email ?? null,
+          removed:
+            p.deletedAt !== null ||
+            p.catalogCode === null ||
+            r.claimStatus !== 'CONFIRMED',
+        },
+      };
+    });
+
+    if (!since) return { items: mapped.map((m) => m.item) };
+    return pageBySince(mapped, query.limit);
   }
 }

@@ -375,6 +375,15 @@ export const PendingClaimListResSchema = z.array(
  * ACADsoom, nên "không chỉnh thì không được tính" là ràng buộc dữ liệu chứ
  * không phải lời nhắc trên giao diện.
  */
+/**
+ * Mốc để gọi lần sau. Bên nhận lưu `nextSince` lại, lần sau gửi nguyên si.
+ * `hasMore` = còn trang nữa, gọi tiếp ngay đừng đợi tới lịch sau.
+ */
+const INTEGRATION_CURSOR = {
+  nextSince: z.string().nullable().optional(),
+  hasMore: z.boolean().optional(),
+};
+
 export const IntegrationPublicationResSchema = z.object({
   items: z.array(
     z.object({
@@ -390,7 +399,9 @@ export const IntegrationPublicationResSchema = z.object({
       acceptedYear: z.number().int().nullable(),
       acceptedMonth: z.number().int().nullable(),
 
-      catalogCode: z.string(),
+      // Null được, nhưng chỉ ở chế độ `since` và luôn đi kèm `removed: true` —
+      // bài rút phân loại thì bên nhận phải thấy để bỏ đi.
+      catalogCode: z.string().nullable(),
       quartile: z.string().nullable(),
 
       satellite: z.boolean(),
@@ -403,14 +414,26 @@ export const IntegrationPublicationResSchema = z.object({
       mainAuthorAtSchool: z.boolean(),
       isMainAuthor: z.boolean(),
       sharePercent: z.number().int().nullable(),
+
+      email: z.string().nullable(),
+      /** Bản ghi này KHÔNG còn được tính nữa (xoá / rút phân loại / rút xác nhận). */
+      removed: z.boolean().optional(),
     }),
   ),
+  ...INTEGRATION_CURSOR,
 });
 
 export const IntegrationQuerySchema = z.object({
   email: z.string().email().optional(),
   from: z.coerce.number().int().min(1900).max(2200).optional(),
   to: z.coerce.number().int().min(1900).max(2200).optional(),
+  /**
+   * Chế độ "lấy phần đã đổi": trả mọi bản ghi động vào từ mốc này, KỂ CẢ bản
+   * vừa bị xoá / bị rút phân loại (đánh dấu `removed`). Đây là chỗ bảo đảm
+   * đồng bộ — webhook chỉ là cú hích, mất thì lần quét này vá lại.
+   */
+  since: z.coerce.date().optional(),
+  limit: z.coerce.number().int().min(1).max(2000).optional(),
 });
 export type IntegrationQueryType = z.infer<typeof IntegrationQuerySchema>;
 
@@ -602,7 +625,7 @@ export const IntegrationProjectResSchema = z.object({
       projectId: z.string(),
       code: z.string().nullable(),
       title: z.string(),
-      catalogCode: z.string(),
+      catalogCode: z.string().nullable(),
       funder: z.string().nullable(),
       budget: z.number().nullable(),
       status: z.enum(PROJECT_STATUSES),
@@ -614,6 +637,11 @@ export const IntegrationProjectResSchema = z.object({
       role: z.enum(PROJECT_ROLES),
       isLead: z.boolean(),
       sharePercent: z.number().int().nullable(),
+
+      email: z.string().nullable(),
+      /** Bản ghi này KHÔNG còn được tính nữa (xoá / rút phân loại / rút xác nhận). */
+      removed: z.boolean().optional(),
     }),
   ),
+  ...INTEGRATION_CURSOR,
 });
