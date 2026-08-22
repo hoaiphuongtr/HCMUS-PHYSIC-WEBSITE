@@ -27,7 +27,7 @@ function sign(
 }
 
 const BASE = {
-  aud: 'phys-profile',
+  aud: 'physprofile',
   email: 'GV@hcmus.edu.vn',
   name: 'Nguyễn Vương Thuỳ Ngân',
   teacher_id: '12345',
@@ -35,19 +35,19 @@ const BASE = {
 
 describe('verifyPhysoomToken — token hợp lệ', () => {
   it('đọc được payload, hạ email về chữ thường', () => {
-    const p = verifyPhysoomToken(sign(BASE), SECRET, 'phys-profile');
+    const p = verifyPhysoomToken(sign(BASE), SECRET, 'physprofile');
     expect(p.email).toBe('gv@hcmus.edu.vn');
     expect(p.teacher_id).toBe('12345');
   });
 
   it('tên tiếng Việt có dấu không bị hỏng', () => {
-    const p = verifyPhysoomToken(sign(BASE), SECRET, 'phys-profile');
+    const p = verifyPhysoomToken(sign(BASE), SECRET, 'physprofile');
     expect(p.name).toBe('Nguyễn Vương Thuỳ Ngân');
   });
 
   it('token đời cũ không có aud vẫn chấp nhận', () => {
     const { aud: _aud, ...noAud } = BASE;
-    expect(verifyPhysoomToken(sign(noAud), SECRET, 'phys-profile').email).toBe(
+    expect(verifyPhysoomToken(sign(noAud), SECRET, 'physprofile').email).toBe(
       'gv@hcmus.edu.vn',
     );
   });
@@ -56,7 +56,7 @@ describe('verifyPhysoomToken — token hợp lệ', () => {
 describe('verifyPhysoomToken — token phải bị từ chối', () => {
   it('sai chữ ký', () => {
     expect(() =>
-      verifyPhysoomToken(sign(BASE, 'bi-mat-khac'), SECRET, 'phys-profile'),
+      verifyPhysoomToken(sign(BASE, 'bi-mat-khac'), SECRET, 'physprofile'),
     ).toThrow(SsoTokenError);
   });
 
@@ -66,13 +66,13 @@ describe('verifyPhysoomToken — token phải bị từ chối', () => {
       JSON.stringify({ ...BASE, email: 'ke-gian@example.com', exp: 9e9 }),
     ).toString('base64url');
     expect(() =>
-      verifyPhysoomToken(`${h}.${forged}.${s}`, SECRET, 'phys-profile'),
+      verifyPhysoomToken(`${h}.${forged}.${s}`, SECRET, 'physprofile'),
     ).toThrow(SsoTokenError);
   });
 
   it('hết hạn', () => {
     expect(() =>
-      verifyPhysoomToken(sign(BASE, SECRET, -10), SECRET, 'phys-profile'),
+      verifyPhysoomToken(sign(BASE, SECRET, -10), SECRET, 'physprofile'),
     ).toThrow(SsoTokenError);
   });
 
@@ -82,7 +82,7 @@ describe('verifyPhysoomToken — token phải bị từ chối', () => {
       verifyPhysoomToken(
         sign({ ...BASE, aud: 'acadsoom' }),
         SECRET,
-        'phys-profile',
+        'physprofile',
       ),
     ).toThrow(SsoTokenError);
   });

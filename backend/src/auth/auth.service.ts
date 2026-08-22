@@ -243,7 +243,7 @@ export class AuthService {
       payload = verifyPhysoomToken(
         token,
         process.env.PHYSOOM_SSO_SECRET ?? '',
-        process.env.PHYSOOM_SSO_AUDIENCE || 'phys-profile',
+        process.env.PHYSOOM_SSO_AUDIENCE || 'physprofile',
       );
     } catch (err: unknown) {
       if (err instanceof SsoTokenError)
