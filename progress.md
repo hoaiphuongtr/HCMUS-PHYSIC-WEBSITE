@@ -902,3 +902,17 @@ Hai chỗ đã vá để không lặp lại:
 
 **Áp dụng healthcheck mới cần dựng lại container db** — chưa làm, để lần bảo trì có
 kế hoạch, không đụng vào lúc vừa phục hồi.
+
+### Lỗi migration: sửa tệp đã chạy rồi (2026-08-22)
+Màn Đề tài đổ lỗi `column ProjectMember.showOnWeb does not exist` dù tệp migration
+trong kho mã có dòng `ALTER TABLE ... ADD COLUMN "showOnWeb"`.
+
+Nguyên nhân: dòng đó được **nối thêm vào `20260822c_research_project` sau khi
+migration này đã chạy trên box** (commit `dda5cf6`, trong khi `20260822c` chạy ở
+`65a85fd`). Migration đã áp dụng thì phần thêm vào không bao giờ được chạy — nó được
+ghi nhận "đã xong" theo tên nên bị bỏ qua; nếu có đối chiếu checksum thì còn tệ hơn,
+lần chạy sau báo lỗi "đã bị sửa sau khi áp dụng".
+
+**Quy tắc: migration đã chạy là bất biến. Thêm gì thì tạo tệp mới.** Đã tách ra
+`20260822d_project_show_on_web/migration.sql` và trả `20260822c` về đúng nội dung lúc
+chạy. Chạy `20260822d` trên box là màn Đề tài hết lỗi (cộng thêm, chạy lại được).
