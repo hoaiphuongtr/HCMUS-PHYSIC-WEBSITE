@@ -16,6 +16,26 @@ enum Role {
   LECTURER
 }
 
+/// Quan hệ công tác với Khoa. Quyết định người đó có được tính vào thống kê và
+/// định mức nhiệm vụ của Khoa hay không — thỉnh giảng thì không.
+enum AffiliationType {
+  /// Cơ hữu — thuộc biên chế/hợp đồng của Khoa.
+  FULL_TIME
+  /// Kiêm nhiệm — công tác chính ở đơn vị khác trong Trường.
+  JOINT
+  /// Thỉnh giảng — mời dạy, không thuộc Khoa.
+  VISITING
+}
+
+/// Bậc đào tạo sau đại học mà giảng viên ĐANG theo học.
+/// Nhiều giảng viên vừa dạy vừa làm nghiên cứu sinh — thông tin này cần cho
+/// trang nhân sự và cho việc xét định mức nhiệm vụ.
+enum GradStudyLevel {
+  MASTER
+  PHD
+  POSTDOC
+}
+
 /// Tình trạng bài báo. Mặc định PUBLISHED: phần lớn bài được khai sau khi đã in.
 enum PublicationStatus {
   SUBMITTED
@@ -812,6 +832,27 @@ model ScholarProfile {
   staffPageSlug   String?
   showOnWeb       Boolean   @default(true)
   lastOrcidSyncAt DateTime?
+
+  // ── Quan hệ công tác ──────────────────────────────────────────────────────
+  /// Để trống = CHƯA KHAI. Cố ý không đặt mặc định FULL_TIME: đoán bừa rồi tính
+  /// nhầm một người thỉnh giảng vào định mức của Khoa còn tệ hơn là để trống.
+  affiliationType AffiliationType?
+  /// Đơn vị công tác chính — chỉ có ý nghĩa với kiêm nhiệm và thỉnh giảng.
+  homeInstitution String?
+
+  // ── Đang học sau đại học ──────────────────────────────────────────────────
+  /// Để trống = không đang theo học chương trình nào.
+  gradStudyLevel       GradStudyLevel?
+  gradStudyField       String?
+  gradStudyInstitution String?
+  gradStudyCountry     String?
+  gradStudyStartYear   Int?
+  /// Năm DỰ KIẾN hoàn thành — không phải năm đã xong.
+  gradStudyEndYear     Int?
+  /// Được cử đi học toàn thời gian. Là dữ kiện ảnh hưởng tới định mức nhiệm vụ,
+  /// nên tách riêng thay vì nhét vào ghi chú.
+  gradStudyFullTime    Boolean @default(false)
+  gradStudyNote        String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

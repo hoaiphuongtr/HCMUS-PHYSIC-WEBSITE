@@ -82,6 +82,8 @@ type Extracted = {
   allEmails: string[];
   research: string[];
   teaching: string[];
+  /** Mục tự đặt tên trên trang (Học vấn, Giải thưởng…) — chỉ để CON NGƯỜI đọc. */
+  extras: Array<{ section: string; title: string; desc: string }>;
   publications: Array<{
     year: string;
     title: string;
@@ -101,6 +103,7 @@ function extract(
   let eyebrow = '';
   const research: string[] = [];
   const teaching: string[] = [];
+  const extras: Extracted['extras'] = [];
   const publications: Extracted['publications'] = [];
   const emails = new Set<string>();
 
@@ -118,6 +121,13 @@ function extract(
       for (const e of (p.teaching ?? []) as Array<Record<string, unknown>>) {
         const t = text(e.title as Localized);
         if (t) teaching.push(t);
+      }
+      for (const e of (p.extras ?? []) as Array<Record<string, unknown>>) {
+        const section = text(e.section as Localized);
+        const title = text(e.title as Localized);
+        if (section || title) {
+          extras.push({ section, title, desc: text(e.desc as Localized) });
+        }
       }
       for (const e of (p.publications ?? []) as Array<
         Record<string, unknown>
@@ -163,6 +173,7 @@ function extract(
     allEmails: all,
     research,
     teaching,
+    extras,
     publications,
   };
 }
@@ -267,7 +278,15 @@ async function main(): Promise<void> {
     });
     if (!user) {
       user = await prisma.user.create({
-        data: { email, firstName, lastName, role: 'LECTURER', isActive: true },
+        data: {
+          email,
+          firstName,
+          lastName,
+          // "ThS.", "TS.", "PGS.TS." — trang nhân sự để ở dòng nhỏ phía trên tên.
+          position: r.eyebrow || null,
+          role: 'LECTURER',
+          isActive: true,
+        },
         select: { id: true, role: true },
       });
       created += 1;

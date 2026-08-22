@@ -13,6 +13,12 @@ export const CLAIM_STATUSES = ['CONFIRMED', 'PENDING', 'REJECTED'] as const;
 
 export const QUARTILES = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
 
+/** Quan hệ công tác với Khoa. Để trống = chưa khai, KHÔNG mặc định cơ hữu. */
+export const AFFILIATION_TYPES = ['FULL_TIME', 'JOINT', 'VISITING'] as const;
+
+/** Bậc đào tạo sau đại học giảng viên ĐANG theo học. */
+export const GRAD_STUDY_LEVELS = ['MASTER', 'PHD', 'POSTDOC'] as const;
+
 const OptionalText = (max: number) => z.string().max(max).nullish();
 
 // ── Lý lịch khoa học ────────────────────────────────────────────────────────
@@ -34,6 +40,19 @@ export const ScholarProfileResSchema = z.object({
   staffPageSlug: z.string().nullable(),
   showOnWeb: z.boolean(),
   lastOrcidSyncAt: z.date().nullable(),
+
+  affiliationType: z.enum(AFFILIATION_TYPES).nullable(),
+  homeInstitution: z.string().nullable(),
+
+  gradStudyLevel: z.enum(GRAD_STUDY_LEVELS).nullable(),
+  gradStudyField: z.string().nullable(),
+  gradStudyInstitution: z.string().nullable(),
+  gradStudyCountry: z.string().nullable(),
+  gradStudyStartYear: z.number().int().nullable(),
+  gradStudyEndYear: z.number().int().nullable(),
+  gradStudyFullTime: z.boolean(),
+  gradStudyNote: z.string().nullable(),
+
   nameVariants: z.array(NameVariantResSchema),
 });
 export type ScholarProfileResType = z.infer<typeof ScholarProfileResSchema>;
@@ -54,6 +73,23 @@ export const UpdateScholarProfileBodySchema = z.object({
   researchGateUrl: z.string().url().max(300).nullish(),
   staffPageSlug: OptionalText(300),
   showOnWeb: z.boolean().optional(),
+
+  // ── Quan hệ công tác ──────────────────────────────────────────────────────
+  affiliationType: z.enum(AFFILIATION_TYPES).nullish(),
+  /** Đơn vị công tác chính — chỉ có nghĩa với kiêm nhiệm và thỉnh giảng. */
+  homeInstitution: OptionalText(300),
+
+  // ── Đang học sau đại học ──────────────────────────────────────────────────
+  // Đặt gradStudyLevel = null để xoá cả khối (đã học xong, hoặc khai nhầm).
+  gradStudyLevel: z.enum(GRAD_STUDY_LEVELS).nullish(),
+  gradStudyField: OptionalText(200),
+  gradStudyInstitution: OptionalText(300),
+  gradStudyCountry: OptionalText(100),
+  gradStudyStartYear: z.number().int().min(1950).max(2200).nullish(),
+  /** Năm DỰ KIẾN hoàn thành. */
+  gradStudyEndYear: z.number().int().min(1950).max(2200).nullish(),
+  gradStudyFullTime: z.boolean().optional(),
+  gradStudyNote: OptionalText(1000),
 });
 export type UpdateScholarProfileBodyType = z.infer<
   typeof UpdateScholarProfileBodySchema

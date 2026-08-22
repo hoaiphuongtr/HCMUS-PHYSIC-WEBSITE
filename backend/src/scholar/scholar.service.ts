@@ -122,6 +122,35 @@ export class ScholarService {
         researchGateUrl: body.researchGateUrl ?? undefined,
         staffPageSlug: body.staffPageSlug ?? undefined,
         showOnWeb: body.showOnWeb ?? undefined,
+        // Từ đây trở xuống: `undefined` = không đụng tới, `null` = xoá đi. Phải
+        // phân biệt "không gửi" với "gửi null", nên không dùng ?? được.
+        affiliationType:
+          body.affiliationType === undefined ? undefined : body.affiliationType,
+        homeInstitution:
+          body.homeInstitution === undefined ? undefined : body.homeInstitution,
+        gradStudyLevel:
+          body.gradStudyLevel === undefined ? undefined : body.gradStudyLevel,
+        gradStudyField:
+          body.gradStudyField === undefined ? undefined : body.gradStudyField,
+        gradStudyInstitution:
+          body.gradStudyInstitution === undefined
+            ? undefined
+            : body.gradStudyInstitution,
+        gradStudyCountry:
+          body.gradStudyCountry === undefined
+            ? undefined
+            : body.gradStudyCountry,
+        gradStudyStartYear:
+          body.gradStudyStartYear === undefined
+            ? undefined
+            : body.gradStudyStartYear,
+        gradStudyEndYear:
+          body.gradStudyEndYear === undefined
+            ? undefined
+            : body.gradStudyEndYear,
+        gradStudyFullTime: body.gradStudyFullTime ?? undefined,
+        gradStudyNote:
+          body.gradStudyNote === undefined ? undefined : body.gradStudyNote,
       },
     });
     return this.getProfile(userId);
