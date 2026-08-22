@@ -34,6 +34,26 @@ const MAILTO = process.env.CROSSREF_MAILTO || '';
 /** Ký tự kết thúc DOI. KHÔNG được để lọt xuống dòng — một DOI sẽ nuốt cả dòng sau. */
 const DOI_RE = /10\.[0-9]{4,9}\/[^\s,;)"'<>\]]+/g;
 
+/**
+ * Dọn rác dính vào DOI khi nó được lấy ra từ HTML.
+ *
+ * Ba kiểu đã gặp thật trên trang nhân sự:
+ *   …05994-5#auth-hoang_luong-cuong-aff2   neo tới tác giả trên trang nhà xuất bản
+ *                                          (11 dòng cùng trỏ về MỘT bài)
+ *   …3225452&amp                           thực thể HTML lọt vào
+ *   …44630-                                bị cắt giữa chừng ở đầu dòng
+ *
+ * DOI về mặt đặc tả CÓ THỂ chứa # và &, nhưng thực tế cực hiếm; còn ở đây thì
+ * 12/14 trường hợp hỏng là do hai ký tự đó. Cắt là đúng hơn giữ.
+ */
+function cleanDoi(raw: string): string {
+  return raw
+    .split('#')[0]
+    .split('&')[0]
+    .replace(/[.,;:)\]}-]+$/, '')
+    .toLowerCase();
+}
+
 type PuckNode = { type?: string; props?: Record<string, unknown> };
 
 function walk(node: unknown, visit: (n: PuckNode) => void): void {
@@ -154,9 +174,10 @@ async function main(): Promise<void> {
     if (!owner) continue;
     const dois = [
       ...new Set(
-        (collectText(l.puckData).match(DOI_RE) ?? []).map((d) =>
-          d.replace(/[.,;:]+$/, '').toLowerCase(),
-        ),
+        (collectText(l.puckData).match(DOI_RE) ?? [])
+          .map(cleanDoi)
+          // Cắt cụt thì phần đuôi còn lại quá ngắn để là DOI thật.
+          .filter((d) => /^10\.[0-9]{4,9}\/.{3,}$/.test(d)),
       ),
     ];
     if (!dois.length) continue;
