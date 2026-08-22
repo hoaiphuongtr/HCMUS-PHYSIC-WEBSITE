@@ -783,3 +783,16 @@ nhưng là mìn đã cài sẵn. 12 test trong `roles.guard.spec.ts` khoá lại
 - Đợt deploy gộp: gallery lightbox + nút "Thông tin layout"
 - `set-department-category.ts cau-lac-bo Club` và `... doan-hoi doan-hoi-sinh-vien`
 - ~8 liên kết mailto gắn cờ "cần xem tay"
+
+### Đã deploy 2026-08-22
+Backend lên box (`build-deploy.sh be`) và migration đã chạy: 4 bảng + enum `Role` có `LECTURER`.
+Thứ tự đúng — backend đã vá guard lên TRƯỚC khi CSDL biết tới `LECTURER`, nên không có
+khoảng hở nào.
+
+Kiểm chứng từ ngoài: `/be/scholar/me` → 401 (route lạ trả 404, nên 401 chứng minh route có
+thật); `/be/integration/publications` → 503 đúng thông điệp thiếu khoá; `/be/categories` và
+`/be/posts/public/{latest,list,upcoming-events}` → 200 có dữ liệu; trang chủ → 200.
+
+**Lưu ý cho phiên sau:** `docker build` lấy từ THƯ MỤC LÀM VIỆC chứ không lấy từ git, nên
+mã chưa commit vẫn deploy được. Đã xảy ra lần này. Nhớ commit ngay sau khi deploy, không thì
+box chạy thứ không có trong lịch sử.
