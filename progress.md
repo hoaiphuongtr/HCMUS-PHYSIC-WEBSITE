@@ -821,3 +821,25 @@ thêm `physprofile` vào `SSO_CLIENTS` trên PHYsoom (chỉ biến môi trườn
 **Tên client SSO không được có gạch ngang** — PHYsoom chặn ở
 `CLIENT_NAME = /^[a-z][a-z0-9]{1,31}$/` vì tên đi thẳng vào tên biến môi trường.
 Repo và tên miền vẫn là `phys-profile`; định danh SSO là `physprofile`.
+
+### Bẫy proxy: content-encoding (2026-08-22)
+App `phys-profile` trên Vercel proxy `/be/*` sang backend qua route handler. Mọi lời
+gọi từ TRÌNH DUYỆT đều `Failed to fetch`, trong khi curl và gọi thẳng box đều xanh.
+
+Nguyên nhân: trình duyệt gửi `accept-encoding: gzip` → backend nén phản hồi → `fetch`
+trong route handler **tự giải nén** thân → nhưng header `content-encoding: gzip` bị
+chép nguyên sang phản hồi trả về. Trình duyệt thấy nhãn "đã nén" trên thân không nén
+→ giải mã thất bại, chỉ báo `Failed to fetch` không kèm lý do.
+
+**Viết proxy thì phải bỏ `content-encoding` (và `content-length`) khỏi phản hồi.**
+
+Vì sao dò lâu: curl không gửi `accept-encoding` nên backend trả về không nén, và gọi
+thẳng box thì không qua proxy — cả hai phép thử đều xanh. Trước khi tìm ra, đã đi
+nhầm sang nghi tường lửa (iptables sạch: `-P INPUT ACCEPT`, không luật INPUT nào),
+nghi DNS (chỉ có A, không AAAA), nghi nguồn tra cứu chậm (Crossref/OpenAlex/DataCite
+đều < 2s từ box). Bằng chứng đã đủ để nghi proxy sớm hơn.
+
+Cũng trong lúc dò: `rewrites()` của Next KHÔNG dùng được cho đích ngoài ở đây —
+bộ định tuyến biên Vercel bắt tay TLS với phys.hcmus.edu.vn thất bại
+(`ROUTER_EXTERNAL_TARGET_HANDSHAKE_ERROR`, hkg1), trong khi `fetch` từ hàm máy chủ
+(iad1) tới đúng địa chỉ đó trả 200 trong 1 giây. Nên proxy phải là route handler.
