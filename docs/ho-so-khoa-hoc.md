@@ -366,6 +366,29 @@ Ba điểm dễ làm sai:
 Chạy theo lịch quan trọng ngang webhook: **kể cả khi mọi webhook đều mất, hệ thống vẫn
 tự lành ở lần quét kế tiếp.** Đó là toàn bộ ý đồ của cách bố trí này.
 
+### Bên nhận đã dựng: ACADsoom
+
+`POST /api/webhook/webkhoa` (repo `Zipexpo/acadsoom`) đã có, cùng
+`models/syncState.js` để hạn nhịp. Hai điểm đáng nhớ khi đọc lại:
+
+- **Cron của Vercel gói Hobby chỉ chạy MỘT LẦN MỖI NGÀY.** Nên ở đây webhook
+  không phải thứ trang trí: thiếu nó, một công bố vừa khai phải chờ tới 24 giờ
+  mới hiện ở NV2. Chỗ đảm bảo vẫn là cron + lần quét khi giảng viên mở màn NV2.
+- **Hạn nhịp phải dùng mốc chung trong CSDL, không phải biến trong bộ nhớ.** Hàm
+  serverless chạy nhiều bản song song, mỗi bản một vùng nhớ riêng; một người lưu
+  liền tay 10 mục sẽ bắn 10 webhook và thành 10 lượt quét cả Khoa cùng lúc.
+
+Cũng nhân dịp đó vá một lỗi bên ACADsoom: `dongBoNckh` chỉ upsert, không bao giờ
+xoá — bài bị xoá hay bị rút phân loại nằm lại trong NV2 vĩnh viễn nên giờ NCKH
+chỉ có tăng. Nay đối chiếu và gỡ, nhưng **chỉ khi mọi lượt gọi đều thành công**,
+để một lần web Khoa hỏng không quét sạch khoản đã chấm của cả Khoa.
+
+**Còn tối ưu được:** `dongBoNckh` đang hỏi TỪNG NGƯỜI (~194 lượt gọi mỗi lần
+quét) vì chú thích trong `webKhoa.js` ghi "payload của web Khoa không kèm email".
+Điều đó **không còn đúng** — mỗi mục giờ có trường `email`, nên gọi một lượt
+không kèm `email` là lấy được trọn cả Khoa. Chưa đổi vì đó là mã đang tính KPI
+cho người thật, đáng một lượt sửa riêng có kiểm chứng.
+
 ### Biến môi trường
 
 ```
