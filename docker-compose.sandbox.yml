@@ -29,7 +29,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      # Thiếu `-d` là pg_isready nối vào CSDL trùng tên user (`physics`) — không
+      # tồn tại, nên Postgres ghi một dòng FATAL mỗi 5 giây, ~17k dòng/ngày. Nó
+      # vẫn báo "healthy" nên không ai để ý, nhưng lúc sự cố thật thì đống rác
+      # đó che mất dòng log cần đọc.
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-hcmus_physics}",
+        ]
       interval: 5s
       timeout: 3s
       retries: 10

@@ -876,3 +876,29 @@ phần còn lại. Lấy trọn mốc rồi mới dừng.
 tài, lưu + sinh lại trang nhân sự. Kiểm chứng: tsc sạch, eslint 0 lỗi (đã sửa luôn 3
 lỗi `no-base-to-string` có sẵn ở `staff-page.service.ts` — `String(p.photo ?? '')` có
 thể ra `[object Object]`), vitest 103/103 (9 tệp, +8 test cho bộ cắt trang).
+
+### Sự cố 2026-08-22 13:34 UTC: ổ docker đầy → Postgres vòng lặp PANIC
+Sau khi deploy backend, **toàn bộ trang có dữ liệu trả 500**. Không phải do mã nguồn.
+
+`/var/lib/docker` (loopback 32G RIÊNG) **đầy 100%, 0 byte**. Postgres không ghi nổi
+`pg_logical/replorigin_checkpoint.tmp` → `PANIC` → postmaster khởi động lại → recovery
+→ PANIC, lặp khoảng 2 lần/giây trong 5 phút. Mọi truy vấn nhận `57P03`.
+
+Dọn: `docker image prune -f` chỉ đòi lại **966MB** (ảnh dùng chung tầng nên số
+"reclaimable 10.6GB" là ảo). Thứ thật sự ôm chỗ là **cache dựng ảnh 9.67GB** —
+`image prune` KHÔNG đụng tới nó. `docker builder prune -f --keep-storage 2GB` đòi lại
+**16.36GB**, ổ về 38%, Postgres tự phục hồi trong vài giây, không mất dữ liệu.
+
+Hai chỗ đã vá để không lặp lại:
+
+1. `deploy-sandbox.py` trước đây **chỉ kiểm tra ổ gốc `/`**. Hôm đó `/` còn 2.2G nên
+   kiểm tra cho qua, trong khi loopback đã cạn — `docker load` ghi vào loopback chứ
+   không ghi vào `/`. Nay đòi `/var/lib/docker` còn ít nhất `max(3× gói, 4000MB)` và
+   dừng kèm hướng dẫn dọn. Bước dọn sau deploy cũng thêm `builder prune`.
+2. Healthcheck của db là `pg_isready -U physics` **thiếu `-d`**, nên nó nối vào CSDL
+   trùng tên user (`physics`, không tồn tại) → một dòng `FATAL` mỗi 5 giây, ~17k
+   dòng/ngày. Vẫn báo "healthy" nên không ai để ý, nhưng lúc sự cố thật thì đống rác
+   đó che mất dòng log cần đọc. Đã thêm `-d ${POSTGRES_DB}`.
+
+**Áp dụng healthcheck mới cần dựng lại container db** — chưa làm, để lần bảo trì có
+kế hoạch, không đụng vào lúc vừa phục hồi.

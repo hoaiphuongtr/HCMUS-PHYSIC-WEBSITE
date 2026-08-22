@@ -49,6 +49,24 @@ if free_mb < need_mb:
         "hoac bot ban sao cu trong /home/vlkt/db-backups."
     )
 
+# Và ổ gốc KHÔNG phải chỗ ảnh docker nằm. `docker load` ghi vào /var/lib/docker,
+# vốn là một loopback 32G RIÊNG. Ngày 2026-08-22 ổ gốc còn 2.2G nên kiểm tra ở
+# trên cho qua, trong khi loopback đã 0 byte — Postgres không ghi nổi tệp
+# checkpoint, PANIC, rồi lặp vòng khởi động lại khoảng 2 lần/giây. Cả web Khoa
+# chết cho tới khi dọn chỗ. Nạp ảnh cần chỗ cho bản GIẢI NÉN, nên đòi rộng tay.
+DOCKER_FLOOR_MB = 4000
+need_dk = max(need_mb * 3, DOCKER_FLOOR_MB)
+free_dk = int(sh("df -Pm /var/lib/docker | awk 'NR==2{print $4}'").strip() or 0)
+print(f"o docker con trong {free_dk}MB, can it nhat {need_dk}MB", flush=True)
+if free_dk < need_dk:
+    raise SystemExit(
+        f"DUNG: /var/lib/docker chi con {free_dk}MB, can {need_dk}MB.\n"
+        "Nap anh vao day se lam DAY o va HA CSDL. Don truoc roi chay lai:\n"
+        "  docker image prune -f                       # anh mo coi\n"
+        "  docker builder prune -f --keep-storage 2GB  # cache dung anh\n"
+        "KHONG dung `docker system prune --volumes`: CSDL nam trong volume."
+    )
+
 t0 = time.time()
 sf = c.open_sftp()
 sf.put(archive, "/tmp/deploy.tar.gz")
@@ -65,7 +83,17 @@ print(
     ),
     flush=True,
 )
-print(sh("docker image prune -f 2>&1 | tail -1; rm -f /tmp/deploy.tar.gz; df -h / /var/lib/docker | tail -2"), flush=True)
+# `image prune` KHÔNG đụng tới cache dựng ảnh — hôm 22/8 nó chỉ đòi lại được
+# 966MB trong khi cache ôm 9.67GB. Dọn cả hai, giữ 2GB cache mới nhất để lần
+# dựng sau còn nhanh.
+print(
+    sh(
+        "docker image prune -f 2>&1 | tail -1; "
+        "docker builder prune -f --keep-storage 2GB 2>&1 | tail -1; "
+        "rm -f /tmp/deploy.tar.gz; df -h / /var/lib/docker | tail -2"
+    ),
+    flush=True,
+)
 print(sh(f"cd {REMOTE_DIR} && {COMPOSE} ps {' '.join(services)} --format '{{{{.Service}}}} {{{{.Status}}}}'"), flush=True)
 print("DEPLOY_DONE", flush=True)
 c.close()
