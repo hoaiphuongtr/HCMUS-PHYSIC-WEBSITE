@@ -15,7 +15,9 @@ import {
   ResolvePreviewResSchema,
   ScholarProfileResSchema,
   SetNameVariantsBodySchema,
+  StaffPageResSchema,
   StatsResSchema,
+  UpdateStaffPageBodySchema,
   UpdatePublicationBodySchema,
   UpdateScholarProfileBodySchema,
 } from './scholar.model';
@@ -65,3 +67,8 @@ export class IntegrationPublicationResDTO extends createZodDto(
 ) {}
 
 export class StatsResDTO extends createZodDto(StatsResSchema) {}
+
+export class StaffPageResDTO extends createZodDto(StaffPageResSchema) {}
+export class UpdateStaffPageBodyDTO extends createZodDto(
+  UpdateStaffPageBodySchema,
+) {}

@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import { extname, join } from 'node:path';
 import {
   Body,
   Controller,
@@ -7,7 +10,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { ZodSerializerDto } from 'nestjs-zod';
 import { ActiveUser } from '../shared/decorators/active-user.decorator';
 import { Roles } from '../shared/decorators/roles.decorator';
@@ -26,11 +33,20 @@ import {
   ResolvePreviewResDTO,
   ScholarProfileResDTO,
   SetNameVariantsBodyDTO,
+  StaffPageResDTO,
   StatsResDTO,
+  UpdateStaffPageBodyDTO,
   UpdatePublicationBodyDTO,
   UpdateScholarProfileBodyDTO,
 } from './scholar.dto';
 import { ScholarService } from './scholar.service';
+import { StaffPageService } from './staff-page.service';
+import { PhotoRequiredException } from './scholar.error';
+
+// Cùng thư mục và cùng cách đặt tên với module media, để ảnh chân dung nằm chung
+// kho với mọi tệp khác của web Khoa (uploads/ được mount ra ngoài container).
+const UPLOADS_DIR = join(process.cwd(), 'uploads');
+mkdirSync(UPLOADS_DIR, { recursive: true });
 
 /**
  * API của app hồ sơ khoa học (profile.phys.hcmus.edu.vn).
@@ -42,7 +58,10 @@ import { ScholarService } from './scholar.service';
 @Controller('scholar')
 @Roles(RoleName.Lecturer, RoleName.Admin, RoleName.SuperAdmin)
 export class ScholarController {
-  constructor(private readonly service: ScholarService) {}
+  constructor(
+    private readonly service: ScholarService,
+    private readonly staffPage: StaffPageService,
+  ) {}
 
   // ── Lý lịch khoa học ──────────────────────────────────────────────────────
   @Get('me')
@@ -154,6 +173,56 @@ export class ScholarController {
     @Body() body: ClaimResponseBodyDTO,
   ) {
     return this.service.respondToClaim(userId, publicationId, body);
+  }
+
+  // ── Trang nhân sự trên web Khoa ───────────────────────────────────────────
+  /** Đọc nội dung trang nhân sự của CHÍNH người gọi. */
+  @Get('me/staff-page')
+  @ZodSerializerDto(StaffPageResDTO)
+  readStaffPage(@ActiveUser('userId') userId: string) {
+    return this.staffPage.read(userId);
+  }
+
+  /** Sửa nội dung trang đó. Trang công khai được dựng lại ngay sau khi ghi. */
+  @Patch('me/staff-page')
+  @ZodSerializerDto(StaffPageResDTO)
+  updateStaffPage(
+    @ActiveUser('userId') userId: string,
+    @Body() body: UpdateStaffPageBodyDTO,
+  ) {
+    return this.staffPage.update(userId, body);
+  }
+
+  /**
+   * Đổi ảnh chân dung. Cổng HẸP có chủ ý: module media chỉ mở cho quản trị, và
+   * mở nó ra cho giảng viên nghĩa là họ duyệt lẫn xoá được toàn bộ kho ảnh của
+   * Khoa. Ở đây chỉ làm đúng một việc — thay ảnh của chính mình.
+   */
+  @Post('me/staff-page/photo')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: UPLOADS_DIR,
+        filename: (_req, file, cb) =>
+          cb(
+            null,
+            `${randomUUID()}${extname(file.originalname).toLowerCase()}`,
+          ),
+      }),
+      limits: { fileSize: 8 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) =>
+        file.mimetype.startsWith('image/')
+          ? cb(null, true)
+          : cb(PhotoRequiredException, false),
+    }),
+  )
+  @ZodSerializerDto(StaffPageResDTO)
+  uploadPhoto(
+    @ActiveUser('userId') userId: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) throw PhotoRequiredException;
+    return this.staffPage.setPhoto(userId, `/uploads/${file.filename}`);
   }
 
   // ── Thống kê ──────────────────────────────────────────────────────────────

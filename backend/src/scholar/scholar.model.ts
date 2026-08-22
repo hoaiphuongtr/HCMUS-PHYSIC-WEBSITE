@@ -417,3 +417,50 @@ export const StatsResSchema = z.object({
     z.object({ status: z.enum(PUBLICATION_STATUSES), count: z.number().int() }),
   ),
 });
+
+// ── Trang nhân sự trên web Khoa ─────────────────────────────────────────────
+// Giảng viên sửa trang của CHÍNH MÌNH từ app. Không có tham số chỉ định trang
+// khác — quyền chặn ở tầng dữ liệu qua ScholarProfile.staffPageSlug.
+const EntrySchema = z.object({
+  title: z.string().min(1).max(300),
+  desc: z.string().max(2000).optional(),
+});
+
+const ExtraSchema = z.object({
+  section: z.string().min(1).max(120),
+  title: z.string().min(1).max(300),
+  desc: z.string().max(2000).optional(),
+});
+
+const StaffPubSchema = z.object({
+  year: z.string().max(10).optional(),
+  title: z.string().min(1).max(1000),
+  meta: z.string().max(1000).optional(),
+  url: z.string().max(1000).optional(),
+});
+
+export const StaffPageResSchema = z.object({
+  slug: z.string(),
+  layoutId: z.string(),
+  photo: z.string(),
+  eyebrow: z.string(),
+  name: z.string(),
+  intro: z.string(),
+  research: z.array(EntrySchema),
+  teaching: z.array(EntrySchema),
+  extras: z.array(ExtraSchema),
+  publications: z.array(StaffPubSchema),
+  /** Nội dung cũ từ đợt migration — CHỈ ĐỌC, hiển thị để người dùng tự chép sang. */
+  legacyHtml: z.string(),
+});
+
+export const UpdateStaffPageBodySchema = z.object({
+  photo: z.string().max(1000).nullish(),
+  eyebrow: z.string().max(200).nullish(),
+  intro: z.string().max(5000).nullish(),
+  research: z.array(EntrySchema).max(50).optional(),
+  teaching: z.array(EntrySchema).max(50).optional(),
+  extras: z.array(ExtraSchema).max(50).optional(),
+  publications: z.array(StaffPubSchema).max(300).optional(),
+});
+export type UpdateStaffPageBodyType = z.infer<typeof UpdateStaffPageBodySchema>;

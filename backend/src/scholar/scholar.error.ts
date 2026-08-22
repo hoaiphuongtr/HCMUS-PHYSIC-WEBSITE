@@ -66,3 +66,26 @@ export const TooFewAuthorsException = new UnprocessableEntityException([
     error: 'Tổng số tác giả phải lớn hơn hoặc bằng số tác giả thuộc Trường',
   },
 ]);
+
+export const NoStaffPageException = new NotFoundException([
+  {
+    field: 'staffPageSlug',
+    error:
+      'Hồ sơ của bạn chưa nối với trang nhân sự nào. Điền địa chỉ trang ở mục Lý lịch khoa học.',
+  },
+]);
+
+export const StaffBlockNotFoundException = new UnprocessableEntityException([
+  {
+    field: 'staffPageSlug',
+    error:
+      'Trang nhân sự này không có khối hồ sơ để sửa — nhờ quản trị dựng lại trang.',
+  },
+]);
+
+export const PhotoRequiredException = new UnprocessableEntityException([
+  {
+    field: 'file',
+    error: 'Cần chọn một tệp ảnh (JPG, PNG, WebP), tối đa 8 MB',
+  },
+]);
