@@ -962,3 +962,26 @@ phải làm việc đó.
 Compose mới đã đẩy lên box (giữ bản cũ ở `docker-compose.sandbox.yml.bak-20260822`),
 `docker compose config` hợp lệ, 6 dịch vụ vẫn healthy, trang công khai 200 suốt.
 Healthcheck `pg_isready -d` mới sẽ có hiệu lực ở lần dựng lại container db kế tiếp.
+
+### Kênh tích hợp: trả SỐ tác giả chính, không phải cờ (2026-08-22)
+ACADsoom báo qua `docs/yeu-cau-web-khoa.md` (repo acadsoom) rằng Cách 2 của Phụ lục 2
+chia phần tác giả chính là `1/3 ÷ số tác giả chính thuộc Trường`. Mẫu số đó **không suy
+ra được từ `mainAuthorAtSchool: boolean`**, nên ACADsoom buộc phải đoán bằng 1 — bài có
+**hai** tác giả chính cùng thuộc Trường thì mỗi người nhận 1/3 thay vì 1/6: **cộng gấp
+đôi**, và tổng phần chia cho Trường vượt 100%.
+
+Đã thêm `mainAuthorsAtSchool` (số đếm) vào `/integration/publications`, **không thêm
+cột**: đếm tại chỗ từ danh sách tác giả đã xác nhận. `recount()` vốn đã giữ đúng dữ
+liệu cần; thêm cột chỉ tạo thêm một chỗ để lệch. Cột `mainAuthorAtSchool` cũ giữ nguyên
+để không phá bên đang dùng.
+
+Kèm mục 3 của tài liệu: trả `authorIndex` / `isFirst` / `isCorresponding` / `isLast` của
+chính người được hỏi. Không ảnh hưởng công thức — Phụ lục 2 chỉ phân biệt tác giả chính
+với đồng tác giả — nhưng khi số giờ ra không như mong đợi, ACADsoom cần chỉ được rằng
+sai nằm ở dữ liệu vị trí tác giả chứ không phải ở phép tính.
+
+CHƯA làm — mục 2 của tài liệu: **Bảng 3, 65/106 mã** (hội đồng đánh giá đề tài, giải
+thưởng, tổ chức hội nghị, hướng dẫn người học…). Đây là một thực thể MỚI, không dùng lại
+`projects` được: ngồi hội đồng thẩm định đề tài của người khác thì không có kinh phí,
+không có số tháng, và người ngồi hội đồng không phải thành viên đề tài. Cần bàn phạm vi
+trước khi làm.

@@ -412,8 +412,16 @@ export const IntegrationPublicationResSchema = z.object({
       totalAuthors: z.number().int(),
       schoolAuthors: z.number().int(),
       mainAuthorAtSchool: z.boolean(),
+      /** SỐ tác giả chính thuộc Trường đã xác nhận — mẫu số của Cách 2. */
+      mainAuthorsAtSchool: z.number().int(),
       isMainAuthor: z.boolean(),
       sharePercent: z.number().int().nullable(),
+
+      /** Vị trí của chính người được hỏi — để đối soát, không dùng để tính. */
+      authorIndex: z.number().int(),
+      isFirst: z.boolean(),
+      isCorresponding: z.boolean(),
+      isLast: z.boolean(),
 
       email: z.string().nullable(),
       /** Bản ghi này KHÔNG còn được tính nữa (xoá / rút phân loại / rút xác nhận). */

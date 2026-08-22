@@ -891,7 +891,19 @@ export class ScholarService {
               },
             }),
       },
-      include: { publication: true, user: { select: { email: true } } },
+      include: {
+        // Kèm các tác giả ĐÃ XÁC NHẬN để đếm được số tác giả chính — xem
+        // `mainAuthorsAtSchool` ở dưới.
+        publication: {
+          include: {
+            authors: {
+              where: { claimStatus: 'CONFIRMED' },
+              select: { isFirst: true, isCorresponding: true, isLast: true },
+            },
+          },
+        },
+        user: { select: { email: true } },
+      },
       orderBy: { publication: { countYear: 'desc' } },
     });
 
@@ -920,8 +932,28 @@ export class ScholarService {
           totalAuthors: p.totalAuthors,
           schoolAuthors: p.schoolAuthors,
           mainAuthorAtSchool: p.mainAuthorAtSchool,
+          // ĐẾM, không phải cờ đúng/sai. Cách 2 của Phụ lục 2 chia phần của tác
+          // giả chính là `1/3 ÷ số tác giả chính thuộc Trường` — mẫu số đó không
+          // suy ra được từ một boolean. ACADsoom trước đây buộc phải đoán bằng 1,
+          // nên bài có HAI tác giả chính cùng thuộc Trường thì mỗi người nhận
+          // 1/3 thay vì 1/6: cộng gấp đôi, và tổng phần chia cho Trường vượt 100%.
+          //
+          // Đếm tại chỗ từ danh sách đã xác nhận thay vì thêm cột: `recount()` đã
+          // giữ đúng dữ liệu cần, thêm cột chỉ tạo thêm một chỗ để lệch.
+          mainAuthorsAtSchool: p.authors.filter(
+            (a) => a.isFirst || a.isCorresponding || a.isLast,
+          ).length,
           isMainAuthor: r.isFirst || r.isCorresponding || r.isLast,
           sharePercent: r.sharePercent,
+
+          // Vị trí của CHÍNH người được hỏi. Không ảnh hưởng công thức — Phụ lục
+          // 2 chỉ phân biệt tác giả chính với đồng tác giả — nhưng khi số giờ ra
+          // không như mong đợi, bên ACADsoom cần chỉ được rằng sai nằm ở dữ liệu
+          // vị trí tác giả chứ không phải ở phép tính.
+          authorIndex: r.authorIndex,
+          isFirst: r.isFirst,
+          isCorresponding: r.isCorresponding,
+          isLast: r.isLast,
           email: r.user?.email ?? null,
           // Ba đường dẫn tới "thôi không tính nữa", gộp thành một cờ để bên nhận
           // khỏi phải tự suy luận: xoá bài, rút phân loại, rút xác nhận.
