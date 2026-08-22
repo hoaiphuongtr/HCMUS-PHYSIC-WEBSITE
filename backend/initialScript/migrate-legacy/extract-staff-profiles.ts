@@ -79,6 +79,8 @@ type Extracted = {
   name: string;
   eyebrow: string;
   email: string | null;
+  /** 2 = email khớp tên, 1 = khớp lỏng, 0 = không liên quan (phải xem tay). */
+  emailScore: number;
   allEmails: string[];
   research: string[];
   teaching: string[];
@@ -93,6 +95,50 @@ type Extracted = {
 };
 
 const MAILTO = /mailto:([^"'\s>?]+)/gi;
+
+/**
+ * Chọn email theo mức KHỚP VỚI TÊN, không lấy bừa cái đầu tiên.
+ *
+ * Trang nhân sự hay lẫn email của người khác (khối liên hệ chép qua chép lại) —
+ * đợt audit mailto trước đã tìm ra 229 liên kết sai người. Nhưng phần lớn trường
+ * hợp email ĐÚNG vẫn nằm ngay trên trang đó, chỉ là không phải cái đầu tiên.
+ *
+ * Email của Trường gần như luôn dựng từ tên: "Đặng Văn Liệt" → dvliet,
+ * "Nguyễn Vương Thuỳ Ngân" → nvtngan. Sinh sẵn các dạng hay gặp rồi so.
+ */
+function localPartCandidates(fullName: string): Set<string> {
+  const t = normalizeName(stripTitles(fullName)).split(' ').filter(Boolean);
+  if (!t.length) return new Set();
+  const last = t[t.length - 1];
+  const head = t.slice(0, -1);
+  const ini = head.map((w) => w[0]).join('');
+  const allIni = t.map((w) => w[0]).join('');
+  return new Set(
+    [
+      ini + last, // dvliet, nvtngan
+      last + ini, // lietdv
+      t[0] + last, // dangliet
+      t.join(''), // dangvanliet
+      allIni, // dvl
+      last, // liet
+      last + t[0], // lietdang
+    ].filter((x) => x.length >= 2),
+  );
+}
+
+/** 2 = khớp chắc, 1 = khớp lỏng (chứa họ hoặc tên gọi), 0 = không liên quan. */
+function scoreEmail(fullName: string, email: string): number {
+  const local = email
+    .split('@')[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  if (!local) return 0;
+  if (localPartCandidates(fullName).has(local)) return 2;
+  const t = normalizeName(stripTitles(fullName)).split(' ').filter(Boolean);
+  const last = t[t.length - 1] ?? '';
+  if (last.length >= 3 && local.includes(last)) return 1;
+  return 0;
+}
 
 function extract(
   slug: string,
@@ -161,15 +207,25 @@ function extract(
 
   if (!name) return null;
 
-  // Ưu tiên email của Trường; hộp thư cá nhân chỉ dùng khi không có gì khác.
+  // Xếp hạng: khớp tên trước, rồi mới tới email của Trường. Lấy bừa cái đầu tiên
+  // là cách chắc chắn gán nhầm hồ sơ cho người khác.
   const all = [...emails];
-  const institutional = all.filter((e) => /@(\w+\.)?hcmus\.edu\.vn$/i.test(e));
+  const ranked = all
+    .map((e) => ({
+      email: e,
+      score: scoreEmail(name, e),
+      institutional: /@(\w+\.)?hcmus\.edu\.vn$/i.test(e) ? 1 : 0,
+    }))
+    .sort((a, b) => b.score - a.score || b.institutional - a.institutional);
+  const best = ranked[0];
+
   return {
     slug,
     layoutId,
     name,
     eyebrow,
-    email: institutional[0] ?? all[0] ?? null,
+    email: best?.email ?? null,
+    emailScore: best?.score ?? 0,
     allEmails: all,
     research,
     teaching,
@@ -219,7 +275,14 @@ async function main(): Promise<void> {
   const noEmail = rows.filter((r) => !r.email);
   const totalPubs = rows.reduce((n, r) => n + r.publications.length, 0);
 
+  const unread = layouts.length - rows.length;
   console.log(`Đọc được hồ sơ: ${rows.length}`);
+  if (unread > 0) {
+    console.log(
+      `  ${unread} trang KHÔNG đọc được tên — nhiều khả năng dùng khối cũ, không` +
+        ' phải StaffProfileEditorial. Xem một trang bằng --slug để biết.',
+    );
+  }
   console.log(`  có email      : ${withEmail.length}`);
   console.log(
     `  KHÔNG có email: ${noEmail.length}  (bỏ qua — không khớp được tài khoản)`,
@@ -231,6 +294,23 @@ async function main(): Promise<void> {
     await prisma.$disconnect();
     return;
   }
+
+  // Hai trang cùng một email = chắc chắn có trang chép nhầm email người khác.
+  // Ghi đè lẫn nhau là hỏng dữ liệu thật, nên loại CẢ HAI ra khỏi phần ghi.
+  const byEmail = new Map<string, Extracted[]>();
+  for (const r of withEmail) {
+    const k = r.email!.toLowerCase();
+    byEmail.set(k, [...(byEmail.get(k) ?? []), r]);
+  }
+  const clashing = new Set<string>();
+  for (const [email, rs] of byEmail) if (rs.length > 1) clashing.add(email);
+
+  const safe = withEmail.filter(
+    (r) => r.emailScore >= 1 && !clashing.has(r.email!.toLowerCase()),
+  );
+  const needsEye = withEmail.filter(
+    (r) => r.emailScore === 0 || clashing.has(r.email!.toLowerCase()),
+  );
 
   console.log('─'.repeat(78));
   for (const r of withEmail) {
@@ -265,7 +345,7 @@ async function main(): Promise<void> {
   let linked = 0;
   let pubsAdded = 0;
 
-  for (const r of withEmail) {
+  for (const r of safe) {
     const email = r.email!.toLowerCase();
     const clean = stripTitles(r.name);
     const { firstName, lastName } = splitName(clean);
