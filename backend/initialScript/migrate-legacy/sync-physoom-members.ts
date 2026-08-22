@@ -60,10 +60,18 @@ function emailProblem(email: string): string | null {
   const e = email.trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(e)) return 'sai định dạng';
   const domain = e.split('@')[1];
-  if (/\.vvn$|\.con$|\.cm$|\.vnn$/.test(domain))
+  // Lỗi gõ đã gặp thật trong danh sách: hcmus.edu.vvn, hcmut.edu.com.
+  // `.edu.<gì đó không phải vn>` ở một trường Việt Nam gần như luôn là gõ nhầm.
+  if (/\.vvn$|\.con$|\.cm$|\.vnn$|\.vm$/.test(domain))
     return `tên miền đáng ngờ (${domain})`;
+  if (/\.edu\.(?!vn$)[a-z]+$/.test(domain))
+    return `tên miền đáng ngờ (${domain}) — có phải .edu.vn không?`;
   return null;
 }
+
+/** Hộp thư ngoài trường: hợp lệ, nhưng nên biết là ai để khỏi bất ngờ. */
+const isExternal = (email: string) =>
+  !/@([a-z0-9-]+\.)?hcmus\.edu\.vn$/i.test(email.trim());
 
 /** Đi hết cây Puck; khối con nằm trong props của khối cha, không ở data.zones. */
 function walk(
@@ -166,6 +174,20 @@ async function main(): Promise<void> {
   console.log(`Email có vấn đề : ${bad.length}  (BỎ QUA)`);
   console.log(`Nối được trang nhân sự: ${linked}`);
   console.log(`Không tìm thấy trang  : ${unlinked}\n`);
+
+  const external = good.filter((m) => isExternal(m.email));
+  if (external.length) {
+    console.log('── Email NGOÀI trường (vẫn dùng được, chỉ để biết) ──');
+    for (const m of external) {
+      console.log(
+        `  ${m.email.padEnd(32)} ${m.name.padEnd(26)} ${m.department || '(không rõ bộ môn)'}`,
+      );
+    }
+    console.log(
+      '  Phần lớn là người đã nghỉ hoặc thỉnh giảng. SSO vẫn đăng nhập được vì' +
+        ' PHYsoom xác thực bằng chính địa chỉ này.\n',
+    );
+  }
 
   if (bad.length) {
     console.log('── Email có vấn đề, phải sửa bên PHYsoom ──');

@@ -796,3 +796,28 @@ thật); `/be/integration/publications` → 503 đúng thông điệp thiếu kh
 **Lưu ý cho phiên sau:** `docker build` lấy từ THƯ MỤC LÀM VIỆC chứ không lấy từ git, nên
 mã chưa commit vẫn deploy được. Đã xảy ra lần này. Nhớ commit ngay sau khi deploy, không thì
 box chạy thứ không có trong lịch sử.
+
+### Bẫy triển khai đã vấp (2026-08-22)
+- **Sửa `backend/.env` → phải RECREATE container**, không phải `restart`. Biến môi
+  trường gán lúc TẠO container; `restart` chỉ khởi động lại tiến trình với env cũ.
+  `docker compose -f docker-compose.sandbox.yml up -d --no-deps --no-build --force-recreate backend`
+- **Thêm script mới vào `initialScript/` → phải `docker cp` hoặc build lại image.**
+  `push-full.ps1` chép mã lên BOX, nhưng `initialScript/` được nướng vào image lúc
+  build chứ không mount volume, nên container vẫn giữ bản cũ.
+  Thứ tự đúng: recreate trước, `docker cp` sau (recreate là mất file vừa cp vào).
+- **`deploy/build-deploy.sh` chạy trên máy Windows (Git Bash), KHÔNG chạy trên box.**
+  Nó build image bằng Docker ở máy rồi sftp lên. PowerShell không chạy được `.sh` —
+  gõ trong PowerShell thì nó trả prompt về, im lặng, không báo gì.
+- **Trang chưa dựng bao giờ có thể 502 ở lần mở đầu tiên** (Next render ~39s, Caddy
+  hết kiên nhẫn trước). Gọi lại thì 0,2s. Không phải sự cố.
+
+### Nguồn nhân sự: PHYsoom, không phải trang web
+Trang nhân sự trên web Khoa chỉ là bản chép lại và thiếu email của hơn nửa số người
+(42/108 khi đọc CSDL, 69 người khi cào trang thật). PHYsoom có đủ **136 người**, tất
+cả đều có MSCB, qua `/api/integration/members?client=physprofile`.
+Đã cấp `PHYSPROFILE_SSO_SECRET`, `PHYSPROFILE_SYNC_SECRET`, `PHYSPROFILE_ORIGIN` và
+thêm `physprofile` vào `SSO_CLIENTS` trên PHYsoom (chỉ biến môi trường, không sửa mã).
+
+**Tên client SSO không được có gạch ngang** — PHYsoom chặn ở
+`CLIENT_NAME = /^[a-z][a-z0-9]{1,31}$/` vì tên đi thẳng vào tên biến môi trường.
+Repo và tên miền vẫn là `phys-profile`; định danh SSO là `physprofile`.
