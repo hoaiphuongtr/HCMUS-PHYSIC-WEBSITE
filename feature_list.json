@@ -168,6 +168,16 @@
       ],
       "status": "done",
       "evidence": "deploy/audit-dead-links.sh + deploy/build-deploy.sh (fe|be|all, refuses to build when behind remote). Audit follows redirects (curl -L): an earlier pass treated 307 as alive and so missed the whole 407-subject family. 646 internal paths → 21 dead, down from 585. Closed by: build-major-pages.ts (11 majors, tabbed sections), build-subject-pages.ts (407 subjects), build-class-staff-pages.ts (classes + leftover staffs under their dept), build-missing-dept-pages.ts (14 dept sub-pages the hardcoded-ID first pass never looked at), build-post-dump-pages.ts (3 pages created on the legacy site AFTER the 14/06/2026 dump, fetched from origin 112.78.11.146 with a Host header since the domain now points at the new site). legacy-redirects.json 397 → 517, incl. 13 subject links mapped by subjects.code rather than by name (curriculum tables link with English slugs or wrong codes). proxy.ts fix: consult the redirect map BEFORE bailing out on paths with a file extension — 51 .html redirects were silently dead. All 21 remaining links verified 404 on the legacy site itself by comparing <title> (Joomla soft-404s return HTTP 200 with a full-size page, so neither status code nor byte size is conclusive): scholarship/student-list indexes, 2 staff pages, and dept .html pages absent from every table of the dump."
+    },
+    {
+      "id": "feat-017",
+      "name": "Scholar profile API (hồ sơ khoa học)",
+      "description": "Backend cho app khai công bố khoa học ở profile.phys.hcmus.edu.vn. Web Khoa giữ toàn bộ dữ liệu và trả ra qua API bảo mật; app là source riêng, ACADsoom là khách của cùng API. Gồm: lý lịch khoa học (ORCID/Scopus/WoS/ResearchGate) + bộ tên thường dùng khi đăng báo; tra DOI/arXiv/ISBN qua Crossref+OpenAlex+DataCite+OpenLibrary (cache Redis); nhập file .bib/.ris/CSL-JSON từ Mendeley–Zotero–EndNote; nhập hàng loạt từ ORCID; một bài dùng chung cho mọi đồng tác giả trong Khoa (gom theo DOI) với cơ chế xác nhận PENDING→CONFIRMED; tình trạng bài (mặc định PUBLISHED) kèm tháng/năm accepted và published; phân loại Phụ lục 2 do TÁC GIẢ TỰ CHỌN — chưa phân loại thì API tích hợp không trả, tức là không được tính KPI.",
+      "dependencies": [
+        "feat-013"
+      ],
+      "status": "in-progress",
+      "evidence": "backend/src/scholar/** (module, resolver, bộ đọc thư mục, khớp tên, guard khoá tích hợp); backend/prisma/migrations/20260822_scholar_profile/migration.sql (cộng thêm, idempotent); docs/ho-so-khoa-hoc.md. Vá kèm: RolesGuard mặc định CHẶN vai trò ngoài admin — trước đây route không ghi @Roles cho qua mọi tài khoản đã đăng nhập, và `!departmentId` được coi là quyền toàn Khoa, nên thêm LECTURER là mở toang trang quản trị. Kiểm chứng cục bộ: tsc --noEmit -p tsconfig.build.json sạch; eslint src/scholar 0 lỗi/2 cảnh báo; vitest run 82/82 (7 file), gồm 12 test roles.guard + 17 test bộ đọc .bib/.ris/CSL + 12 test khớp tên. CHƯA chạy: migration trên box, chưa có giao diện app, chưa nối ACADsoom."
     }
   ]
 }

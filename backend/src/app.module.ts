@@ -18,6 +18,7 @@ import { TagModule } from './tag/tag.module';
 import { NotificationModule } from './notification/notification.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { StaticPageModule } from './static-page/static-page.module';
+import { ScholarModule } from './scholar/scholar.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -58,6 +59,7 @@ import envConfig from './shared/config/config';
     NotificationModule,
     ChatbotModule,
     StaticPageModule,
+    ScholarModule,
   ],
   controllers: [AppController],
   providers: [AppService],

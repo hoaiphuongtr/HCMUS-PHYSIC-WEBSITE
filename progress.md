@@ -727,3 +727,59 @@ Làm theo `HANDOFF-remaining-fixes.md` (đã xoá sau phiên này); commit `eed8
   không gọi `https://phys.hcmus.edu.vn` từ trong box (curl treo/trả 000).
 - Box chỉ có python2 và **không có `zip`**; đóng gói bundle bằng `adm-zip` trong container
   backend (`docker cp` vào/ra).
+
+---
+
+## 2026-08-22 — feat-017: API hồ sơ khoa học (backend)
+
+### Kiến trúc đã chốt (sau 3 lần chỉnh với Phương)
+Web Khoa **giữ toàn bộ dữ liệu công bố** và trả ra qua API bảo mật. App
+`profile.phys.hcmus.edu.vn` là **source riêng, stack tự chọn**, không có CSDL riêng —
+nhờ vậy không phải nằm trong pnpm workspace, không phải mirror `lib/api` + `lib/i18n`.
+**ACADsoom là KHÁCH của API này**, không phải nguồn: nó nhận dữ kiện rồi tự quy đổi giờ
+bằng `nv2Hours.js` sẵn có (đúng nguyên tắc nó tự đặt cho PHYsoom — hệ nguồn không tự quy đổi).
+
+Chi tiết: `docs/ho-so-khoa-hoc.md`.
+
+### Quyết định nghiệp vụ ảnh hưởng tới mã
+- **Q1–Q4 tác giả tự chọn.** Không nạp bảng xếp hạng SCImago/WoS/CORE. `catalogCode = null`
+  nghĩa là chưa phân loại, và **API tích hợp không trả bài đó** → không lọt vào KPI. Luật
+  "không chỉnh thì không được tính" là ràng buộc dữ liệu, không phải lời nhắc trên giao diện.
+- **Một bài dùng chung cho cả nhóm.** Gom theo DOI: khai lại DOI đã có thì KHÔNG tạo bản thứ
+  hai, chỉ gắn thêm người gọi. Nếu để mỗi người một dòng thì trang nhân sự hiện ba bản và
+  thống kê Khoa đếm ba lần.
+- **Xác nhận tác giả.** Người tự khai → CONFIRMED ngay. Người bị đồng nghiệp gắn tên → PENDING
+  cho tới khi chính họ bấm đồng ý. Không ai xác nhận thay người khác được.
+- **Khớp tên không đoán bừa.** Ba mức: ORCID → dạng tên đã đăng ký → giống lỏng. Cả ba đều chỉ
+  là GỢI Ý. Rút từ đợt tự động trích email của trang nhân sự: suy đoán sai trên dữ liệu thật
+  tốn công sửa hơn hẳn để người dùng tự chọn.
+
+### Bản vá bảo mật đi kèm — BẮT BUỘC deploy trước khi tạo tài khoản LECTURER
+`src/shared/guards/roles.guard.ts` có hai chỗ sẽ thành lỗ hổng ngay khi thêm vai trò ngoài:
+1. `if (!requiredRoles) return true;` — route không ghi `@Roles` cho qua **mọi** tài khoản đã
+   đăng nhập. Hàng trăm route quản trị chưa từng gắn `@Roles`.
+2. `isFacultyWide` xét `!user.departmentId` mà không xét vai trò → giảng viên không gắn bộ môn
+   **thừa hưởng quyền toàn Khoa**, thoả mọi cổng `@Roles(SuperAdmin)`.
+
+Đã vá: mặc định chặn mọi vai trò ngoài `ADMIN_ROLES`, và `isFacultyWide` phải là admin trước.
+Hôm nay chưa phải lỗ hổng (chỉ có ADMIN/SUPER_ADMIN, và đó là chủ ý cho admin văn phòng khoa),
+nhưng là mìn đã cài sẵn. 12 test trong `roles.guard.spec.ts` khoá lại cả hai hành vi.
+
+### Kiểm chứng đã chạy (cục bộ)
+- `tsc --noEmit -p tsconfig.build.json` — sạch (đường build thật)
+- `eslint src/scholar/**` — 0 lỗi, 2 cảnh báo (đúng mức của guard sẵn có đọc `request`)
+- `vitest run` — **82/82 qua, 7 file**: 12 test RolesGuard, 17 test bộ đọc .bib/.ris/CSL-JSON,
+  12 test khớp tên tiếng Việt, cộng 41 test cũ vẫn xanh
+- `prisma generate` chạy lại sau khi thêm model
+
+### CHƯA làm
+- Migration **chưa chạy trên box**: `backend/prisma/migrations/20260822_scholar_profile/migration.sql`
+  (cộng thêm + idempotent; có `ALTER TYPE "Role" ADD VALUE 'LECTURER'`)
+- Chưa có giao diện app; chưa có adapter bên ACADsoom; chưa có holder Puck `StaffPublications`
+- Chưa đặt `ACADSOOM_SYNC_SECRET` và `CROSSREF_MAILTO` trong env của backend
+- Chưa có DNS cho `profile.phys.hcmus.edu.vn` (IT phải tạo bản ghi A về 103.88.121.212)
+
+### Còn tồn đọng từ trước (chưa đụng tới phiên này)
+- Đợt deploy gộp: gallery lightbox + nút "Thông tin layout"
+- `set-department-category.ts cau-lac-bo Club` và `... doan-hoi doan-hoi-sinh-vien`
+- ~8 liên kết mailto gắn cờ "cần xem tay"

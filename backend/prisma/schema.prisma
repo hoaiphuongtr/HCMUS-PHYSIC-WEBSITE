@@ -11,6 +11,26 @@ datasource db {
 enum Role {
   SUPER_ADMIN
   ADMIN
+  // Giảng viên khai hồ sơ khoa học. KHÔNG vào được trang quản trị — RolesGuard
+  // chặn mặc định mọi route không ghi rõ @Roles(RoleName.Lecturer).
+  LECTURER
+}
+
+/// Tình trạng bài báo. Mặc định PUBLISHED: phần lớn bài được khai sau khi đã in.
+enum PublicationStatus {
+  SUBMITTED
+  ACCEPTED
+  IN_PRESS
+  PUBLISHED
+  RETRACTED
+}
+
+/// Một bài được dùng chung cho mọi đồng tác giả trong Khoa. Người khai đầu tiên
+/// gắn tên đồng nghiệp vào; những người đó phải tự xác nhận thì mới được tính.
+enum AuthorClaimStatus {
+  CONFIRMED
+  PENDING
+  REJECTED
 }
 
 enum Language {
@@ -120,6 +140,8 @@ model User {
   auditLogs          AuditLog[]
   pageLayouts        PageLayout[]
   pageLayoutVersions PageLayoutVersion[]
+  scholarProfile     ScholarProfile?
+  publicationAuthors PublicationAuthor[]
 
   @@index([role])
   @@index([email])
@@ -765,4 +787,146 @@ model AIConfig {
   @@unique([provider, model, purpose])
   @@index([purpose])
   @@index([isActive])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hồ sơ khoa học — xem docs/ho-so-khoa-hoc.md
+//
+// Web Khoa là chủ sở hữu duy nhất của dữ liệu công bố. App
+// profile.phys.hcmus.edu.vn và ACADsoom đều chỉ là khách của API, không giữ bản
+// sao. Vì vậy mọi ràng buộc dữ liệu phải nằm ở đây, không nằm ở tầng giao diện.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Lý lịch khoa học của một tài khoản: định danh ngoài + nối sang trang nhân sự.
+model ScholarProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  orcid           String?   @unique
+  scopusAuthorId  String?
+  researcherId    String?
+  googleScholarId String?
+  /// ResearchGate không có API công khai — chỉ lưu để hiển thị, không đồng bộ.
+  researchGateUrl String?
+  /// Slug trang nhân sự trên web Khoa. Web Khoa chưa có thực thể "nhân sự"
+  /// riêng; trang nhân sự vẫn là PageLayout, nên đây là chỗ nối tạm.
+  staffPageSlug   String?
+  showOnWeb       Boolean   @default(true)
+  lastOrcidSyncAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nameVariants ScholarNameVariant[]
+
+  @@index([staffPageSlug])
+}
+
+/// Các dạng tên một người dùng khi đăng báo ("Nguyen V. T. N.", "N. V. T. Ngan").
+/// Đây là bộ khớp tên: khi ai đó khai một bài, hệ thống dò danh sách tác giả của
+/// bài theo bảng này để đoán ai trong Khoa có mặt trong đó.
+model ScholarNameVariant {
+  id         String   @id @default(cuid())
+  profileId  String
+  /// Nguyên văn người dùng nhập, để hiển thị lại.
+  raw        String
+  /// Dạng đã chuẩn hoá để so khớp — xem normalizeName() trong name-match.ts.
+  normalized String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  profile ScholarProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, normalized])
+  @@index([normalized])
+}
+
+/// Một công trình = một dòng, dùng chung cho mọi đồng tác giả trong Khoa.
+/// Gom theo DOI: bài ba người trong Khoa cùng đứng tên vẫn chỉ là MỘT dòng, nếu
+/// không thì trang nhân sự hiện ba bản và thống kê Khoa đếm ba lần.
+model Publication {
+  id             String  @id @default(cuid())
+  doi            String? @unique
+  arxivId        String?
+  isbn           String?
+  issn           String?
+  type           String  @default("journal-article")
+  title          String
+  containerTitle String?
+  volume         String?
+  issue          String?
+  pages          String?
+  publisher      String?
+  url            String?
+
+  status         PublicationStatus @default(PUBLISHED)
+  publishedYear  Int?
+  publishedMonth Int?
+  acceptedYear   Int?
+  acceptedMonth  Int?
+  /// Năm dùng để tính KPI = publishedYear, hoặc acceptedYear nếu chưa in.
+  /// Suy ra lúc ghi (xem resolveCountYear) để lọc theo năm là truy vấn có index.
+  countYear      Int?
+
+  /// Danh sách tác giả theo ĐÚNG thứ tự gốc: [{ family, given, sequence, orcid }].
+  authorsRaw Json
+  source     String @default("manual")
+  raw        Json?
+
+  /// Mã Phụ lục 2 do TÁC GIẢ TỰ CHỌN. null = chưa phân loại → không lọt vào API
+  /// tích hợp → không được tính KPI. Hệ thống không tự đoán quartile.
+  catalogCode  String?
+  quartile     String?
+  classifiedBy String?
+  classifiedAt DateTime?
+
+  /// Hệ số tính chất bài — thuộc về BÀI, không thuộc về từng người.
+  satellite   Boolean @default(false)
+  reprint     Boolean @default(false)
+  fromProject Boolean @default(false)
+  stage       Int     @default(0)
+
+  totalAuthors       Int     @default(1)
+  schoolAuthors      Int     @default(1)
+  mainAuthorAtSchool Boolean @default(false)
+
+  createdBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  authors PublicationAuthor[]
+
+  @@index([countYear])
+  @@index([catalogCode])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([issn])
+}
+
+/// Một giảng viên trong Khoa đứng tên trong một công trình.
+/// claimStatus là cơ chế xác nhận: người tự khai được CONFIRMED ngay, người bị
+/// đồng nghiệp gắn tên vào ở PENDING cho tới khi chính họ xác nhận.
+model PublicationAuthor {
+  id              String            @id @default(cuid())
+  publicationId   String
+  userId          String
+  /// Vị trí trong authorsRaw; -1 = chưa chỉ được là tác giả nào.
+  authorIndex     Int               @default(-1)
+  isFirst         Boolean           @default(false)
+  isCorresponding Boolean           @default(false)
+  isLast          Boolean           @default(false)
+  /// Cách 1 của Phụ lục 2 — nhóm tự thoả thuận tỷ lệ chia giờ.
+  sharePercent    Int?
+  claimStatus     AuthorClaimStatus @default(PENDING)
+  invitedBy       String?
+  respondedAt     DateTime?
+  showOnWeb       Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([publicationId, userId])
+  @@index([userId, claimStatus])
 }
