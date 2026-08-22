@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import ms, { type StringValue } from 'ms';
 import { HashingService } from '../shared/services/hashing.service';
@@ -34,6 +34,11 @@ import { EmailService } from '../shared/email/email.service';
 import { generateOTP, toSlug } from '../shared/helpers';
 import envConfig from '../shared/config/config';
 import { VerificationCodeType } from '../generated/prisma/client';
+import {
+  SsoTokenError,
+  splitVietnameseName,
+  verifyPhysoomToken,
+} from './physoom-sso';
 
 @Injectable()
 export class AuthService {
@@ -221,6 +226,48 @@ export class AuthService {
       }),
     ]);
     return { message: 'Change password successfully' };
+  }
+
+  /**
+   * Đăng nhập bằng SSO của PHYsoom — dành cho giảng viên ở app hồ sơ khoa học.
+   *
+   * Giảng viên KHÔNG có tài khoản quản trị web Khoa; hồ sơ nhân sự nằm ở PHYsoom.
+   * Ở đây web Khoa nhận token PHYsoom đã ký, đổi lấy access token của chính mình,
+   * và tạo tài khoản `LECTURER` ở lần đăng nhập đầu.
+   *
+   * Chuỗi bí mật chỉ nằm ở backend — app không bao giờ thấy nó.
+   */
+  async loginWithPhysoom(token: string) {
+    let payload;
+    try {
+      payload = verifyPhysoomToken(
+        token,
+        process.env.PHYSOOM_SSO_SECRET ?? '',
+        process.env.PHYSOOM_SSO_AUDIENCE || 'phys-profile',
+      );
+    } catch (err: unknown) {
+      if (err instanceof SsoTokenError)
+        throw new UnauthorizedException(err.message);
+      throw err;
+    }
+
+    const { firstName, lastName } = splitVietnameseName(
+      payload.name || payload.email,
+    );
+    const user = await this.authRepository.upsertSsoUser({
+      email: payload.email,
+      firstName,
+      lastName,
+    });
+    // Tài khoản bị khoá thì SSO cũng không mở lại được — quyết định của web Khoa,
+    // không phải của PHYsoom.
+    if (!user.isActive) throw InactiveAccountException;
+
+    return this.generateTokens({
+      userId: user.id,
+      roleName: user.role as RoleName,
+      departmentId: user.departmentId,
+    });
   }
 
   async generateTokens(payload: CreateAccessTokenPayload) {

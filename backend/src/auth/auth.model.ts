@@ -15,6 +15,12 @@ export const LoginResSchema = z.object({
 
 export type LoginResType = z.infer<typeof LoginResSchema>;
 
+/** Token ngắn hạn do PHYsoom ký, đổi lấy access token của web Khoa. */
+export const PhysoomSsoBodySchema = z.object({
+  token: z.string().min(20).max(4000),
+});
+export type PhysoomSsoBodyType = z.infer<typeof PhysoomSsoBodySchema>;
+
 export const RefreshTokenBodySchema = z.object({
   refreshToken: z.string(),
 });

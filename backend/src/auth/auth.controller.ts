@@ -17,6 +17,7 @@ import { AuthService } from './auth.service';
 import { GoogleService } from './google.service';
 import {
   LoginBodyDTO,
+  PhysoomSsoBodyDTO,
   LoginResDTO,
   RefreshTokenBodyDTO,
   RefreshTokenResDTO,
@@ -90,6 +91,15 @@ export class AuthController {
   @ZodSerializerDto(LoginResDTO)
   login(@Body() body: LoginBodyDTO) {
     return this.authService.login(body);
+  }
+
+  /** Đổi token PHYsoom lấy access token của web Khoa. */
+  @Post('sso/physoom')
+  @IsPublic()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ZodSerializerDto(LoginResDTO)
+  ssoPhysoom(@Body() body: PhysoomSsoBodyDTO) {
+    return this.authService.loginWithPhysoom(body.token);
   }
 
   @Post('create-admin')

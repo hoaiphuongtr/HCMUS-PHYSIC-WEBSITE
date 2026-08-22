@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import {
+  PhysoomSsoBodySchema,
   LoginBodySchema,
   LoginResSchema,
   RefreshTokenBodySchema,
@@ -38,3 +39,5 @@ export class ChangePasswordBodyDTO extends createZodDto(
   ChangePasswordBodySchema,
 ) {}
 export class SetStarredBodyDTO extends createZodDto(SetStarredBodySchema) {}
+
+export class PhysoomSsoBodyDTO extends createZodDto(PhysoomSsoBodySchema) {}

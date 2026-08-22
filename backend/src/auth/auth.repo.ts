@@ -139,4 +139,38 @@ export class AuthRepository {
       where: { email_type: { email: data.email, type: data.type } },
     });
   }
+
+  /**
+   * Tài khoản đăng nhập bằng SSO PHYsoom.
+   *
+   * Tên và MSCB lấy lại từ PHYsoom mỗi lần đăng nhập vì PHYsoom mới là nơi giữ
+   * hồ sơ nhân sự. Nhưng VAI TRÒ và bộ môn thì chỉ đặt lúc TẠO MỚI — một quản
+   * trị viên cũng có tài khoản PHYsoom, đăng nhập lại mà bị hạ xuống LECTURER
+   * là mất luôn trang quản trị.
+   */
+  upsertSsoUser(data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    position?: string | null;
+  }) {
+    return this.prisma.user.upsert({
+      where: { email: data.email },
+      update: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        lastLoginAt: new Date(),
+      },
+      create: {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        position: data.position ?? null,
+        role: 'LECTURER',
+        isActive: true,
+        lastLoginAt: new Date(),
+      },
+      omit: { password: true },
+    });
+  }
 }
