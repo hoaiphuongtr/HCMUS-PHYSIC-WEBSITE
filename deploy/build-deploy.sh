@@ -33,6 +33,37 @@ if [ "$behind" != "0" ]; then
   exit 1
 fi
 
+
+# `python3` của Git Bash là bản msys2 và thường KHÔNG có paramiko, trong khi bản
+# cài từ python.org thì có — gọi thẳng `python3` là dính "No module named
+# 'paramiko'" dù đã pip install. Chọn trình thông dịch nào thật sự chạy được.
+# Ép một bản cụ thể: PYTHON=/duong/dan/python.exe deploy/build-deploy.sh be
+pick_python() {
+  for p in ${PYTHON:-} python3 python       /c/Users/*/AppData/Local/Programs/Python/Python*/python.exe       /c/Program\ Files/Python*/python.exe; do
+    [ -n "$p" ] || continue
+    command -v "$p" >/dev/null 2>&1 || [ -x "$p" ] || continue
+    if "$p" -c "import paramiko" >/dev/null 2>&1; then
+      printf '%s' "$p"
+      return 0
+    fi
+  done
+  return 1
+}
+
+PY_BIN=$(pick_python) || {
+  echo "DỪNG: không tìm được Python nào có paramiko." >&2
+  echo "  Cài: python -m pip install paramiko" >&2
+  echo "  Hoặc chỉ định: PYTHON=/c/Users/<ban>/AppData/Local/Programs/Python/Python313/python.exe deploy/build-deploy.sh be" >&2
+  exit 1
+}
+
+# Docker phải đang chạy, nếu không thì `docker build` chết giữa chừng sau khi đã
+# mất vài phút — kiểm trước cho biết ngay.
+docker info >/dev/null 2>&1 || {
+  echo "DỪNG: Docker chưa chạy. Mở Docker Desktop rồi thử lại." >&2
+  exit 1
+}
+
 IMAGES=""
 case "$TARGET" in
   fe|all)
@@ -59,6 +90,6 @@ echo "== save $(date +%H:%M) =="
 docker save $IMAGES | gzip -1 > "$ARCHIVE"
 
 echo "== deploy $(date +%H:%M) =="
-python3 "$ROOT/deploy/deploy-sandbox.py" "$ARCHIVE" $SERVICES
+"$PY_BIN" "$ROOT/deploy/deploy-sandbox.py" "$ARCHIVE" $SERVICES
 rm -f "$ARCHIVE"
 echo "ALL_DONE $(date +%H:%M)"
