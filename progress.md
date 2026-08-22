@@ -932,3 +932,33 @@ box 3.7GB RAM. Đây là một phần lý do ổ đầy.
 `depends_on`, biến `OLLAMA_URL`/`OLLAMA_MODEL`/`HF_CACHE_DIR`, và khai báo volume
 `ollama_models`/`hf_cache`. **Gỡ khai báo volume KHÔNG xoá dữ liệu trên box** —
 volume thành mồ côi, phải `docker volume rm` tay.
+
+### Kết quả dọn ổ (2026-08-22, không gián đoạn dịch vụ)
+
+| | trước | sau |
+|---|---|---|
+| `/` | 45G/47G — **96%** | 26G/47G — **54%** |
+| `/var/lib/docker` | 32G/32G — **100%** | 6.1G/32G — **21%** |
+| `docker.img` chiếm trên `/` | 31G | 12G |
+
+Ba việc, không cái nào cần dừng dịch vụ:
+
+1. **`fstrim`** — đây mới là mấu chốt. Ổ docker là tệp loopback nằm trên `/`, và tệp
+   đó **chỉ phình, không co**: dọn bên trong thì `df /var/lib/docker` đẹp lên nhưng `/`
+   không nhúc nhích. Box này có hỗ trợ discard trên loop
+   (`/sys/block/loop0/queue/discard_max_bytes` = 4294966784, CentOS 7.9 / 3.10) nên
+   `fstrim` đục lỗ được vào tệp và **trả 19G về cho `/`**.
+2. **Cron hằng tuần** `/etc/cron.d/fstrim-docker` (3h sáng Chủ nhật) để cái ratchet đó
+   không quay lại. Dùng cron thay vì cờ `discard` trong fstab vì trim ngay mỗi lần xoá
+   có thể làm chậm I/O trên nhân 3.10 cũ.
+3. **Gỡ Ollama** — 4.77GB ảnh + 672MB model + container + volume.
+
+**KHÔNG chuyển `data-root` ra khỏi loopback.** Đã cân nhắc và bỏ: cần 12G trống trên
+`/` mới bắt đầu chép được (mà chỗ trống đó đang bị chính loopback giữ), `pgdata` và
+`caddy_data` chứng chỉ Let's Encrypt thật nằm trong cây đó, overlay2 phải chép bằng
+`rsync -aHAX` mới giữ được hardlink, và phải tắt toàn bộ web. `fstrim` xoá luôn lý do
+phải làm việc đó.
+
+Compose mới đã đẩy lên box (giữ bản cũ ở `docker-compose.sandbox.yml.bak-20260822`),
+`docker compose config` hợp lệ, 6 dịch vụ vẫn healthy, trang công khai 200 suốt.
+Healthcheck `pg_isready -d` mới sẽ có hiệu lực ở lần dựng lại container db kế tiếp.
