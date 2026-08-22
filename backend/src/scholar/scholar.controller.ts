@@ -40,6 +40,7 @@ import {
   ProjectListResDTO,
   ProjectResDTO,
   StaffPageResDTO,
+  SyncStaffPageBodyDTO,
   UpdateProjectBodyDTO,
   StatsResDTO,
   UpdateStaffPageBodyDTO,
@@ -257,6 +258,16 @@ export class ScholarController {
     @Body() body: UpdateStaffPageBodyDTO,
   ) {
     return this.staffPage.update(userId, body);
+  }
+
+  /** Sinh lại danh sách công bố (và đề tài) trên trang từ CSDL. */
+  @Post('me/staff-page/sync')
+  @ZodSerializerDto(StaffPageResDTO)
+  syncStaffPage(
+    @ActiveUser('userId') userId: string,
+    @Body() body: SyncStaffPageBodyDTO,
+  ) {
+    return this.staffPage.syncFromDatabase(userId, body);
   }
 
   /**

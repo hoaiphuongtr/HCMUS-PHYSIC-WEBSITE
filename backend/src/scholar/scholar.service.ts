@@ -631,6 +631,7 @@ export class ScholarService {
       authorsRaw: (row.authorsRaw ?? []) as AuthorRow[],
       isClassified: Boolean(row.catalogCode),
       myClaimStatus: mine?.claimStatus ?? null,
+      myShowOnWeb: mine?.showOnWeb ?? true,
       authors: row.authors.map((a) => ({
         id: a.id,
         userId: a.userId,

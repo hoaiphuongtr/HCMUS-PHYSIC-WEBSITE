@@ -200,6 +200,136 @@ export class StaffPageService {
     return out;
   }
 
+  /**
+   * Sinh danh sách công bố (và đề tài) trên trang TỪ CHÍNH cơ sở dữ liệu.
+   *
+   * Trước đây trang nhân sự giữ một danh sách gõ tay riêng — tức là bản sao thứ
+   * hai của cùng dữ liệu, sớm muộn cũng lệch với mục "Công bố của tôi". Giờ nó
+   * được sinh ra, và người dùng điều khiển bằng hai thứ:
+   *   · cờ `showOnWeb` trên từng bài / từng đề tài
+   *   · `fromYear` để giới hạn phạm vi (vd 5 năm gần nhất)
+   *
+   * Ghi đè hẳn danh sách cũ — đó là điểm mấu chốt, vì mục đích là bỏ bản chép
+   * tay đi. Giao diện phải nói rõ điều này trước khi người dùng bấm.
+   */
+  async syncFromDatabase(
+    userId: string,
+    opts: { fromYear?: number | null; includeProjects?: boolean } = {},
+  ) {
+    const pubs = await this.prisma.publicationAuthor.findMany({
+      where: {
+        userId,
+        claimStatus: 'CONFIRMED',
+        showOnWeb: true,
+        publication: {
+          deletedAt: null,
+          ...(opts.fromYear ? { countYear: { gte: opts.fromYear } } : {}),
+        },
+      },
+      include: { publication: true },
+    });
+
+    const publications = pubs
+      .map((r) => r.publication)
+      .sort((a, b) => (b.countYear ?? 0) - (a.countYear ?? 0))
+      .map((p) => ({
+        year: p.countYear ? String(p.countYear) : '',
+        title: p.title,
+        // Dòng phụ dựng từ dữ liệu thư mục, không bắt người dùng gõ lại.
+        meta: [
+          p.containerTitle,
+          p.volume ? `Tập ${p.volume}` : null,
+          p.issue ? `số ${p.issue}` : null,
+          p.pages ? `tr. ${p.pages}` : null,
+          p.doi ? `DOI ${p.doi}` : null,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        url: p.url ?? (p.doi ? `https://doi.org/${p.doi}` : ''),
+      }));
+
+    let projectEntries: Array<{
+      section: string;
+      title: string;
+      desc: string;
+    }> = [];
+    if (opts.includeProjects) {
+      const members = await this.prisma.projectMember.findMany({
+        where: {
+          userId,
+          claimStatus: 'CONFIRMED',
+          showOnWeb: true,
+          project: {
+            deletedAt: null,
+            ...(opts.fromYear ? { startYear: { gte: opts.fromYear } } : {}),
+          },
+        },
+        include: { project: true },
+      });
+      const roleVi = {
+        LEAD: 'Chủ nhiệm',
+        SECRETARY: 'Thư ký',
+        MEMBER: 'Thành viên',
+      };
+      projectEntries = members
+        .sort((a, b) => (b.project.startYear ?? 0) - (a.project.startYear ?? 0))
+        .map((m) => ({
+          section: 'Đề tài, dự án',
+          title: m.project.title,
+          desc: [
+            m.project.code,
+            m.project.funder,
+            roleVi[m.role],
+            m.project.startYear ? `từ ${m.project.startYear}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        }));
+    }
+
+    const { node, layout, slug } = await this.locate(userId);
+    const prev = node.props ?? {};
+    // Giữ nguyên các mục extras KHÁC do người dùng tự đặt; chỉ thay phần đề tài.
+    const keptExtras = (
+      (prev.extras ?? []) as Array<Record<string, unknown>>
+    ).filter((e) => !/đề tài|de tai|project/i.test(asText(e.section)));
+
+    const next: Record<string, unknown> = {
+      ...prev,
+      publications: publications.map((e) => ({
+        year: e.year,
+        title: toLocalized(e.title, null),
+        meta: toLocalized(e.meta, null),
+        url: e.url,
+      })),
+      ...(opts.includeProjects
+        ? {
+            extras: [
+              ...keptExtras,
+              ...projectEntries.map((e) => ({
+                section: toLocalized(e.section, null),
+                title: toLocalized(e.title, null),
+                desc: toLocalized(e.desc, null),
+              })),
+            ],
+          }
+        : {}),
+    };
+
+    await this.prisma.pageLayout.update({
+      where: { id: layout.id },
+      data: {
+        puckData: this.replaceProps(
+          layout.puckData,
+          node,
+          next,
+        ) as Prisma.InputJsonValue,
+      },
+    });
+    this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
+    return this.read(userId);
+  }
+
   /** Đổi ảnh chân dung. Ảnh đã được lưu vào uploads/ bởi tầng nhận tệp. */
   async setPhoto(userId: string, url: string) {
     return this.update(userId, { photo: url });

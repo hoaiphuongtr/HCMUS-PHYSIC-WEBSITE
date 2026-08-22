@@ -60,3 +60,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ProjectMember_projectId_userId_key"
   ON "ProjectMember" ("projectId", "userId");
 CREATE INDEX IF NOT EXISTS "ProjectMember_userId_claimStatus_idx"
   ON "ProjectMember" ("userId", "claimStatus");
+
+-- Cờ hiển thị đề tài trên trang nhân sự, cùng ý nghĩa với PublicationAuthor.showOnWeb.
+ALTER TABLE "ProjectMember"
+  ADD COLUMN IF NOT EXISTS "showOnWeb" BOOLEAN NOT NULL DEFAULT true;

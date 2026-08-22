@@ -52,6 +52,7 @@ export class ProjectService {
       isClassified: Boolean(row.catalogCode),
       myRole: mine?.role ?? null,
       myClaimStatus: mine?.claimStatus ?? null,
+      myShowOnWeb: mine?.showOnWeb ?? true,
       members: row.members.map((m: any) => ({
         id: m.id,
         userId: m.userId,
@@ -140,6 +141,7 @@ export class ProjectService {
             // Người khai mặc định là chủ nhiệm; đổi được nếu họ chỉ là thành viên.
             role: body.myRole ?? 'LEAD',
             sharePercent: body.mySharePercent ?? null,
+            showOnWeb: body.myShowOnWeb ?? true,
             claimStatus: 'CONFIRMED',
             respondedAt: new Date(),
           },
@@ -202,13 +204,18 @@ export class ProjectService {
       },
     });
 
-    if (body.myRole || body.mySharePercent !== undefined) {
+    if (
+      body.myRole ||
+      body.mySharePercent !== undefined ||
+      body.myShowOnWeb !== undefined
+    ) {
       await this.prisma.projectMember.update({
         where: { projectId_userId: { projectId: id, userId } },
         data: {
           role: body.myRole ?? undefined,
           sharePercent:
             body.mySharePercent === undefined ? undefined : body.mySharePercent,
+          showOnWeb: body.myShowOnWeb ?? undefined,
         },
       });
     }

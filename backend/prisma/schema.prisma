@@ -1042,6 +1042,8 @@ model ProjectMember {
   claimStatus  AuthorClaimStatus @default(PENDING)
   invitedBy    String?
   respondedAt  DateTime?
+  /// Hiện đề tài này trên trang nhân sự của người này hay không.
+  showOnWeb    Boolean           @default(true)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 

@@ -23,6 +23,7 @@ import {
   ProjectListResSchema,
   ProjectResSchema,
   StaffPageResSchema,
+  SyncStaffPageBodySchema,
   UpdateProjectBodySchema,
   StatsResSchema,
   UpdateStaffPageBodySchema,
@@ -98,4 +99,8 @@ export class PendingProjectListResDTO extends createZodDto(
 export class ProjectClaimBodyDTO extends createZodDto(ProjectClaimBodySchema) {}
 export class IntegrationProjectResDTO extends createZodDto(
   IntegrationProjectResSchema,
+) {}
+
+export class SyncStaffPageBodyDTO extends createZodDto(
+  SyncStaffPageBodySchema,
 ) {}

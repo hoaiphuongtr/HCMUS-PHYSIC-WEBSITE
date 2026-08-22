@@ -251,6 +251,8 @@ export const PublicationResSchema = z.object({
   /** Suy ra cho người đang gọi, để giao diện không phải tự dò. */
   isClassified: z.boolean(),
   myClaimStatus: z.enum(CLAIM_STATUSES).nullable(),
+  /** Bài này có hiện trên trang nhân sự của TÔI không. */
+  myShowOnWeb: z.boolean(),
 });
 export type PublicationResType = z.infer<typeof PublicationResSchema>;
 
@@ -465,6 +467,14 @@ export const StaffPageResSchema = z.object({
   legacyHtml: z.string(),
 });
 
+/** Sinh lại danh sách trên trang từ CSDL. Ghi đè hẳn danh sách cũ. */
+export const SyncStaffPageBodySchema = z.object({
+  /** Chỉ lấy từ năm này trở đi. Bỏ trống = lấy tất cả. */
+  fromYear: z.number().int().min(1950).max(2200).nullish(),
+  includeProjects: z.boolean().optional(),
+});
+export type SyncStaffPageBodyType = z.infer<typeof SyncStaffPageBodySchema>;
+
 export const UpdateStaffPageBodySchema = z.object({
   photo: z.string().max(1000).nullish(),
   eyebrow: z.string().max(200).nullish(),
@@ -522,6 +532,7 @@ export const ProjectResSchema = z.object({
   isClassified: z.boolean(),
   myRole: z.enum(PROJECT_ROLES).nullable(),
   myClaimStatus: z.enum(CLAIM_STATUSES).nullable(),
+  myShowOnWeb: z.boolean(),
 });
 
 export const ProjectListResSchema = z.object({
@@ -547,6 +558,8 @@ export const CreateProjectBodySchema = z.object({
   note: OptionalText(2000),
   myRole: z.enum(PROJECT_ROLES).optional(),
   mySharePercent: z.number().int().min(1).max(100).nullish(),
+  /** Hiện đề tài này trên trang nhân sự của tôi. */
+  myShowOnWeb: z.boolean().optional(),
   memberUserIds: z.array(z.string()).max(50).default([]),
 });
 export type CreateProjectBodyType = z.infer<typeof CreateProjectBodySchema>;
