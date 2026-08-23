@@ -214,11 +214,51 @@ async function main(): Promise<void> {
   }
 
   if (!APPLY) {
+    // Hình thức công tác ảnh hưởng tới ĐỊNH MỨC NCKH, nên phải soi được TRƯỚC khi
+    // ghi. Liệt kê riêng thay vì nhét thêm một cột: người cần xem là người sắp bị
+    // gán "cơ hữu", và họ phải đọc được lý do — ngạch nào.
+    const seCoHuu = good.filter(coHuu);
+    const chuaRo = good.filter((m) => !coHuu(m));
+    const theoNgach = new Map<string, number>();
+    for (const m of seCoHuu) {
+      const k = (m.rank || '').trim();
+      theoNgach.set(k, (theoNgach.get(k) ?? 0) + 1);
+    }
+
+    console.log('── Hình thức công tác sẽ điền sẵn ──');
+    console.log(
+      `  ${seCoHuu.length} người CÓ NGẠCH → điền "cơ hữu"; ` +
+        `${chuaRo.length} người trống ngạch → ĐỂ TRỐNG, chờ họ tự khai.`,
+    );
+    console.log(
+      '  Theo ngạch: ' +
+        [...theoNgach.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([k, n]) => `${k} ${n}`)
+          .join(' · '),
+    );
+    console.log(
+      '  Chỉ ghi vào hồ sơ đang TRỐNG trường này — không đè lên ai đã tự khai.',
+    );
+    if (chuaRo.length) {
+      console.log('  Trống ngạch (để trống, KHÔNG đoán là thỉnh giảng):');
+      for (const m of chuaRo.slice(0, 12)) {
+        console.log(
+          `    ${m.email.padEnd(32)} ${m.name.padEnd(26)} ${m.department || '(không rõ bộ môn)'}`,
+        );
+      }
+      if (chuaRo.length > 12) {
+        console.log(`    … còn ${chuaRo.length - 12} người nữa`);
+      }
+    }
+    console.log();
+
     console.log('── 15 dòng đầu sẽ ghi ──');
     for (const m of good.slice(0, 15)) {
       const slug = slugByName.get(normalizeName(stripTitles(m.name)));
       console.log(
         `  ${m.email.padEnd(30)} ${m.name.padEnd(26)} ${(m.degree || '—').padEnd(5)} ` +
+          `${(m.rank || '—').padEnd(5)} ${coHuu(m) ? 'cơ hữu' : '  —   '} ` +
           `${(m.department || '—').padEnd(24)} ${slug ? '→ ' + slug : '(chưa có trang)'}`,
       );
     }
