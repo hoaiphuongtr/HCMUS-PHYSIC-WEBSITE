@@ -4,11 +4,18 @@ import { ResolveService } from './resolve/resolve.service';
 import { ScholarController } from './scholar.controller';
 import { ScholarService } from './scholar.service';
 import { ProjectService } from './project.service';
+import { ActivityService } from './activity.service';
 import { StaffPageService } from './staff-page.service';
 
 @Module({
   controllers: [ScholarController, ScholarIntegrationController],
-  providers: [ScholarService, ResolveService, StaffPageService, ProjectService],
+  providers: [
+    ScholarService,
+    ResolveService,
+    StaffPageService,
+    ProjectService,
+    ActivityService,
+  ],
   exports: [ScholarService],
 })
 export class ScholarModule {}

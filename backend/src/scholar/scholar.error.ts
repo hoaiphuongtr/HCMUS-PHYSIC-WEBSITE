@@ -100,3 +100,7 @@ export const NotAProjectMemberException = new ForbiddenException([
     error: 'Chỉ thành viên đã xác nhận của đề tài mới được sửa',
   },
 ]);
+
+export const ActivityNotFoundException = new NotFoundException([
+  { field: 'id', error: 'Không tìm thấy hoạt động khoa học' },
+]);

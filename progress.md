@@ -985,3 +985,27 @@ thưởng, tổ chức hội nghị, hướng dẫn người học…). Đây l�
 `projects` được: ngồi hội đồng thẩm định đề tài của người khác thì không có kinh phí,
 không có số tháng, và người ngồi hội đồng không phải thành viên đề tài. Cần bàn phạm vi
 trước khi làm.
+
+### Bảng 3 — Hoạt động KHCN khác (2026-08-23)
+65 trên tổng 106 mã Phụ lục 2 trước nay không có đường nào vào ACADsoom; giảng viên
+phải khai tay. Nay có `ScienceActivity` + API + màn khai báo.
+
+**Vì sao là thực thể mới chứ không dùng lại `ResearchProject`:** ngồi hội đồng thẩm
+định đề tài của người khác thì không có kinh phí, không có số tháng thực hiện, và
+người ngồi hội đồng không phải thành viên đề tài. Nhét chung là bịa ra ba trường vô
+nghĩa và làm hỏng phép tính theo kinh phí của Bảng 2.
+
+**Vì sao KHÔNG dùng chung giữa nhiều người như `Publication`:** Bảng 3 tính giờ CỐ
+ĐỊNH CHO MỘT NGƯỜI, không chia theo số tác giả. Hai người cùng ngồi một hội đồng là
+hai bản ghi độc lập, mỗi người hưởng trọn phần của mình — nên không có mời, không có
+hàng chờ xác nhận, không có `totalAuthors` / `schoolAuthors` / `sharePercent`.
+
+`catalogCode` **bắt buộc**, khác `Publication`: bài báo tra tự động về nên có giai
+đoạn "chưa phân loại", còn ở đây người khai chọn mã ngay từ danh sách. `level` và
+`role` chỉ để đối soát — mã đã gói sẵn cả cấp lẫn vai trò.
+
+Danh mục 65 mã trong `phys-profile/src/lib/catalog.ts` **trích thẳng bằng script** từ
+`acadsoom/src/lib/nv2Catalog.js` — bảng đã đối chiếu tay với bản scan PL2 ngày
+22/8/2026. Gõ lại tay là mời một mã lệch vào, mà mã lệch thì ACADsoom quy đổi sai giờ.
+
+Migration `20260823_science_activity` — cộng thêm, chạy lại được. CHƯA chạy trên box.

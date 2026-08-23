@@ -36,7 +36,12 @@ import {
   CreateProjectBodyDTO,
   ListProjectsQueryDTO,
   PendingProjectListResDTO,
+  ActivityListResDTO,
+  ActivityResDTO,
+  CreateActivityBodyDTO,
+  ListActivitiesQueryDTO,
   ProjectClaimBodyDTO,
+  UpdateActivityBodyDTO,
   ProjectListResDTO,
   ProjectResDTO,
   StaffPageResDTO,
@@ -50,6 +55,7 @@ import {
 import { ScholarService } from './scholar.service';
 import { StaffPageService } from './staff-page.service';
 import { ProjectService } from './project.service';
+import { ActivityService } from './activity.service';
 import { PhotoRequiredException } from './scholar.error';
 
 // Cùng thư mục và cùng cách đặt tên với module media, để ảnh chân dung nằm chung
@@ -71,6 +77,7 @@ export class ScholarController {
     private readonly service: ScholarService,
     private readonly staffPage: StaffPageService,
     private readonly projects: ProjectService,
+    private readonly activities: ActivityService,
   ) {}
 
   // ── Lý lịch khoa học ──────────────────────────────────────────────────────
@@ -224,6 +231,53 @@ export class ScholarController {
   @Delete('projects/:id')
   removeProject(@ActiveUser('userId') userId: string, @Param('id') id: string) {
     return this.projects.remove(userId, id);
+  }
+
+  // ── Hoạt động KHCN khác (Bảng 3) ────────────────────────────────────────
+  //
+  // Không có route xác nhận như công bố và đề tài: Bảng 3 tính giờ cố định cho
+  // MỘT người, nên hoạt động là của riêng người khai, không ai phải xác nhận hộ.
+
+  @Get('activities')
+  @ZodSerializerDto(ActivityListResDTO)
+  listActivities(
+    @ActiveUser('userId') userId: string,
+    @Query() query: ListActivitiesQueryDTO,
+  ) {
+    return this.activities.list(userId, query);
+  }
+
+  @Get('activities/:id')
+  @ZodSerializerDto(ActivityResDTO)
+  findActivity(@ActiveUser('userId') userId: string, @Param('id') id: string) {
+    return this.activities.findOne(id, userId);
+  }
+
+  @Post('activities')
+  @ZodSerializerDto(ActivityResDTO)
+  createActivity(
+    @ActiveUser('userId') userId: string,
+    @Body() body: CreateActivityBodyDTO,
+  ) {
+    return this.activities.create(userId, body);
+  }
+
+  @Patch('activities/:id')
+  @ZodSerializerDto(ActivityResDTO)
+  updateActivity(
+    @ActiveUser('userId') userId: string,
+    @Param('id') id: string,
+    @Body() body: UpdateActivityBodyDTO,
+  ) {
+    return this.activities.update(userId, id, body);
+  }
+
+  @Delete('activities/:id')
+  removeActivity(
+    @ActiveUser('userId') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.activities.remove(userId, id);
   }
 
   @Get('project-claims/pending')

@@ -3,12 +3,14 @@ import { ZodSerializerDto } from 'nestjs-zod';
 import { IsPublic } from '../shared/decorators/auth.decorator';
 import {
   IntegrationProjectResDTO,
+  IntegrationActivityResDTO,
   IntegrationPublicationResDTO,
   IntegrationQueryDTO,
 } from './scholar.dto';
 import { IntegrationSecretGuard } from './integration-secret.guard';
 import { ScholarService } from './scholar.service';
 import { ProjectService } from './project.service';
+import { ActivityService } from './activity.service';
 
 /**
  * Kênh máy-với-máy cho ACADsoom.
@@ -29,12 +31,20 @@ export class ScholarIntegrationController {
   constructor(
     private readonly service: ScholarService,
     private readonly projects: ProjectService,
+    private readonly activities: ActivityService,
   ) {}
 
   @Get('publications')
   @ZodSerializerDto(IntegrationPublicationResDTO)
   publications(@Query() query: IntegrationQueryDTO) {
     return this.service.integrationList(query);
+  }
+
+  /** Hoạt động KHCN khác — Bảng 3. Giờ cố định cho một người, không chia. */
+  @Get('activities')
+  @ZodSerializerDto(IntegrationActivityResDTO)
+  listActivities(@Query() query: IntegrationQueryDTO) {
+    return this.activities.integrationList(query);
   }
 
   /** Đề tài đã chọn mã Bảng 2, thành viên đã xác nhận. Không trả giờ. */

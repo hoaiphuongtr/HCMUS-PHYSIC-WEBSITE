@@ -179,6 +179,7 @@ model User {
   scholarProfile     ScholarProfile?
   publicationAuthors PublicationAuthor[]
   projectMembers     ProjectMember[]
+  scienceActivities  ScienceActivity[]
 
   @@index([role])
   @@index([email])
@@ -994,6 +995,60 @@ model PublicationAuthor {
 /// Vì sao ở đây chứ không ở ACADsoom: giảng viên không nên khai công bố ở một
 /// app rồi đề tài ở app khác. Web Khoa giữ dữ kiện, ACADsoom lấy về rồi tự nhân
 /// hệ số ra giờ — cùng một ranh giới như với công bố.
+/// Hoạt động KHCN khác — Bảng 3 của Phụ lục 2, 65 trên tổng 106 mã: ngồi hội đồng
+/// đánh giá đề tài của người khác, giải thưởng, tổ chức hội nghị, hướng dẫn người
+/// học đạt thành tích, ký kết hợp tác quốc tế, ban biên tập tạp chí…
+///
+/// KHÔNG dùng lại ResearchProject: ngồi hội đồng thẩm định đề tài của người khác
+/// thì không có kinh phí, không có số tháng thực hiện, và người ngồi hội đồng
+/// không phải thành viên đề tài. Nhét chung là bịa ra ba trường vô nghĩa và làm
+/// hỏng phép tính theo kinh phí của Bảng 2.
+///
+/// Và KHÔNG dùng chung giữa nhiều người như Publication: Bảng 3 tính giờ CỐ ĐỊNH
+/// cho một người, không chia theo số tác giả. Hai người cùng ngồi một hội đồng là
+/// hai bản ghi độc lập, mỗi người hưởng phần của mình — nên ở đây không có cơ chế
+/// mời và xác nhận đồng sở hữu.
+model ScienceActivity {
+  id     String @id @default(cuid())
+  userId String
+
+  /// Mã Bảng 3 (B3-…). BẮT BUỘC, khác với Publication: bài báo tra tự động về nên
+  /// có giai đoạn "chưa phân loại", còn ở đây người khai tự chọn từ danh sách nên
+  /// không có lý do gì để tồn tại một bản ghi không mã. Mã đã gói sẵn cả cấp lẫn
+  /// vai trò, ACADsoom quy đổi giờ theo đúng nó.
+  catalogCode String
+  /// Tên đề tài được đánh giá, tên hội nghị, tên giải thưởng…
+  title       String
+  /// Cấp (Nhà nước / ĐHQG-HCM / Bộ-Sở / Trường) và vai trò (Chủ tịch / Thư ký /
+  /// Phản biện / Thành viên). CHỈ để hiển thị và đối soát — giờ quy đổi lấy theo
+  /// catalogCode, hai trường này lệch cũng không làm sai con số.
+  level       String?
+  role        String?
+  /// Đơn vị tổ chức / cơ quan ra quyết định.
+  organizer   String?
+  /// Số quyết định thành lập hội đồng, giấy chứng nhận giải thưởng…
+  decisionNo  String?
+
+  /// Mốc để xếp vào năm học. Bảng 3 không có kỳ thực hiện kéo dài như Bảng 2.
+  year  Int?
+  month Int?
+
+  note String?
+  /// Liên kết minh chứng.
+  url  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([catalogCode])
+  @@index([deletedAt])
+  @@index([userId, year])
+}
+
 model ResearchProject {
   id          String  @id @default(cuid())
   /// Mã số đề tài do cơ quan chủ quản cấp.

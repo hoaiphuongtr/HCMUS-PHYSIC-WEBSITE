@@ -431,6 +431,78 @@ export const IntegrationPublicationResSchema = z.object({
   ...INTEGRATION_CURSOR,
 });
 
+// ── Hoạt động KHCN khác (Bảng 3) ────────────────────────────────────────────
+//
+// Khác hẳn công bố và đề tài ở một điểm quyết định hình dạng lược đồ: Bảng 3
+// tính giờ CỐ ĐỊNH CHO MỘT NGƯỜI, không chia theo số tác giả. Nên không có
+// `totalAuthors` / `schoolAuthors` / `sharePercent`, và không có cơ chế mời —
+// hai người cùng ngồi một hội đồng thì khai hai bản ghi độc lập.
+const ActivityYear = z.number().int().min(1950).max(2200);
+
+export const CreateActivityBodySchema = z.object({
+  /** Mã Bảng 3 — BẮT BUỘC. Nó gói sẵn cả cấp lẫn vai trò, và là căn cứ quy đổi giờ. */
+  catalogCode: z.string().min(2).max(20),
+  title: z.string().min(1).max(500),
+  level: OptionalText(100),
+  role: OptionalText(100),
+  organizer: OptionalText(300),
+  decisionNo: OptionalText(100),
+  year: ActivityYear.nullish(),
+  month: z.number().int().min(1).max(12).nullish(),
+  note: OptionalText(2000),
+  url: OptionalText(1000),
+});
+export type CreateActivityBodyType = z.infer<typeof CreateActivityBodySchema>;
+
+export const UpdateActivityBodySchema = CreateActivityBodySchema.partial();
+export type UpdateActivityBodyType = z.infer<typeof UpdateActivityBodySchema>;
+
+export const ListActivitiesQuerySchema = z.object({
+  year: z.coerce.number().int().min(1900).max(2200).optional(),
+  q: z.string().max(200).optional(),
+});
+export type ListActivitiesQueryType = z.infer<typeof ListActivitiesQuerySchema>;
+
+export const ActivityResSchema = z.object({
+  id: z.string(),
+  catalogCode: z.string(),
+  title: z.string(),
+  level: z.string().nullable(),
+  role: z.string().nullable(),
+  organizer: z.string().nullable(),
+  decisionNo: z.string().nullable(),
+  year: z.number().int().nullable(),
+  month: z.number().int().nullable(),
+  note: z.string().nullable(),
+  url: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const ActivityListResSchema = z.object({
+  items: z.array(ActivityResSchema),
+  total: z.number().int(),
+});
+
+export const IntegrationActivityResSchema = z.object({
+  items: z.array(
+    z.object({
+      activityId: z.string(),
+      catalogCode: z.string(),
+      title: z.string(),
+      level: z.string().nullable(),
+      role: z.string().nullable(),
+      organizer: z.string().nullable(),
+      decisionNo: z.string().nullable(),
+      year: z.number().int().nullable(),
+      month: z.number().int().nullable(),
+      email: z.string().nullable(),
+      removed: z.boolean().optional(),
+    }),
+  ),
+  ...INTEGRATION_CURSOR,
+});
+
 export const IntegrationQuerySchema = z.object({
   email: z.string().email().optional(),
   from: z.coerce.number().int().min(1900).max(2200).optional(),

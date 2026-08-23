@@ -17,6 +17,12 @@ import {
   SetNameVariantsBodySchema,
   CreateProjectBodySchema,
   IntegrationProjectResSchema,
+  CreateActivityBodySchema,
+  UpdateActivityBodySchema,
+  ListActivitiesQuerySchema,
+  ActivityResSchema,
+  ActivityListResSchema,
+  IntegrationActivityResSchema,
   ListProjectsQuerySchema,
   PendingProjectListResSchema,
   ProjectClaimBodySchema,
@@ -99,6 +105,21 @@ export class PendingProjectListResDTO extends createZodDto(
 export class ProjectClaimBodyDTO extends createZodDto(ProjectClaimBodySchema) {}
 export class IntegrationProjectResDTO extends createZodDto(
   IntegrationProjectResSchema,
+) {}
+
+export class CreateActivityBodyDTO extends createZodDto(
+  CreateActivityBodySchema,
+) {}
+export class UpdateActivityBodyDTO extends createZodDto(
+  UpdateActivityBodySchema,
+) {}
+export class ListActivitiesQueryDTO extends createZodDto(
+  ListActivitiesQuerySchema,
+) {}
+export class ActivityResDTO extends createZodDto(ActivityResSchema) {}
+export class ActivityListResDTO extends createZodDto(ActivityListResSchema) {}
+export class IntegrationActivityResDTO extends createZodDto(
+  IntegrationActivityResSchema,
 ) {}
 
 export class SyncStaffPageBodyDTO extends createZodDto(
