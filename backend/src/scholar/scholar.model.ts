@@ -619,6 +619,7 @@ export const ProjectMemberResSchema = z.object({
 export const ProjectResSchema = z.object({
   id: z.string(),
   code: z.string().nullable(),
+  decisionNo: z.string().nullable(),
   title: z.string(),
   catalogCode: z.string().nullable(),
   funder: z.string().nullable(),
@@ -639,6 +640,7 @@ export const ProjectResSchema = z.object({
   myRole: z.enum(PROJECT_ROLES).nullable(),
   myClaimStatus: z.enum(CLAIM_STATUSES).nullable(),
   myShowOnWeb: z.boolean(),
+  mySharePercent: z.number().int().nullable(),
 });
 
 export const ProjectListResSchema = z.object({
@@ -650,6 +652,8 @@ export const ProjectListResSchema = z.object({
 export const CreateProjectBodySchema = z.object({
   title: z.string().min(1).max(500),
   code: OptionalText(100),
+  /** Số quyết định phê duyệt — căn cứ của mốc "trong thời gian được phê duyệt". */
+  decisionNo: OptionalText(100),
   /** Mã Bảng 2 — CHỦ NHIỆM tự chọn. Hệ thống không suy cấp đề tài từ kinh phí. */
   catalogCode: OptionalText(20),
   funder: OptionalText(300),
@@ -659,7 +663,11 @@ export const CreateProjectBodySchema = z.object({
   startMonth: ProjectMonth.nullish(),
   endYear: ProjectYear.nullish(),
   endMonth: ProjectMonth.nullish(),
-  /** Số tháng thực hiện — Phụ lục 2 chia đều giờ cho từng tháng. */
+  /**
+   * Số tháng thực hiện. CHỈ dùng khi thiếu mốc bắt đầu hoặc kết thúc — có đủ hai
+   * mốc thì backend tự suy ra và bỏ qua giá trị gửi lên, để con số này không bao
+   * giờ lệch với hai mốc kia.
+   */
   months: z.number().int().min(1).max(240).nullish(),
   note: OptionalText(2000),
   myRole: z.enum(PROJECT_ROLES).optional(),
@@ -709,6 +717,7 @@ export const IntegrationProjectResSchema = z.object({
       code: z.string().nullable(),
       title: z.string(),
       catalogCode: z.string().nullable(),
+      decisionNo: z.string().nullable(),
       funder: z.string().nullable(),
       budget: z.number().nullable(),
       status: z.enum(PROJECT_STATUSES),

@@ -6,6 +6,7 @@ import { laterOf, pageBySince } from './integration-cursor';
 import {
   NotAProjectMemberException,
   ProjectNotFoundException,
+  ShareOverflowException,
 } from './scholar.error';
 import type {
   CreateProjectBodyType,
@@ -31,6 +32,28 @@ import type {
  * cùng một mức tiền có thể là ĐHQG loại B, cấp Bộ, hay quỹ tài trợ — đoán sai là
  * lệch hàng nghìn giờ.
  */
+/**
+ * Số tháng thực hiện, suy từ hai mốc — bao gồm cả tháng đầu và tháng cuối.
+ *
+ * Phụ lục 2 tr. 2.7 chia đều giờ của đề tài cho TỪNG THÁNG thực hiện, nên con số
+ * này là mẫu số của mọi phép chia theo năm học. Để người dùng gõ tay một ô riêng
+ * bên cạnh ngày bắt đầu và ngày kết thúc là mời sai lệch: sửa ngày kết thúc mà
+ * quên sửa số tháng thì giờ của mọi thành viên, mọi năm đều lệch mà không ai
+ * thấy. Có đủ hai mốc thì suy ra; thiếu mốc mới dùng giá trị nhập tay.
+ */
+export function soThang(
+  startYear?: number | null,
+  startMonth?: number | null,
+  endYear?: number | null,
+  endMonth?: number | null,
+): number | null {
+  if (!startYear || !startMonth || !endYear || !endMonth) return null;
+  const dau = startYear * 12 + (startMonth - 1);
+  const cuoi = endYear * 12 + (endMonth - 1);
+  if (cuoi < dau) return null;
+  return cuoi - dau + 1;
+}
+
 @Injectable()
 export class ProjectService {
   constructor(
@@ -58,6 +81,7 @@ export class ProjectService {
       isClassified: Boolean(row.catalogCode),
       myRole: mine?.role ?? null,
       myClaimStatus: mine?.claimStatus ?? null,
+      mySharePercent: mine?.sharePercent ?? null,
       myShowOnWeb: mine?.showOnWeb ?? true,
       members: row.members.map((m: any) => ({
         id: m.id,
@@ -126,6 +150,7 @@ export class ProjectService {
     const created = await this.prisma.researchProject.create({
       data: {
         code: body.code ?? null,
+        decisionNo: body.decisionNo ?? null,
         title: body.title,
         catalogCode: body.catalogCode ?? null,
         funder: body.funder ?? null,
@@ -138,7 +163,15 @@ export class ProjectService {
         startMonth: body.startMonth ?? null,
         endYear: body.endYear ?? null,
         endMonth: body.endMonth ?? null,
-        months: body.months ?? null,
+        months:
+          soThang(
+            body.startYear,
+            body.startMonth,
+            body.endYear,
+            body.endMonth,
+          ) ??
+          body.months ??
+          null,
         note: body.note ?? null,
         createdBy: userId,
         members: {
@@ -186,14 +219,37 @@ export class ProjectService {
     await this.assertMember(id, userId);
     const cur = await this.prisma.researchProject.findUnique({
       where: { id },
-      select: { catalogCode: true },
+      select: {
+        catalogCode: true,
+        startYear: true,
+        startMonth: true,
+        endYear: true,
+        endMonth: true,
+      },
     });
     if (!cur) throw ProjectNotFoundException;
+
+    // Suy số tháng theo mốc SAU khi cập nhật, không phải theo mốc gửi lên: người
+    // dùng có thể chỉ sửa ngày kết thúc, và mốc bắt đầu vẫn phải lấy từ bản ghi.
+    const moc = {
+      startYear: body.startYear === undefined ? cur.startYear : body.startYear,
+      startMonth:
+        body.startMonth === undefined ? cur.startMonth : body.startMonth,
+      endYear: body.endYear === undefined ? cur.endYear : body.endYear,
+      endMonth: body.endMonth === undefined ? cur.endMonth : body.endMonth,
+    };
+    const thangSuyRa = soThang(
+      moc.startYear,
+      moc.startMonth,
+      moc.endYear,
+      moc.endMonth,
+    );
 
     await this.prisma.researchProject.update({
       where: { id },
       data: {
         code: body.code === undefined ? undefined : body.code,
+        decisionNo: body.decisionNo === undefined ? undefined : body.decisionNo,
         title: body.title ?? undefined,
         catalogCode:
           body.catalogCode === undefined ? undefined : body.catalogCode,
@@ -209,10 +265,15 @@ export class ProjectService {
         startMonth: body.startMonth === undefined ? undefined : body.startMonth,
         endYear: body.endYear === undefined ? undefined : body.endYear,
         endMonth: body.endMonth === undefined ? undefined : body.endMonth,
-        months: body.months === undefined ? undefined : body.months,
+        months:
+          thangSuyRa ?? (body.months === undefined ? undefined : body.months),
         note: body.note === undefined ? undefined : body.note,
       },
     });
+
+    if (body.mySharePercent !== undefined && body.mySharePercent !== null) {
+      await this.assertShareFits(id, userId, body.mySharePercent);
+    }
 
     if (
       body.myRole ||
@@ -321,6 +382,35 @@ export class ProjectService {
     return this.findOne(projectId, userId);
   }
 
+  /**
+   * Tổng tỷ lệ chia của các thành viên ĐÃ XÁC NHẬN không được vượt 100%.
+   *
+   * Phụ lục 2 tr. 2.8: chủ nhiệm nộp một phương án chia số giờ quy đổi CỦA NHIỆM
+   * VỤ cho từng thành viên — một chiếc bánh, chia một lần. Không có ràng buộc này
+   * thì ba người cùng khai 50% và hệ thống nhận hết, thành 150% giờ của đề tài
+   * mà không ai thấy cho tới lúc đối chiếu tổng.
+   *
+   * Chỉ đếm người đã xác nhận: người còn đang chờ chưa hưởng giờ nào, giữ chỗ cho
+   * họ sẽ chặn oan người đang khai thật.
+   */
+  private async assertShareFits(
+    projectId: string,
+    userId: string,
+    share: number,
+  ) {
+    const others = await this.prisma.projectMember.findMany({
+      where: {
+        projectId,
+        claimStatus: 'CONFIRMED',
+        userId: { not: userId },
+        sharePercent: { not: null },
+      },
+      select: { sharePercent: true },
+    });
+    const daChia = others.reduce((s, m) => s + (m.sharePercent ?? 0), 0);
+    if (daChia + share > 100) throw ShareOverflowException(daChia, share);
+  }
+
   private async assertMember(projectId: string, userId: string) {
     const m = await this.prisma.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId } },
@@ -377,6 +467,7 @@ export class ProjectService {
         item: {
           projectId: p.id,
           code: p.code,
+          decisionNo: p.decisionNo,
           title: p.title,
           catalogCode: p.catalogCode,
           funder: p.funder,

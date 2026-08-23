@@ -1053,6 +1053,10 @@ model ResearchProject {
   id          String  @id @default(cuid())
   /// Mã số đề tài do cơ quan chủ quản cấp.
   code        String?
+  /// Số quyết định phê duyệt. Bảng 2 chỉ tính giờ cho đề tài "đang triển khai
+  /// TRONG THỜI GIAN ĐƯỢC PHÊ DUYỆT" (Phụ lục 2 tr. 2.6), nên quyết định phê
+  /// duyệt chính là căn cứ của mốc thời gian — không phải giấy tờ trang trí.
+  decisionNo  String?
   title       String
   /// Mã Bảng 2 (B2-1.1 … B2-2.2) do CHỦ NHIỆM tự chọn — hệ thống không đoán cấp
   /// đề tài từ kinh phí, vì cùng một mức tiền có thể thuộc nhiều cấp khác nhau.
@@ -1068,8 +1072,13 @@ model ResearchProject {
   startMonth Int?
   endYear    Int?
   endMonth   Int?
-  /// Số tháng thực hiện chính thức. Phụ lục 2 chia đều giờ cho từng tháng, nên
-  /// thiếu con số này thì ACADsoom không tính được phần rơi vào năm học nào.
+  /// Số tháng thực hiện chính thức. Phụ lục 2 tr. 2.7 chia đều giờ cho từng
+  /// tháng, nên đây là MẪU SỐ của phép chia theo năm học — sai một tháng là lệch
+  /// giờ của mọi thành viên, mọi năm.
+  ///
+  /// SUY RA từ start/end khi có đủ hai mốc (xem `soThang()` trong service). Chỉ
+  /// giữ giá trị nhập tay khi thiếu mốc, hoặc khi đề tài có thời gian tạm dừng
+  /// nên số tháng thực hiện ít hơn khoảng cách hai mốc.
   months     Int?
 
   note      String?

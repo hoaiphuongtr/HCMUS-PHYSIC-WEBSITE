@@ -104,3 +104,15 @@ export const NotAProjectMemberException = new ForbiddenException([
 export const ActivityNotFoundException = new NotFoundException([
   { field: 'id', error: 'Không tìm thấy hoạt động khoa học' },
 ]);
+
+/** Tổng tỷ lệ chia của đề tài vượt 100% — xem `assertShareFits`. */
+export const ShareOverflowException = (daChia: number, them: number) =>
+  new UnprocessableEntityException([
+    {
+      field: 'mySharePercent',
+      error:
+        `Các thành viên đã xác nhận đang giữ ${daChia}% của đề tài, ` +
+        `thêm ${them}% nữa là vượt 100%. Phụ lục 2 chia số giờ của nhiệm vụ ` +
+        `một lần cho cả đề tài, không phải mỗi năm một bộ tỷ lệ.`,
+    },
+  ]);
