@@ -696,7 +696,21 @@ export const CreateProjectBodySchema = z.object({
   mySharePercent: z.number().int().min(1).max(100).nullish(),
   /** Hiện đề tài này trên trang nhân sự của tôi. */
   myShowOnWeb: z.boolean().optional(),
-  memberUserIds: z.array(z.string()).max(50).default([]),
+  /**
+   * Thành viên trong Khoa, kèm vai trò và phần được chia — nhận NGAY lúc tạo.
+   * Trước đây chỉ nhận danh sách id, nên chủ nhiệm phải lưu rồi mở lại mới gán
+   * được vai trò và tỷ lệ: hai lượt gọi cho một lần bấm.
+   */
+  members: z
+    .array(
+      z.object({
+        userId: z.string(),
+        role: z.enum(PROJECT_ROLES).optional(),
+        sharePercent: z.number().int().min(1).max(100).nullish(),
+      }),
+    )
+    .max(50)
+    .default([]),
   /**
    * Thành viên KHÔNG có tài khoản trong hệ thống — cộng sự ngoài Khoa, ngoài
    * Trường, hoặc ngoài đơn vị. Phụ lục 2 tr. 2.8 chia giờ cho MỌI thành viên của
@@ -707,6 +721,7 @@ export const CreateProjectBodySchema = z.object({
       z.object({
         name: z.string().min(1).max(200),
         org: OptionalText(300),
+        role: z.enum(PROJECT_ROLES).optional(),
         sharePercent: z.number().int().min(1).max(100).nullish(),
       }),
     )
@@ -717,7 +732,21 @@ export type CreateProjectBodyType = z.infer<typeof CreateProjectBodySchema>;
 
 export const UpdateProjectBodySchema = CreateProjectBodySchema.partial().extend(
   {
-    memberUserIds: z.array(z.string()).max(50).optional(),
+    /**
+     * Thành viên trong Khoa, kèm vai trò và phần được chia — nhận NGAY lúc tạo.
+     * Trước đây chỉ nhận danh sách id, nên chủ nhiệm phải lưu rồi mở lại mới gán
+     * được vai trò và tỷ lệ: hai lượt gọi cho một lần bấm.
+     */
+    members: z
+      .array(
+        z.object({
+          userId: z.string(),
+          role: z.enum(PROJECT_ROLES).optional(),
+          sharePercent: z.number().int().min(1).max(100).nullish(),
+        }),
+      )
+      .max(50)
+      .optional(),
     /**
      * Vai trò và phương án chia giờ của CẢ NHÓM, do chủ nhiệm nộp (Phụ lục 2
      * tr. 2.8). Gộp làm một mảng chứ không tách hai: chúng được sửa cùng lúc

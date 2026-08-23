@@ -191,11 +191,11 @@ export class ProjectService {
       },
       select: { id: true },
     });
-    await this.invite(created.id, userId, body.memberUserIds ?? []);
+    await this.invite(created.id, userId, body.members ?? []);
     await this.addExternals(created.id, body.externalMembers ?? []);
     this.bus.emit('project.changed', {
       id: created.id,
-      userIds: [userId, ...(body.memberUserIds ?? [])],
+      userIds: [userId, ...(body.members ?? []).map((m) => m.userId)],
     });
     return this.findOne(created.id, userId);
   }
@@ -213,6 +213,7 @@ export class ProjectService {
     people: Array<{
       name: string;
       org?: string | null;
+      role?: 'LEAD' | 'SECRETARY' | 'MEMBER';
       sharePercent?: number | null;
     }>,
   ) {
@@ -225,7 +226,7 @@ export class ProjectService {
         externalName: p.name.trim(),
         externalOrg: p.org?.trim() || null,
         sharePercent: p.sharePercent ?? null,
-        role: 'MEMBER' as const,
+        role: p.role ?? ('MEMBER' as const),
         claimStatus: 'CONFIRMED' as const,
         respondedAt: new Date(),
       })),
@@ -236,14 +237,30 @@ export class ProjectService {
   private async invite(
     projectId: string,
     invitedBy: string,
-    userIds: string[],
+    people: Array<{
+      userId: string;
+      role?: 'LEAD' | 'SECRETARY' | 'MEMBER';
+      sharePercent?: number | null;
+    }>,
   ) {
-    const others = [...new Set(userIds)].filter((id) => id && id !== invitedBy);
-    if (!others.length) return;
+    // Khử trùng theo userId: gắn tên một người hai lần là lỗi của người khai,
+    // không phải lý do để dựng hai dòng.
+    const theoId = new Map(
+      people
+        .filter((p) => p.userId && p.userId !== invitedBy)
+        .map((p) => [p.userId, p]),
+    );
+    if (!theoId.size) return;
+
     await this.prisma.projectMember.createMany({
-      data: others.map((userId) => ({
+      // Vai trò và tỷ lệ ghi NGAY từ lúc gắn tên. Chúng là phương án của chủ
+      // nhiệm (tr. 2.8), không phải thứ người được gắn tự khai — nên không có
+      // lý do gì phải đợi họ xác nhận rồi mới ghi được.
+      data: [...theoId.values()].map((p) => ({
         projectId,
-        userId,
+        userId: p.userId,
+        role: p.role ?? ('MEMBER' as const),
+        sharePercent: p.sharePercent ?? null,
         invitedBy,
         claimStatus: 'PENDING' as const,
       })),
@@ -367,7 +384,7 @@ export class ProjectService {
         },
       });
     }
-    if (body.memberUserIds) await this.invite(id, userId, body.memberUserIds);
+    if (body.members) await this.invite(id, userId, body.members);
     this.bus.emit('project.changed', { id, userIds: [userId] });
     return this.findOne(id, userId);
   }
