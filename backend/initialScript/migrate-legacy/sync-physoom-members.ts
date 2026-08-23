@@ -47,6 +47,20 @@ type Member = {
   degree: string;
 };
 
+/**
+ * Suy "cơ hữu" từ NGẠCH viên chức mà PHYsoom ghi.
+ *
+ * PHYsoom KHÔNG có trường hình thức công tác — payload chỉ có
+ * `id, email, name, department, teacher_id, rank, degree`. Nhưng `rank` là ngạch
+ * viên chức (GV, GVC, GVCC, TrG, CV, NCV): giữ ngạch ở Trường nghĩa là đang
+ * trong biên chế, tức cơ hữu. Thỉnh giảng không giữ ngạch.
+ *
+ * CHIỀU NGƯỢC LẠI KHÔNG ĐÚNG. Trống ngạch là THIẾU DỮ LIỆU, không phải bằng
+ * chứng thỉnh giảng — 40/135 người đang trống. Đoán họ là thỉnh giảng sẽ gạt
+ * người thật ra khỏi định mức NCKH của Khoa, nên để trống và chờ họ tự khai.
+ */
+const coHuu = (m: Member) => Boolean((m.rank || '').trim());
+
 /** Học hàm học vị đứng trước tên trên trang nhân sự. */
 const TITLE_RE = /^((GS|PGS|TS|ThS|Ths|CN|KS|NCS|GVC|GVCC|BS|TrG)[.\s]*)+/i;
 const stripTitles = (n: string) => n.replace(TITLE_RE, '').trim();
@@ -261,12 +275,16 @@ async function main(): Promise<void> {
 
     const profile = await prisma.scholarProfile.findUnique({
       where: { userId: user.id },
-      select: { id: true, staffPageSlug: true },
+      select: { id: true, staffPageSlug: true, affiliationType: true },
     });
 
     if (!profile) {
       const p = await prisma.scholarProfile.create({
-        data: { userId: user.id, staffPageSlug: slug },
+        data: {
+          userId: user.id,
+          staffPageSlug: slug,
+          affiliationType: coHuu(m) ? 'FULL_TIME' : null,
+        },
         select: { id: true },
       });
       // Gợi sẵn các dạng tên hay dùng khi đăng báo — người dùng bỏ bớt dạng nào
@@ -284,11 +302,21 @@ async function main(): Promise<void> {
         });
       }
       profiles += 1;
-    } else if (!profile.staffPageSlug && slug) {
-      // Chỉ điền chỗ còn trống, không ghi đè thứ người dùng đã tự sửa.
+    } else if (
+      (!profile.staffPageSlug && slug) ||
+      (!profile.affiliationType && coHuu(m))
+    ) {
+      // Chỉ điền chỗ còn trống, không ghi đè thứ người dùng đã tự sửa. Ghi từng
+      // trường có điều kiện chứ không gộp một cục: vào nhánh này vì lý do cơ hữu
+      // mà `slug` đang rỗng thì gộp cả cục sẽ XOÁ MẤT slug đã nối được trước đó.
       await prisma.scholarProfile.update({
         where: { id: profile.id },
-        data: { staffPageSlug: slug },
+        data: {
+          ...(!profile.staffPageSlug && slug ? { staffPageSlug: slug } : {}),
+          ...(!profile.affiliationType && coHuu(m)
+            ? { affiliationType: 'FULL_TIME' as const }
+            : {}),
+        },
       });
     }
   }

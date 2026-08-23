@@ -35,6 +35,8 @@ export const ScholarProfileResSchema = z.object({
   /** Tên và email của chính người gọi — giao diện cần để chào và hiện chữ tắt. */
   displayName: z.string(),
   email: z.string(),
+  /** Bộ môn, đồng bộ từ PHYsoom. CHỈ ĐỌC — sửa ở PHYsoom, không sửa ở đây. */
+  departmentName: z.string().nullable(),
   orcid: z.string().nullable(),
   scopusAuthorId: z.string().nullable(),
   researcherId: z.string().nullable(),

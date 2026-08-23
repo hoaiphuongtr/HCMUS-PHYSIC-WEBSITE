@@ -79,12 +79,24 @@ export class ScholarService {
     // cần chúng ngay ở lần gọi đầu, nên gộp vào đây thay vì bắt gọi thêm một API.
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { firstName: true, lastName: true, email: true },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
+        // Bộ môn ĐÃ được đồng bộ từ PHYsoom vào `User.departmentId` (xem
+        // sync-physoom-members.ts). Trả kèm ở đây vì trước nay dữ liệu nằm sẵn
+        // trong CSDL mà không màn nào hiện ra, nên người dùng tưởng chưa có.
+        department: { select: { name: true } },
+      },
     });
     const fullName = [user?.lastName, user?.firstName]
       .filter(Boolean)
       .join(' ');
-    const danhTinh = { displayName: fullName, email: user?.email ?? '' };
+    const danhTinh = {
+      displayName: fullName,
+      email: user?.email ?? '',
+      departmentName: user?.department?.name ?? null,
+    };
 
     const existing = await this.prisma.scholarProfile.findUnique({
       where: { userId },
