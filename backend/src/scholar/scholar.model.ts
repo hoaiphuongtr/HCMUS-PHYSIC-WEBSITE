@@ -625,9 +625,12 @@ const ProjectMonth = z.number().int().min(1).max(12);
 
 export const ProjectMemberResSchema = z.object({
   id: z.string(),
-  userId: z.string(),
+  /** Trống = người ngoài hệ thống (cộng sự ngoài Khoa / ngoài Trường). */
+  userId: z.string().nullable(),
   displayName: z.string(),
   email: z.string(),
+  /** Cơ quan của người ngoài, nếu có khai. */
+  externalOrg: z.string().nullable(),
   role: z.enum(PROJECT_ROLES),
   sharePercent: z.number().int().nullable(),
   claimStatus: z.enum(CLAIM_STATUSES),
@@ -694,6 +697,21 @@ export const CreateProjectBodySchema = z.object({
   /** Hiện đề tài này trên trang nhân sự của tôi. */
   myShowOnWeb: z.boolean().optional(),
   memberUserIds: z.array(z.string()).max(50).default([]),
+  /**
+   * Thành viên KHÔNG có tài khoản trong hệ thống — cộng sự ngoài Khoa, ngoài
+   * Trường, hoặc ngoài đơn vị. Phụ lục 2 tr. 2.8 chia giờ cho MỌI thành viên của
+   * nhiệm vụ, nên bỏ họ ra là làm phần của người trong Khoa phình lên.
+   */
+  externalMembers: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        org: OptionalText(300),
+        sharePercent: z.number().int().min(1).max(100).nullish(),
+      }),
+    )
+    .max(50)
+    .default([]),
 });
 export type CreateProjectBodyType = z.infer<typeof CreateProjectBodySchema>;
 
@@ -701,15 +719,20 @@ export const UpdateProjectBodySchema = CreateProjectBodySchema.partial().extend(
   {
     memberUserIds: z.array(z.string()).max(50).optional(),
     /**
-     * Phương án chia giờ của CẢ NHÓM, do chủ nhiệm nộp (Phụ lục 2 tr. 2.8).
-     * Tổng không được vượt 100% — chia một lần cho cả đề tài, không phải mỗi năm
-     * một bộ tỷ lệ.
+     * Vai trò và phương án chia giờ của CẢ NHÓM, do chủ nhiệm nộp (Phụ lục 2
+     * tr. 2.8). Gộp làm một mảng chứ không tách hai: chúng được sửa cùng lúc
+     * trên cùng một bảng, tách ra chỉ tạo cơ hội cho hai lần ghi lệch nhau.
+     *
+     * Tổng tỷ lệ không được vượt 100% — chia một lần cho cả đề tài, không phải
+     * mỗi năm một bộ tỷ lệ.
      */
-    memberShares: z
+    memberUpdates: z
       .array(
         z.object({
-          userId: z.string(),
-          sharePercent: z.number().int().min(1).max(100).nullable(),
+          /** Id của DÒNG thành viên — dùng được cho cả người ngoài hệ thống. */
+          memberId: z.string(),
+          role: z.enum(PROJECT_ROLES).optional(),
+          sharePercent: z.number().int().min(1).max(100).nullish(),
         }),
       )
       .max(50)

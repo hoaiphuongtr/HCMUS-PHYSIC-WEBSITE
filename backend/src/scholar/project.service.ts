@@ -87,10 +87,12 @@ export class ProjectService {
       members: row.members.map((m: any) => ({
         id: m.id,
         userId: m.userId,
-        displayName: [m.user?.lastName, m.user?.firstName]
-          .filter(Boolean)
-          .join(' '),
+        displayName:
+          [m.user?.lastName, m.user?.firstName].filter(Boolean).join(' ') ||
+          m.externalName ||
+          '(chưa rõ tên)',
         email: m.user?.email ?? '',
+        externalOrg: m.externalOrg ?? null,
         role: m.role,
         sharePercent: m.sharePercent,
         claimStatus: m.claimStatus,
@@ -190,11 +192,44 @@ export class ProjectService {
       select: { id: true },
     });
     await this.invite(created.id, userId, body.memberUserIds ?? []);
+    await this.addExternals(created.id, body.externalMembers ?? []);
     this.bus.emit('project.changed', {
       id: created.id,
       userIds: [userId, ...(body.memberUserIds ?? [])],
     });
     return this.findOne(created.id, userId);
+  }
+
+  /**
+   * Thêm thành viên KHÔNG có tài khoản — cộng sự ngoài Khoa hoặc ngoài Trường.
+   *
+   * Đánh CONFIRMED ngay, khác hẳn người trong hệ thống: họ không đăng nhập được
+   * nên không bao giờ tự xác nhận, mà để PENDING thì phần của họ rơi khỏi phép
+   * kiểm tổng và người trong Khoa lại chia nhau đủ 100% — đúng cái sai mà việc
+   * ghi nhận họ sinh ra để tránh.
+   */
+  private async addExternals(
+    projectId: string,
+    people: Array<{
+      name: string;
+      org?: string | null;
+      sharePercent?: number | null;
+    }>,
+  ) {
+    const sach = people.filter((p) => p.name.trim());
+    if (!sach.length) return;
+    await this.prisma.projectMember.createMany({
+      data: sach.map((p) => ({
+        projectId,
+        userId: null,
+        externalName: p.name.trim(),
+        externalOrg: p.org?.trim() || null,
+        sharePercent: p.sharePercent ?? null,
+        role: 'MEMBER' as const,
+        claimStatus: 'CONFIRMED' as const,
+        respondedAt: new Date(),
+      })),
+    });
   }
 
   /** Gắn tên đồng nghiệp → họ ở PENDING cho tới khi chính họ đồng ý. */
@@ -285,20 +320,32 @@ export class ProjectService {
       },
     });
 
-    // Phương án chia của CẢ NHÓM, do chủ nhiệm nộp (tr. 2.8). Kiểm tổng ở đây
-    // chứ không kiểm từng dòng: chia một chiếc bánh thì phải nhìn cả chiếc.
-    if (body.memberShares?.length) {
-      const tong = body.memberShares.reduce(
+    // Vai trò và phương án chia của CẢ NHÓM, do chủ nhiệm nộp (tr. 2.8). Kiểm
+    // tổng ở đây chứ không kiểm từng dòng: chia một chiếc bánh thì phải nhìn cả
+    // chiếc — và chiếc bánh gồm CẢ người ngoài hệ thống.
+    if (body.memberUpdates?.length) {
+      const tong = body.memberUpdates.reduce(
         (t, m) => t + (m.sharePercent ?? 0),
         0,
       );
       if (tong > 100) throw ShareOverflowException(0, tong);
-      for (const m of body.memberShares) {
+      for (const m of body.memberUpdates) {
         await this.prisma.projectMember.updateMany({
-          where: { projectId: id, userId: m.userId },
-          data: { sharePercent: m.sharePercent ?? null },
+          // Khoá theo id DÒNG, không theo userId: người ngoài không có userId.
+          // Vẫn kèm projectId để không sửa được dòng của đề tài khác.
+          where: { id: m.memberId, projectId: id },
+          data: {
+            ...(m.role ? { role: m.role } : {}),
+            ...(m.sharePercent === undefined
+              ? {}
+              : { sharePercent: m.sharePercent ?? null }),
+          },
         });
       }
+    }
+
+    if (body.externalMembers?.length) {
+      await this.addExternals(id, body.externalMembers);
     }
 
     if (body.mySharePercent !== undefined && body.mySharePercent !== null) {
@@ -435,8 +482,11 @@ export class ProjectService {
       where: {
         projectId,
         claimStatus: 'CONFIRMED',
-        userId: { not: userId },
         sharePercent: { not: null },
+        // `{ not: userId }` một mình sẽ LOẠI luôn các dòng userId NULL, vì trong
+        // SQL `NULL <> 'x'` cho ra NULL chứ không phải true. Mà dòng NULL chính
+        // là người ngoài hệ thống — bỏ họ ra là đếm thiếu đúng phần cần đếm.
+        OR: [{ userId: null }, { userId: { not: userId } }],
       },
       select: { sharePercent: true },
     });
@@ -481,6 +531,9 @@ export class ProjectService {
 
     const rows = await this.prisma.projectMember.findMany({
       where: {
+        // Người ngoài hệ thống không có định mức NCKH ở Trường — họ chỉ tồn tại
+        // để chiếm phần trong phương án chia. Không gửi sang ACADsoom.
+        userId: { not: null },
         ...(query.email ? { user: { email: query.email.toLowerCase() } } : {}),
         ...(since
           ? {

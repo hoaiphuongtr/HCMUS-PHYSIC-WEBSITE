@@ -1096,10 +1096,25 @@ model ResearchProject {
 
 /// Thành viên đề tài thuộc Khoa. Cùng cơ chế xác nhận như đồng tác giả: chủ
 /// nhiệm gắn tên, người được gắn phải tự đồng ý thì mới được tính.
+/// Một thành viên đề tài. CÓ THỂ KHÔNG PHẢI người của Khoa.
+///
+/// Phụ lục 2 tr. 2.8 nói chủ nhiệm chia số giờ của nhiệm vụ "cho từng thành
+/// viên… phù hợp với đóng góp của các thành viên trong nhiệm vụ" — là MỌI thành
+/// viên, không riêng người thuộc Khoa hay thuộc Trường. Nếu chỉ chia 100% giữa
+/// vài người trong Khoa thì họ hưởng nhiều hơn phần thật, vì phần của cộng sự
+/// bên ngoài biến mất khỏi mẫu số.
+///
+/// Nên `userId` được phép TRỐNG: dòng không có tài khoản là người ngoài, ghi tên
+/// và cơ quan bằng tay. Họ không đăng nhập, không xác nhận, không lên trang nhân
+/// sự — chỉ chiếm phần của mình trong phương án chia.
 model ProjectMember {
   id           String            @id @default(cuid())
   projectId    String
-  userId       String
+  /// Trống = người ngoài hệ thống, xem `externalName`.
+  userId       String?
+  /// Chỉ dùng khi `userId` trống.
+  externalName String?
+  externalOrg  String?
   role         ProjectRole       @default(MEMBER)
   /// Tỷ lệ chia giờ do nhóm thoả thuận; chủ nhiệm là người khai (Phụ lục 2 tr. 2.8).
   sharePercent Int?
@@ -1112,7 +1127,7 @@ model ProjectMember {
   updatedAt    DateTime          @updatedAt
 
   project ResearchProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([userId, claimStatus])
