@@ -5,6 +5,7 @@ import { EventBusService } from '../shared/services/event-bus.service';
 import { laterOf, pageBySince } from './integration-cursor';
 import {
   NotAProjectMemberException,
+  NotProjectLeadException,
   ProjectNotFoundException,
   ShareOverflowException,
 } from './scholar.error';
@@ -216,7 +217,20 @@ export class ProjectService {
   }
 
   async update(userId: string, id: string, body: UpdateProjectBodyType) {
-    await this.assertMember(id, userId);
+    // CHỦ NHIỆM mới được sửa dữ liệu của đề tài. Phụ lục 2 tr. 2.8 đặt trách
+    // nhiệm ở đó: "chủ nhiệm đề tài cung cấp cho Trường phương án để chia số giờ
+    // quy đổi của nhiệm vụ cho từng thành viên". Để mọi thành viên sửa được kinh
+    // phí hay thời gian là để mỗi người tự đổi mẫu số giờ của cả nhóm.
+    //
+    // Ngoại lệ DUY NHẤT: `myShowOnWeb` — hiện đề tài trên trang nhân sự của
+    // CHÍNH MÌNH hay không là việc riêng của từng người, chủ nhiệm không quyết
+    // thay được.
+    const chiDoiHienThi =
+      body.myShowOnWeb !== undefined &&
+      Object.keys(body).every((k) => k === 'myShowOnWeb');
+
+    if (chiDoiHienThi) await this.assertMember(id, userId);
+    else await this.assertLead(id, userId);
     const cur = await this.prisma.researchProject.findUnique({
       where: { id },
       select: {
@@ -271,6 +285,22 @@ export class ProjectService {
       },
     });
 
+    // Phương án chia của CẢ NHÓM, do chủ nhiệm nộp (tr. 2.8). Kiểm tổng ở đây
+    // chứ không kiểm từng dòng: chia một chiếc bánh thì phải nhìn cả chiếc.
+    if (body.memberShares?.length) {
+      const tong = body.memberShares.reduce(
+        (t, m) => t + (m.sharePercent ?? 0),
+        0,
+      );
+      if (tong > 100) throw ShareOverflowException(0, tong);
+      for (const m of body.memberShares) {
+        await this.prisma.projectMember.updateMany({
+          where: { projectId: id, userId: m.userId },
+          data: { sharePercent: m.sharePercent ?? null },
+        });
+      }
+    }
+
     if (body.mySharePercent !== undefined && body.mySharePercent !== null) {
       await this.assertShareFits(id, userId, body.mySharePercent);
     }
@@ -298,6 +328,8 @@ export class ProjectService {
   /** Gỡ tên mình; đề tài không còn ai xác nhận thì xoá mềm cả dòng. */
   async remove(userId: string, id: string) {
     await this.assertMember(id, userId);
+    // Rút TÊN MÌNH ra thì ai cũng làm được. Nhưng xoá HẲN đề tài — trường hợp
+    // không còn ai khác — là xoá dữ liệu chung, nên chỉ chủ nhiệm.
     const others = await this.prisma.projectMember.count({
       where: {
         projectId: id,
@@ -311,6 +343,7 @@ export class ProjectService {
         data: { claimStatus: 'REJECTED', respondedAt: new Date() },
       });
     } else {
+      await this.assertLead(id, userId);
       await this.prisma.researchProject.update({
         where: { id },
         data: { deletedAt: new Date() },
@@ -409,6 +442,15 @@ export class ProjectService {
     });
     const daChia = others.reduce((s, m) => s + (m.sharePercent ?? 0), 0);
     if (daChia + share > 100) throw ShareOverflowException(daChia, share);
+  }
+
+  private async assertLead(projectId: string, userId: string) {
+    const m = await this.prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId } },
+      select: { claimStatus: true, role: true },
+    });
+    if (!m || m.claimStatus !== 'CONFIRMED') throw NotAProjectMemberException;
+    if (m.role !== 'LEAD') throw NotProjectLeadException;
   }
 
   private async assertMember(projectId: string, userId: string) {

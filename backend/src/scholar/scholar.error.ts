@@ -116,3 +116,12 @@ export const ShareOverflowException = (daChia: number, them: number) =>
         `một lần cho cả đề tài, không phải mỗi năm một bộ tỷ lệ.`,
     },
   ]);
+
+export const NotProjectLeadException = new ForbiddenException([
+  {
+    field: 'id',
+    error:
+      'Chỉ chủ nhiệm đề tài mới sửa được. Phụ lục 2 đặt trách nhiệm nộp phương ' +
+      'án chia giờ ở chủ nhiệm — nhờ chủ nhiệm sửa, hoặc báo nếu vai trò ghi sai.',
+  },
+]);

@@ -508,6 +508,23 @@ export const IntegrationActivityResSchema = z.object({
   ...INTEGRATION_CURSOR,
 });
 
+// ── Tra người trong Khoa ────────────────────────────────────────────────────
+export const PeopleQuerySchema = z.object({
+  q: z.string().max(100).optional(),
+});
+export type PeopleQueryType = z.infer<typeof PeopleQuerySchema>;
+
+export const PeopleResSchema = z.object({
+  items: z.array(
+    z.object({
+      userId: z.string(),
+      displayName: z.string(),
+      email: z.string(),
+      departmentName: z.string().nullable(),
+    }),
+  ),
+});
+
 export const IntegrationQuerySchema = z.object({
   email: z.string().email().optional(),
   from: z.coerce.number().int().min(1900).max(2200).optional(),
@@ -683,6 +700,20 @@ export type CreateProjectBodyType = z.infer<typeof CreateProjectBodySchema>;
 export const UpdateProjectBodySchema = CreateProjectBodySchema.partial().extend(
   {
     memberUserIds: z.array(z.string()).max(50).optional(),
+    /**
+     * Phương án chia giờ của CẢ NHÓM, do chủ nhiệm nộp (Phụ lục 2 tr. 2.8).
+     * Tổng không được vượt 100% — chia một lần cho cả đề tài, không phải mỗi năm
+     * một bộ tỷ lệ.
+     */
+    memberShares: z
+      .array(
+        z.object({
+          userId: z.string(),
+          sharePercent: z.number().int().min(1).max(100).nullable(),
+        }),
+      )
+      .max(50)
+      .optional(),
   },
 );
 export type UpdateProjectBodyType = z.infer<typeof UpdateProjectBodySchema>;

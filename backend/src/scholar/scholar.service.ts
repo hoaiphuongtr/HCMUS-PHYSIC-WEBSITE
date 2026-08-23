@@ -269,6 +269,56 @@ export class ScholarService {
   }
 
   /** Danh sách người có hồ sơ khoa học, dùng để dò tên tác giả. */
+  /**
+   * Danh sách người trong Khoa để chọn làm đồng tác giả / thành viên đề tài.
+   *
+   * Công bố không cần cái này: đồng tác giả được dò tự động từ danh sách tác giả
+   * của chính bài báo. Đề tài thì KHÔNG có danh sách nào để dò — chủ nhiệm phải
+   * tự chọn người, nên phải có chỗ tra.
+   *
+   * Bỏ TÀI KHOẢN ĐƠN VỊ ra: "Khoa Vật Lý", "BCN Khoa" là hộp thư của văn phòng,
+   * không phải người, và gợi ý chúng làm đồng tác giả thì vừa vô nghĩa vừa dễ
+   * bấm nhầm. Nhận ra bằng chỗ chúng KHÔNG có tên riêng — tài khoản đơn vị chỉ
+   * có một cụm tên, còn người thì luôn đủ họ và tên.
+   */
+  async people(q?: string) {
+    const rows = await this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        scholarProfile: { isNot: null },
+        ...(q
+          ? {
+              OR: [
+                { firstName: { contains: q, mode: 'insensitive' } },
+                { lastName: { contains: q, mode: 'insensitive' } },
+                { email: { contains: q, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        department: { select: { name: true } },
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+      take: 300,
+    });
+
+    return {
+      items: rows
+        .filter((u) => (u.firstName ?? '').trim() && (u.lastName ?? '').trim())
+        .map((u) => ({
+          userId: u.id,
+          displayName: [u.lastName, u.firstName].filter(Boolean).join(' '),
+          email: u.email,
+          departmentName: u.department?.name ?? null,
+        })),
+    };
+  }
+
   private async candidates(): Promise<
     Array<CandidateProfile & { email: string }>
   > {

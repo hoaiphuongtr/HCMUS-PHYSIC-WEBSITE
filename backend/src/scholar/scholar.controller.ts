@@ -40,6 +40,8 @@ import {
   ActivityResDTO,
   CreateActivityBodyDTO,
   ListActivitiesQueryDTO,
+  PeopleQueryDTO,
+  PeopleResDTO,
   ProjectClaimBodyDTO,
   UpdateActivityBodyDTO,
   ProjectListResDTO,
@@ -231,6 +233,13 @@ export class ScholarController {
   @Delete('projects/:id')
   removeProject(@ActiveUser('userId') userId: string, @Param('id') id: string) {
     return this.projects.remove(userId, id);
+  }
+
+  /** Người trong Khoa, để chọn làm thành viên đề tài. Không có tài khoản đơn vị. */
+  @Get('people')
+  @ZodSerializerDto(PeopleResDTO)
+  people(@Query() query: PeopleQueryDTO) {
+    return this.service.people(query.q);
   }
 
   // ── Hoạt động KHCN khác (Bảng 3) ────────────────────────────────────────
