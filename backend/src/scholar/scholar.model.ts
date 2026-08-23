@@ -32,6 +32,9 @@ export const NameVariantResSchema = z.object({
 export const ScholarProfileResSchema = z.object({
   id: z.string(),
   userId: z.string(),
+  /** Tên và email của chính người gọi — giao diện cần để chào và hiện chữ tắt. */
+  displayName: z.string(),
+  email: z.string(),
   orcid: z.string().nullable(),
   scopusAuthorId: z.string().nullable(),
   researcherId: z.string().nullable(),

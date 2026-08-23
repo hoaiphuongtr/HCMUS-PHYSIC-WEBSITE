@@ -75,21 +75,24 @@ export class ScholarService {
   // ── Lý lịch khoa học ──────────────────────────────────────────────────────
   /** Tự tạo hồ sơ rỗng ở lần gọi đầu — giảng viên không phải bấm "tạo hồ sơ". */
   async getProfile(userId: string) {
-    const existing = await this.prisma.scholarProfile.findUnique({
-      where: { userId },
-      include: { nameVariants: { orderBy: { isPrimary: 'desc' } } },
-    });
-    if (existing) return existing;
-
+    // Tên và email nằm ở bảng User, không nằm ở hồ sơ khoa học — nhưng giao diện
+    // cần chúng ngay ở lần gọi đầu, nên gộp vào đây thay vì bắt gọi thêm một API.
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { firstName: true, lastName: true },
+      select: { firstName: true, lastName: true, email: true },
     });
     const fullName = [user?.lastName, user?.firstName]
       .filter(Boolean)
       .join(' ');
+    const danhTinh = { displayName: fullName, email: user?.email ?? '' };
 
-    return this.prisma.scholarProfile.create({
+    const existing = await this.prisma.scholarProfile.findUnique({
+      where: { userId },
+      include: { nameVariants: { orderBy: { isPrimary: 'desc' } } },
+    });
+    if (existing) return { ...existing, ...danhTinh };
+
+    const created = await this.prisma.scholarProfile.create({
       data: {
         userId,
         // Gợi sẵn các dạng tên hay dùng để người mới vào có cái mà bỏ bớt, thay
@@ -104,6 +107,7 @@ export class ScholarService {
       },
       include: { nameVariants: { orderBy: { isPrimary: 'desc' } } },
     });
+    return { ...created, ...danhTinh };
   }
 
   async updateProfile(userId: string, body: UpdateScholarProfileBodyType) {
