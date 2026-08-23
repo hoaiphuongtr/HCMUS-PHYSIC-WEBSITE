@@ -1009,3 +1009,32 @@ Danh mục 65 mã trong `phys-profile/src/lib/catalog.ts` **trích thẳng bằn
 22/8/2026. Gõ lại tay là mời một mã lệch vào, mà mã lệch thì ACADsoom quy đổi sai giờ.
 
 Migration `20260823_science_activity` — cộng thêm, chạy lại được. CHƯA chạy trên box.
+
+## 2026-08-23 — Bảng 3, đề tài theo Phụ lục 2, giao diện mới, hình thức công tác
+
+**Bảng 3 — Hoạt động KHCN khác.** 65/106 mã trước nay không có đường vào ACADsoom.
+Thêm `ScienceActivity` + API + `/integration/activities` + màn `/hoat-dong`, và bên
+ACADsoom `layHoatDong` + `hoatDongSangDauVao`. Migration `20260823_science_activity`
+ĐÃ CHẠY. Danh mục 65 mã trích **bằng script** từ `acadsoom/src/lib/nv2Catalog.js` —
+gõ tay là mời một mã lệch vào, mà mã lệch thì quy đổi sai giờ.
+
+**Đề tài — đối chiếu PL2 tr. 2.6–2.8.** Phát hiện Bảng 2 khác Bảng 1: Bảng 1 có Cách 1
+và Cách 2, Bảng 2 **chỉ có Cách 1** (chủ nhiệm nộp phương án chia). Và tỷ lệ là của
+TOÀN BỘ nhiệm vụ — phần rơi vào từng năm tính riêng theo số tháng (tr. 2.7), hai trục
+độc lập. Đã vá bốn chỗ: ràng buộc tổng ≤100%, suy số tháng từ hai mốc, thêm
+`decisionNo`, và **mở ô tỷ lệ ra giao diện** — trước đó trường quyết định cả phép chia
+giờ mà giảng viên không nhập được. Migration `20260823b_project_decision_no` ĐÃ CHẠY.
+
+**Giao diện mới.** Dựng từ Claude Design (dự án 12ff5f81): 8 màn máy tính + 7 màn điện
+thoại, cộng bản tối. Hai tệp thiết kế cấu trúc giống hệt nhau nên cặp sáng→tối rút bằng
+đối chiếu 830 màu **theo vị trí** (47 cặp). Xem `memory/phys-profile-design-system.md`.
+
+**Hình thức công tác.** PHYsoom KHÔNG có trường này — payload đúng bảy trường. Nhưng
+`rank` là ngạch viên chức nên suy được: **95 người có ngạch → cơ hữu** (đã chạy, kiểm
+chứng bằng `SELECT affiliationType, count(*)`). 40 hồ sơ còn trống là CỐ Ý: trống ngạch
+là thiếu dữ liệu, không phải bằng chứng thỉnh giảng. Bộ môn thì vốn đã đồng bộ từ 22/8
+vào `User.departmentId`, chỉ là chưa API nào trả ra — nay `/scholar/me` trả kèm.
+
+**Còn treo:** `import-page-dois.ts --apply` (99/113 DOI, hiện mới 3 công bố trong hệ
+thống); ACADsoom chưa kéo Bảng 3 vào NV2 vì cần rà lại cách `mucBTheoMa` ghép 65 mã
+sang đầu mục mục B khi có dữ liệu thật; một hồ sơ khoa học không khớp danh sách PHYsoom.
