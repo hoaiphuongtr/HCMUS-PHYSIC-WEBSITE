@@ -64,21 +64,76 @@ function staffNodes(root: unknown): PuckNode[] {
   return out;
 }
 
+/**
+ * Thực thể HTML → ký tự.
+ *
+ * Bản đầu chỉ biết `&nbsp; &amp; &lt; &gt; &quot;` nên "Ph&aacute;p" ở lại
+ * nguyên xi: chữ hỏng đã đành, mà "Pháp" còn không khớp danh sách quốc gia nên
+ * bị nhét luôn vào tên trường. Trang nhân sự cũ mã hoá NGUYÊN dải Latin-1 kiểu
+ * này (á â ê ô ó…), chỉ chừa các chữ riêng của tiếng Việt (ư ơ ạ) ở dạng thật.
+ *
+ * Không liệt kê tay sáu chục tên: dải Latin-1 có quy luật <chữ cái><tên dấu>,
+ * nên ghép chữ với dấu tổ hợp rồi chuẩn hoá NFC là ra. Tên lạ thì GIỮ NGUYÊN,
+ * vì nuốt mất một cụm còn khó lần ra hơn là để nó lộ ra trên màn hình.
+ */
+const DAU: Record<string, string> = {
+  grave: '\u0300',
+  acute: '\u0301',
+  circ: '\u0302',
+  tilde: '\u0303',
+  uml: '\u0308',
+  ring: '\u030a',
+  cedil: '\u0327',
+};
+
+const TEN: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  ndash: '–',
+  mdash: '—',
+  hellip: '…',
+  lsquo: '\u2018',
+  rsquo: '\u2019',
+  ldquo: '\u201c',
+  rdquo: '\u201d',
+  deg: '°',
+  middot: '·',
+  szlig: 'ß',
+  aelig: 'æ',
+  oslash: 'ø',
+  AElig: 'Æ',
+  Oslash: 'Ø',
+};
+
+export function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) =>
+      String.fromCodePoint(parseInt(h, 16)),
+    )
+    .replace(/&#(\d+);/g, (_, d: string) => String.fromCodePoint(Number(d)))
+    .replace(/&([A-Za-z]+);/g, (all: string, ten: string) => {
+      if (TEN[ten]) return TEN[ten];
+      const low = TEN[ten.toLowerCase()];
+      const m = /^([A-Za-z])(grave|acute|circ|tilde|uml|ring|cedil)$/.exec(ten);
+      if (m) return (m[1] + DAU[m[2]]).normalize('NFC');
+      return low ?? all;
+    });
+}
+
 /** HTML → chữ, giữ ranh giới dòng vì mỗi bằng cấp là một dòng. */
 function toText(html: string): string {
-  return html
-    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, '\n')
-    .replace(/<br[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&#39;/gi, "'")
-    .replace(/&apos;/gi, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/[ \t ]+/g, ' ')
+  return decodeEntities(
+    html
+      .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+      .replace(/<\/(p|div|tr|li|h[1-6]|table)>/gi, '\n')
+      .replace(/<br[^>]*>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .replace(/[ \t\u00a0]+/g, ' ')
     .replace(/\n\s*\n+/g, '\n')
     .trim();
 }

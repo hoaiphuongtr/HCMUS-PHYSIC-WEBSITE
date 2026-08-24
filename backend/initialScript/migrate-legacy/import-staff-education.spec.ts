@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extract, parseLine } from './import-staff-education';
+import { decodeEntities, extract, parseLine } from './import-staff-education';
 
 /**
  * Bộ ca kiểm lấy NGUYÊN VĂN từ trang nhân sự thật trên box (24/8/2026), kể cả
@@ -147,5 +147,39 @@ describe('extract', () => {
       ].join('\n'),
     );
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe('decodeEntities', () => {
+  it('giải mã dải Latin-1 mà trang nhân sự cũ dùng', () => {
+    // Nguyên văn `vat-ly-tin-hoc/nhan-su/pgsts-duong-hoai-nghia`.
+    expect(decodeEntities('Ph&aacute;p')).toBe('Pháp');
+    expect(decodeEntities('Đại học C&ocirc;ng Nghệ')).toBe('Đại học Công Nghệ');
+    expect(decodeEntities('nghi&ecirc;n cứu')).toBe('nghiên cứu');
+    expect(decodeEntities('Ph&oacute; gi&aacute;o sư')).toBe('Phó giáo sư');
+  });
+
+  it('giữ nguyên chữ riêng của tiếng Việt vốn không mã hoá', () => {
+    expect(decodeEntities('các hướng nghiên cứu')).toBe('các hướng nghiên cứu');
+  });
+
+  it('giải mã cả dạng số', () => {
+    expect(decodeEntities('&#432;&#x1a1;')).toBe('ươ');
+  });
+
+  it('giữ nguyên tên lạ thay vì nuốt mất', () => {
+    // Nuốt một cụm không rõ còn khó lần ra hơn là để nó lộ ra trên màn hình.
+    expect(decodeEntities('&khongcothat;')).toBe('&khongcothat;');
+  });
+
+  it('quốc gia mã hoá vẫn tách ra được khỏi tên trường', () => {
+    // Chính là chỗ hỏng: chưa giải mã thì "Ph&aacute;p" không khớp danh sách
+    // quốc gia, và nó bị nhét luôn vào tên trường.
+    const r = parseLine(
+      decodeEntities('PhD: Viện Polytechnique de Grenoble, Ph&aacute;p, 1998'),
+    );
+    expect(r?.institution).toBe('Viện Polytechnique de Grenoble');
+    expect(r?.country).toBe('Pháp');
+    expect(r?.year).toBe(1998);
   });
 });
