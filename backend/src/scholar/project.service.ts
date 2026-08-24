@@ -536,13 +536,39 @@ export class ProjectService {
   /** Xem chú thích ở `ScholarService.integrationList` — cùng một giao kèo. */
   async integrationList(query: IntegrationQueryType) {
     const { since } = query;
+    // ĐỀ TÀI GIAO NHAU với khoảng năm, không phải đề tài BẮT ĐẦU trong khoảng.
+    //
+    // Trước đây lọc `startYear` nằm trong [from, to]. Công bố thì đúng — nó là
+    // một mốc. Đề tài thì KHÔNG: nó là một quãng, và Phụ lục 2 tr. 2.7 chia giờ
+    // theo SỐ THÁNG THỰC HIỆN TRONG TỪNG NĂM HỌC. Đề tài 12/2025 → 12/2026 phải
+    // có mặt ở cả năm học 2025–2026 lẫn 2026–2027; lọc theo năm bắt đầu thì năm
+    // thứ hai không thấy đề tài đâu và giảng viên mất trắng phần giờ của 5 tháng
+    // còn lại. Đã gặp thật: hỏi from=2026&to=2027 trả về 0 đề tài.
+    //
+    // `endYear` trống = chưa biết kết thúc → coi như còn chạy, vẫn giao nhau.
+    // Phải hỏi `null` TƯỜNG MINH: trong SQL `NULL >= 2026` ra NULL chứ không ra
+    // true, nên `{ gte: from }` một mình sẽ lặng lẽ loại hết đề tài chưa có ngày
+    // kết thúc.
+    //
+    // `startYear` trống thì vẫn bị loại như trước — không biết bắt đầu khi nào
+    // thì cũng không tính được tháng trong năm học, mà cho lọt thì nó xuất hiện
+    // ở MỌI năm và cộng giờ nhiều lần.
     const years =
       query.from || query.to
         ? {
-            startYear: {
-              ...(query.from ? { gte: query.from } : {}),
-              ...(query.to ? { lte: query.to } : {}),
-            },
+            AND: [
+              ...(query.to ? [{ startYear: { lte: query.to } }] : []),
+              ...(query.from
+                ? [
+                    {
+                      OR: [
+                        { endYear: null },
+                        { endYear: { gte: query.from } },
+                      ],
+                    },
+                  ]
+                : []),
+            ],
           }
         : {};
 
