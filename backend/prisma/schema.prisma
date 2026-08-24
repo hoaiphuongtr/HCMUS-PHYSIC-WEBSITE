@@ -36,6 +36,25 @@ enum GradStudyLevel {
   POSTDOC
 }
 
+/// Bậc trong quá trình ĐÃ ĐÀO TẠO. Khác `GradStudyLevel` vốn là "đang theo học":
+/// một người có thể đã có bằng Tiến sĩ (ở đây) mà đang làm sau tiến sĩ (ở kia).
+enum EducationLevel {
+  BACHELOR
+  ENGINEER
+  MASTER
+  PHD
+  POSTDOC
+  OTHER
+}
+
+/// Dòng học vấn từ đâu ra. Cần, vì bản đổ từ trang nhân sự là máy đọc chữ tự do
+/// nên có thể sai — phải phân biệt được với dòng chính chủ đã xác nhận, và phải
+/// biết dòng nào là của đợt đổ để chạy lại không sinh trùng.
+enum EducationSource {
+  SELF
+  STAFF_PAGE
+}
+
 /// Tình trạng bài báo. Mặc định PUBLISHED: phần lớn bài được khai sau khi đã in.
 enum PublicationStatus {
   SUBMITTED
@@ -876,6 +895,7 @@ model ScholarProfile {
 
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   nameVariants ScholarNameVariant[]
+  education    ScholarEducation[]
 
   @@index([staffPageSlug])
 }
@@ -897,6 +917,37 @@ model ScholarNameVariant {
 
   @@unique([profileId, normalized])
   @@index([normalized])
+}
+
+/// Một tấm bằng trong quá trình đào tạo. Nhiều dòng cho một người.
+///
+/// Là BẢNG chứ không phải mấy cột trên `ScholarProfile`: lý lịch khoa học liệt
+/// kê từng bậc một (cử nhân → thạc sĩ → tiến sĩ, có người thêm sau tiến sĩ), và
+/// nhét vào cột cố định thì tới người thứ tư là hết chỗ.
+model ScholarEducation {
+  id        String @id @default(cuid())
+  profileId String
+
+  level EducationLevel
+  /// Ngành/chuyên ngành. Trang nhân sự cũ phần lớn không ghi, nên cho trống.
+  field       String?
+  /// Nơi đào tạo. Bắt buộc — một dòng học vấn không nói học ở đâu thì vô nghĩa.
+  institution String
+  country     String?
+  /// Năm TỐT NGHIỆP. Cho trống vì nhiều trang nhân sự cũ chỉ ghi trường.
+  year        Int?
+  note        String?
+
+  /// Xem `EducationSource`. Dòng máy đổ về đứng ở STAFF_PAGE cho tới khi chính
+  /// chủ mở ra sửa — lúc đó nó thành SELF và đợt đổ sau không đụng tới nữa.
+  source EducationSource @default(SELF)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile ScholarProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
 }
 
 /// Một công trình = một dòng, dùng chung cho mọi đồng tác giả trong Khoa.

@@ -33,6 +33,7 @@ import type {
   IntegrationQueryType,
   ListPublicationsQueryType,
   OrcidImportBodyType,
+  SetEducationBodyType,
   SetNameVariantsBodyType,
   UpdatePublicationBodyType,
   UpdateScholarProfileBodyType,
@@ -100,7 +101,12 @@ export class ScholarService {
 
     const existing = await this.prisma.scholarProfile.findUnique({
       where: { userId },
-      include: { nameVariants: { orderBy: { isPrimary: 'desc' } } },
+      include: {
+        nameVariants: { orderBy: { isPrimary: 'desc' } },
+        // Theo THỜI GIAN như mẫu lý lịch khoa học: cử nhân trước, tiến sĩ sau.
+        // Dòng chưa có năm xuống cuối, vì không biết xếp vào đâu cho đúng.
+        education: { orderBy: [{ year: 'asc' }, { createdAt: 'asc' }] },
+      },
     });
     if (existing) return { ...existing, ...danhTinh };
 
@@ -117,7 +123,12 @@ export class ScholarService {
           })),
         },
       },
-      include: { nameVariants: { orderBy: { isPrimary: 'desc' } } },
+      include: {
+        nameVariants: { orderBy: { isPrimary: 'desc' } },
+        // Theo THỜI GIAN như mẫu lý lịch khoa học: cử nhân trước, tiến sĩ sau.
+        // Dòng chưa có năm xuống cuối, vì không biết xếp vào đâu cho đúng.
+        education: { orderBy: [{ year: 'asc' }, { createdAt: 'asc' }] },
+      },
     });
     return { ...created, ...danhTinh };
   }
@@ -198,6 +209,37 @@ export class ScholarService {
           raw,
           normalized,
           isPrimary: primaryNorm ? normalized === primaryNorm : i === 0,
+        })),
+      }),
+    ]);
+    return this.getProfile(userId);
+  }
+
+
+  /**
+   * Thay CẢ danh sách học vấn.
+   *
+   * Mọi dòng ghi ở đây đều thành `SELF`, kể cả dòng người dùng không sửa gì:
+   * họ đã mở màn hình ra và bấm Lưu, tức là đã nhìn qua. Nhờ vậy đợt đổ từ trang
+   * nhân sự chạy lại sau này biết đâu là dòng của máy (còn `STAFF_PAGE`) mà bỏ
+   * qua, thay vì đè lên phần người ta vừa sửa tay.
+   */
+  async setEducation(userId: string, body: SetEducationBodyType) {
+    const profile = await this.getProfile(userId);
+    await this.prisma.$transaction([
+      this.prisma.scholarEducation.deleteMany({
+        where: { profileId: profile.id },
+      }),
+      this.prisma.scholarEducation.createMany({
+        data: body.items.map((e) => ({
+          profileId: profile.id,
+          level: e.level,
+          field: e.field ?? null,
+          institution: e.institution.trim(),
+          country: e.country ?? null,
+          year: e.year ?? null,
+          note: e.note ?? null,
+          source: 'SELF' as const,
         })),
       }),
     ]);

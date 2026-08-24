@@ -14,6 +14,7 @@ import {
   ResolveBodySchema,
   ResolvePreviewResSchema,
   ScholarProfileResSchema,
+  SetEducationBodySchema,
   SetNameVariantsBodySchema,
   CreateProjectBodySchema,
   IntegrationProjectResSchema,
@@ -45,6 +46,8 @@ export class ScholarProfileResDTO extends createZodDto(
 export class UpdateScholarProfileBodyDTO extends createZodDto(
   UpdateScholarProfileBodySchema,
 ) {}
+export class SetEducationBodyDTO extends createZodDto(SetEducationBodySchema) {}
+
 export class SetNameVariantsBodyDTO extends createZodDto(
   SetNameVariantsBodySchema,
 ) {}

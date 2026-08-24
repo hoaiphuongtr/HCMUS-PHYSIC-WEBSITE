@@ -32,6 +32,7 @@ import {
   ResolveBodyDTO,
   ResolvePreviewResDTO,
   ScholarProfileResDTO,
+  SetEducationBodyDTO,
   SetNameVariantsBodyDTO,
   CreateProjectBodyDTO,
   ListProjectsQueryDTO,
@@ -106,6 +107,21 @@ export class ScholarController {
     @Body() body: SetNameVariantsBodyDTO,
   ) {
     return this.service.setNameVariants(userId, body);
+  }
+
+  /**
+   * Quá trình đào tạo — thay cả danh sách một lần.
+   *
+   * Dòng nào máy đọc được từ trang nhân sự cũ thì đã nằm sẵn ở đây; người dùng
+   * sửa lại rồi lưu là nó thành dòng chính chủ. Xem `setEducation()`.
+   */
+  @Patch('me/education')
+  @ZodSerializerDto(ScholarProfileResDTO)
+  setEducation(
+    @ActiveUser('userId') userId: string,
+    @Body() body: SetEducationBodyDTO,
+  ) {
+    return this.service.setEducation(userId, body);
   }
 
   // ── Nhập liệu ─────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { EventBusService } from '../shared/services/event-bus.service';
 import { PublicRevalidateService } from '../shared/services/public-revalidate.service';
 import {
   NoStaffPageException,
+  StaffBlockAmbiguousException,
   StaffBlockNotFoundException,
 } from './scholar.error';
 import type { UpdateStaffPageBodyType } from './scholar.model';
@@ -79,20 +80,40 @@ export class StaffPageService {
     });
     if (!layout) throw NoStaffPageException;
 
-    const node = this.findStaffNode(layout.puckData);
-    if (!node) throw StaffBlockNotFoundException;
-    return { layout, node, slug: profile.staffPageSlug };
+    // ĐÚNG MỘT khối, không phải "khối đầu tiên". Xem findStaffNodes().
+    const nodes = this.findStaffNodes(layout.puckData);
+    if (nodes.length === 0) throw StaffBlockNotFoundException;
+    if (nodes.length > 1) {
+      this.logger.warn(
+        `staffPageSlug "${profile.staffPageSlug}" có ${nodes.length} khối hồ sơ — ` +
+          `chặn sửa cho user ${userId} để khỏi ghi đè hồ sơ người khác.`,
+      );
+      throw StaffBlockAmbiguousException;
+    }
+    return { layout, node: nodes[0], slug: profile.staffPageSlug };
   }
 
-  private findStaffNode(root: unknown): PuckNode | null {
-    let found: PuckNode | null = null;
+  /**
+   * TẤT CẢ khối hồ sơ trong trang, không phải khối đầu tiên.
+   *
+   * Bản đầu trả về khối đầu tiên tìm thấy. Đúng khi `staffPageSlug` trỏ vào
+   * trang riêng của một người — mà hôm nay cả 82 hồ sơ đều vậy, đã kiểm. Nhưng
+   * không có gì trong hệ thống buộc phải vậy: slug là ô chữ tự do, và trang
+   * `…/nhan-su` (không có tên ai) là trang danh sách cả bộ môn. Trỏ nhầm vào đó
+   * thì người này lặng lẽ đổi ảnh và tiểu sử của người đứng đầu danh sách.
+   *
+   * Đếm rồi chặn thì lỗi nổ ngay lúc mở trang, chứ không phải sau khi đã ghi đè
+   * hồ sơ của đồng nghiệp — và không ai đi tìm nổi nguyên nhân.
+   */
+  private findStaffNodes(root: unknown): PuckNode[] {
+    const found: PuckNode[] = [];
     const walk = (n: unknown) => {
-      if (found) return;
       if (Array.isArray(n)) return n.forEach(walk);
       if (!n || typeof n !== 'object') return;
       const node = n as PuckNode;
       if (node.type && STAFF_TYPES.includes(node.type)) {
-        found = node;
+        found.push(node);
+        // Khối hồ sơ không lồng trong khối hồ sơ — khỏi đi sâu thêm.
         return;
       }
       for (const v of Object.values(n)) {

@@ -19,6 +19,21 @@ export const AFFILIATION_TYPES = ['FULL_TIME', 'JOINT', 'VISITING'] as const;
 /** Bậc đào tạo sau đại học giảng viên ĐANG theo học. */
 export const GRAD_STUDY_LEVELS = ['MASTER', 'PHD', 'POSTDOC'] as const;
 
+/**
+ * Bậc ĐÃ tốt nghiệp. Khác `GRAD_STUDY_LEVELS` ("đang học"): một người đã có bằng
+ * tiến sĩ mà đang làm sau tiến sĩ thì có mặt ở cả hai chỗ, và đó là đúng.
+ */
+export const EDUCATION_LEVELS = [
+  'BACHELOR',
+  'ENGINEER',
+  'MASTER',
+  'PHD',
+  'POSTDOC',
+  'OTHER',
+] as const;
+
+export const EDUCATION_SOURCES = ['SELF', 'STAFF_PAGE'] as const;
+
 const OptionalText = (max: number) => z.string().max(max).nullish();
 
 // ── Lý lịch khoa học ────────────────────────────────────────────────────────
@@ -28,6 +43,45 @@ export const NameVariantResSchema = z.object({
   normalized: z.string(),
   isPrimary: z.boolean(),
 });
+
+// ── Quá trình đào tạo ───────────────────────────────────────────────────────
+export const EducationResSchema = z.object({
+  id: z.string(),
+  level: z.enum(EDUCATION_LEVELS),
+  field: z.string().nullable(),
+  institution: z.string(),
+  country: z.string().nullable(),
+  year: z.number().int().nullable(),
+  note: z.string().nullable(),
+  /** STAFF_PAGE = máy đọc từ trang nhân sự cũ, chính chủ chưa soát lại. */
+  source: z.enum(EDUCATION_SOURCES),
+});
+export type EducationResType = z.infer<typeof EducationResSchema>;
+
+const EducationRowSchema = z.object({
+  level: z.enum(EDUCATION_LEVELS),
+  field: OptionalText(200),
+  /** Nơi đào tạo — dòng học vấn không nói học ở đâu thì không dùng được. */
+  institution: z.string().min(2).max(300),
+  country: OptionalText(100),
+  /**
+   * Năm TỐT NGHIỆP. Cho trống vì phần lớn trang nhân sự cũ chỉ ghi tên trường;
+   * bắt buộc thì người ta điền bừa một năm, mà số bịa còn tệ hơn ô trống.
+   */
+  year: z.number().int().min(1950).max(2200).nullish(),
+  note: OptionalText(500),
+});
+
+/**
+ * Thay CẢ danh sách trong một lần gọi, giống `SetNameVariantsBodySchema`.
+ *
+ * Sửa từng dòng thì giao diện phải theo dõi id của dòng chưa lưu, và người dùng
+ * đổi thứ tự là sinh ra một mớ lệnh gọi. Danh sách này dài nhất chỉ vài dòng.
+ */
+export const SetEducationBodySchema = z.object({
+  items: z.array(EducationRowSchema).max(12),
+});
+export type SetEducationBodyType = z.infer<typeof SetEducationBodySchema>;
 
 export const ScholarProfileResSchema = z.object({
   id: z.string(),
@@ -59,6 +113,7 @@ export const ScholarProfileResSchema = z.object({
   gradStudyNote: z.string().nullable(),
 
   nameVariants: z.array(NameVariantResSchema),
+  education: z.array(EducationResSchema),
 });
 export type ScholarProfileResType = z.infer<typeof ScholarProfileResSchema>;
 

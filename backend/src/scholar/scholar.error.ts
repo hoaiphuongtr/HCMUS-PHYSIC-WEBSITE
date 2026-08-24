@@ -83,6 +83,21 @@ export const StaffBlockNotFoundException = new UnprocessableEntityException([
   },
 ]);
 
+/**
+ * Trang có NHIỀU khối hồ sơ — vd `staffPageSlug` bị trỏ nhầm vào trang danh sách
+ * cả bộ môn. Trước đây hàm định vị lấy khối ĐẦU TIÊN, nghĩa là người này sẽ sửa
+ * ảnh và tiểu sử của người đứng đầu danh sách mà không hề biết. Thà chặn.
+ */
+export const StaffBlockAmbiguousException = new UnprocessableEntityException([
+  {
+    field: 'staffPageSlug',
+    error:
+      'Trang nhân sự này chứa nhiều hồ sơ (có thể là trang danh sách cả bộ môn), ' +
+      'nên không xác định được khối nào là của bạn. Nhờ quản trị trỏ hồ sơ sang ' +
+      'đúng trang riêng của bạn — sửa ở đây sẽ đụng vào hồ sơ người khác.',
+  },
+]);
+
 export const PhotoRequiredException = new UnprocessableEntityException([
   {
     field: 'file',
