@@ -953,6 +953,10 @@ export class ScholarService {
               publication: {
                 deletedAt: null,
                 catalogCode: { not: null },
+                // Bài ĐÃ RÚT không còn là công trình nữa — cùng loại với bài đã
+                // xoá, không phải công trình hạng thấp hơn. Để lọt ra kênh tích
+                // hợp là nó tiếp tục cộng giờ NCKH sau khi tạp chí đã gỡ bài.
+                status: { not: 'RETRACTED' },
                 ...years,
               },
             }),
@@ -1023,9 +1027,13 @@ export class ScholarService {
           email: r.user?.email ?? null,
           // Ba đường dẫn tới "thôi không tính nữa", gộp thành một cờ để bên nhận
           // khỏi phải tự suy luận: xoá bài, rút phân loại, rút xác nhận.
+          // Bốn đường dẫn tới "thôi không tính nữa", gộp thành một cờ để bên
+          // nhận khỏi phải tự suy luận: xoá bài, rút phân loại, rút xác nhận,
+          // và tạp chí rút bài.
           removed:
             p.deletedAt !== null ||
             p.catalogCode === null ||
+            p.status === 'RETRACTED' ||
             r.claimStatus !== 'CONFIRMED',
         },
       };
