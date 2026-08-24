@@ -569,7 +569,26 @@ export class ProjectService {
               },
             }),
       },
-      include: { project: true, user: { select: { email: true } } },
+      include: {
+        project: {
+          include: {
+            // MẪU SỐ chia giờ — xem `memberCount` ở dưới.
+            //
+            // Phải nạp thêm thật: `sharePercent` và `isLead` lấy từ chính dòng
+            // thành viên đang duyệt (`r`), nên bản ghi đề tài KHÔNG hề có sẵn
+            // danh sách nhóm để đếm. Prisma gộp phần này thành một lượt truy vấn
+            // cho cả trang, không phải mỗi dòng một lượt.
+            //
+            // Cố ý KHÔNG kèm `userId: { not: null }` như bộ lọc ở trên: chỗ đó
+            // quyết định dòng nào được GỬI, còn đây là đếm ai được CHIA.
+            members: {
+              where: { claimStatus: 'CONFIRMED' },
+              select: { id: true },
+            },
+          },
+        },
+        user: { select: { email: true } },
+      },
     });
 
     const mapped = rows.map((r) => {
@@ -593,6 +612,9 @@ export class ProjectService {
           role: r.role,
           isLead: r.role === 'LEAD',
           sharePercent: r.sharePercent,
+          // Tối thiểu 1: đề tài một mình chủ nhiệm vẫn là một mẫu số hợp lệ, và
+          // 0 lọt sang bên kia thành phép chia cho không.
+          memberCount: Math.max(1, p.members.length),
           email: r.user?.email ?? null,
           removed:
             p.deletedAt !== null ||

@@ -869,6 +869,20 @@ export const IntegrationProjectResSchema = z.object({
       role: z.enum(PROJECT_ROLES),
       isLead: z.boolean(),
       sharePercent: z.number().int().nullable(),
+      /**
+       * MẪU SỐ chia giờ: số thành viên mà giờ quy đổi của đề tài được chia cho.
+       * Giống nhau trên mọi dòng của cùng một `projectId`.
+       *
+       * ĐẾM CẢ người ngoài Khoa — họ không có dòng riêng trong payload này (đã
+       * lọc `userId != null`) nhưng vẫn chiếm phần theo Phụ lục 2 tr. 2.8, vốn
+       * chia cho "các thành viên trong nhiệm vụ" chứ không riêng người của Khoa.
+       * Bỏ họ ra là hai người thuộc Khoa của một đề tài năm người chia nhau đủ
+       * 100%.
+       *
+       * Bên nhận KHÔNG suy ra được: đếm số dòng cùng `projectId` chỉ ra số người
+       * CÓ TÀI KHOẢN. Cùng loại với `mainAuthorsAtSchool` ở công bố.
+       */
+      memberCount: z.number().int().min(1),
 
       email: z.string().nullable(),
       /** Bản ghi này KHÔNG còn được tính nữa (xoá / rút phân loại / rút xác nhận). */
