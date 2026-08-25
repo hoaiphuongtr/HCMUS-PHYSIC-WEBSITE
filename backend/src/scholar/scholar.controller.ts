@@ -39,6 +39,8 @@ import {
   PendingProjectListResDTO,
   ActivityListResDTO,
   ActivityResDTO,
+  ActivityClaimListResDTO,
+  RespondActivityClaimBodyDTO,
   CreateActivityBodyDTO,
   ListActivitiesQueryDTO,
   PeopleQueryDTO,
@@ -303,6 +305,22 @@ export class ScholarController {
     @Param('id') id: string,
   ) {
     return this.activities.remove(userId, id);
+  }
+
+  /** Lời mời đồng thực hiện (giải thưởng) đang chờ chính mình xác nhận. */
+  @Get('activity-claims/pending')
+  @ZodSerializerDto(ActivityClaimListResDTO)
+  pendingActivities(@ActiveUser('userId') userId: string) {
+    return this.activities.pendingClaims(userId);
+  }
+
+  @Post('activity-claims/:activityId')
+  respondActivity(
+    @ActiveUser('userId') userId: string,
+    @Param('activityId') activityId: string,
+    @Body() body: RespondActivityClaimBodyDTO,
+  ) {
+    return this.activities.respondClaim(userId, activityId, body.accept);
   }
 
   @Get('project-claims/pending')

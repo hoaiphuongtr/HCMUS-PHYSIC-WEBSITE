@@ -499,6 +499,12 @@ export const IntegrationPublicationResSchema = z.object({
 // hai người cùng ngồi một hội đồng thì khai hai bản ghi độc lập.
 const ActivityYear = z.number().int().min(1950).max(2200);
 
+/** Đồng thực hiện — dùng cho giải thưởng có nhiều người đồng hướng dẫn. */
+const ActivityMemberInputSchema = z.object({
+  userId: z.string(),
+  role: OptionalText(100),
+});
+
 export const CreateActivityBodySchema = z.object({
   /** Mã Bảng 3 — BẮT BUỘC. Nó gói sẵn cả cấp lẫn vai trò, và là căn cứ quy đổi giờ. */
   catalogCode: z.string().min(2).max(20),
@@ -511,6 +517,12 @@ export const CreateActivityBodySchema = z.object({
   month: z.number().int().min(1).max(12).nullish(),
   note: OptionalText(2000),
   url: OptionalText(1000),
+  /**
+   * Đồng thực hiện thuộc Khoa — họ ở PENDING cho tới khi TỰ xác nhận. Bảng 3
+   * khoán giờ cố định cho mỗi người nên KHÔNG chia: mỗi người được trọn phần,
+   * ai xác nhận nấy được ghi. Chỉ có ý nghĩa với nhóm giải thưởng.
+   */
+  members: z.array(ActivityMemberInputSchema).max(30).optional(),
 });
 export type CreateActivityBodyType = z.infer<typeof CreateActivityBodySchema>;
 
@@ -522,6 +534,15 @@ export const ListActivitiesQuerySchema = z.object({
   q: z.string().max(200).optional(),
 });
 export type ListActivitiesQueryType = z.infer<typeof ListActivitiesQuerySchema>;
+
+export const ActivityMemberResSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  displayName: z.string(),
+  role: z.string().nullable(),
+  claimStatus: z.enum(CLAIM_STATUSES),
+  invitedBy: z.string().nullable(),
+});
 
 export const ActivityResSchema = z.object({
   id: z.string(),
@@ -535,9 +556,31 @@ export const ActivityResSchema = z.object({
   month: z.number().int().nullable(),
   note: z.string().nullable(),
   url: z.string().nullable(),
+  members: z.array(ActivityMemberResSchema).default([]),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+/** Lời mời đồng thực hiện đang chờ CHÍNH người được gắn xác nhận. */
+export const ActivityClaimResSchema = z.object({
+  id: z.string(),
+  activityId: z.string(),
+  title: z.string(),
+  catalogCode: z.string(),
+  role: z.string().nullable(),
+  year: z.number().int().nullable(),
+  ownerName: z.string(),
+  invitedBy: z.string().nullable(),
+});
+export const ActivityClaimListResSchema = z.object({
+  items: z.array(ActivityClaimResSchema),
+});
+export const RespondActivityClaimBodySchema = z.object({
+  accept: z.boolean(),
+});
+export type RespondActivityClaimBodyType = z.infer<
+  typeof RespondActivityClaimBodySchema
+>;
 
 export const ActivityListResSchema = z.object({
   items: z.array(ActivityResSchema),

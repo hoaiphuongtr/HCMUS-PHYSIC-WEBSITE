@@ -177,28 +177,29 @@ model User {
   lastLoginAt       DateTime?
   tourCompletedAt   DateTime?
 
-  department         Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  preference         UserPreference?
-  sessions           Session[]
-  accounts           Account[]
-  templates          Template[]
-  posts              Post[]
-  postsApproved      Post[]              @relation("PostApprovedBy")
-  postReactions      PostReaction[]
-  postComments       PostComment[]
-  postTranslations   PostTranslation[]
-  media              Media[]
-  notifications      Notification[]
-  faqItems           FAQ[]
-  faqUpdated         FAQ[]               @relation("FAQUpdatedBy")
-  chatbotTraining    ChatbotTraining[]
-  auditLogs          AuditLog[]
-  pageLayouts        PageLayout[]
-  pageLayoutVersions PageLayoutVersion[]
-  scholarProfile     ScholarProfile?
-  publicationAuthors PublicationAuthor[]
-  projectMembers     ProjectMember[]
-  scienceActivities  ScienceActivity[]
+  department             Department?             @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  preference             UserPreference?
+  sessions               Session[]
+  accounts               Account[]
+  templates              Template[]
+  posts                  Post[]
+  postsApproved          Post[]                  @relation("PostApprovedBy")
+  postReactions          PostReaction[]
+  postComments           PostComment[]
+  postTranslations       PostTranslation[]
+  media                  Media[]
+  notifications          Notification[]
+  faqItems               FAQ[]
+  faqUpdated             FAQ[]                   @relation("FAQUpdatedBy")
+  chatbotTraining        ChatbotTraining[]
+  auditLogs              AuditLog[]
+  pageLayouts            PageLayout[]
+  pageLayoutVersions     PageLayoutVersion[]
+  scholarProfile         ScholarProfile?
+  publicationAuthors     PublicationAuthor[]
+  projectMembers         ProjectMember[]
+  scienceActivities      ScienceActivity[]
+  scienceActivityMembers ScienceActivityMember[]
 
   @@index([role])
   @@index([email])
@@ -888,10 +889,10 @@ model ScholarProfile {
   gradStudyEndYear     Int?
   /// Được cử đi học toàn thời gian. Là dữ kiện ảnh hưởng tới định mức nhiệm vụ,
   /// nên tách riêng thay vì nhét vào ghi chú.
-  gradStudyFullTime    Boolean @default(false)
+  gradStudyFullTime    Boolean         @default(false)
   gradStudyNote        String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   nameVariants ScholarNameVariant[]
@@ -928,7 +929,7 @@ model ScholarEducation {
   id        String @id @default(cuid())
   profileId String
 
-  level EducationLevel
+  level       EducationLevel
   /// Ngành/chuyên ngành. Trang nhân sự cũ phần lớn không ghi, nên cho trống.
   field       String?
   /// Nơi đào tạo. Bắt buộc — một dòng học vấn không nói học ở đâu thì vô nghĩa.
@@ -1092,12 +1093,44 @@ model ScienceActivity {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members ScienceActivityMember[]
 
   @@index([userId])
   @@index([catalogCode])
   @@index([deletedAt])
   @@index([userId, year])
+}
+
+/// Đồng thực hiện một hoạt động Bảng 3 — đồng hướng dẫn SV đạt giải, đồng chủ
+/// trì… Người khai (`ScienceActivity.userId`) là chủ; đây là những người được
+/// gắn thêm, mỗi người TỰ xác nhận thì mới được ghi nhận bên mình.
+///
+/// KHÁC `ProjectMember` ở chỗ KHÔNG có `sharePercent`: Bảng 3 khoán giờ CỐ ĐỊNH
+/// cho mỗi người (Phụ lục 2), nên đồng-hướng-dẫn nào cũng được TRỌN số giờ, không
+/// chia. Vì thế cũng không nhận người ngoài Trường (họ không có định mức để cộng,
+/// và không có tài khoản để xác nhận) — `userId` bắt buộc.
+///
+/// Điểm của người CHỦ không chờ ai: chủ được duyệt là có điểm. Trạng thái ở đây
+/// chỉ quyết định người ĐƯỢC GẮN có được ghi nhận hay không.
+model ScienceActivityMember {
+  id          String            @id @default(cuid())
+  activityId  String
+  userId      String
+  /// Vai trò để hiển thị, vd "Đồng hướng dẫn". Không ảnh hưởng số giờ.
+  role        String?
+  claimStatus AuthorClaimStatus @default(PENDING)
+  invitedBy   String?
+  respondedAt DateTime?
+  showOnWeb   Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  activity ScienceActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId, claimStatus])
 }
 
 model ResearchProject {

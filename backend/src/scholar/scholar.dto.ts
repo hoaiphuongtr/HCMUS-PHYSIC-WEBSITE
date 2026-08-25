@@ -25,6 +25,8 @@ import {
   ListActivitiesQuerySchema,
   ActivityResSchema,
   ActivityListResSchema,
+  ActivityClaimListResSchema,
+  RespondActivityClaimBodySchema,
   IntegrationActivityResSchema,
   ListProjectsQuerySchema,
   PendingProjectListResSchema,
@@ -123,6 +125,12 @@ export class ListActivitiesQueryDTO extends createZodDto(
 ) {}
 export class ActivityResDTO extends createZodDto(ActivityResSchema) {}
 export class ActivityListResDTO extends createZodDto(ActivityListResSchema) {}
+export class ActivityClaimListResDTO extends createZodDto(
+  ActivityClaimListResSchema,
+) {}
+export class RespondActivityClaimBodyDTO extends createZodDto(
+  RespondActivityClaimBodySchema,
+) {}
 export class IntegrationActivityResDTO extends createZodDto(
   IntegrationActivityResSchema,
 ) {}
