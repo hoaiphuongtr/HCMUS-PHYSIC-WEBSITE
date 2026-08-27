@@ -580,4 +580,144 @@ export class StaffPageService {
     };
     return { tree: walk(root), changed };
   }
+
+  /**
+   * Chuẩn hoá TRANG CÁ NHÂN sang kiểu editorial cho mọi trang dưới `prefix` còn ở
+   * kiểu cũ (Header + PageHero + StaffProfile + Footer) → (Header +
+   * StaffProfileEditorial + Footer). GIỮ nội dung: ảnh/tên/chức danh/email/điện
+   * thoại/`html` mang sang; các ô cấu trúc để trống — người vốn không có nên block
+   * tự ẩn. Bỏ PageHero (editorial có hero riêng), giữ Header/Footer.
+   *
+   * Idempotent: trang đã editorial (không còn khối StaffProfile) bị bỏ qua.
+   */
+  async migrateStaffToEditorial(prefix: string) {
+    const template = await this.editorialTemplate();
+    if (!template) {
+      return {
+        error: 'Không tìm thấy trang mẫu StaffProfileEditorial để lấy bố cục.',
+      };
+    }
+    const pages = await this.prisma.pageLayout.findMany({
+      where: { slug: { startsWith: prefix }, deletedAt: null },
+      select: { id: true, slug: true, puckData: true, isPublished: true },
+    });
+    const report = { doi: [] as string[], boQua: [] as string[] };
+    const touched: string[] = [];
+    for (const pg of pages) {
+      const content = (pg.puckData as { content?: unknown })?.content;
+      if (!Array.isArray(content)) {
+        report.boQua.push(pg.slug);
+        continue;
+      }
+      const nodes = content as PuckNode[];
+      const staff = nodes.find((b) => b.type === 'StaffProfile');
+      if (!staff) {
+        report.boQua.push(pg.slug);
+        continue;
+      }
+      const header = nodes.find((b) => b.type === 'Header');
+      const footer = nodes.find((b) => b.type === 'Footer');
+      const editorial: PuckNode = {
+        type: 'StaffProfileEditorial',
+        props: this.mapToEditorial(template, staff.props ?? {}, pg.slug),
+      };
+      const newContent = [header, editorial, footer].filter(Boolean);
+      const newPuck = {
+        root: (pg.puckData as { root?: unknown })?.root ?? {},
+        zones: {},
+        content: newContent,
+      };
+      await this.prisma.pageLayout.update({
+        where: { id: pg.id },
+        data: {
+          puckData: newPuck as unknown as Prisma.InputJsonValue,
+          ...(pg.isPublished
+            ? { publishedPuckData: newPuck as unknown as Prisma.InputJsonValue }
+            : {}),
+        },
+      });
+      report.doi.push(pg.slug);
+      touched.push(pg.slug);
+    }
+    if (touched.length) {
+      await this.cache.clear();
+      this.publicRevalidate.trigger([
+        ...touched.map((s) => `page:${s}`),
+        'sitemap',
+      ]);
+    }
+    return report;
+  }
+
+  /** Props KHÔNG-cá-nhân của một khối editorial có sẵn, làm khuôn (tiêu đề mục, photoFilter…). */
+  private async editorialTemplate(): Promise<Record<
+    string,
+    unknown
+  > | null> {
+    const rows = await this.prisma.$queryRaw<
+      Array<{ publishedPuckData: unknown; puckData: unknown }>
+    >`
+      SELECT "publishedPuckData", "puckData" FROM "PageLayout"
+      WHERE "deletedAt" IS NULL
+        AND (position('StaffProfileEditorial' in "publishedPuckData"::text) > 0
+          OR position('StaffProfileEditorial' in "puckData"::text) > 0)
+      LIMIT 1
+    `;
+    if (!rows.length) return null;
+    const findEd = (root: unknown): PuckNode | null => {
+      let hit: PuckNode | null = null;
+      const w = (n: unknown) => {
+        if (hit) return;
+        if (Array.isArray(n)) return n.forEach(w);
+        if (n && typeof n === 'object') {
+          if ((n as PuckNode).type === 'StaffProfileEditorial') {
+            hit = n as PuckNode;
+            return;
+          }
+          Object.values(n).forEach(w);
+        }
+      };
+      w(root);
+      return hit;
+    };
+    const ed = findEd(rows[0].publishedPuckData) ?? findEd(rows[0].puckData);
+    if (!ed?.props) return null;
+    const t: Record<string, unknown> = { ...ed.props };
+    for (const k of [
+      'id', 'photo', 'name', 'role', 'email', 'phone', 'html', 'intro',
+      'eyebrow', 'research', 'teaching', 'publications', 'extras', 'projects',
+      'nameLines',
+    ]) {
+      delete t[k];
+    }
+    return t;
+  }
+
+  /** Khuôn + dữ liệu cá nhân của khối StaffProfile cũ → props khối editorial. */
+  private mapToEditorial(
+    template: Record<string, unknown>,
+    sp: Record<string, unknown>,
+    slug: string,
+  ): Record<string, unknown> {
+    const empty = { vi: '', en: '' };
+    const seg = slug.split('/').filter(Boolean).pop() ?? '';
+    return {
+      ...template,
+      id: `body-${seg}`,
+      photo: asPlain(sp.photo),
+      name: sp.name ?? empty,
+      role: sp.role ?? empty,
+      email: asPlain(sp.email),
+      phone: asPlain(sp.phone),
+      html: sp.html ?? empty,
+      intro: empty,
+      eyebrow: empty,
+      research: [],
+      teaching: [],
+      publications: [],
+      extras: [],
+      projects: [],
+      nameLines: [],
+    };
+  }
 }

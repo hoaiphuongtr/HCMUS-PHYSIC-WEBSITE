@@ -410,6 +410,19 @@ export class ScholarController {
     return this.staffPage.backfillPhotos();
   }
 
+  /**
+   * Chuẩn hoá trang cá nhân sang kiểu editorial (Header + StaffProfileEditorial +
+   * Footer) cho mọi trang dưới `prefix` còn kiểu cũ — chỉ quản trị. Giữ nội dung,
+   * bỏ PageHero. Idempotent.
+   */
+  @Post('staff-pages/migrate-editorial')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  migrateStaffEditorial(@Body('prefix') prefix?: string) {
+    return this.staffPage.migrateStaffToEditorial(
+      prefix || 'vat-ly-tin-hoc/nhan-su/',
+    );
+  }
+
   // ── Thống kê ──────────────────────────────────────────────────────────────
   @Get('stats/me')
   @ZodSerializerDto(StatsResDTO)
