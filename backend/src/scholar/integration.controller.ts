@@ -5,6 +5,7 @@ import {
   IntegrationProjectResDTO,
   IntegrationActivityResDTO,
   IntegrationPublicationResDTO,
+  IntegrationGradStudyResDTO,
   IntegrationQueryDTO,
 } from './scholar.dto';
 import { IntegrationSecretGuard } from './integration-secret.guard';
@@ -52,5 +53,16 @@ export class ScholarIntegrationController {
   @ZodSerializerDto(IntegrationProjectResDTO)
   listProjects(@Query() query: IntegrationQueryDTO) {
     return this.projects.integrationList(query);
+  }
+
+  /**
+   * Diện đang học sau đại học. Kéo giảm định mức ở ACADsoom (tới 50% + giờ
+   * chuẩn), nên là dữ kiện tính toán chứ không phải nhãn. ACADsoom gán vào
+   * `Term.hocTap` theo bậc + quốc gia, và tự cắt theo cửa sổ năm học.
+   */
+  @Get('grad-study')
+  @ZodSerializerDto(IntegrationGradStudyResDTO)
+  gradStudy(@Query() query: IntegrationQueryDTO) {
+    return this.service.gradStudyIntegrationList(query);
   }
 }

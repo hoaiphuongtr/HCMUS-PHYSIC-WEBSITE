@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventBusService } from '../shared/services/event-bus.service';
@@ -60,6 +61,7 @@ export class StaffPageService {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private readonly publicRevalidate: PublicRevalidateService,
     private readonly bus: EventBusService,
   ) {}
@@ -76,7 +78,7 @@ export class StaffPageService {
       where: { slug: profile.staffPageSlug, deletedAt: null },
       // Trang đã xuất bản là bản người đọc thấy — ưu tiên nó.
       orderBy: [{ isPublished: 'desc' }, { updatedAt: 'desc' }],
-      select: { id: true, slug: true, puckData: true },
+      select: { id: true, slug: true, puckData: true, isPublished: true },
     });
     if (!layout) throw NoStaffPageException;
 
@@ -200,17 +202,50 @@ export class StaffPageService {
     // thứ khác của layout không bị đụng tới.
     const tree = this.replaceProps(layout.puckData, node, next);
 
+    await this.persist(layout, tree);
+    await this.afterWrite(userId, slug);
+    return this.read(userId);
+  }
+
+  /**
+   * Ghi cây Puck vào layout.
+   *
+   * Trang công khai phục vụ `publishedPuckData` (bản đã xuất bản), KHÔNG phải
+   * `puckData` (bản nháp). Trang nhân sự là tự-phục-vụ: người dùng bấm Lưu là
+   * xong, không có bước "xuất bản" riêng như trang thường. Nên với layout ĐÃ xuất
+   * bản phải cập nhật CẢ bản công khai — nếu chỉ ghi `puckData` thì ảnh và nội
+   * dung mới nằm mãi trong nháp, trang thật vẫn bản cũ dù đã revalidate.
+   *
+   * Layout còn ở dạng nháp thì chỉ ghi `puckData`: chưa ai thấy trang, và ghi
+   * `publishedPuckData` lúc này là tự "xuất bản" hộ một bản chưa được duyệt.
+   */
+  private async persist(
+    layout: { id: string; isPublished: boolean },
+    tree: unknown,
+  ) {
     await this.prisma.pageLayout.update({
       where: { id: layout.id },
-      data: { puckData: tree as Prisma.InputJsonValue },
+      data: {
+        puckData: tree as Prisma.InputJsonValue,
+        ...(layout.isPublished
+          ? { publishedPuckData: tree as Prisma.InputJsonValue }
+          : {}),
+      },
     });
+  }
 
-    // Trang công khai chạy ISR nên phải báo Next dựng lại, nếu không người đọc
-    // vẫn thấy bản cũ tới cả tiếng.
+  /**
+   * Sau khi ghi: xoá cache backend rồi báo frontend dựng lại.
+   *
+   * Endpoint công khai `/slug/*` có CacheInterceptor giữ 10 phút; không xoá thì
+   * frontend dựng lại nhưng đọc trúng bản cache cũ, và người đọc vẫn thấy bản cũ
+   * tới 10 phút. Xoá cache trước, rồi revalidate ISR — đúng thứ tự trang thường
+   * làm khi sửa layout.
+   */
+  private async afterWrite(userId: string, slug: string) {
+    await this.cache.clear();
     this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
     this.bus.emit('staff-page.changed', { userIds: [userId], key: slug });
-
-    return this.read(userId);
   }
 
   /** Nhân bản cây, thay props của đúng một khối (so sánh theo tham chiếu). */
@@ -348,18 +383,8 @@ export class StaffPageService {
         : {}),
     };
 
-    await this.prisma.pageLayout.update({
-      where: { id: layout.id },
-      data: {
-        puckData: this.replaceProps(
-          layout.puckData,
-          node,
-          next,
-        ) as Prisma.InputJsonValue,
-      },
-    });
-    this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
-    this.bus.emit('staff-page.changed', { userIds: [userId], key: slug });
+    await this.persist(layout, this.replaceProps(layout.puckData, node, next));
+    await this.afterWrite(userId, slug);
     return this.read(userId);
   }
 

@@ -1085,6 +1085,56 @@ export class ScholarService {
     return pageBySince(mapped, query.limit);
   }
 
+  /**
+   * Diện đang học sau đại học cho ACADsoom. Hai chế độ như các kênh khác:
+   *
+   *   không `since` — ảnh chụp: mọi người ĐANG khai một diện học (gradStudyLevel
+   *                   khác trống). Dùng cho lần nạp đầu.
+   *   có `since`    — hồ sơ đổi từ mốc đó, KỂ CẢ người vừa GỠ diện học
+   *                   (`removed: true`, `level = null`). Không trả cái đó thì bên
+   *                   nhận không có đường nào biết mà thôi giảm định mức, và
+   *                   người học xong vẫn được giảm mãi.
+   *
+   * Chỉ trả dữ kiện — bậc, quốc gia, năm bắt đầu/dự kiến xong, có được cử đi toàn
+   * thời gian không. Việc chọn diện nào và áp hệ số bao nhiêu là của ACADsoom.
+   */
+  async gradStudyIntegrationList(query: IntegrationQueryType) {
+    const { since } = query;
+    const rows = await this.prisma.scholarProfile.findMany({
+      where: {
+        ...(query.email ? { user: { email: query.email.toLowerCase() } } : {}),
+        // Ảnh chụp: chỉ người đang khai một diện. Chế độ `since`: mọi hồ sơ vừa
+        // đổi, kể cả người vừa xoá diện học (để gửi `removed`).
+        ...(since
+          ? { updatedAt: { gte: since } }
+          : { gradStudyLevel: { not: null } }),
+      },
+      include: { user: { select: { email: true } } },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const mapped = rows.map((r) => ({
+      changedAt: r.updatedAt,
+      item: {
+        email: r.user?.email ?? null,
+        level: r.gradStudyLevel,
+        field: r.gradStudyField,
+        institution: r.gradStudyInstitution,
+        country: r.gradStudyCountry,
+        startYear: r.gradStudyStartYear,
+        endYear: r.gradStudyEndYear,
+        fullTime: r.gradStudyFullTime,
+        note: r.gradStudyNote,
+        // Ảnh chụp đã lọc `gradStudyLevel != null` nên luôn false ở đó; ở chế độ
+        // `since`, hồ sơ vừa gỡ diện học (level = null) thành removed: true.
+        removed: r.gradStudyLevel === null,
+      },
+    }));
+
+    if (!since) return { items: mapped.map((m) => m.item) };
+    return pageBySince(mapped, query.limit);
+  }
+
   // ── Trang nhân sự ─────────────────────────────────────────────────────────
   /**
    * Trang nhân sự chạy ISR nên phải báo Next dựng lại; cùng CSDL nên không có

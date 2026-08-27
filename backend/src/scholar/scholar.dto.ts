@@ -5,6 +5,7 @@ import {
   ImportFileBodySchema,
   ImportPreviewResSchema,
   IntegrationPublicationResSchema,
+  IntegrationGradStudyResSchema,
   IntegrationQuerySchema,
   ListPublicationsQuerySchema,
   OrcidImportBodySchema,
@@ -86,6 +87,9 @@ export class PendingClaimListResDTO extends createZodDto(
 export class IntegrationQueryDTO extends createZodDto(IntegrationQuerySchema) {}
 export class IntegrationPublicationResDTO extends createZodDto(
   IntegrationPublicationResSchema,
+) {}
+export class IntegrationGradStudyResDTO extends createZodDto(
+  IntegrationGradStudyResSchema,
 ) {}
 
 export class StatsResDTO extends createZodDto(StatsResSchema) {}

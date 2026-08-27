@@ -491,6 +491,42 @@ export const IntegrationPublicationResSchema = z.object({
   ...INTEGRATION_CURSOR,
 });
 
+/**
+ * Diện đang học sau đại học cho ACADsoom.
+ *
+ * Là DỮ KIỆN, không phải giờ: bên ACADsoom diện đang học kéo giảm định mức
+ * (tới 50%) và cộng giờ chuẩn, nhưng hệ số nào áp cho ai là quy định của
+ * Trường/Khoa, cài ở ACADsoom. Web Khoa chỉ nói người này đang học BẬC gì, Ở ĐÂU
+ * (quốc gia — để tách NCS trong nước / nước ngoài), TỪ năm nào ĐẾN năm nào (dự
+ * kiến), và có được cử đi TOÀN THỜI GIAN không.
+ *
+ * `from/to` KHÔNG áp ở đây — diện học không có một "năm" đơn để lọc. ACADsoom
+ * nhận trọn `startYear/endYear` rồi tự cắt theo cửa sổ năm học của nó, đúng như
+ * cách nó cắt tháng đề tài.
+ */
+export const IntegrationGradStudyResSchema = z.object({
+  items: z.array(
+    z.object({
+      email: z.string().nullable(),
+      // Null CHỈ ở chế độ `since`, luôn đi kèm `removed: true` — người vừa gỡ
+      // diện học thì bên nhận phải thấy để THÔI giảm định mức, không thì họ được
+      // giảm mãi sau khi đã học xong.
+      level: z.enum(GRAD_STUDY_LEVELS).nullable(),
+      field: z.string().nullable(),
+      institution: z.string().nullable(),
+      country: z.string().nullable(),
+      startYear: z.number().int().nullable(),
+      /** Năm DỰ KIẾN hoàn thành, không phải năm đã xong. */
+      endYear: z.number().int().nullable(),
+      fullTime: z.boolean(),
+      note: z.string().nullable(),
+      /** KHÔNG còn khai diện học nào nữa — bên nhận thôi áp giảm định mức. */
+      removed: z.boolean().optional(),
+    }),
+  ),
+  ...INTEGRATION_CURSOR,
+});
+
 // ── Hoạt động KHCN khác (Bảng 3) ────────────────────────────────────────────
 //
 // Khác hẳn công bố và đề tài ở một điểm quyết định hình dạng lược đồ: Bảng 3
