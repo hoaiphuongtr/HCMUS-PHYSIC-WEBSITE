@@ -399,6 +399,17 @@ export class ScholarController {
     return this.staffPage.setPhoto(userId, `/uploads/${file.filename}`);
   }
 
+  /**
+   * Đồng bộ MỘT LƯỢT ảnh cho toàn bộ trang nhân sự — chỉ quản trị. Dùng cho người
+   * đã upload ảnh trước khi có auto-sync (ảnh kẹt ở nháp / lưới danh sách còn ảnh
+   * cũ). Chỉ đụng ảnh, không publish nội dung nháp khác.
+   */
+  @Post('staff-pages/backfill-photos')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  backfillStaffPhotos() {
+    return this.staffPage.backfillPhotos();
+  }
+
   // ── Thống kê ──────────────────────────────────────────────────────────────
   @Get('stats/me')
   @ZodSerializerDto(StatsResDTO)

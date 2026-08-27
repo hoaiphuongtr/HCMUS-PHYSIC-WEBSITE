@@ -203,8 +203,103 @@ export class StaffPageService {
     const tree = this.replaceProps(layout.puckData, node, next);
 
     await this.persist(layout, tree);
-    await this.afterWrite(userId, slug);
+    // Ảnh còn được sao vào các thẻ ProfileCard ở trang danh sách (…/nhan-su) —
+    // một bản sao denormalized, ghép người theo email. Đổi ảnh thì đồng bộ luôn,
+    // nếu không trang cá nhân đổi mà lưới "Đội ngũ" vẫn ảnh cũ.
+    const extraSlugs =
+      body.photo !== undefined
+        ? await this.syncProfileCards(userId, body.photo ?? '')
+        : [];
+    await this.afterWrite(userId, [slug, ...extraSlugs]);
     return this.read(userId);
+  }
+
+  /**
+   * Đồng bộ ảnh sang các thẻ ProfileCard trỏ về người này, ghép theo EMAIL.
+   *
+   * Thẻ danh sách là `ProfileCard` với `props.email` + `props.imageUrl`, nằm rải
+   * trong puckData của trang "Đội ngũ" (có thể nhiều trang: VI/EN, khoa/bộ môn).
+   * Lọc trước theo email cho hẹp, rồi duyệt cây cập nhật đúng thẻ khớp — cả
+   * `puckData` lẫn `publishedPuckData` (trang công khai đọc bản published).
+   *
+   * Trả về danh sách slug đã đổi để revalidate.
+   */
+  private async syncProfileCards(
+    userId: string,
+    imageUrl: string,
+  ): Promise<string[]> {
+    const profile = await this.prisma.scholarProfile.findUnique({
+      where: { userId },
+      select: { user: { select: { email: true } } },
+    });
+    const email = profile?.user?.email?.toLowerCase();
+    if (!email) return [];
+
+    const rows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "PageLayout"
+      WHERE "deletedAt" IS NULL
+        AND (position(${email} in lower("puckData"::text)) > 0
+          OR position(${email} in lower(coalesce("publishedPuckData"::text, ''))) > 0)
+    `;
+
+    const changed: string[] = [];
+    for (const { id } of rows) {
+      const layout = await this.prisma.pageLayout.findUnique({
+        where: { id },
+        select: {
+          slug: true,
+          puckData: true,
+          publishedPuckData: true,
+          isPublished: true,
+        },
+      });
+      if (!layout) continue;
+      const d = this.updateProfileCards(layout.puckData, email, imageUrl);
+      const p = layout.isPublished
+        ? this.updateProfileCards(layout.publishedPuckData, email, imageUrl)
+        : { tree: layout.publishedPuckData, changed: 0 };
+      if (!d.changed && !p.changed) continue;
+      await this.prisma.pageLayout.update({
+        where: { id },
+        data: {
+          ...(d.changed ? { puckData: d.tree as Prisma.InputJsonValue } : {}),
+          ...(p.changed
+            ? { publishedPuckData: p.tree as Prisma.InputJsonValue }
+            : {}),
+        },
+      });
+      changed.push(layout.slug);
+    }
+    return changed;
+  }
+
+  /** Nhân bản cây, đổi `imageUrl` của mọi ProfileCard khớp email. Không đụng gì khác. */
+  private updateProfileCards(
+    root: unknown,
+    email: string,
+    imageUrl: string,
+  ): { tree: unknown; changed: number } {
+    let changed = 0;
+    const walk = (n: unknown): unknown => {
+      if (Array.isArray(n)) return n.map(walk);
+      if (!n || typeof n !== 'object') return n;
+      const node = n as PuckNode;
+      if (
+        node.type === 'ProfileCard' &&
+        node.props &&
+        String(node.props.email ?? '').toLowerCase() === email
+      ) {
+        if (node.props.imageUrl === imageUrl) return node;
+        changed++;
+        return { ...node, props: { ...node.props, imageUrl } };
+      }
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        out[k] = v && typeof v === 'object' ? walk(v) : v;
+      }
+      return out;
+    };
+    return { tree: walk(root), changed };
   }
 
   /**
@@ -242,10 +337,11 @@ export class StaffPageService {
    * tới 10 phút. Xoá cache trước, rồi revalidate ISR — đúng thứ tự trang thường
    * làm khi sửa layout.
    */
-  private async afterWrite(userId: string, slug: string) {
+  private async afterWrite(userId: string, slugs: string[]) {
     await this.cache.clear();
-    this.publicRevalidate.trigger([`page:${slug}`, 'sitemap']);
-    this.bus.emit('staff-page.changed', { userIds: [userId], key: slug });
+    const tags = [...new Set(slugs.filter(Boolean))].map((s) => `page:${s}`);
+    this.publicRevalidate.trigger([...tags, 'sitemap']);
+    this.bus.emit('staff-page.changed', { userIds: [userId], key: slugs[0] });
   }
 
   /** Nhân bản cây, thay props của đúng một khối (so sánh theo tham chiếu). */
@@ -384,12 +480,104 @@ export class StaffPageService {
     };
 
     await this.persist(layout, this.replaceProps(layout.puckData, node, next));
-    await this.afterWrite(userId, slug);
+    await this.afterWrite(userId, [slug]);
     return this.read(userId);
   }
 
   /** Đổi ảnh chân dung. Ảnh đã được lưu vào uploads/ bởi tầng nhận tệp. */
   async setPhoto(userId: string, url: string) {
     return this.update(userId, { photo: url });
+  }
+
+  /**
+   * Đồng bộ MỘT LƯỢT ảnh hiện có cho mọi hồ sơ có trang nhân sự — dùng cho người
+   * đã upload ảnh phys-profile TRƯỚC khi có auto-sync (ảnh nằm ở nháp chưa publish,
+   * và thẻ danh sách vẫn ảnh cũ). Chỉ đụng ẢNH, KHÔNG publish nội dung nháp khác:
+   * lấy ảnh trong khối hồ sơ, ghi vào publishedPuckData của trang cá nhân + đồng
+   * bộ các thẻ ProfileCard.
+   */
+  async backfillPhotos() {
+    const profiles = await this.prisma.scholarProfile.findMany({
+      where: { staffPageSlug: { not: null } },
+      select: {
+        userId: true,
+        staffPageSlug: true,
+        user: { select: { email: true } },
+      },
+    });
+    const report = { nguoi: 0, caNhanDoi: 0, theDoi: 0, boQua: [] as string[] };
+    const touched = new Set<string>();
+    for (const pr of profiles) {
+      try {
+        const layout = await this.prisma.pageLayout.findFirst({
+          where: { slug: pr.staffPageSlug ?? '', deletedAt: null },
+          orderBy: [{ isPublished: 'desc' }, { updatedAt: 'desc' }],
+          select: {
+            id: true,
+            slug: true,
+            puckData: true,
+            publishedPuckData: true,
+            isPublished: true,
+          },
+        });
+        if (!layout) continue;
+        const nodes = this.findStaffNodes(layout.puckData);
+        if (nodes.length !== 1) {
+          report.boQua.push(pr.staffPageSlug ?? pr.userId);
+          continue;
+        }
+        const photo = asPlain(nodes[0].props?.photo);
+        if (!photo) continue;
+        report.nguoi++;
+        if (layout.isPublished) {
+          const pub = this.setPhotoOnStaffBlocks(layout.publishedPuckData, photo);
+          if (pub.changed) {
+            await this.prisma.pageLayout.update({
+              where: { id: layout.id },
+              data: { publishedPuckData: pub.tree as Prisma.InputJsonValue },
+            });
+            report.caNhanDoi++;
+            touched.add(layout.slug);
+          }
+        }
+        const slugs = await this.syncProfileCards(pr.userId, photo);
+        report.theDoi += slugs.length;
+        slugs.forEach((s) => touched.add(s));
+      } catch {
+        report.boQua.push(pr.staffPageSlug ?? pr.userId);
+      }
+    }
+    if (touched.size) {
+      await this.cache.clear();
+      this.publicRevalidate.trigger([
+        ...[...touched].map((s) => `page:${s}`),
+        'sitemap',
+      ]);
+    }
+    return report;
+  }
+
+  /** Nhân bản cây, đặt `photo` cho mọi khối hồ sơ (StaffProfile / StaffProfileEditorial). */
+  private setPhotoOnStaffBlocks(
+    root: unknown,
+    photo: string,
+  ): { tree: unknown; changed: number } {
+    let changed = 0;
+    const walk = (n: unknown): unknown => {
+      if (Array.isArray(n)) return n.map(walk);
+      if (!n || typeof n !== 'object') return n;
+      const node = n as PuckNode;
+      if (node.type && STAFF_TYPES.includes(node.type) && node.props) {
+        if (node.props.photo === photo) return node;
+        changed++;
+        return { ...node, props: { ...node.props, photo } };
+      }
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        out[k] = v && typeof v === 'object' ? walk(v) : v;
+      }
+      return out;
+    };
+    return { tree: walk(root), changed };
   }
 }
