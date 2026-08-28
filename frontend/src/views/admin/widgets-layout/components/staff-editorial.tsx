@@ -66,9 +66,9 @@ type Props = {
 /** Tiêu đề mục: chữ serif hoa + đường kẻ chạy hết phần còn lại. */
 function RuleHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-6 mb-12">
+    <div className="flex items-center gap-5 mb-8">
       <h2
-        className="text-3xl md:text-4xl text-gray-900 uppercase tracking-wider"
+        className="text-2xl md:text-3xl text-gray-900 uppercase tracking-wider"
         style={{ fontFamily: "var(--font-playfair)" }}
       >
         {children}
@@ -80,10 +80,10 @@ function RuleHeading({ children }: { children: React.ReactNode }) {
 
 function EntryList({ items, tx }: { items: Entry[]; tx: (v: LocalizedString) => string }) {
   return (
-    <ul className="space-y-8 font-light text-gray-600">
+    <ul className="space-y-6 font-light text-gray-600">
       {items.map((it, i) => (
         <li key={`${tx(it.title)}-${i}`} className="flex flex-col">
-          <span className="text-gray-900 text-xl font-medium mb-2">
+          <span className="text-gray-900 text-lg font-medium mb-1.5">
             {tx(it.title)}
           </span>
           {tx(it.desc) ? (
@@ -151,11 +151,11 @@ function StaffProfileEditorialRender(props: Props) {
       <style>{`
         .staff-editorial {
           background-color: ${PAPER};
-          background-image: linear-gradient(to bottom, ${INK} 700px, transparent 700px);
+          background-image: linear-gradient(to bottom, ${INK} 560px, transparent 560px);
         }
         @media (min-width: 768px) {
           .staff-editorial {
-            background-image: linear-gradient(to bottom, ${INK} 65vh, transparent 65vh);
+            background-image: linear-gradient(to bottom, ${INK} 52vh, transparent 52vh);
           }
         }
         /* Chữ trắng + phép trừ màu: trên nền đen ra trắng, trên nền giấy ra đen. */
@@ -166,7 +166,7 @@ function StaffProfileEditorialRender(props: Props) {
       `}</style>
 
       {/* ── Hero ── */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-12 pt-24 md:pt-[15vh] pb-24 md:pb-32 flex flex-col md:flex-row items-center gap-12 md:gap-16">
+      <div className="max-w-7xl mx-auto px-6 sm:px-12 pt-16 md:pt-[10vh] pb-16 md:pb-24 flex flex-col md:flex-row items-center gap-10 md:gap-12">
         <div className="w-full max-w-sm mx-auto md:max-w-none md:w-5/12 shrink-0 z-10">
           <div className="aspect-[3/4] w-full shadow-2xl overflow-hidden rounded-tl-[5rem] rounded-bl-[5rem] rounded-tr-xl rounded-br-xl bg-gray-200">
             {photo ? (
@@ -195,7 +195,7 @@ function StaffProfileEditorialRender(props: Props) {
           ) : null}
           {nameLines.length ? (
             <h1
-              className="text-5xl sm:text-6xl lg:text-7xl xl:text-[6.5rem] uppercase leading-[0.9] mb-8"
+              className="text-4xl sm:text-5xl lg:text-6xl uppercase leading-[0.95] mb-5"
               style={{ fontFamily: "var(--font-playfair)" }}
             >
               {nameLines.map((line, i) => (
@@ -215,12 +215,12 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Nghiên cứu / Giảng dạy ── */}
       {columns.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-24 text-gray-900">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 border-t border-gray-300 pt-16">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-16 text-gray-900">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 border-t border-gray-300 pt-12">
             {columns.map((col) => (
               <div key={col.title}>
                 <h2
-                  className="text-3xl md:text-4xl mb-8 uppercase tracking-wide text-gray-800"
+                  className="text-2xl md:text-3xl mb-6 uppercase tracking-wide text-gray-800"
                   style={{ fontFamily: "var(--font-playfair)" }}
                 >
                   {col.title}
@@ -234,7 +234,7 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Dự án ứng dụng ── */}
       {projects.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20">
           <RuleHeading>
             {tx(props.projectsTitle) ||
               (locale === "en" ? "Projects" : "Dự án ứng dụng")}
@@ -269,12 +269,12 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Xuất bản khoa học ── */}
       {pubs.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20">
           <RuleHeading>
             {tx(props.pubsTitle) ||
               (locale === "en" ? "Publications" : "Xuất bản khoa học")}
           </RuleHeading>
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-4 md:space-y-6">
             {pubs.map((p, i) => (
               <div
                 key={`${tx(p.title)}-${i}`}
@@ -289,12 +289,12 @@ function StaffProfileEditorialRender(props: Props) {
                       href={p.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-lg md:text-xl font-medium text-gray-800 group-hover:text-blue-700 transition-colors"
+                      className="text-base md:text-lg font-medium text-gray-800 group-hover:text-blue-700 transition-colors"
                     >
                       {tx(p.title)}
                     </a>
                   ) : (
-                    <h3 className="text-lg md:text-xl font-medium text-gray-800">
+                    <h3 className="text-base md:text-lg font-medium text-gray-800">
                       {tx(p.title)}
                     </h3>
                   )}
@@ -325,7 +325,7 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Nội dung hồ sơ cũ — giữ mọi thứ chưa kịp tách ra ô riêng ── */}
       {hasBody ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-32 text-gray-900">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20 text-gray-900">
           <RuleHeading>
             {tx(props.contentTitle) ||
               (locale === "en" ? "Details" : "Thông tin chi tiết")}
