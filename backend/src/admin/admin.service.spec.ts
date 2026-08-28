@@ -14,7 +14,9 @@ const makeRepoMock = (): RepoMock => ({
   listPaged: vi.fn(),
   count: vi.fn(),
   countActiveSince: vi.fn(),
+  listUnits: vi.fn(),
   findById: vi.fn(),
+  updateProfile: vi.fn(),
   setActive: vi.fn(),
   setPassword: vi.fn(),
 });
@@ -61,6 +63,7 @@ describe('AdminService mutations', () => {
       repo.listPaged.mockResolvedValue([sampleAdmin]);
       repo.count.mockResolvedValue(3);
       repo.countActiveSince.mockResolvedValue(1);
+      repo.listUnits.mockResolvedValue([{ id: 'u1', name: 'BM A' }]);
 
       const result = await service.list({ page: 2, pageSize: 5 });
 
@@ -71,6 +74,7 @@ describe('AdminService mutations', () => {
         activeNow: 1,
         page: 2,
         pageSize: 5,
+        units: [{ id: 'u1', name: 'BM A' }],
       });
     });
   });

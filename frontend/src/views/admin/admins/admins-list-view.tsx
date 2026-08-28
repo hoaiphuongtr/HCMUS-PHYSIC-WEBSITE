@@ -23,6 +23,7 @@ import {
 import { isFacultyWide } from "@/lib/department";
 import { PortalMenu } from "@/views/admin/widgets-layout/portal-menu";
 import { ResetPasswordModal } from "./reset-password-modal";
+import { EditProfileModal } from "./edit-profile-modal";
 
 const PAGE_SIZE = 10;
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
@@ -69,6 +70,7 @@ export function AdminsListView() {
   const [page, setPage] = useState(1);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [resetTarget, setResetTarget] = useState<AdminListItem | null>(null);
+  const [editTarget, setEditTarget] = useState<AdminListItem | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: profile } = useQuery({
@@ -209,6 +211,11 @@ export function AdminsListView() {
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-300 truncate">
                       {a.department?.name ?? "—"}
+                      {a.rank && (
+                        <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                          · {a.rank}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span
@@ -261,6 +268,16 @@ export function AdminsListView() {
               onClose={() => setMenuOpenId(null)}
               widthPx={200}
             >
+              <button
+                type="button"
+                onClick={() => {
+                  setEditTarget(openMenuFor);
+                  setMenuOpenId(null);
+                }}
+                className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
+              >
+                Sửa hồ sơ
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -336,6 +353,14 @@ export function AdminsListView() {
           adminId={resetTarget.id}
           adminName={displayName(resetTarget)}
           onClose={() => setResetTarget(null)}
+        />
+      )}
+
+      {editTarget && (
+        <EditProfileModal
+          person={editTarget}
+          units={data?.units ?? []}
+          onClose={() => setEditTarget(null)}
         />
       )}
     </div>

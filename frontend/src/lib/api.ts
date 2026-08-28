@@ -164,11 +164,33 @@ export type AdminListItem = {
   lastName: string | null;
   avatarUrl: string | null;
   position: string | null;
-  role: "SUPER_ADMIN" | "ADMIN";
+  role: "SUPER_ADMIN" | "ADMIN" | "LECTURER";
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;
   department: { id: string; name: string } | null;
+  // Hồ sơ tài khoản (Mục 10) — web Khoa làm chủ.
+  physoomId: string | null;
+  teacherId: string | null;
+  degree: string | null;
+  rank: string | null;
+  positionKey: string | null;
+  positionFrom: string | null;
+  positionTo: string | null;
+  employmentType: string | null;
+};
+
+export type StaffUnit = { id: string; name: string };
+
+export type StaffProfileUpdate = {
+  rank?: string | null;
+  positionKey?: string | null;
+  positionFrom?: string | null;
+  positionTo?: string | null;
+  degree?: string | null;
+  teacherId?: string | null;
+  employmentType?: string | null;
+  departmentId?: string | null;
 };
 
 export const adminApi = {
@@ -179,6 +201,7 @@ export const adminApi = {
       activeNow: number;
       page: number;
       pageSize: number;
+      units: StaffUnit[];
     }>(`/admins${buildQuery(params)}`);
   },
   suspend(id: string) {
@@ -195,6 +218,12 @@ export const adminApi = {
     return authFetch<{ message: string }>(`/admins/${id}/reset-password`, {
       method: "POST",
       body: JSON.stringify({ password }),
+    });
+  },
+  updateProfile(id: string, body: StaffProfileUpdate) {
+    return authFetch<AdminListItem>(`/admins/${id}/profile`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
     });
   },
 };

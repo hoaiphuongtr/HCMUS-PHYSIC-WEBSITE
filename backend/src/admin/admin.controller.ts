@@ -12,8 +12,10 @@ import { AdminService } from './admin.service';
 import {
   AdminListQueryDTO,
   AdminListResDTO,
+  AdminItemDTO,
   AdminMessageResDTO,
   ResetAdminPasswordBodyDTO,
+  UpdateAdminProfileBodyDTO,
 } from './admin.dto';
 import { Roles } from '../shared/decorators/roles.decorator';
 import { RoleName } from '../shared/constants/role.constants';
@@ -48,5 +50,15 @@ export class AdminController {
     @Body() body: ResetAdminPasswordBodyDTO,
   ) {
     return this.adminService.resetPassword(id, body);
+  }
+
+  /** Sửa hồ sơ tài khoản (Mục 10): ngạch/chức vụ/học vị/MSCB/đơn vị… */
+  @Patch(':id/profile')
+  @ZodSerializerDto(AdminItemDTO)
+  updateProfile(
+    @Param('id') id: string,
+    @Body() body: UpdateAdminProfileBodyDTO,
+  ) {
+    return this.adminService.updateProfile(id, body);
   }
 }

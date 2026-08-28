@@ -24,6 +24,15 @@ export const AdminItemSchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  // ── Hồ sơ tài khoản (Mục 10) — web Khoa làm chủ ──
+  physoomId: z.string().nullable(),
+  teacherId: z.string().nullable(),
+  degree: z.string().nullable(),
+  rank: z.string().nullable(),
+  positionKey: z.string().nullable(),
+  positionFrom: z.date().nullable(),
+  positionTo: z.date().nullable(),
+  employmentType: z.string().nullable(),
 });
 
 export type AdminItemType = z.infer<typeof AdminItemSchema>;
@@ -34,7 +43,25 @@ export const AdminListResSchema = z.object({
   activeNow: z.number().int(),
   page: z.number().int(),
   pageSize: z.number().int(),
+  /** Danh sách đơn vị để dropdown chọn — Mục 10. */
+  units: z.array(z.object({ id: z.string(), name: z.string() })),
 });
+
+/** Cập nhật hồ sơ tài khoản (Mục 10). Chỉ các trường web Khoa làm chủ. */
+export const UpdateAdminProfileBodySchema = z.object({
+  rank: z.string().nullable().optional(),
+  positionKey: z.string().nullable().optional(),
+  positionFrom: z.coerce.date().nullable().optional(),
+  positionTo: z.coerce.date().nullable().optional(),
+  degree: z.string().nullable().optional(),
+  teacherId: z.string().nullable().optional(),
+  employmentType: z.string().nullable().optional(),
+  departmentId: z.string().nullable().optional(),
+});
+
+export type UpdateAdminProfileBodyType = z.infer<
+  typeof UpdateAdminProfileBodySchema
+>;
 
 export type AdminListResType = z.infer<typeof AdminListResSchema>;
 
