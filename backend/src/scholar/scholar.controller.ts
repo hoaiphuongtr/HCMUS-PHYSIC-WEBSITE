@@ -423,6 +423,16 @@ export class ScholarController {
     );
   }
 
+  /**
+   * NẠP LẦN ĐẦU hồ sơ nhân sự từ ACADsoom (Mục 10.7) — chỉ quản trị, chạy MỘT
+   * lượt trước khi đổi web Khoa thành gốc. Cần ACADSOOM_BASE_URL + WEBKHOA_PULL_SECRET.
+   */
+  @Post('staff/initial-load')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  staffInitialLoad() {
+    return this.service.staffInitialLoad();
+  }
+
   // ── Thống kê ──────────────────────────────────────────────────────────────
   @Get('stats/me')
   @ZodSerializerDto(StatsResDTO)

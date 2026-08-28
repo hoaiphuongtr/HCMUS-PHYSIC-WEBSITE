@@ -172,6 +172,21 @@ model User {
   position          String?
   bio               String?
   departmentId      String?
+  // ── Hồ sơ tài khoản (Mục 10) — web Khoa LÀM CHỦ, ACADsoom kéo về, không sửa ──
+  /// Định danh BẤT BIẾN (PHYsoom/ACADsoom) — khoá ghép người bền hơn email/MSCB.
+  physoomId         String?   @unique
+  /// MSCB — giữ NGUYÊN số 0 ở đầu (là chuỗi, không phải số).
+  teacherId         String?
+  /// Học vị: GS · PGS · TS · ThS · CN — chỉ hiển thị.
+  degree            String?
+  /// Ngạch: GV · GVC · GVCC · TrG · NCV · NCVC · CV · NV — chọn dòng định mức bên ACADsoom.
+  rank              String?
+  /// Chức vụ quản lý (key): truong_bo_mon… (`position` phía trên là nhãn hiển thị cũ).
+  positionKey       String?
+  positionFrom      DateTime?
+  positionTo        DateTime?
+  /// bien_che · hop_dong · thinh_giang.
+  employmentType    String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   lastLoginAt       DateTime?
@@ -280,6 +295,12 @@ model Department {
   // Phân loại đơn vị: "department" = bộ môn (hiện như bộ môn), "unit" = đơn vị
   // khác (Đoàn – Hội, CLB…) — KHÔNG coi là bộ môn ở các listing động.
   kind              String   @default("department")
+  // ── Mục 10: đơn vị nhân sự cho ACADsoom ──
+  /// dept · lab · office — quyết định trần điểm NV3 (bộ môn 30, PTN 40). Nguồn
+  /// thật, không suy từ tên bằng regex như ACADsoom đang làm tạm.
+  unitKind          String?
+  /// Thứ tự hiển thị trong danh sách đơn vị.
+  order             Int      @default(0)
   // Danh muc MAC DINH cua don vi: bai do tai khoan thuoc don vi nay dang se LUON
   // duoc gan danh muc do (vd CLB -> "Cau lac bo"), khong phu thuoc nguoi dang co
   // nho tick hay khong. De trong = khong ep gi.

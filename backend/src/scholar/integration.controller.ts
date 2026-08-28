@@ -6,6 +6,7 @@ import {
   IntegrationActivityResDTO,
   IntegrationPublicationResDTO,
   IntegrationGradStudyResDTO,
+  IntegrationStaffResDTO,
   IntegrationQueryDTO,
 } from './scholar.dto';
 import { IntegrationSecretGuard } from './integration-secret.guard';
@@ -64,5 +65,15 @@ export class ScholarIntegrationController {
   @ZodSerializerDto(IntegrationGradStudyResDTO)
   gradStudy(@Query() query: IntegrationQueryDTO) {
     return this.service.gradStudyIntegrationList(query);
+  }
+
+  /**
+   * Hồ sơ nhân sự (Mục 10) — web Khoa LÀM CHỦ, ACADsoom kéo về không sửa. Trả
+   * dữ kiện người + đơn vị, KHÔNG trả giờ/định mức.
+   */
+  @Get('staff')
+  @ZodSerializerDto(IntegrationStaffResDTO)
+  staff(@Query() query: IntegrationQueryDTO) {
+    return this.service.staffIntegrationList(query);
   }
 }

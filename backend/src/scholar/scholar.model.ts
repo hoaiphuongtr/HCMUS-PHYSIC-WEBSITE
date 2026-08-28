@@ -527,6 +527,45 @@ export const IntegrationGradStudyResSchema = z.object({
   ...INTEGRATION_CURSOR,
 });
 
+/**
+ * Hồ sơ nhân sự cho ACADsoom (Mục 10) — web Khoa LÀM CHỦ, ACADsoom kéo về, không
+ * sửa. Trả DỮ KIỆN người + danh sách đơn vị; KHÔNG trả giờ/điểm/định mức (nằm ở
+ * `Term.*` bên ACADsoom, đổi theo năm học). Hai chế độ ảnh chụp / `since` như các
+ * kênh khác. `id` là định danh BẤT BIẾN (physoomId) — khoá ghép người.
+ */
+export const IntegrationStaffResSchema = z.object({
+  units: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      /** dept · lab · office — quyết định trần điểm NV3 bên ACADsoom. */
+      kind: z.string().nullable(),
+      order: z.number().int(),
+    }),
+  ),
+  items: z.array(
+    z.object({
+      id: z.string(),
+      email: z.string(),
+      name: z.string(),
+      /** MSCB — chuỗi, giữ số 0 đầu. */
+      teacherId: z.string().nullable(),
+      degree: z.string().nullable(),
+      rank: z.string().nullable(),
+      /** Chức vụ (key), rỗng = không giữ chức vụ. */
+      position: z.string().nullable(),
+      positionFrom: z.string().nullable(),
+      positionTo: z.string().nullable(),
+      unitId: z.string().nullable(),
+      employmentType: z.string().nullable(),
+      active: z.boolean(),
+      /** Ở chế độ `since`: người đã nghỉ / gỡ — bên nhận ẩn đi. */
+      removed: z.boolean().optional(),
+    }),
+  ),
+  ...INTEGRATION_CURSOR,
+});
+
 // ── Hoạt động KHCN khác (Bảng 3) ────────────────────────────────────────────
 //
 // Khác hẳn công bố và đề tài ở một điểm quyết định hình dạng lược đồ: Bảng 3

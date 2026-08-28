@@ -6,6 +6,7 @@ import {
   ImportPreviewResSchema,
   IntegrationPublicationResSchema,
   IntegrationGradStudyResSchema,
+  IntegrationStaffResSchema,
   IntegrationQuerySchema,
   ListPublicationsQuerySchema,
   OrcidImportBodySchema,
@@ -90,6 +91,9 @@ export class IntegrationPublicationResDTO extends createZodDto(
 ) {}
 export class IntegrationGradStudyResDTO extends createZodDto(
   IntegrationGradStudyResSchema,
+) {}
+export class IntegrationStaffResDTO extends createZodDto(
+  IntegrationStaffResSchema,
 ) {}
 
 export class StatsResDTO extends createZodDto(StatsResSchema) {}

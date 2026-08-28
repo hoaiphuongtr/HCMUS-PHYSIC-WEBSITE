@@ -1135,6 +1135,143 @@ export class ScholarService {
     return pageBySince(mapped, query.limit);
   }
 
+  /**
+   * Hồ sơ nhân sự cho ACADsoom (Mục 10). Web Khoa LÀM CHỦ; đây là chỗ ACADsoom
+   * kéo về. Trả dữ kiện người + danh sách đơn vị, KHÔNG trả giờ/định mức. Hai chế
+   * độ như các kênh khác. `id` = physoomId (định danh bất biến); chưa có thì tạm
+   * dùng `User.id` để không rỗng — lượt nạp lần đầu sẽ điền physoomId.
+   */
+  async staffIntegrationList(query: IntegrationQueryType) {
+    const { since } = query;
+    const units = await this.prisma.department.findMany({
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, unitKind: true, order: true },
+    });
+    const users = await this.prisma.user.findMany({
+      where: {
+        ...(query.email ? { email: query.email.toLowerCase() } : {}),
+        ...(since ? { updatedAt: { gte: since } } : {}),
+      },
+      select: {
+        id: true,
+        physoomId: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        teacherId: true,
+        degree: true,
+        rank: true,
+        positionKey: true,
+        positionFrom: true,
+        positionTo: true,
+        departmentId: true,
+        employmentType: true,
+        isActive: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const ngay = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+    const mapped = users.map((u) => ({
+      changedAt: u.updatedAt,
+      item: {
+        id: u.physoomId || u.id,
+        email: u.email,
+        name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        teacherId: u.teacherId,
+        degree: u.degree,
+        rank: u.rank,
+        position: u.positionKey,
+        positionFrom: ngay(u.positionFrom),
+        positionTo: ngay(u.positionTo),
+        unitId: u.departmentId,
+        employmentType: u.employmentType,
+        active: u.isActive,
+        // Chế độ `since`: người tắt hoạt động thì bên nhận ẩn đi.
+        removed: !u.isActive,
+      },
+    }));
+
+    const unitItems = units.map((u) => ({
+      id: u.id,
+      name: u.name,
+      kind: u.unitKind,
+      order: u.order,
+    }));
+
+    if (!since) return { units: unitItems, items: mapped.map((m) => m.item) };
+    return { units: unitItems, ...pageBySince(mapped, query.limit) };
+  }
+
+  /**
+   * NẠP LẦN ĐẦU (Mục 10.7) — đổ ngược dữ liệu nhân sự từ ACADsoom lên web Khoa
+   * MỘT LƯỢT, rồi từ đó web Khoa làm gốc. ~38 ngạch Khoa vá tay + đơn vị hiện chỉ
+   * có ở ACADsoom. Ghép người theo EMAIL (web Khoa chưa có physoomId), điền
+   * physoomId/teacherId/rank/positionKey + đơn vị (khớp theo tên). KHÔNG đụng
+   * name/degree/employmentType (ACADsoom không phát hai cái sau; name giữ nguyên).
+   */
+  async staffInitialLoad() {
+    const base = (process.env.ACADSOOM_BASE_URL || '').replace(/\/$/, '');
+    const secret = process.env.WEBKHOA_PULL_SECRET || '';
+    if (!base || !secret) {
+      return { error: 'Chưa đặt ACADSOOM_BASE_URL / WEBKHOA_PULL_SECRET' };
+    }
+    let data: {
+      items?: Array<{
+        email: string;
+        physoomId?: string;
+        teacherId?: string;
+        rank?: string;
+        position?: string;
+        unit?: string;
+      }>;
+    };
+    try {
+      const res = await fetch(`${base}/api/integration/staff`, {
+        headers: { 'x-webkhoa-secret': secret },
+      });
+      if (!res.ok) return { error: `ACADsoom trả ${res.status}` };
+      data = await res.json();
+    } catch (e) {
+      return { error: `Không gọi được ACADsoom: ${(e as Error).message}` };
+    }
+
+    const depts = await this.prisma.department.findMany({
+      select: { id: true, name: true },
+    });
+    const deptByName = new Map(
+      depts.map((d) => [d.name.trim().toLowerCase(), d.id]),
+    );
+    const report = {
+      doi: 0,
+      khongKhopEmail: [] as string[],
+      donViLa: new Set<string>(),
+    };
+    for (const it of data.items ?? []) {
+      const email = String(it.email ?? '').toLowerCase();
+      if (!email) continue;
+      const unitName = String(it.unit ?? '').trim();
+      const deptId = unitName
+        ? (deptByName.get(unitName.toLowerCase()) ?? null)
+        : null;
+      if (unitName && !deptId) report.donViLa.add(unitName);
+      const res = await this.prisma.user.updateMany({
+        where: { email },
+        data: {
+          physoomId: it.physoomId || undefined,
+          teacherId: it.teacherId || undefined,
+          rank: it.rank || undefined,
+          positionKey: it.position || undefined,
+          ...(deptId ? { departmentId: deptId } : {}),
+        },
+      });
+      if (res.count) report.doi++;
+      else report.khongKhopEmail.push(email);
+    }
+    return { ...report, donViLa: [...report.donViLa] };
+  }
+
   // ── Trang nhân sự ─────────────────────────────────────────────────────────
   /**
    * Trang nhân sự chạy ISR nên phải báo Next dựng lại; cùng CSDL nên không có
