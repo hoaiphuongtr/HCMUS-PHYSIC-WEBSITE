@@ -19,6 +19,8 @@ const makeRepoMock = (): RepoMock => ({
   updateProfile: vi.fn(),
   setActive: vi.fn(),
   setPassword: vi.fn(),
+  findByEmail: vi.fn(),
+  createStaff: vi.fn(),
 });
 
 const sampleAdmin = {
@@ -67,7 +69,7 @@ describe('AdminService mutations', () => {
 
       const result = await service.list({ page: 2, pageSize: 5 });
 
-      expect(repo.listPaged).toHaveBeenCalledWith(5, 5);
+      expect(repo.listPaged).toHaveBeenCalledWith('admin', 5, 5);
       expect(result).toEqual({
         items: [sampleAdmin],
         total: 3,

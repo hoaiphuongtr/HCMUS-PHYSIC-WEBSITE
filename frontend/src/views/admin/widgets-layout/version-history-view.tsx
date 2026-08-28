@@ -52,7 +52,7 @@ const initialsOf = (v: PageLayoutVersion) => {
 const displayName = (v: PageLayoutVersion) => {
   const u = v.publishedByUser;
   if (!u) return "—";
-  const full = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+  const full = [u.lastName, u.firstName].filter(Boolean).join(" ").trim();
   return full || u.email;
 };
 

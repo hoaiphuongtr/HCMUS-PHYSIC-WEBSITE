@@ -3,11 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
 import { UpdateAdminProfileBodyType } from './admin.model';
 
-// Trang quản lý user cho CẢ nhân sự: admin CMS lẫn giảng viên (LECTURER). Mục 10
-// biến trang "admins" thành nơi web Khoa làm chủ hồ sơ mọi người.
-const STAFF_WHERE: Prisma.UserWhereInput = {
-  role: { in: ['SUPER_ADMIN', 'ADMIN', 'LECTURER'] },
+// Hai nhóm TÁCH BIỆT (Khoa quyết: quản lý cán bộ ≠ quản lý admin):
+//   'admin' = tài khoản đăng nhập CMS (super-admin + admin bộ môn), có password.
+//   'staff' = CÁN BỘ/giảng viên (LECTURER) — hồ sơ nhân sự, KHÔNG đăng nhập.
+export type StaffKind = 'admin' | 'staff';
+const ADMIN_WHERE: Prisma.UserWhereInput = {
+  role: { in: ['SUPER_ADMIN', 'ADMIN'] },
 };
+const STAFF_WHERE: Prisma.UserWhereInput = { role: 'LECTURER' };
+const whereFor = (kind: StaffKind): Prisma.UserWhereInput =>
+  kind === 'staff' ? STAFF_WHERE : ADMIN_WHERE;
 
 const STAFF_SELECT = {
   id: true,
@@ -35,9 +40,9 @@ const STAFF_SELECT = {
 export class AdminRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  listPaged(skip: number, take: number) {
+  listPaged(kind: StaffKind, skip: number, take: number) {
     return this.prisma.user.findMany({
-      where: STAFF_WHERE,
+      where: whereFor(kind),
       orderBy: [{ createdAt: 'desc' }],
       skip,
       take,
@@ -45,13 +50,37 @@ export class AdminRepository {
     });
   }
 
-  count() {
-    return this.prisma.user.count({ where: STAFF_WHERE });
+  count(kind: StaffKind) {
+    return this.prisma.user.count({ where: whereFor(kind) });
   }
 
-  countActiveSince(since: Date) {
+  countActiveSince(kind: StaffKind, since: Date) {
     return this.prisma.user.count({
-      where: { ...STAFF_WHERE, lastLoginAt: { gte: since } },
+      where: { ...whereFor(kind), lastLoginAt: { gte: since } },
+    });
+  }
+
+  findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  /** Tạo cán bộ (giảng viên) — role LECTURER, KHÔNG password. */
+  createStaff(data: {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    teacherId?: string | null;
+    rank?: string | null;
+    positionKey?: string | null;
+    degree?: string | null;
+    employmentType?: string | null;
+    departmentId?: string | null;
+    positionFrom?: Date | null;
+    positionTo?: Date | null;
+  }) {
+    return this.prisma.user.create({
+      data: { ...data, role: 'LECTURER' },
+      select: STAFF_SELECT,
     });
   }
 

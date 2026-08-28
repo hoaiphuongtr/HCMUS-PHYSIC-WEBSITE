@@ -14,7 +14,7 @@ export const AdminItemSchema = z.object({
   lastName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   position: z.string().nullable(),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN']),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'LECTURER']),
   isActive: z.boolean(),
   lastLoginAt: z.date().nullable(),
   createdAt: z.date(),
@@ -62,6 +62,26 @@ export const UpdateAdminProfileBodySchema = z.object({
 export type UpdateAdminProfileBodyType = z.infer<
   typeof UpdateAdminProfileBodySchema
 >;
+
+/**
+ * Tạo CÁN BỘ (giảng viên) — hồ sơ nhân sự, KHÔNG có mật khẩu (không đăng nhập
+ * CMS). Khác hẳn tạo admin (POST /auth/create-admin, có password). `name` là họ
+ * tên đầy đủ tiếng Việt, tách bằng splitVietnameseName.
+ */
+export const CreateStaffBodySchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email(),
+  teacherId: z.string().max(50).nullable().optional(),
+  rank: z.string().nullable().optional(),
+  positionKey: z.string().nullable().optional(),
+  degree: z.string().nullable().optional(),
+  employmentType: z.string().nullable().optional(),
+  departmentId: z.string().nullable().optional(),
+  positionFrom: z.coerce.date().nullable().optional(),
+  positionTo: z.coerce.date().nullable().optional(),
+});
+
+export type CreateStaffBodyType = z.infer<typeof CreateStaffBodySchema>;
 
 export type AdminListResType = z.infer<typeof AdminListResSchema>;
 

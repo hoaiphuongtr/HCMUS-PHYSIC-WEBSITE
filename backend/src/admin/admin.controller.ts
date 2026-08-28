@@ -14,6 +14,7 @@ import {
   AdminListResDTO,
   AdminItemDTO,
   AdminMessageResDTO,
+  CreateStaffBodyDTO,
   ResetAdminPasswordBodyDTO,
   UpdateAdminProfileBodyDTO,
 } from './admin.dto';
@@ -29,6 +30,20 @@ export class AdminController {
   @ZodSerializerDto(AdminListResDTO)
   list(@Query() query: AdminListQueryDTO) {
     return this.adminService.list(query);
+  }
+
+  /** Danh sách CÁN BỘ (giảng viên) — trang quản lý cán bộ, tách khỏi admin. */
+  @Get('staff')
+  @ZodSerializerDto(AdminListResDTO)
+  listStaff(@Query() query: AdminListQueryDTO) {
+    return this.adminService.listStaff(query);
+  }
+
+  /** Tạo CÁN BỘ (không mật khẩu — khác Create Admin). */
+  @Post('staff')
+  @ZodSerializerDto(AdminItemDTO)
+  createStaff(@Body() body: CreateStaffBodyDTO) {
+    return this.adminService.createStaff(body);
   }
 
   @Patch(':id/suspend')

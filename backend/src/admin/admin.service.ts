@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { AdminRepository } from './admin.repo';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { AdminRepository, StaffKind } from './admin.repo';
 import {
   AdminListQueryType,
+  CreateStaffBodyType,
   ResetAdminPasswordBodyType,
   UpdateAdminProfileBodyType,
 } from './admin.model';
@@ -10,6 +11,7 @@ import {
   CannotMutateSuperAdminException,
 } from './admin.error';
 import { HashingService } from '../shared/services/hashing.service';
+import { splitVietnameseName } from '../auth/physoom-sso';
 
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
 
@@ -21,16 +23,50 @@ export class AdminService {
   ) {}
 
   async list(query: AdminListQueryType) {
+    return this.listByKind('admin', query);
+  }
+
+  /** Danh sách CÁN BỘ (giảng viên) — trang quản lý cán bộ, tách khỏi admin. */
+  async listStaff(query: AdminListQueryType) {
+    return this.listByKind('staff', query);
+  }
+
+  private async listByKind(kind: StaffKind, query: AdminListQueryType) {
     const { page, pageSize } = query;
     const skip = (page - 1) * pageSize;
     const activeSince = new Date(Date.now() - ACTIVE_WINDOW_MS);
     const [items, total, activeNow, units] = await Promise.all([
-      this.adminRepository.listPaged(skip, pageSize),
-      this.adminRepository.count(),
-      this.adminRepository.countActiveSince(activeSince),
+      this.adminRepository.listPaged(kind, skip, pageSize),
+      this.adminRepository.count(kind),
+      this.adminRepository.countActiveSince(kind, activeSince),
       this.adminRepository.listUnits(),
     ]);
     return { items, total, activeNow, page, pageSize, units };
+  }
+
+  /**
+   * Tạo CÁN BỘ (giảng viên) — hồ sơ nhân sự, role LECTURER, KHÔNG mật khẩu
+   * (không đăng nhập CMS). Khác createAdmin (auth, có password).
+   */
+  async createStaff(body: CreateStaffBodyType) {
+    const email = body.email.toLowerCase();
+    if (await this.adminRepository.findByEmail(email)) {
+      throw new ConflictException('Email đã tồn tại');
+    }
+    const { firstName, lastName } = splitVietnameseName(body.name);
+    return this.adminRepository.createStaff({
+      email,
+      firstName,
+      lastName,
+      teacherId: body.teacherId ?? null,
+      rank: body.rank ?? null,
+      positionKey: body.positionKey ?? null,
+      degree: body.degree ?? null,
+      employmentType: body.employmentType ?? null,
+      departmentId: body.departmentId ?? null,
+      positionFrom: body.positionFrom ?? null,
+      positionTo: body.positionTo ?? null,
+    });
   }
 
   /**

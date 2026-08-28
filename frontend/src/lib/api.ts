@@ -193,6 +193,21 @@ export type StaffProfileUpdate = {
   departmentId?: string | null;
 };
 
+// Tạo cán bộ (giảng viên, role LECTURER) — KHÔNG có mật khẩu. `name` là họ tên
+// tiếng Việt đầy đủ, backend tự tách họ/tên.
+export type StaffCreate = {
+  name: string;
+  email: string;
+  teacherId?: string | null;
+  rank?: string | null;
+  positionKey?: string | null;
+  degree?: string | null;
+  employmentType?: string | null;
+  departmentId?: string | null;
+  positionFrom?: string | null;
+  positionTo?: string | null;
+};
+
 export const adminApi = {
   list(params: { page?: number; pageSize?: number } = {}) {
     return authFetch<{
@@ -203,6 +218,22 @@ export const adminApi = {
       pageSize: number;
       units: StaffUnit[];
     }>(`/admins${buildQuery(params)}`);
+  },
+  listStaff(params: { page?: number; pageSize?: number } = {}) {
+    return authFetch<{
+      items: AdminListItem[];
+      total: number;
+      activeNow: number;
+      page: number;
+      pageSize: number;
+      units: StaffUnit[];
+    }>(`/admins/staff${buildQuery(params)}`);
+  },
+  createStaff(body: StaffCreate) {
+    return authFetch<AdminListItem>(`/admins/staff`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   },
   suspend(id: string) {
     return authFetch<{ message: string }>(`/admins/${id}/suspend`, {

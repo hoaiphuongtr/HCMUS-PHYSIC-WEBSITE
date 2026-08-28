@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -21,9 +20,9 @@ import {
   resolveMediaUrl,
 } from "@/lib/api";
 import { isFacultyWide } from "@/lib/department";
+import { EditProfileModal } from "@/views/admin/admins/edit-profile-modal";
 import { PortalMenu } from "@/views/admin/widgets-layout/portal-menu";
-import { ResetPasswordModal } from "./reset-password-modal";
-import { EditProfileModal } from "./edit-profile-modal";
+import { CreateStaffModal } from "./create-staff-modal";
 
 const PAGE_SIZE = 10;
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
@@ -65,13 +64,13 @@ const computeStatus = (a: AdminListItem) => {
   return { label: "Offline", tone: "slate" } as const;
 };
 
-export function AdminsListView() {
+export function StaffListView() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [resetTarget, setResetTarget] = useState<AdminListItem | null>(null);
   const [editTarget, setEditTarget] = useState<AdminListItem | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const { data: profile } = useQuery({
@@ -86,29 +85,29 @@ export function AdminsListView() {
   }, [profile, router]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["ADMINS", { page, pageSize: PAGE_SIZE }],
-    queryFn: () => adminApi.list({ page, pageSize: PAGE_SIZE }),
+    queryKey: ["STAFF", { page, pageSize: PAGE_SIZE }],
+    queryFn: () => adminApi.listStaff({ page, pageSize: PAGE_SIZE }),
     enabled: isFacultyWide(profile?.role, profile?.departmentId),
   });
 
   const suspendMut = useMutation({
-    mutationKey: ["ADMINS", "SUSPEND"],
+    mutationKey: ["STAFF", "SUSPEND"],
     mutationFn: (id: string) => adminApi.suspend(id),
     onSuccess: () => {
-      toast.success("Account đã bị vô hiệu hóa");
-      queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+      toast.success("Đã cho cán bộ nghỉ");
+      queryClient.invalidateQueries({ queryKey: ["STAFF"] });
     },
     onError: (err: { message?: string }) => {
-      toast.error(err.message || "Vô hiệu hóa thất bại");
+      toast.error(err.message || "Thao tác thất bại");
     },
   });
 
   const restoreMut = useMutation({
-    mutationKey: ["ADMINS", "RESTORE"],
+    mutationKey: ["STAFF", "RESTORE"],
     mutationFn: (id: string) => adminApi.restore(id),
     onSuccess: () => {
-      toast.success("Account đã được khôi phục");
-      queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+      toast.success("Đã khôi phục cán bộ");
+      queryClient.invalidateQueries({ queryKey: ["STAFF"] });
     },
     onError: (err: { message?: string }) => {
       toast.error(err.message || "Khôi phục thất bại");
@@ -129,33 +128,34 @@ export function AdminsListView() {
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-              Quản lý admin
+              Quản lý cán bộ
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-              Quản lý tài khoản đăng nhập CMS (Super Admin và Admin): phân
-              quyền, vai trò và trạng thái đăng nhập. Cán bộ/giảng viên không có
-              tài khoản được quản lý ở trang "Quản lý cán bộ".
+              Quản lý hồ sơ nhân sự của cán bộ, giảng viên trong Khoa (ngạch,
+              học vị, chức vụ quản lý, đơn vị). Cán bộ không có tài khoản đăng
+              nhập CMS.
             </p>
           </div>
-          <Link
-            href="/admin/admins/new"
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-sm font-semibold"
           >
             <PlusIcon className="w-4 h-4" />
-            Create Admin
-          </Link>
+            Tạo cán bộ
+          </button>
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
           <StatCard
-            label="TOTAL ADMINS"
+            label="TỔNG CÁN BỘ"
             value={String(total)}
             icon={
               <UsersIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             }
           />
           <StatCard
-            label="ACTIVE NOW"
+            label="ĐANG HOẠT ĐỘNG"
             value={String(activeNow)}
             icon={
               <WifiIcon className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
@@ -170,11 +170,11 @@ export function AdminsListView() {
 
         <div className="mt-6 bg-white dark:bg-[#101622] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[3fr_2fr_1fr_1.5fr_0.5fr] gap-4 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#0e1422] border-b border-slate-200 dark:border-slate-800">
-            <div>User</div>
-            <div>Department</div>
-            <div>Status</div>
-            <div>Last login</div>
-            <div className="text-right">Actions</div>
+            <div>Cán bộ</div>
+            <div>Đơn vị</div>
+            <div>Trạng thái</div>
+            <div>Hoạt động</div>
+            <div className="text-right">Thao tác</div>
           </div>
 
           {isLoading ? (
@@ -183,7 +183,7 @@ export function AdminsListView() {
             </p>
           ) : items.length === 0 ? (
             <p className="text-center px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
-              Chưa có admin nào. Bấm "Create Admin" để thêm.
+              Chưa có cán bộ nào. Bấm "Tạo cán bộ" để thêm.
             </p>
           ) : (
             <ul>
@@ -245,7 +245,7 @@ export function AdminsListView() {
                     <div className="flex justify-end">
                       <button
                         type="button"
-                        aria-label="Open admin actions"
+                        aria-label="Mở thao tác cán bộ"
                         aria-haspopup="menu"
                         aria-expanded={menuOpenId === a.id}
                         onClick={(e) => {
@@ -280,16 +280,6 @@ export function AdminsListView() {
               >
                 Sửa hồ sơ
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setResetTarget(openMenuFor);
-                  setMenuOpenId(null);
-                }}
-                className="w-full px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#202c44]"
-              >
-                Reset password
-              </button>
               {openMenuFor.isActive ? (
                 <button
                   type="button"
@@ -299,7 +289,7 @@ export function AdminsListView() {
                   }}
                   className="w-full px-3 py-2 text-left text-xs text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                 >
-                  Suspend
+                  Cho nghỉ
                 </button>
               ) : (
                 <button
@@ -310,7 +300,7 @@ export function AdminsListView() {
                   }}
                   className="w-full px-3 py-2 text-left text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                 >
-                  Restore
+                  Khôi phục
                 </button>
               )}
             </PortalMenu>
@@ -319,18 +309,18 @@ export function AdminsListView() {
           {total > 0 && (
             <div className="flex items-center justify-between px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#101622]">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Showing{" "}
+                Hiển thị{" "}
                 <strong>
                   {pageStart}-{pageEnd}
                 </strong>{" "}
-                of <strong>{total}</strong> admins
+                trên <strong>{total}</strong> cán bộ
               </p>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  aria-label="Previous page"
+                  aria-label="Trang trước"
                   className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronLeftIcon className="w-3.5 h-3.5" />
@@ -339,7 +329,7 @@ export function AdminsListView() {
                   type="button"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  aria-label="Next page"
+                  aria-label="Trang sau"
                   className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#202c44] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronRightIcon className="w-3.5 h-3.5" />
@@ -350,11 +340,10 @@ export function AdminsListView() {
         </div>
       </div>
 
-      {resetTarget && (
-        <ResetPasswordModal
-          adminId={resetTarget.id}
-          adminName={displayName(resetTarget)}
-          onClose={() => setResetTarget(null)}
+      {createOpen && (
+        <CreateStaffModal
+          units={data?.units ?? []}
+          onClose={() => setCreateOpen(false)}
         />
       )}
 

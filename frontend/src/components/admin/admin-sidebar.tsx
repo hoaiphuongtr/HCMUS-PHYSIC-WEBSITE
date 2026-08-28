@@ -5,6 +5,7 @@ import {
   Code2,
   FileText,
   FolderOpen,
+  GraduationCap,
   LayoutDashboard,
   LayoutPanelLeft,
   HelpCircle,
@@ -55,7 +56,8 @@ const SYSTEM_ITEMS: NavItem[] = [
 ];
 
 const SUPER_ADMIN_ITEMS: NavItem[] = [
-  { name: "Admin Management", href: "/admin/admins", icon: Users },
+  { name: "Quản lý cán bộ", href: "/admin/staff", icon: GraduationCap },
+  { name: "Quản lý admin", href: "/admin/admins", icon: Users },
 ];
 
 const ROLE_LABELS: Record<string, string> = {

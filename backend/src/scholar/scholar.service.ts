@@ -1149,6 +1149,11 @@ export class ScholarService {
     });
     const users = await this.prisma.user.findMany({
       where: {
+        // Chỉ phát NGƯỜI THẬT (role LECTURER). Loại tài khoản chức năng (admin
+        // bộ môn vllt_admin…) và bản trùng ADMIN — vd Ngân có 2 bản ADMIN
+        // (nguyenvuongthuyngan@ / ngannguyen@) cạnh bản thật nvtngan@ (LECTURER).
+        // Không lọc thì PHYsoom/ACADsoom kéo về sẽ tạo tài khoản rác/trùng.
+        role: 'LECTURER',
         ...(query.email ? { email: query.email.toLowerCase() } : {}),
         ...(since ? { updatedAt: { gte: since } } : {}),
       },
@@ -1178,7 +1183,12 @@ export class ScholarService {
       item: {
         id: u.physoomId || u.id,
         email: u.email,
-        name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        // Tên tiếng Việt: HỌ+ĐỆM (lastName) trước, TÊN GỌI (firstName) sau.
+        // splitVietnameseName lưu firstName = từ cuối (tên gọi), lastName = phần
+        // còn lại — nên [firstName, lastName] ra "Ngân Nguyễn Vương Thùy" (đảo,
+        // PHYsoom thấy sai tùm lum); phải [lastName, firstName] mới đúng
+        // "Nguyễn Vương Thùy Ngân".
+        name: [u.lastName, u.firstName].filter(Boolean).join(' ') || u.email,
         teacherId: u.teacherId,
         degree: u.degree,
         rank: u.rank,

@@ -10,76 +10,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { adminApi, type AdminListItem, type StaffUnit } from "@/lib/api";
+import { adminApi, type StaffUnit } from "@/lib/api";
+// Dùng chung danh mục với modal "Sửa hồ sơ" — khoá phải khớp ĐÚNG chuỗi ACADsoom.
+import {
+  DEGREES,
+  EMPLOYMENT,
+  POSITIONS,
+  RANKS,
+} from "@/views/admin/admins/edit-profile-modal";
 
-// Khoá phải khớp ĐÚNG chuỗi ACADsoom dùng (Mục 10.4).
-// Export để trang "Quản lý cán bộ" (create-staff-modal) dùng chung, khỏi copy.
-export const RANKS: [string, string][] = [
-  ["GV", "Giảng viên"],
-  ["GVC", "Giảng viên chính"],
-  ["GVCC", "Giảng viên cao cấp"],
-  ["TrG", "Trợ giảng"],
-  ["NCV", "Nghiên cứu viên"],
-  ["NCVC", "Nghiên cứu viên chính"],
-  ["CV", "Chuyên viên"],
-  ["NV", "Nhân viên phòng ban"],
-];
-export const POSITIONS: [string, string][] = [
-  ["truong_khoa", "Trưởng khoa"],
-  ["pho_truong_khoa", "Phó Trưởng khoa"],
-  ["truong_bo_mon", "Trưởng bộ môn"],
-  ["pho_truong_bo_mon", "Phó Trưởng bộ môn"],
-  ["truong_ptn", "Trưởng PTN"],
-  ["giao_vu", "Giáo vụ"],
-  ["tro_ly", "Trợ lý Khoa"],
-  ["cong_doan", "Chủ tịch Công đoàn"],
-  ["doan_thanh_nien", "Bí thư Đoàn TN"],
-];
-export const DEGREES: [string, string][] = [
-  ["GS", "Giáo sư"],
-  ["PGS", "Phó Giáo sư"],
-  ["TS", "Tiến sĩ"],
-  ["ThS", "Thạc sĩ"],
-  ["CN", "Cử nhân"],
-];
-export const EMPLOYMENT: [string, string][] = [
-  ["bien_che", "Biên chế"],
-  ["hop_dong", "Hợp đồng"],
-  ["thinh_giang", "Thỉnh giảng"],
-];
-
-const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const nn = (s: string) => (s.trim() ? s : null);
 
 const fieldCls =
   "w-full px-3 py-2 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2436] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30";
 
-export function EditProfileModal({
-  person,
+export function CreateStaffModal({
   units,
   onClose,
 }: {
-  person: AdminListItem;
   units: StaffUnit[];
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
   const id = useId();
-  const [rank, setRank] = useState(person.rank ?? "");
-  const [positionKey, setPositionKey] = useState(person.positionKey ?? "");
-  const [degree, setDegree] = useState(person.degree ?? "");
-  const [teacherId, setTeacherId] = useState(person.teacherId ?? "");
-  const [employmentType, setEmploymentType] = useState(
-    person.employmentType ?? "",
-  );
-  const [departmentId, setDepartmentId] = useState(person.department?.id ?? "");
-  const [positionFrom, setPositionFrom] = useState(day(person.positionFrom));
-  const [positionTo, setPositionTo] = useState(day(person.positionTo));
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [rank, setRank] = useState("");
+  const [positionKey, setPositionKey] = useState("");
+  const [degree, setDegree] = useState("");
+  const [teacherId, setTeacherId] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [positionFrom, setPositionFrom] = useState("");
+  const [positionTo, setPositionTo] = useState("");
 
-  const save = useMutation({
-    mutationKey: ["ADMINS", "UPDATE_PROFILE", person.id],
+  const create = useMutation({
+    mutationKey: ["STAFF", "CREATE"],
     mutationFn: () =>
-      adminApi.updateProfile(person.id, {
+      adminApi.createStaff({
+        name: name.trim(),
+        email: email.trim(),
         rank: nn(rank),
         positionKey: nn(positionKey),
         degree: nn(degree),
@@ -90,40 +60,68 @@ export function EditProfileModal({
         positionTo: nn(positionTo),
       }),
     onSuccess: () => {
-      toast.success("Đã lưu hồ sơ");
-      // Modal này dùng chung cho cả trang admin (["ADMINS"]) lẫn trang cán bộ
-      // (["STAFF"]); làm mới cả hai để danh sách đang mở cập nhật ngay.
-      queryClient.invalidateQueries({ queryKey: ["ADMINS"] });
+      toast.success("Đã tạo cán bộ");
       queryClient.invalidateQueries({ queryKey: ["STAFF"] });
       onClose();
     },
     onError: (err: { message?: string }) => {
-      toast.error(err.message || "Lưu hồ sơ thất bại");
+      // Backend trả 409 "Email đã tồn tại" — thông điệp đã nằm trong err.message.
+      toast.error(err.message || "Tạo cán bộ thất bại");
     },
   });
 
-  const name =
-    [person.lastName, person.firstName].filter(Boolean).join(" ").trim() ||
-    person.email;
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Họ và tên không được để trống");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Email không được để trống");
+      return;
+    }
+    create.mutate();
+  };
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Hồ sơ — {name}</DialogTitle>
+          <DialogTitle>Tạo cán bộ mới</DialogTitle>
           <DialogDescription>
-            Web Khoa làm chủ các trường này; ACADsoom kéo về để tính định mức.
-            Ngạch sai là sai định mức cả năm.
+            Thêm hồ sơ cán bộ / giảng viên (ngạch, học vị, chức vụ…). Cán bộ
+            không có tài khoản đăng nhập nên không cần mật khẩu.
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            save.mutate();
-          }}
-          className="mt-2 grid grid-cols-2 gap-3"
-        >
+        <form onSubmit={submit} className="mt-2 grid grid-cols-2 gap-3">
+          <Field
+            label="Họ và tên"
+            htmlFor={`${id}-name`}
+            className="col-span-2"
+          >
+            <input
+              id={`${id}-name`}
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="VD: Nguyễn Văn An"
+              className={fieldCls}
+            />
+          </Field>
+
+          <Field label="Email" htmlFor={`${id}-email`} className="col-span-2">
+            <input
+              id={`${id}-email`}
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={fieldCls}
+            />
+          </Field>
+
           <Field label="Ngạch" htmlFor={`${id}-rank`}>
             <select
               id={`${id}-rank`}
@@ -244,10 +242,10 @@ export function EditProfileModal({
             </button>
             <button
               type="submit"
-              disabled={save.isPending}
+              disabled={create.isPending}
               className="px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
             >
-              {save.isPending ? "Đang lưu…" : "Lưu hồ sơ"}
+              {create.isPending ? "Đang tạo…" : "Tạo cán bộ"}
             </button>
           </div>
         </form>
@@ -259,14 +257,16 @@ export function EditProfileModal({
 function Field({
   label,
   htmlFor,
+  className,
   children,
 }: {
   label: string;
   htmlFor: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className={className}>
       <label
         htmlFor={htmlFor}
         className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
