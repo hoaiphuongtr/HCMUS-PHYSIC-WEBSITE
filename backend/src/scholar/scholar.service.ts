@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventBusService } from '../shared/services/event-bus.service';
@@ -1205,6 +1205,77 @@ export class ScholarService {
   }
 
   /**
+   * Physoom ĐẨY một người sang: thêm tài khoản ở web Khoa khi bên đó tạo user.
+   *
+   * Ghép người theo physoomId trước (định danh bất biến), không có thì theo email.
+   * Physoom CHỈ phát định danh (email + tên) — không phát chức vụ/vai trò; web
+   * Khoa tự giữ role. Nên:
+   *  - TẠO MỚI: role LECTURER, isActive true (như luồng SSO). Người mới do Physoom
+   *    thêm không được là ADMIN (default của schema là ADMIN — phải ép LECTURER).
+   *  - ĐÃ CÓ: chỉ vá physoomId/teacherId, cập nhật tên; KHÔNG đụng role/isActive
+   *    (đăng nhập lại mà bị hạ quyền là mất trang quản trị).
+   */
+  async upsertUserFromPhysoom(data: {
+    email: string;
+    name?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    physoomId?: string | null;
+    teacherId?: string | null;
+  }) {
+    const email = String(data.email || '').trim().toLowerCase();
+    if (!email) throw new BadRequestException('Thiếu email');
+
+    // Physoom gửi `name` nguyên khối; nếu không tách sẵn first/last thì đặt cả
+    // tên vào firstName để phần hiển thị `first + last` ra đúng nguyên tên.
+    const firstName = (data.firstName ?? data.name ?? '').trim() || null;
+    const lastName = (data.lastName ?? '').trim() || null;
+    const physoomId = (data.physoomId ?? '').trim() || null;
+    const teacherId = (data.teacherId ?? '').trim() || null;
+
+    // Ưu tiên ghép theo physoomId; chưa có thì theo email.
+    const existing = physoomId
+      ? await this.prisma.user.findFirst({
+          where: { OR: [{ physoomId }, { email }] },
+          select: { id: true },
+        })
+      : await this.prisma.user.findUnique({
+          where: { email },
+          select: { id: true },
+        });
+
+    if (existing) {
+      const updated = await this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          email,
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+          ...(physoomId ? { physoomId } : {}),
+          ...(teacherId ? { teacherId } : {}),
+          // KHÔNG đặt role / isActive ở đây.
+        },
+        select: { id: true, email: true, physoomId: true },
+      });
+      return { created: false, ...updated };
+    }
+
+    const createdUser = await this.prisma.user.create({
+      data: {
+        email,
+        firstName,
+        lastName,
+        physoomId,
+        teacherId,
+        role: 'LECTURER',
+        isActive: true,
+      },
+      select: { id: true, email: true, physoomId: true },
+    });
+    return { created: true, ...createdUser };
+  }
+
+  /**
    * NẠP LẦN ĐẦU (Mục 10.7) — đổ ngược dữ liệu nhân sự từ ACADsoom lên web Khoa
    * MỘT LƯỢT, rồi từ đó web Khoa làm gốc. ~38 ngạch Khoa vá tay + đơn vị hiện chỉ
    * có ở ACADsoom. Ghép người theo EMAIL (web Khoa chưa có physoomId), điền
@@ -1240,22 +1311,54 @@ export class ScholarService {
     const depts = await this.prisma.department.findMany({
       select: { id: true, name: true },
     });
-    const deptByName = new Map(
-      depts.map((d) => [d.name.trim().toLowerCase(), d.id]),
-    );
+
+    // ── Cầu tên bộ môn ─────────────────────────────────────────────────────
+    // ACADsoom và web Khoa đặt tên khác quy ước: ACADsoom có tiền tố "Bộ môn ",
+    // hoa/thường và dấu gạch khác nhau ("Hải Dương - Khí tượng Thủy văn" vs
+    // "Hải dương - Khí tượng- Thủy văn"), Unicode có thể ở NFC/NFD khác nhau.
+    // Khớp nguyên văn trượt cả 7 bộ môn. Quy hai bên về một dạng chuẩn rồi mới
+    // ghép — KHÔNG đổi tên bên nào (xem Mục 10, docs/yeu-cau-web-khoa.md).
+    const chuan = (s: string) =>
+      s
+        .normalize('NFC')
+        .toLowerCase()
+        .replace(/^bộ môn\s+/u, '') // chỉ ACADsoom có tiền tố này
+        .replace(/[\s\-–—]+/gu, ' ') // gộp gạch nối + khoảng trắng
+        .trim();
+    // Alias tên→id cho ca không có chữ chung với tên web Khoa. TRỐNG có chủ
+    // đích: "Văn phòng Khoa" KHÔNG gộp vào Khoa Vật lý — nó là đơn vị riêng.
+    // Khi nào web Khoa có Department "Văn phòng Khoa" thì cầu tự khớp nguyên
+    // văn, không cần alias; tới đó nhóm này còn nằm trong donViLa (giữ nguyên
+    // departmentId), đúng ý "Văn phòng Khoa là Văn phòng Khoa".
+    const ALIAS: Record<string, string> = {};
+    const deptByChuan = new Map(depts.map((d) => [chuan(d.name), d.id]));
+    const tenById = new Map(depts.map((d) => [d.id, d.name]));
+    const timDept = (unitName: string): string | null => {
+      if (!unitName) return null;
+      const key = chuan(unitName);
+      if (ALIAS[key]) return ALIAS[key];
+      const exact = deptByChuan.get(key);
+      if (exact) return exact;
+      // Tên web Khoa dài hơn ("vật lý hạt nhân kthn vlyk" ⊃ "vật lý hạt nhân").
+      // Chỉ nhận khi DUY NHẤT một bộ môn có tiền tố khớp — mơ hồ thì bỏ.
+      const hits = depts.filter((d) => chuan(d.name).startsWith(key));
+      return hits.length === 1 ? hits[0].id : null;
+    };
+
     const report = {
       doi: 0,
       khongKhopEmail: [] as string[],
       donViLa: new Set<string>(),
+      mapDonVi: {} as Record<string, string>, // tên ACADsoom → tên web Khoa (soát ghép)
     };
     for (const it of data.items ?? []) {
       const email = String(it.email ?? '').toLowerCase();
       if (!email) continue;
       const unitName = String(it.unit ?? '').trim();
-      const deptId = unitName
-        ? (deptByName.get(unitName.toLowerCase()) ?? null)
-        : null;
+      const deptId = timDept(unitName);
       if (unitName && !deptId) report.donViLa.add(unitName);
+      if (unitName && deptId && !report.mapDonVi[unitName])
+        report.mapDonVi[unitName] = tenById.get(deptId) ?? deptId;
       const res = await this.prisma.user.updateMany({
         where: { email },
         data: {
