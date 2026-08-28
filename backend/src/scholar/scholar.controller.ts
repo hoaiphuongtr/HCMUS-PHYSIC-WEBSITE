@@ -423,6 +423,17 @@ export class ScholarController {
     );
   }
 
+  /**
+   * Kéo NGẠCH + CHỨC VỤ từ ACADsoom (nguồn thật) về ô `role` trang nhân sự + thẻ
+   * ProfileCard, ghép theo email — chỉ quản trị. Cần ACADSOOM_BASE_URL +
+   * WEBKHOA_PULL_SECRET.
+   */
+  @Post('staff-pages/sync-ranks')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  syncStaffRanks() {
+    return this.staffPage.syncStaffRanks();
+  }
+
   // ── Thống kê ──────────────────────────────────────────────────────────────
   @Get('stats/me')
   @ZodSerializerDto(StatsResDTO)
