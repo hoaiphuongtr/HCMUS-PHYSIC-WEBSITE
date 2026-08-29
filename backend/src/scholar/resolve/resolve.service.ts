@@ -366,16 +366,16 @@ export class ResolveService {
       .filter((x): x is NonNullable<typeof x> => x !== null)
       .slice(0, limit);
 
-    const out: ResolvedWork[] = [];
-    for (const s of summaries) {
+    // Tra Crossref/OpenAlex cho từng bài chạy SONG SONG (tối đa 6 cùng lúc).
+    // Trước đây nối đuôi nhau (for await) nên hồ sơ nhiều bài kéo cả phút, vượt
+    // timeout của request → "lần đầu lỗi, phải thử lại". byDoi vẫn cache 7 ngày,
+    // nên lượt sau vẫn nhanh; lượt ĐẦU giờ cũng nhanh vì không còn chờ nối đuôi.
+    return this.mapLimit(summaries, 6, async (s): Promise<ResolvedWork> => {
       if (s.doi) {
         const full = await this.byDoi(s.doi);
-        if (full) {
-          out.push(full);
-          continue;
-        }
+        if (full) return full;
       }
-      out.push({
+      return {
         doi: s.doi,
         type: s.type,
         title: s.title,
@@ -383,9 +383,8 @@ export class ResolveService {
         publishedMonth: s.month,
         authors: [],
         source: 'orcid',
-      });
-    }
-    return out;
+      };
+    });
   }
 
   // ── Hạ tầng ───────────────────────────────────────────────────────────────
@@ -396,6 +395,29 @@ export class ResolveService {
     if (value)
       await this.cache.set(key, value, this.ttlMs).catch(() => undefined);
     return value;
+  }
+
+  /**
+   * map có GIỚI HẠN ĐỒNG THỜI: chạy `fn` cho mọi phần tử, tối đa `limit` cái
+   * cùng lúc, giữ NGUYÊN thứ tự kết quả. Dùng cho byOrcid để tra hàng loạt bài
+   * vừa nhanh (không nối đuôi) vừa không bung hết một lúc (tránh rate-limit).
+   */
+  private async mapLimit<T, R>(
+    items: readonly T[],
+    limit: number,
+    fn: (item: T) => Promise<R>,
+  ): Promise<R[]> {
+    const out = new Array<R>(items.length);
+    let next = 0;
+    const worker = async () => {
+      for (let i = next++; i < items.length; i = next++) {
+        out[i] = await fn(items[i]);
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(limit, items.length) }, worker),
+    );
+    return out;
   }
 
   /** Gọi mạng hỏng thì trả null — người dùng vẫn nhập tay được, không chặn họ. */
