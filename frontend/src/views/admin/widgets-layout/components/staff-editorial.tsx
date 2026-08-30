@@ -22,6 +22,16 @@ import { LegacyHtmlRender } from "./post-placeholders";
 const INK = "#111111";
 const PAPER = "#F9F9F6";
 
+/** INK dạng rgba — phủ màn tối lên ảnh nền hero để chữ blend vẫn đọc được. */
+const inkVeil = (alpha: number) => {
+  const h = INK.replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(n.slice(0, 2), 16);
+  const g = parseInt(n.slice(2, 4), 16);
+  const b = parseInt(n.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 type Entry = { title: LocalizedString; desc: LocalizedString };
 /** Mục tự đặt tên (Học vấn, Major, Giải thưởng…) — gom theo `section`. */
 type Extra = {
@@ -44,10 +54,16 @@ type Publication = {
 type Props = {
   photo: string;
   photoFilter: boolean;
+  // Ảnh nền hero — non-optional như `photo` để khớp CustomField của mediaPickerField.
+  heroBg: string;
   eyebrow: LocalizedString;
   name: LocalizedString;
   nameLines?: { text: LocalizedString }[];
   intro: LocalizedString;
+  orcid?: string;
+  scopus?: string;
+  googleScholar?: string;
+  researcherId?: string;
   researchTitle: LocalizedString;
   research?: Entry[];
   teachingTitle: LocalizedString;
@@ -66,7 +82,7 @@ type Props = {
 /** Tiêu đề mục: chữ serif hoa + đường kẻ chạy hết phần còn lại. */
 function RuleHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-5 mb-8">
+    <div className="flex items-center gap-5 mb-5">
       <h2
         className="text-2xl md:text-3xl text-gray-900 uppercase tracking-wider"
         style={{ fontFamily: "var(--font-playfair)" }}
@@ -80,7 +96,7 @@ function RuleHeading({ children }: { children: React.ReactNode }) {
 
 function EntryList({ items, tx }: { items: Entry[]; tx: (v: LocalizedString) => string }) {
   return (
-    <ul className="space-y-6 font-light text-gray-600">
+    <ul className="space-y-2.5 font-light text-gray-600">
       {items.map((it, i) => (
         <li key={`${tx(it.title)}-${i}`} className="flex flex-col">
           <span className="text-gray-900 text-lg font-medium mb-1.5">
@@ -144,6 +160,107 @@ function StaffProfileEditorialRender(props: Props) {
   const pubs = (props.publications ?? []).filter((p) => tx(p.title).trim());
   const hasBody = tx(props.html).trim().length > 0;
 
+  // Nền hero: có ảnh nền thì phủ màn INK mờ (0.72) lên ảnh để chữ blend vẫn đọc
+  // được; không có ảnh thì giữ nguyên nền INK đặc như cũ (byte-for-byte).
+  const heroBg = resolveMediaUrl(props.heroBg || "");
+  const heroVeil = inkVeil(0.72);
+  const mobileBgImage = heroBg
+    ? `linear-gradient(to bottom, ${heroVeil} 560px, transparent 560px), url("${heroBg}")`
+    : `linear-gradient(to bottom, ${INK} 560px, transparent 560px)`;
+  const desktopBgImage = heroBg
+    ? `linear-gradient(to bottom, ${heroVeil} 52vh, transparent 52vh), url("${heroBg}")`
+    : `linear-gradient(to bottom, ${INK} 52vh, transparent 52vh)`;
+  const heroBgExtra = heroBg
+    ? `\n          background-size: auto, cover;\n          background-position: center, center top;\n          background-repeat: no-repeat, no-repeat;`
+    : "";
+
+  // Hồ sơ học thuật: mỗi ID có giá trị thì hiện một icon-link màu thương hiệu.
+  // Đặt NGOÀI vùng `blend` để logo giữ đúng màu, không bị phép trừ màu đảo.
+  const scholarLinks = [
+    props.orcid?.trim()
+      ? {
+          key: "orcid",
+          href: `https://orcid.org/${encodeURIComponent(props.orcid.trim())}`,
+          label: "ORCID iD",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 256 256" role="img" aria-hidden="true">
+              <path fill="#A6CE39" d="M256 128c0 70.7-57.3 128-128 128S0 198.7 0 128 57.3 0 128 0s128 57.3 128 128z" />
+              <path fill="#FFF" d="M86.3 186.2H70.9V79.1h15.4v107.1z" />
+              <path fill="#FFF" d="M108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4z" />
+              <path fill="#FFF" d="M88.7 56.8c0 5.5-4.5 10.1-10.1 10.1-5.6 0-10.1-4.6-10.1-10.1 0-5.6 4.5-10.1 10.1-10.1 5.6 0 10.1 4.6 10.1 10.1z" />
+            </svg>
+          ),
+        }
+      : null,
+    props.googleScholar?.trim()
+      ? {
+          key: "scholar",
+          href: `https://scholar.google.com/citations?user=${encodeURIComponent(props.googleScholar.trim())}`,
+          label: "Google Scholar",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 512 512" role="img" aria-hidden="true">
+              <path fill="#4285F4" d="M256 411.12L0 202.667 256 0z" />
+              <path fill="#356AC3" d="M256 411.12l256-208.453L256 0z" />
+              <circle fill="#A0C3FF" cx="256" cy="362.667" r="149.333" />
+              <path fill="#76A7FA" d="M121.037 298.667c23.968-50.453 75.392-85.334 134.963-85.334s110.995 34.881 134.963 85.334H121.037z" />
+            </svg>
+          ),
+        }
+      : null,
+    props.scopus?.trim()
+      ? {
+          key: "scopus",
+          href: `https://www.scopus.com/authid/detail.uri?authorId=${encodeURIComponent(props.scopus.trim())}`,
+          label: "Scopus Author ID",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <circle cx="12" cy="12" r="12" fill="#E9711C" />
+              <text
+                x="12"
+                y="16.5"
+                textAnchor="middle"
+                fontFamily="Georgia, 'Times New Roman', serif"
+                fontSize="15"
+                fontWeight="700"
+                fill="#FFF"
+              >
+                S
+              </text>
+            </svg>
+          ),
+        }
+      : null,
+    props.researcherId?.trim()
+      ? {
+          key: "wos",
+          href: `https://www.webofscience.com/wos/author/record/${encodeURIComponent(props.researcherId.trim())}`,
+          label: "ResearcherID (Web of Science)",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <g stroke="#8C52FF" strokeWidth="1.4" strokeLinecap="round">
+                <line x1="12" y1="12" x2="5.5" y2="6" />
+                <line x1="12" y1="12" x2="18.5" y2="7" />
+                <line x1="12" y1="12" x2="7" y2="18.5" />
+                <line x1="12" y1="12" x2="17" y2="18" />
+              </g>
+              <g fill="#8C52FF">
+                <circle cx="12" cy="12" r="2.4" />
+                <circle cx="5.5" cy="6" r="1.7" />
+                <circle cx="18.5" cy="7" r="1.7" />
+                <circle cx="7" cy="18.5" r="1.7" />
+                <circle cx="17" cy="18" r="1.7" />
+              </g>
+            </svg>
+          ),
+        }
+      : null,
+  ].filter(Boolean) as {
+    key: string;
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+  }[];
+
   return (
     <div className="staff-editorial w-full antialiased">
       {/* Nền: đen ở nửa trên, trắng ngà bên dưới — ranh giới là chỗ chữ đảo màu.
@@ -151,11 +268,11 @@ function StaffProfileEditorialRender(props: Props) {
       <style>{`
         .staff-editorial {
           background-color: ${PAPER};
-          background-image: linear-gradient(to bottom, ${INK} 560px, transparent 560px);
+          background-image: ${mobileBgImage};${heroBgExtra}
         }
         @media (min-width: 768px) {
           .staff-editorial {
-            background-image: linear-gradient(to bottom, ${INK} 52vh, transparent 52vh);
+            background-image: ${desktopBgImage};
           }
         }
         /* Chữ trắng + phép trừ màu: trên nền đen ra trắng, trên nền giấy ra đen. */
@@ -187,40 +304,59 @@ function StaffProfileEditorialRender(props: Props) {
           </div>
         </div>
 
-        <div className="w-full md:w-7/12 flex flex-col justify-center text-white blend">
-          {tx(props.eyebrow) ? (
-            <p className="text-xs md:text-sm tracking-[0.3em] mb-4 font-medium uppercase">
-              {tx(props.eyebrow)}
-            </p>
-          ) : null}
-          {nameLines.length ? (
-            <h1
-              className="text-4xl sm:text-5xl lg:text-6xl uppercase leading-[0.95] mb-5"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              {nameLines.map((line, i) => (
-                <span key={`${line}-${i}`} className="block">
-                  {line}
-                </span>
+        <div className="w-full md:w-7/12 flex flex-col justify-center">
+          <div className="text-white blend">
+            {tx(props.eyebrow) ? (
+              <p className="text-xs md:text-sm tracking-[0.3em] mb-4 font-medium uppercase">
+                {tx(props.eyebrow)}
+              </p>
+            ) : null}
+            {nameLines.length ? (
+              <h1
+                className="text-4xl sm:text-5xl lg:text-6xl uppercase leading-[0.95] mb-5"
+                style={{ fontFamily: "var(--font-playfair)" }}
+              >
+                {nameLines.map((line, i) => (
+                  <span key={`${line}-${i}`} className="block">
+                    {line}
+                  </span>
+                ))}
+              </h1>
+            ) : null}
+            {tx(props.intro) ? (
+              <p className="text-base md:text-lg max-w-xl font-light leading-relaxed">
+                {tx(props.intro)}
+              </p>
+            ) : null}
+          </div>
+          {scholarLinks.length ? (
+            <div className="mt-5 flex gap-3 items-center">
+              {scholarLinks.map((l) => (
+                <a
+                  key={l.key}
+                  href={l.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={l.label}
+                  aria-label={l.label}
+                  className="inline-flex hover:opacity-70 transition-opacity"
+                >
+                  {l.icon}
+                </a>
               ))}
-            </h1>
-          ) : null}
-          {tx(props.intro) ? (
-            <p className="text-base md:text-lg max-w-xl font-light leading-relaxed">
-              {tx(props.intro)}
-            </p>
+            </div>
           ) : null}
         </div>
       </div>
 
       {/* ── Nghiên cứu / Giảng dạy ── */}
       {columns.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-16 text-gray-900">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 border-t border-gray-300 pt-12">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-10 text-gray-900">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 border-t border-gray-300 pt-8">
             {columns.map((col) => (
               <div key={col.title}>
                 <h2
-                  className="text-2xl md:text-3xl mb-6 uppercase tracking-wide text-gray-800"
+                  className="text-2xl md:text-3xl mb-4 uppercase tracking-wide text-gray-800"
                   style={{ fontFamily: "var(--font-playfair)" }}
                 >
                   {col.title}
@@ -234,7 +370,7 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Dự án ứng dụng ── */}
       {projects.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-12">
           <RuleHeading>
             {tx(props.projectsTitle) ||
               (locale === "en" ? "Projects" : "Dự án ứng dụng")}
@@ -269,16 +405,16 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Xuất bản khoa học ── */}
       {pubs.length ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-12">
           <RuleHeading>
             {tx(props.pubsTitle) ||
               (locale === "en" ? "Publications" : "Xuất bản khoa học")}
           </RuleHeading>
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-3 md:space-y-4">
             {pubs.map((p, i) => (
               <div
                 key={`${tx(p.title)}-${i}`}
-                className="flex flex-col md:flex-row md:gap-8 border-b border-gray-200 pb-6 group"
+                className="flex flex-col md:flex-row md:gap-8 border-b border-gray-200 pb-4 group"
               >
                 <div className="md:w-32 shrink-0 text-gray-400 font-medium mb-2 md:mb-0">
                   {p.year}
@@ -325,7 +461,7 @@ function StaffProfileEditorialRender(props: Props) {
 
       {/* ── Nội dung hồ sơ cũ — giữ mọi thứ chưa kịp tách ra ô riêng ── */}
       {hasBody ? (
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-20 text-gray-900">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 pb-12 text-gray-900">
           <RuleHeading>
             {tx(props.contentTitle) ||
               (locale === "en" ? "Details" : "Thông tin chi tiết")}
@@ -344,10 +480,15 @@ export const StaffProfileEditorial: ComponentConfig<Props> = {
   defaultProps: {
     photo: "",
     photoFilter: true,
+    heroBg: "",
     eyebrow: { vi: "", en: "" },
     name: { vi: "", en: "" },
     nameLines: [],
     intro: { vi: "", en: "" },
+    orcid: "",
+    scopus: "",
+    googleScholar: "",
+    researcherId: "",
     researchTitle: { vi: "Nghiên cứu", en: "Research" },
     research: [],
     teachingTitle: { vi: "Giảng dạy", en: "Teaching" },
@@ -375,6 +516,7 @@ export const StaffProfileEditorial: ComponentConfig<Props> = {
         { label: "Không (ảnh màu thật)", value: false },
       ],
     },
+    heroBg: mediaPickerField("Ảnh nền hero (thay nền tối)"),
     eyebrow: localizedTextField("Dòng nhỏ trên tên (vd: Thạc sĩ • Giảng viên)"),
     name: localizedTextField("Họ tên (dùng khi không tách dòng)"),
     nameLines: {
@@ -385,6 +527,10 @@ export const StaffProfileEditorial: ComponentConfig<Props> = {
       arrayFields: { text: localizedTextField("Chữ trên dòng này") },
     },
     intro: localizedTextField("Đoạn giới thiệu"),
+    orcid: { type: "text", label: "ORCID iD" },
+    scopus: { type: "text", label: "Scopus Author ID" },
+    googleScholar: { type: "text", label: "Google Scholar ID" },
+    researcherId: { type: "text", label: "ResearcherID (Web of Science)" },
     researchTitle: localizedTextField("Tiêu đề cột nghiên cứu"),
     research: {
       type: "array",

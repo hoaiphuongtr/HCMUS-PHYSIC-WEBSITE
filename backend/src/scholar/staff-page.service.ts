@@ -582,6 +582,242 @@ export class StaffPageService {
   }
 
   /**
+   * Tự điền hồ sơ học thuật (ORCID / Scopus / Google Scholar / ResearcherID) vào
+   * MỌI khối hồ sơ trên trang nhân sự — chỉ quản trị. Ghép khối ↔ người theo
+   * EMAIL (`props.email` của khối, cùng cách updateProfileCards ghép thẻ danh
+   * sách), lấy ID từ ScholarProfile. CHỈ ghi đè ô nào nguồn CÓ giá trị — không
+   * xoá ID người dùng đã tự điền trên khối. Ghi cả puckData (trình dựng) lẫn
+   * publishedPuckData (trang công khai) rồi revalidate.
+   */
+  async backfillScholarLinks() {
+    const profiles = await this.prisma.scholarProfile.findMany({
+      select: {
+        orcid: true,
+        scopusAuthorId: true,
+        researcherId: true,
+        googleScholarId: true,
+        user: { select: { email: true } },
+      },
+    });
+    const byEmail = new Map<string, Record<string, string>>();
+    for (const p of profiles) {
+      const email = p.user?.email?.toLowerCase();
+      if (!email) continue;
+      byEmail.set(email, {
+        orcid: p.orcid ?? '',
+        scopus: p.scopusAuthorId ?? '',
+        googleScholar: p.googleScholarId ?? '',
+        researcherId: p.researcherId ?? '',
+      });
+    }
+
+    // Trang nhân sự = layout có khối StaffProfileEditorial trong puckData/published.
+    const rows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "PageLayout"
+      WHERE "deletedAt" IS NULL
+        AND (position('StaffProfileEditorial' in "puckData"::text) > 0
+          OR position('StaffProfileEditorial' in coalesce("publishedPuckData"::text, '')) > 0)
+    `;
+
+    const report = { doi: 0, boQua: 0, khongKhop: [] as string[] };
+    const touched = new Set<string>();
+    for (const { id } of rows) {
+      const layout = await this.prisma.pageLayout.findUnique({
+        where: { id },
+        select: {
+          slug: true,
+          puckData: true,
+          publishedPuckData: true,
+          isPublished: true,
+        },
+      });
+      if (!layout) continue;
+      // Đếm/báo cáo từ bản nháp (puckData tồn tại ở mọi trang); bản published chỉ
+      // ghi theo, không đếm lại để khỏi nhân đôi cùng một khối.
+      const d = this.setScholarLinksOnStaffBlocks(
+        layout.puckData,
+        byEmail,
+        report,
+      );
+      const p = layout.isPublished
+        ? this.setScholarLinksOnStaffBlocks(
+            layout.publishedPuckData,
+            byEmail,
+            null,
+          )
+        : { tree: layout.publishedPuckData, changed: 0 };
+      if (!d.changed && !p.changed) continue;
+      await this.prisma.pageLayout.update({
+        where: { id },
+        data: {
+          ...(d.changed ? { puckData: d.tree as Prisma.InputJsonValue } : {}),
+          ...(p.changed
+            ? { publishedPuckData: p.tree as Prisma.InputJsonValue }
+            : {}),
+        },
+      });
+      touched.add(layout.slug);
+    }
+    if (touched.size) {
+      await this.cache.clear();
+      this.publicRevalidate.trigger([
+        ...[...touched].map((s) => `page:${s}`),
+        'sitemap',
+      ]);
+    }
+    return { ...report, khongKhop: [...new Set(report.khongKhop)] };
+  }
+
+  /**
+   * Nhân bản cây, điền ID học thuật cho mọi khối hồ sơ khớp EMAIL. Chỉ set ô nào
+   * nguồn CÓ giá trị (không xoá ô người dùng đã điền). `report` = null khi duyệt
+   * bản published (đã đếm ở bản nháp) để khỏi đếm trùng.
+   */
+  private setScholarLinksOnStaffBlocks(
+    root: unknown,
+    byEmail: Map<string, Record<string, string>>,
+    report: { doi: number; boQua: number; khongKhop: string[] } | null,
+  ): { tree: unknown; changed: number } {
+    let changed = 0;
+    const walk = (n: unknown): unknown => {
+      if (Array.isArray(n)) return n.map(walk);
+      if (!n || typeof n !== 'object') return n;
+      const node = n as PuckNode;
+      if (node.type && STAFF_TYPES.includes(node.type) && node.props) {
+        const email = String(node.props.email ?? '').toLowerCase();
+        if (!email) {
+          if (report) report.boQua++;
+          return node;
+        }
+        const links = byEmail.get(email);
+        if (!links) {
+          if (report) report.khongKhop.push(email);
+          return node;
+        }
+        const props = { ...node.props };
+        let hit = false;
+        for (const key of [
+          'orcid',
+          'scopus',
+          'googleScholar',
+          'researcherId',
+        ] as const) {
+          const val = links[key];
+          if (val && props[key] !== val) {
+            props[key] = val;
+            hit = true;
+          }
+        }
+        if (!hit) {
+          if (report) report.boQua++;
+          return node;
+        }
+        changed++;
+        if (report) report.doi++;
+        return { ...node, props };
+      }
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        out[k] = v && typeof v === 'object' ? walk(v) : v;
+      }
+      return out;
+    };
+    return { tree: walk(root), changed };
+  }
+
+  /**
+   * Đặt ẢNH NỀN HERO (và tắt lọc ảnh nghệ thuật) cho mọi trang nhân sự thuộc MỘT
+   * bộ môn — chỉ quản trị. "Thuộc bộ môn" xác định qua `User.departmentId` (nguồn
+   * thật về nhân sự); trang nhân sự KHÔNG stamp departmentId nên không lọc theo
+   * PageLayout được. Ghi cả puckData lẫn publishedPuckData rồi revalidate.
+   */
+  async setHeroBgForDept(departmentId: string, heroBg: string) {
+    const report = { nguoi: 0, doi: 0, boQua: [] as string[] };
+    if (!departmentId) return report;
+    const profiles = await this.prisma.scholarProfile.findMany({
+      where: { staffPageSlug: { not: null }, user: { departmentId } },
+      select: { staffPageSlug: true },
+    });
+    const slugs = [
+      ...new Set(profiles.map((p) => p.staffPageSlug ?? '')),
+    ].filter(Boolean);
+    const touched = new Set<string>();
+    for (const slug of slugs) {
+      const layout = await this.prisma.pageLayout.findFirst({
+        where: { slug, deletedAt: null },
+        orderBy: [{ isPublished: 'desc' }, { updatedAt: 'desc' }],
+        select: {
+          id: true,
+          slug: true,
+          puckData: true,
+          publishedPuckData: true,
+          isPublished: true,
+        },
+      });
+      if (!layout) continue;
+      const nodes = this.findStaffNodes(layout.puckData);
+      if (nodes.length !== 1) {
+        report.boQua.push(slug);
+        continue;
+      }
+      report.nguoi++;
+      const d = this.setHeroBgOnStaffBlocks(layout.puckData, heroBg);
+      const p = layout.isPublished
+        ? this.setHeroBgOnStaffBlocks(layout.publishedPuckData, heroBg)
+        : { tree: layout.publishedPuckData, changed: 0 };
+      if (!d.changed && !p.changed) continue;
+      await this.prisma.pageLayout.update({
+        where: { id: layout.id },
+        data: {
+          ...(d.changed ? { puckData: d.tree as Prisma.InputJsonValue } : {}),
+          ...(p.changed
+            ? { publishedPuckData: p.tree as Prisma.InputJsonValue }
+            : {}),
+        },
+      });
+      report.doi += d.changed;
+      touched.add(layout.slug);
+    }
+    if (touched.size) {
+      await this.cache.clear();
+      this.publicRevalidate.trigger([
+        ...[...touched].map((s) => `page:${s}`),
+        'sitemap',
+      ]);
+    }
+    return report;
+  }
+
+  /** Nhân bản cây, đặt `heroBg` + tắt `photoFilter` cho mọi khối hồ sơ. */
+  private setHeroBgOnStaffBlocks(
+    root: unknown,
+    heroBg: string,
+  ): { tree: unknown; changed: number } {
+    let changed = 0;
+    const walk = (n: unknown): unknown => {
+      if (Array.isArray(n)) return n.map(walk);
+      if (!n || typeof n !== 'object') return n;
+      const node = n as PuckNode;
+      if (node.type && STAFF_TYPES.includes(node.type) && node.props) {
+        if (node.props.heroBg === heroBg && node.props.photoFilter === false) {
+          return node;
+        }
+        changed++;
+        return {
+          ...node,
+          props: { ...node.props, heroBg, photoFilter: false },
+        };
+      }
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        out[k] = v && typeof v === 'object' ? walk(v) : v;
+      }
+      return out;
+    };
+    return { tree: walk(root), changed };
+  }
+
+  /**
    * Chuẩn hoá TRANG CÁ NHÂN sang kiểu editorial cho mọi trang dưới `prefix` còn ở
    * kiểu cũ (Header + PageHero + StaffProfile + Footer) → (Header +
    * StaffProfileEditorial + Footer). GIỮ nội dung: ảnh/tên/chức danh/email/điện

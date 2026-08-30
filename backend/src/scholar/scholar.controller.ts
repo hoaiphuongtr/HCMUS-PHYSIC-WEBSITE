@@ -424,6 +424,30 @@ export class ScholarController {
   }
 
   /**
+   * Tự điền hồ sơ học thuật (ORCID / Scopus / Google Scholar / ResearcherID) từ
+   * ScholarProfile vào các khối hồ sơ — chỉ quản trị. Ghép theo email; chỉ ghi đè
+   * khi nguồn có giá trị (không xoá ID người dùng đã tự điền).
+   */
+  @Post('staff-pages/backfill-scholar-links')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  backfillScholarLinks() {
+    return this.staffPage.backfillScholarLinks();
+  }
+
+  /**
+   * Đặt ảnh nền hero (và tắt lọc ảnh nghệ thuật) cho mọi trang nhân sự của MỘT bộ
+   * môn — chỉ quản trị. Body: { departmentId, heroBg }.
+   */
+  @Post('staff-pages/set-hero-bg')
+  @Roles(RoleName.Admin, RoleName.SuperAdmin)
+  setHeroBgForDept(
+    @Body('departmentId') departmentId: string,
+    @Body('heroBg') heroBg: string,
+  ) {
+    return this.staffPage.setHeroBgForDept(departmentId, heroBg ?? '');
+  }
+
+  /**
    * NẠP LẦN ĐẦU hồ sơ nhân sự từ ACADsoom (Mục 10.7) — chỉ quản trị, chạy MỘT
    * lượt trước khi đổi web Khoa thành gốc. Cần ACADSOOM_BASE_URL + WEBKHOA_PULL_SECRET.
    */
