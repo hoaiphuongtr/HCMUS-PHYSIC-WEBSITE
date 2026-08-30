@@ -164,14 +164,18 @@ function StaffProfileEditorialRender(props: Props) {
   // được; không có ảnh thì giữ nguyên nền INK đặc như cũ (byte-for-byte).
   const heroBg = resolveMediaUrl(props.heroBg || "");
   const heroVeil = inkVeil(0.72);
+  // Ảnh nền CHỈ phủ vùng hero (560px mobile / 52vh desktop trên cùng); dưới
+  // ngưỡng đó phải là nền PAPER như cũ. Lớp gradient PAPER (trong suốt phần
+  // trên, đặc phần dưới) đè lên ảnh để che nó ở phần thân — nếu không ảnh
+  // `cover` sẽ tràn xuống hết trang.
   const mobileBgImage = heroBg
-    ? `linear-gradient(to bottom, ${heroVeil} 560px, transparent 560px), url("${heroBg}")`
+    ? `linear-gradient(to bottom, ${heroVeil} 560px, transparent 560px), linear-gradient(to bottom, transparent 560px, ${PAPER} 560px), url("${heroBg}")`
     : `linear-gradient(to bottom, ${INK} 560px, transparent 560px)`;
   const desktopBgImage = heroBg
-    ? `linear-gradient(to bottom, ${heroVeil} 52vh, transparent 52vh), url("${heroBg}")`
+    ? `linear-gradient(to bottom, ${heroVeil} 52vh, transparent 52vh), linear-gradient(to bottom, transparent 52vh, ${PAPER} 52vh), url("${heroBg}")`
     : `linear-gradient(to bottom, ${INK} 52vh, transparent 52vh)`;
   const heroBgExtra = heroBg
-    ? `\n          background-size: auto, cover;\n          background-position: center, center top;\n          background-repeat: no-repeat, no-repeat;`
+    ? `\n          background-size: auto, auto, cover;\n          background-position: center, center, center top;\n          background-repeat: no-repeat, no-repeat, no-repeat;`
     : "";
 
   // Hồ sơ học thuật: mỗi ID có giá trị thì hiện một icon-link màu thương hiệu.
