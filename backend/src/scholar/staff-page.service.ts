@@ -22,9 +22,9 @@ import type { UpdateStaffPageBodyType } from './scholar.model';
  * Ranh giới quyền: chỉ sửa được layout mà `ScholarProfile.staffPageSlug` của
  * chính người gọi trỏ tới. Không có tham số nào cho phép chỉ định trang khác.
  *
- * Ô `html` (nội dung cũ đổ từ đợt migration) chỉ ĐỌC. Nó vẫn hiển thị trên trang
- * cho tới khi người dùng tự chép sang các ô có cấu trúc — không tự tách, không
- * tự xoá, vì mỗi trang một kiểu và đoán sai là mất nội dung của người ta.
+ * Ô `html` (khối "Thông tin chi tiết") nay SỬA ĐƯỢC: app gửi HTML thô, ở đây ghi
+ * vào đúng prop `html` của khối theo cùng cách song ngữ như `intro`. Vẫn KHÔNG tự
+ * tách sang các ô có cấu trúc — mỗi trang một kiểu, đoán sai là mất nội dung.
  */
 
 type Localized = { vi?: string; en?: string };
@@ -157,7 +157,7 @@ export class StaffPageService {
         meta: asText(e.meta),
         url: asPlain(e.url),
       })),
-      /** Nội dung cũ, CHỈ ĐỌC — xem ghi chú đầu tệp. */
+      /** Khối "Thông tin chi tiết" — nay sửa được, xem ghi chú đầu tệp. */
       legacyHtml: asText(p.html),
     };
   }
@@ -173,6 +173,11 @@ export class StaffPageService {
     }
     if (body.intro !== undefined) {
       next.intro = toLocalized(body.intro ?? '', prev.intro);
+    }
+    // Khối "Thông tin chi tiết": ghi HTML thô vào prop `html` theo ĐÚNG cách song
+    // ngữ như `intro` — giữ nguyên `en` cũ, thay `vi`. Chỉ đụng khi app có gửi.
+    if (body.legacyHtml !== undefined) {
+      next.html = toLocalized(body.legacyHtml ?? '', prev.html);
     }
     for (const key of ['research', 'teaching'] as const) {
       const list = body[key];

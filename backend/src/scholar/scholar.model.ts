@@ -761,7 +761,7 @@ export const StaffPageResSchema = z.object({
   teaching: z.array(EntrySchema),
   extras: z.array(ExtraSchema),
   publications: z.array(StaffPubSchema),
-  /** Nội dung cũ từ đợt migration — CHỈ ĐỌC, hiển thị để người dùng tự chép sang. */
+  /** Khối "Thông tin chi tiết" (prop `html`) — nay sửa được qua ô soạn thảo ở app. */
   legacyHtml: z.string(),
 });
 
@@ -781,6 +781,12 @@ export const UpdateStaffPageBodySchema = z.object({
   teaching: z.array(EntrySchema).max(50).optional(),
   extras: z.array(ExtraSchema).max(50).optional(),
   publications: z.array(StaffPubSchema).max(300).optional(),
+  /**
+   * Khối "Thông tin chi tiết" (prop `html`), HTML thô do ô soạn thảo ở app gửi.
+   * Trần rộng có chủ ý: nội dung này đi kèm MỌI lần lưu (kể cả khi không sửa nó),
+   * nên trần phải lớn hơn mọi khối cũ để không chặn nhầm bản đang có.
+   */
+  legacyHtml: z.string().max(500000).nullish(),
 });
 export type UpdateStaffPageBodyType = z.infer<typeof UpdateStaffPageBodySchema>;
 

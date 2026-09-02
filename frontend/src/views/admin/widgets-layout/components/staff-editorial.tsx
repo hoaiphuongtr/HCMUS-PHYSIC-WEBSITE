@@ -82,7 +82,7 @@ type Props = {
 /** Tiêu đề mục: chữ serif hoa + đường kẻ chạy hết phần còn lại. */
 function RuleHeading({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-5 mb-5">
+    <div className="flex items-center gap-5 mb-2">
       <h2
         className="text-2xl md:text-3xl text-gray-900 uppercase tracking-wider"
         style={{ fontFamily: "var(--font-playfair)" }}
